@@ -1,7 +1,7 @@
 --
 --  File Name:         SortListPkg_int.vhd
 --  Design Unit Name:  SortListPkg_int
---  Revision:          STANDARD VERSION,  revision 2013.05
+--  Revision:          STANDARD VERSION,  revision 2014.01
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -30,10 +30,11 @@
 --    4/2013     2013.04    No Changes
 --    5/2013     2013.05    No changes of substance. 
 --                          Deleted extra variable declaration in procedure remove
+--    1/2014     2014.01    Added RevSort.  Added AllowDuplicate paramter to Add procedure
 --
 --
 --
---  Copyright (c) 2008 - 2013 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2008 - 2014 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -74,9 +75,10 @@ package SortListPkg_int is
 
   function inside (constant E : ElementType; constant A : in ArrayofElementType) return boolean ;
   impure function sort (constant A : in ArrayofElementType) return ArrayofElementType ;
+  impure function revsort (constant A : in ArrayofElementType) return ArrayofElementType ;
 
   type SortListPType is protected
-    procedure add ( constant A : in ElementType ) ;
+    procedure add ( constant A : in ElementType ; constant AllowDuplicate : Boolean := FALSE ) ;
     procedure add ( constant A : in ArrayofElementType ) ;
     procedure add ( constant A : in ArrayofElementType ; Min, Max : integer ) ;
     procedure add ( variable A : inout SortListPType ) ;
@@ -95,6 +97,7 @@ package SortListPkg_int is
     procedure remove ( variable A : inout SortListPType ) ;
 
     impure function to_array (constant EraseList : boolean := FALSE) return ArrayofElementType ;
+    impure function to_rev_array (constant EraseList : boolean := FALSE) return ArrayofElementType ;
   end protected SortListPType ;
 
 end SortListPkg_int ;
@@ -124,32 +127,38 @@ package body SortListPkg_int is
     variable HeadPointer : ListPointerType := NULL ;
     -- variable TailPointer : ListPointerType := NULL ;
 
-    procedure add    ( constant A : in ElementType ) is
+    procedure add ( constant A : in ElementType ; constant AllowDuplicate : Boolean := FALSE ) is
       variable CurPtr, tempPtr : ListPointerType ;
     begin
       if HeadPointer = NULL then
         HeadPointer  := new ListType'(A, NULL) ;
-
       elsif A = HeadPointer.A then -- ignore duplicates
-        return ;
-
+        if AllowDuplicate then
+          tempPtr := HeadPointer ;
+          HeadPointer   := new ListType'(A, tempPtr) ;
+        end if ; 
       elsif A < HeadPointer.A  then
         tempPtr := HeadPointer ;
         HeadPointer   := new ListType'(A, tempPtr) ;
-
       else
         CurPtr := HeadPointer ;
-        loop
-          exit when CurPtr.NextPtr = NULL ;
-          exit when A < CurPtr.NextPtr.A  ;
-          if A = CurPtr.NextPtr.A then return ; end if; -- exit
+        AddLoop : loop
+          exit AddLoop when CurPtr.NextPtr = NULL ;
+          exit AddLoop when A < CurPtr.NextPtr.A  ;
+          if A = CurPtr.NextPtr.A then 
+            if AllowDuplicate then 
+              exit AddLoop ;    -- insert 
+            else
+              return ;  -- return without insert
+            end if; 
+          end if ; 
           CurPtr := CurPtr.NextPtr ;
-        end loop ;
+        end loop AddLoop ;
         tempPtr := CurPtr.NextPtr ;
         CurPtr.NextPtr := new ListType'(A, tempPtr) ;
       end if ;
     end procedure add ;
-
+    
     procedure add ( constant A : in ArrayofElementType ) is
     begin
       for i in A'range loop
@@ -364,15 +373,37 @@ package body SortListPkg_int is
       return result ;
     end function to_array ;
 
-  end protected body SortListPType ;
+    impure function to_rev_array (constant EraseList : boolean := FALSE) return ArrayofElementType is
+      variable result : ArrayofElementType(Count downto 1) ;
+    begin
+      for i in 1 to Count loop
+        result(i) := Get(i) ;
+      end loop ;
+      if EraseList then
+        erase ;
+      end if ;
+      return result ;
+    end function to_rev_array ;
+
+    end protected body SortListPType ;
  
  
   impure function sort (constant A : in ArrayofElementType) return ArrayofElementType is
     variable Result : SortListPType ;
   begin
-    Result.Add(A) ; 
+    for i in A'range loop 
+      Result.Add(A(i), TRUE) ;
+    end loop ;
     return Result.to_array(EraseList => TRUE)  ; 
   end function sort ;
 
+  impure function revsort (constant A : in ArrayofElementType) return ArrayofElementType is
+    variable Result : SortListPType ;
+  begin
+    for i in A'range loop 
+      Result.Add(A(i), TRUE) ;
+    end loop ;
+    return Result.to_rev_array(EraseList => TRUE)  ; 
+  end function revsort ;
 end SortListPkg_int ;
 
