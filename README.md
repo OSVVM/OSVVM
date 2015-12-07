@@ -11,6 +11,7 @@ This is an **unofficial** repository of "Open Source VHDL Verification Methodolo
 
 ## Release History
 
+ - 03.07.2015 - **2015.06** OSVVM VHDL sources, release notes, and User’s Guide for RandomPkg, CoveragePkg, AlertLogPkg, TranscriptPkg, MemoryPkg, and OsvvmGlobalPkg.
  - 23.03.2015 - **2015.03** OSVVM VHDL sources, release notes, and User’s Guide for RandomPkg, CoveragePkg, AlertLogPkg, TranscriptPkg, and OsvvmGlobalPkg.
  - 16.12.2014 - **2014.07a** OSVVM VHDL sources, CoveragePkg User’s Guide, RandomPkg User’s Guide, and release notes.<sup>1</sup>
  - 22.01.2014 - **2014.01** Complete OS-VVM package containing VHDL sources and documentation.

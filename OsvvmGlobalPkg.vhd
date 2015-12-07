@@ -55,6 +55,7 @@ package OsvvmGlobalPkg is
   -- Shared Options Type used in OSVVM
   type OsvvmOptionsType is (OPT_INIT_PARM_DETECT, OPT_USE_DEFAULT, DISABLED, FALSE, ENABLED, TRUE) ;
   function IsEnabled (A : OsvvmOptionsType) return boolean ;  -- Requires that TRUE is last and ENABLED is 2nd to last
+  function to_OsvvmOptionsType (A : boolean) return OsvvmOptionsType ;
 
   -- Defaults for String values
   constant OSVVM_DEFAULT_ALERT_PREFIX     : string := "%% Alert" ;
@@ -146,6 +147,16 @@ package body OsvvmGlobalPkg is
   begin
     return A >= ENABLED ; 
   end function IsEnabled ; 
+  
+  function to_OsvvmOptionsType (A : boolean) return OsvvmOptionsType is
+  begin
+    if A then 
+      return TRUE ; 
+    else 
+      return FALSE ;
+    end if ; 
+  end function to_OsvvmOptionsType ; 
+  
 
   ------------------------------------------------------------
   procedure SetOsvvmGlobalOptions (

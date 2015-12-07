@@ -1,0 +1,30 @@
+  ------------------------------------------------------------
+  -- Local, Used by GenBin, IllegalBin, and IgnoreBin
+  function MakeBin(
+  ------------------------------------------------------------
+    Min, Max      : integer ;
+    NumBin        : integer ;
+    AtLeast       : integer ;
+    Weight        : integer ;
+    Action        : integer
+  ) return CovBinType is
+    constant CALC_NUM_BINS : integer := minimum(NumBin, Max-Min+1) ;
+    variable iCovBin : CovBinType(0 to CALC_NUM_BINS -1) ;
+    variable CurMin, NextMin, RemainingBins, NumItemsInBin : integer ;
+  begin
+    CurMin := Min ;
+    for i in iCovBin'range loop
+      RemainingBins := CALC_NUM_BINS - i ;
+      NumItemsInBin := (Max - CurMin + 1) / RemainingBins ;
+      NextMin := CurMin + NumItemsInBin ;
+      iCovBin(i) := (
+        BinVal => (1 => (CurMin, NextMin - 1)),
+        Action => Action,
+        Count => 0,
+        Weight => Weight,
+        AtLeast => AtLeast
+      ) ;
+      CurMin := NextMin ;
+    end loop ;
+    return iCovBin ;
+  end function MakeBin ;

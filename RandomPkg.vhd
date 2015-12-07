@@ -1,7 +1,7 @@
 --
 --  File Name :         RandomPkg.vhd
 --  Design Unit Name :  RandomPkg
---  Revision :          STANDARD VERSION,  revision 2015.01
+--  Revision :          STANDARD VERSION
 --
 --  Maintainer :        Jim Lewis      email :  jim@synthworks.com
 --  Contributor(s) :
@@ -44,6 +44,7 @@
 --    1/2014     2014.01    Added RandTime, RandReal(set), RandIntV, RandRealV, RandTimeV
 --                          Made sort, revsort from SortListPkg_int visible via aliases
 --    1/2015     2015.01    Changed Assert/Report to Alert
+--    5/2015     2015.06    Revised Alerts to Alert(OSVVM_ALERTLOG_ID, ...) ;
 --
 --  Copyright (c) 2006 - 2015 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -331,18 +332,26 @@ package body RandomPkg is
   function Scale (A, Min, Max : real) return real is
     variable ValRange : Real ;
   begin
-    ValRange := Max - Min ;
-    return A * ValRange + Min ;
+    if Max >= Min then 
+      ValRange := Max - Min ;
+      return A * ValRange + Min ;
+    else
+      return real'left ;
+    end if ; 
   end function Scale ;
 
   function Scale (A : real ; Min, Max : integer) return integer is
     variable ValRange : real ;
     variable rMin, rMax : real ;
   begin
-    rMin := real(Min) - 0.5 ;
-    rMax := real(Max) + 0.5 ;
-    ValRange := rMax - rMin ;
-    return integer(round(A * ValRange + rMin)) ;
+    if Max >= Min then 
+      rMin := real(Min) - 0.5 ;
+      rMax := real(Max) + 0.5 ;
+      ValRange := rMax - rMin ;
+      return integer(round(A * ValRange + rMin)) ;
+    else
+      return integer'left ; 
+    end if ; 
   end function Scale ;
 
   -- create more smaller values
@@ -474,7 +483,7 @@ package body RandomPkg is
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
-      AlertIfNot( ReadValid, OSVVM_ALERTLOG_ID, "RandomPkg.read[line, RandomDistType] failed", FAILURE) ;
+      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomDistType] failed", FAILURE) ;
   end procedure read ;
 
 
@@ -521,7 +530,7 @@ package body RandomPkg is
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
-      AlertIfNot( ReadValid, OSVVM_ALERTLOG_ID, "RandomPkg.read[line, RandomParmType] failed", FAILURE) ; 
+      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomParmType] failed", FAILURE) ; 
   end procedure read ;
 
 
@@ -618,7 +627,7 @@ package body RandomPkg is
     impure function Uniform (Min, Max : in real) return real is
       variable rRandomVal : real ;
     begin
-      AlertIf (Max < Min, OSVVM_ALERTLOG_ID, "RandomPkg.Uniform: Max < Min", FAILURE) ;
+      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.Uniform: Max < Min", FAILURE) ;
       Uniform(rRandomVal, RandomSeed) ;
       return scale(rRandomVal, Min, Max) ;
     end function Uniform ;
@@ -626,7 +635,7 @@ package body RandomPkg is
     impure function Uniform (Min, Max : integer) return integer is
       variable rRandomVal : real ;
     begin
-      AlertIf (Max < Min, OSVVM_ALERTLOG_ID, "RandomPkg.Uniform: Max < Min", FAILURE) ;
+      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.Uniform: Max < Min", FAILURE) ;
       Uniform(rRandomVal, RandomSeed) ;
       return scale(rRandomVal, Min, Max) ;
     end function Uniform ;
@@ -657,7 +666,7 @@ package body RandomPkg is
     impure function FavorSmall (Min, Max : real) return real is
       variable rRandomVal : real ;
     begin
-      AlertIf (Max < Min, OSVVM_ALERTLOG_ID, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
+      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
       Uniform(rRandomVal, RandomSeed) ;
       return scale(FavorSmall(rRandomVal), Min, Max) ; -- real
     end function FavorSmall ;
@@ -665,7 +674,7 @@ package body RandomPkg is
     impure function FavorSmall (Min, Max : integer) return integer is
       variable rRandomVal : real ;
     begin
-      AlertIf (Max < Min, OSVVM_ALERTLOG_ID, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
+      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
       Uniform(rRandomVal, RandomSeed) ;
       return scale(FavorSmall(rRandomVal), Min, Max) ; -- integer
     end function FavorSmall ;
@@ -696,7 +705,7 @@ package body RandomPkg is
     impure function FavorBig (Min, Max : real) return real is
       variable rRandomVal : real ;
     begin
-      AlertIf (Max < Min, OSVVM_ALERTLOG_ID, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
+      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
       Uniform(rRandomVal, RandomSeed) ;
       return scale(FavorBig(rRandomVal), Min, Max) ; -- real
     end function FavorBig ;
@@ -704,7 +713,7 @@ package body RandomPkg is
     impure function FavorBig (Min, Max : integer) return integer is
       variable rRandomVal : real ;
     begin
-      AlertIf (Max < Min, OSVVM_ALERTLOG_ID, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
+      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
       Uniform(rRandomVal, RandomSeed) ;
       return scale(FavorBig(rRandomVal), Min, Max) ; -- integer
     end function FavorBig ;
@@ -779,6 +788,7 @@ package body RandomPkg is
     begin
       if Max < Min then
          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Normal: Max < Min", FAILURE) ;
+         return Mean ; 
       else
         loop
           rRandomVal := Normal (Mean, StdDeviation) ;
@@ -800,6 +810,7 @@ package body RandomPkg is
     begin
       if Max < Min then
         Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Normal: Max < Min", FAILURE) ;
+        return integer(round(Mean)) ;
       else
         loop
           iRandomVal := integer(round(  Normal(Mean, StdDeviation)  )) ;
@@ -831,7 +842,7 @@ package body RandomPkg is
       -- add this check to set parameters?
       if Mean <= 0.0 or Bound <= 0.0 then
         Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Poisson: Mean < 0 or too large.  Mean = " & real'image(Mean), FAILURE) ;
-        return -1.0 ;
+        return Mean ;
       end if ;
 
       while (Product >= Bound) loop
@@ -848,6 +859,7 @@ package body RandomPkg is
     begin
       if Max < Min then
         Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Poisson: Max < Min", FAILURE) ;
+        return Mean ; 
       else
         loop
           rRandomVal := Poisson (Mean) ;
@@ -867,6 +879,7 @@ package body RandomPkg is
     begin
       if Max < Min then
         Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Poisson: Max < Min", FAILURE) ;
+        return integer(round(Mean)) ; 
       else
         loop
           iRandomVal := integer(round(  Poisson (Mean)  )) ;
@@ -1542,7 +1555,7 @@ package body RandomPkg is
     impure function RandSigned (Max : signed) return signed is
     begin
       if max'length > 0 then
-        AlertIf (Max < 0, OSVVM_ALERTLOG_ID, "RandomPkg.RandSigned: Max < 0", FAILURE) ;
+        AlertIf (OSVVM_ALERTLOG_ID, Max < 0, "RandomPkg.RandSigned: Max < 0", FAILURE) ;
         return signed(RandUnsigned( unsigned(Max))) ;
       else
         return NULL_SV ; -- Null Array
