@@ -10,12 +10,12 @@ This is an **unofficial** repository of "Open Source VHDL Verification Methodolo
 **Copyright:**	Copyright © 2012-2015 by [SynthWorks Design Inc.](http://www.synthworks.com/)
 
 ## Release History
+ - 16.12.2014 - **2014.07a** OSVVM VHDL sources, CoveragePkg User’s Guide, RandomPkg User’s Guide, and release notes.<sup>1</sup>
+ - 22.01.2014 - **2014.01** Complete OS-VVM package containing VHDL sources and documentation.
+ - 25.05.2013 - **2013.05** Complete OS-VVM package containing VHDL sources, documentation <s>and sample designs</s><sup>2</sup>.
 
- - 22.01.2014 - 2014.01 Complete OS-VVM package containing VHDL sources and documentation.
- - 25.05.2013 - 2013.05 Complete OS-VVM package containing VHDL sources, documentation <s>and sample designs</s><sup>1</sup>.
-
-
-<sup>1</sup> This repository does not contain the OS-VVM user guide and the example designs provided by [Aldec][aldec], due to the unknow license state of these files.
+<sup>1</sup> Bugfix for release 2014.07: Fix memory leak in deallocate.
+<sup>2</sup> This repository does not contain the OS-VVM user guide and the example designs provided by [Aldec][aldec], due to the unknow license state of these files.
 
 ------
 

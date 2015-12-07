@@ -9,7 +9,7 @@
 --
 --
 --  Package Defines
---      Data structure for name and message handling. 
+--      Data structure for multi-line name/message to be associated with a data structure. 
 --
 --  Developed for:
 --        SynthWorks Design Inc.
@@ -23,9 +23,11 @@
 --  Revision History:
 --    Date      Version    Description
 --    06/2010:  0.1        Initial revision
+--    07/2014:  2014.07    Moved specialization required by CoveragePkg to CoveragePkg
+--    07/2014:  2014.07a   Removed initialized pointers which can lead to memory leaks.
 --
 --
---  Copyright (c) 2010 - 2013 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2010 - 2014 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -55,18 +57,13 @@ package MessagePkg is
 
   type MessagePType is protected
 
-    procedure SetName (NameIn : String) ;
-    impure function GetName return string ;
-    impure function IsSetName return boolean ; 
-    
-    procedure SetMessage (MessageIn : String) ;
-    impure function GetMessage (ItemNumber : integer) return string ; 
-    impure function GetMessageCount return integer ; 
-
-    procedure DeallocateName ; -- clear name
-    procedure DeallocateMessage ; -- clear message
-    procedure Deallocate ; -- clear all
-    
+    procedure Set (MessageIn : String) ;
+    impure function Get (ItemNumber : integer := 1) return string ; 
+    impure function GetCount return integer ; 
+    impure function IsSet return boolean ; 
+    procedure Clear ; -- clear message
+    procedure Deallocate ; -- clear message
+        
   end protected MessagePType ;
 
 end package MessagePkg ;
@@ -75,58 +72,16 @@ package body MessagePkg is
   -- Local Data Structure Types
   type LineArrayType is array (natural range <>) of line ; 
   type LineArrayPtrType is access LineArrayType ;
-    
-  ------------------------------------------------------------
-  -- Local.  Get first word from a string
-  function GetWord (Message : string) return string is
-  ------------------------------------------------------------
-    alias aMessage : string( 1 to Message'length) is Message ; 
-  begin
-    for i in aMessage'range loop 
-      if aMessage(i) = ' ' or aMessage(i) = HT then 
-        return aMessage(1 to i-1) ; 
-      end if ; 
-    end loop ; 
-    return aMessage ;
-  end function GetWord ; 
-      
 
   type MessagePType is protected body
   
-    variable NamePtr   : line := new string'("") ;
     variable MessageCount : integer := 0 ; 
-    constant INITIAL_ITEM_COUNT : integer := 25 ; 
-    variable MaxMessageCount : integer := INITIAL_ITEM_COUNT ; 
-    variable MessagePtr : LineArrayPtrType := new LineArrayType(1 to INITIAL_ITEM_COUNT) ; 
+    constant INITIAL_ITEM_COUNT : integer := 16 ; 
+    variable MaxMessageCount : integer := 0 ; 
+    variable MessagePtr : LineArrayPtrType ; 
 
     ------------------------------------------------------------
-    procedure SetName (NameIn : String) is
-    ------------------------------------------------------------
-    begin
-      deallocate(NamePtr) ;
-      NamePtr := new string'(NameIn) ;
-    end procedure SetName ;
-
-    ------------------------------------------------------------
-    impure function GetName return string is
-    ------------------------------------------------------------
-    begin
-      if NamePtr.all /= "" or MessagePtr(1) = NULL then 
-        return NamePtr.all ;
-      else
-        return GetWord( MessagePtr(1).all ) ; 
-      end if ;
-    end function GetName ;
-
-    ------------------------------------------------------------
-    impure function IsSetName return boolean is 
-    ------------------------------------------------------------
-    begin
-      return NamePtr.all /= "" ; 
-    end function IsSetName ;      
-
-    ------------------------------------------------------------
-    procedure SetMessage (MessageIn : String) is
+    procedure Set (MessageIn : String) is
     ------------------------------------------------------------
       variable NamePtr : line ;
       variable OldMaxMessageCount : integer ;
@@ -135,7 +90,7 @@ package body MessagePkg is
       MessageCount := MessageCount + 1 ; 
       if MessageCount > MaxMessageCount then
         OldMaxMessageCount := MaxMessageCount ; 
-        MaxMessageCount := OldMaxMessageCount * 2 ; 
+        MaxMessageCount := MaxMessageCount + INITIAL_ITEM_COUNT ; 
         OldMessagePtr := MessagePtr ;
         MessagePtr := new LineArrayType(1 to MaxMessageCount) ; 
         for i in 1 to OldMaxMessageCount loop
@@ -144,10 +99,10 @@ package body MessagePkg is
         Deallocate( OldMessagePtr ) ;
       end if ; 
       MessagePtr(MessageCount) := new string'(MessageIn) ;
-    end procedure SetMessage ; 
+    end procedure Set ; 
 
     ------------------------------------------------------------
-    impure function GetMessage (ItemNumber : integer) return string is
+    impure function Get (ItemNumber : integer := 1) return string is
     ------------------------------------------------------------
     begin
       if MessageCount > 0 then 
@@ -158,27 +113,27 @@ package body MessagePkg is
           return "" ; -- error if this happens 
         end if ; 
       else 
-        return NamePtr.all ; 
+        report LF & "%% MessagePkg:MessagePType.GetMessage message is not set" severity failure ; 
+        return "" ; -- error if this happens 
       end if ;
-    end function GetMessage ; 
+    end function Get ; 
 
     ------------------------------------------------------------
-    impure function GetMessageCount return integer is 
+    impure function GetCount return integer is 
     ------------------------------------------------------------
     begin
       return MessageCount ; 
-    end function GetMessageCount ; 
+    end function GetCount ; 
 
     ------------------------------------------------------------
-    procedure DeallocateName is  -- clear name
+    impure function IsSet return boolean is 
     ------------------------------------------------------------
     begin
-      deallocate(NamePtr) ;
-      NamePtr := new string'("") ;
-    end procedure DeallocateName ;
+      return MessageCount > 0 ; 
+    end function IsSet ;      
 
     ------------------------------------------------------------
-    procedure DeallocateMessage is  -- clear message
+    procedure Deallocate is  -- clear message
     ------------------------------------------------------------
       variable CurPtr : LineArrayPtrType ;
     begin
@@ -186,16 +141,16 @@ package body MessagePkg is
         deallocate( MessagePtr(i) ) ; 
       end loop ; 
       MessageCount := 0 ; 
-      -- Do NOT Do this: deallocate( MessagePtr ) ; 
-    end procedure DeallocateMessage ;
+      MaxMessageCount := 0 ; 
+      deallocate( MessagePtr ) ; 
+    end procedure Deallocate ;
 
     ------------------------------------------------------------
-    procedure Deallocate is  -- clear all
+    procedure Clear is  -- clear 
     ------------------------------------------------------------
     begin
-      DeallocateName ;
-      DeallocateMessage ;
-    end procedure Deallocate ;
+      Deallocate ;
+    end procedure Clear ;
 
   end protected body MessagePType ;
 
