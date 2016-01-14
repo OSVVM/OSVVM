@@ -42,6 +42,7 @@
 --    12/2014   2014.07a   Fix memory leak in deallocate. Removed initialied pointers which can lead to leaks.
 --    01/2015   2015.01    Use AlertLogPkg to count assertions and filter log messages
 --    06/2015   2015.06    AddCross[CovMatrix?Type], Mirroring for WriteBin
+--    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
 --
 --  Development Notes:
 --      The coverage procedures are named ICover to avoid conflicts with
@@ -969,7 +970,7 @@ package body CoveragePkg is
 
   -- ------------------------------------------------------------
   function ConcatenateBins (
-  -- package local, used by AddCross
+  -- package local, used by AddCross and GenCross
   -- ------------------------------------------------------------
     BinIndex : integer_vector ;
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
@@ -1020,7 +1021,10 @@ package body CoveragePkg is
         when 18 =>  result(i) := aBin18(aBinIndex(i)) ;
         when 19 =>  result(i) := aBin19(aBinIndex(i)) ;
         when 20 =>  result(i) := aBin20(aBinIndex(i)) ;
-        when others =>  Alert(OSVVM_ALERTLOG_ID, "CoveragePkg.AddCross: More than 20 bins not supported", FAILURE) ;
+        when others =>  
+          -- pure functions cannot use alert and/or print
+          report "CoveragePkg.AddCross: More than 20 bins not supported"
+            severity FAILURE ;
       end case ;
     end loop ;
     return result ;
@@ -1594,7 +1598,6 @@ package body CoveragePkg is
         BinValLength := CurBinValLength ; -- number of points in cross
       else
         AlertIf(AlertLogIDVar, BinValLength /= CurBinValLength, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" & 
-
         " Cross coverage bins of different dimensions prohibited", FAILURE) ; 
       end if;
     end procedure CheckBinValLength ;
@@ -2037,13 +2040,13 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure ICover( CovPoint : integer_vector) is
     ------------------------------------------------------------
---dd      variable Found : boolean := FALSE ;
     begin
-      if CountMode = COUNT_FIRST and inside(CovPoint, CovBinPtr(LastIndex).BinVal.all) then
+      if CovPoint'length /= BinValLength then
+        Alert(AlertLogIDVar, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg." &  
+        " ICover: CovPoint length = " & to_string(CovPoint'length) &
+        "  does not match Coverage Bin dimensions = " & to_string(BinValLength), FAILURE) ; 
+      elsif CountMode = COUNT_FIRST and inside(CovPoint, CovBinPtr(LastIndex).BinVal.all) then
         ICoverIndex(LastIndex, CovPoint) ;
---dd        Found := TRUE ;
---dd      end if;
---dd      if not Found then
       else
         CovLoop : for i in 1 to NumBins loop
           -- skip this CovBin if CovPoint is not in it
@@ -3475,19 +3478,19 @@ package body CoveragePkg is
 
       write(buf, RV.GetSeed ) ;
       write(buf, ' ') ;
-      write(buf, CovThreshold) ;
+      write(buf, CovThreshold, RIGHT, 0, 5) ;
       write(buf, ' ') ;
       write(buf, IllegalModeType'pos(IllegalMode)) ;
       write(buf, ' ') ;
       write(buf, WeightModeType'pos(WeightMode)) ;
       write(buf, ' ') ;
-      write(buf, WeightScale) ;
+      write(buf, WeightScale, RIGHT, 0, 6) ;
       write(buf, ' ') ;
       write(buf, CountModeType'pos(CountMode)) ;
       write(buf, ' ') ;
       write(buf, ThresholdingEnable) ; -- boolean
       write(buf, ' ') ;
-      write(buf, CovTarget) ; -- Real
+      write(buf, CovTarget, RIGHT, 0, 6) ; -- Real
       write(buf, ' ') ;
       write(buf, MergingEnable) ; -- boolean
       write(buf, ' ') ;
@@ -3524,7 +3527,7 @@ package body CoveragePkg is
         write(buf, ' ') ;
         write(buf, CovBinPtr(LineCount).Weight) ;
         write(buf, ' ') ;
-        write(buf, CovBinPtr(LineCount).PercentCov) ;
+        write(buf, CovBinPtr(LineCount).PercentCov, RIGHT, 0, 4) ;
         write(buf, ' ') ;
         WriteBinVal(buf, CovBinPtr(LineCount).BinVal.all) ;
         write(buf, ' ') ;
@@ -3588,6 +3591,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix2Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(2, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3602,6 +3606,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix3Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(3, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3616,6 +3621,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix4Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(4, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3630,6 +3636,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix5Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(5, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3644,6 +3651,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix6Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(6, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3658,6 +3666,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix7Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(7, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3672,6 +3681,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix8Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(8, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -3686,6 +3696,7 @@ package body CoveragePkg is
     procedure AddCross (CovBin : CovMatrix9Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckBinValLength(9, "AddCross") ;   
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(
@@ -4046,116 +4057,61 @@ package body CoveragePkg is
       end if;
     end procedure WriteCovHoles ;
     
-    
     ------------------------------------------------------------
+    -- Deprecated.  Use AddCross Instead.
     procedure AddBins (CovBin : CovMatrix2Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix3Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix4Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix5Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix6Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix7Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix8Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
-
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix9Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      GrowBins(CovBin'length) ;
-      for i in CovBin'range loop
-        InsertBin(
-          CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
-          CovBin(i).AtLeast, CovBin(i).Weight, Name
-        ) ;
-      end loop ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
   end protected body CovPType ;
@@ -4255,7 +4211,7 @@ package body CoveragePkg is
     variable iCurMin, iCurMax : integer ; 
   begin
     if Min > Max then
-      -- Similar to NULL ranges.  Only generate report warning.  
+      -- Similar to NULL ranges.  Only generate report warning.
       report "OSVVM.CoveragePkg.MakeBin (called by GenBin, IllegalBin, or IgnoreBin) MAX > MIN generated NULL_BIN"
         severity WARNING ; 
       -- No Alerts. They make this impure.
