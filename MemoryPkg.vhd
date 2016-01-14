@@ -19,9 +19,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    05/2005:  0.1        Initial revision
 --    06/2015:  2015.06    Updated for Alerts, ...
 --                         Numerous revisions for VHDL Testbenches and Verification
---    05/2005:  0.1        Initial revision
+--    01/2016:  2016.01    Update for buf.all(buf'left)
 --
 --
 --  Copyright (c) 2005 - 2015 by SynthWorks Design Inc.  All rights reserved.
@@ -385,7 +386,7 @@ package body MemoryPkg is
           EmptyOrCommentLine(buf, Empty, MultiLineComment) ; 
           exit ItemLoop when Empty ; 
           ItemNum := ItemNum + 1 ; 
-          NextChar := buf.all(1) ;
+          NextChar := buf.all(buf'left) ;
           
           if (NextChar = '@') then 
           -- Get Address

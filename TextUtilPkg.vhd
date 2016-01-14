@@ -21,6 +21,7 @@
 --  Revision History:
 --    Date       Version    Description
 --    01/2015:   2015.05    Initial revision
+--    01/2016:   2016.01    Update for L.all(L'left)
 --
 --
 --  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
@@ -147,7 +148,7 @@ package body TextUtilPkg is
   begin
     Empty := TRUE ; 
     WhiteSpLoop : while L /= null and L.all'length > 0 loop
-      if (L.all(1) = ' ' or L.all(1) = NBSP or L.all(1) = HT) then
+      if (L.all(L'left) = ' ' or L.all(L'left) = NBSP or L.all(L'left) = HT) then
         read (L, Char, Valid) ;
         exit when not Valid ; 
       else
@@ -176,19 +177,18 @@ package body TextUtilPkg is
     variable MultiLineComment : inout boolean 
   ) is
     variable Valid : boolean ;
-    variable Str   : string(1 to 2) ;
+    variable Char  : character ;
   begin
     MultiLineComment := TRUE ; 
     Empty            := TRUE ; 
     FindEndOfCommentLoop : while L /= null and L.all'length > 1 loop
-      if L.all(1) = '*' and L.all(2) = '/' then 
-        read(L, Str, Valid) ; 
+      read(L, Char, Valid) ; 
+      if Char = '*' and L.all(L'left) = '/' then
+        read(L, Char, Valid) ; 
         Empty            := FALSE ;
         MultiLineComment := FALSE ;
         exit FindEndOfCommentLoop ;
-      else
-        read(L, Str(1), Valid) ; -- remove one character and repeat
-      end if; 
+      end if ; 
     end loop ; 
   end procedure FindCommentEnd ;
   
@@ -200,7 +200,7 @@ package body TextUtilPkg is
     variable MultiLineComment : inout  boolean 
   ) is
     variable Valid : boolean ;
-    variable Char  : character ;
+    variable Next2Char  : string(1 to 2) ;
     constant NBSP  : CHARACTER := CHARACTER'val(160);  -- space character
   begin
     if MultiLineComment then 
@@ -213,13 +213,18 @@ package body TextUtilPkg is
       
       Empty := TRUE ; 
 
-      exit when L.all(1) = '#' ; -- shell style comment
+      exit when L.all(L'left) = '#' ; -- shell style comment
       
       if L.all'length >= 2 then 
-        exit when L.all(1 to 2) = "//" ; -- C style comment
-        exit when L.all(1 to 2) = "--" ; -- VHDL style comment
+        if L'ascending then 
+          Next2Char := L.all(L'left to L'left+1) ;
+        else 
+          Next2Char := L.all(L'left to L'left-1) ;
+        end if; 
+        exit when Next2Char = "//" ; -- C style comment
+        exit when Next2Char = "--" ; -- VHDL style comment
         
-        if L.all(1 to 2) = "/*" then   -- C style multi line comment
+        if Next2Char = "/*" then   -- C style multi line comment
           FindCommentEnd(L, Empty, MultiLineComment) ;
           exit when Empty ; 
           next EmptyCheckLoop ; -- Found end of comment, restart processing line
@@ -252,7 +257,7 @@ package body TextUtilPkg is
     CharCount := 0 ; 
     
     ReadLoop : while L /= null and L.all'length > 0 loop
-      NextChar := L.all(1) ; 
+      NextChar := L.all(L'left) ; 
       if ishex(NextChar) or NextChar = 'X' or NextChar = 'Z' then 
         hread(L, ReadVal, ReadValid) ; 
         ReturnVal := ReturnVal(ResultNormLen-5 downto 0) & ReadVal ; 
@@ -293,7 +298,7 @@ package body TextUtilPkg is
     CharCount := 0 ; 
     
     ReadLoop : while L /= null and L.all'length > 0 loop
-      NextChar := L.all(1) ; 
+      NextChar := L.all(L'left) ; 
       if isstd_logic(NextChar) then 
         read(L, ReadVal, ReadValid) ; 
         ReturnVal := ReturnVal(Result'length-2 downto 0) & ReadVal ; 
