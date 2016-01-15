@@ -53,7 +53,7 @@
 --      composites with unconstrained elements
 --
 --
---  Copyright (c) 2010 - 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2010 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.

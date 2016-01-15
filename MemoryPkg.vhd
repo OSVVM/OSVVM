@@ -25,7 +25,7 @@
 --    01/2016:  2016.01    Update for buf.all(buf'left)
 --
 --
---  Copyright (c) 2005 - 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2005 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and 
 --  distributed without restriction.   
