@@ -4,7 +4,7 @@
 [**Open Source VHDL Verification Methodology (OSVVM)**][osvvm] is an intelligent testbench methodology that allows mixing of “Intelligent Coverage” (coverage driven randomization) with directed, algorithmic, file based, and constrained random test approaches. The methodology can be adopted in part or in whole as needed. With OSVVM you can add advanced verification methodologies to your current testbench without having to learn a new language or throw out your existing testbench or testbench models.
 
 **Source:**     [http://www.osvvm.org/][osvvm]  
-**OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/] 
+**OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/][osvvm-blog]  
 **License:**	[Artistic License 2.0][PAL2.0]  
 **Copyright:**	Copyright © 2006-2016 by [SynthWorks Design Inc.](http://www.synthworks.com/)
 
@@ -18,17 +18,18 @@
  - Jan-2014 - **2014.01**  RandomPkg: RandTime, RandIntV, RandRealV, RandTimeV.  CoveragePkg:  Support merging of coverage bins.  
  - May-2013 - **2013.05**  RandomPkg:  Big Vector Randomization.  
  
- For more revision information, see doc/osvvm_release_notes.pdf
+ For more revision information, see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)
 
 
 ------
 
-*Starting with 2016.01, this repository was handed off to Jim Lewis (OSVVM Developer) and became the GIT site for OSVVM*
-*Releases Prior to 2016.01 were uploaded by Patrick Lehmann*
+*Starting with 2016.01, this repository was handed off to Jim Lewis (OSVVM Developer) and became the GIT site for OSVVM*  
+*Releases prior to 2016.01 were uploaded by Patrick Lehmann*
 
- [osvvm]:   http://www.osvvm.org/
- [aldec]:   http://www.aldec.com/
- [PAL2.0]:	http://www.perlfoundation.org/artistic_license_2_0
+ [osvvm]:      http://www.osvvm.org/
+ [osvvm-blog]: http://www.synthworks.com/blog/osvvm/
+ [aldec]:      http://www.aldec.com/
+ [PAL2.0]:	   http://www.perlfoundation.org/artistic_license_2_0
 
 
 
