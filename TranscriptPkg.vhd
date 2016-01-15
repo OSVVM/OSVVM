@@ -1,7 +1,7 @@
 --
 --  File Name:         TranscriptPkg.vhd
 --  Design Unit Name:  TranscriptPkg
---  Revision:          STANDARD VERSION,  revision 2015.01
+--  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -22,9 +22,10 @@
 --  Revision History:
 --    Date       Version    Description
 --    01/2015:   2015.01    Initial revision
+--    01/2016:   2016.01    TranscriptOpen function now calls procedure of same name
 --
 --
---  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2015-2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -57,6 +58,7 @@ package TranscriptPkg is
   procedure        TranscriptOpen (Status: out FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
   procedure        TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;  
   impure function  TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) return FILE_OPEN_STATUS ;
+  
   procedure        TranscriptClose ;  
   impure function  IsTranscriptOpen return boolean ; 
   alias            IsTranscriptEnabled is IsTranscriptOpen [return boolean] ;  
@@ -103,15 +105,21 @@ package body TranscriptPkg is
   ------------------------------------------------------------
   begin
     file_open(Status, TranscriptFile, ExternalName, OpenKind) ;
-    TranscriptEnable.Set(TRUE) ;
+    if Status = OPEN_OK then 
+      TranscriptEnable.Set(TRUE) ;
+    end if ; 
   end procedure TranscriptOpen ; 
   
   ------------------------------------------------------------
   procedure TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
+    variable Status : FILE_OPEN_STATUS ; 
   begin
-    file_open(TranscriptFile, ExternalName, OpenKind) ;
-    TranscriptEnable.Set(TRUE) ;
+    TranscriptOpen(Status, ExternalName, OpenKind) ;
+    if Status /= OPEN_OK then 
+      report "TranscriptPkg.TranscriptOpen file: " & 
+             ExternalName & " status is: " & to_string(status) & " and is not OPEN_OK" severity FAILURE ;
+    end if ; 
   end procedure TranscriptOpen ; 
   
   ------------------------------------------------------------
@@ -119,9 +127,8 @@ package body TranscriptPkg is
   ------------------------------------------------------------
     variable Status : FILE_OPEN_STATUS ; 
   begin
-    file_open(Status, TranscriptFile, ExternalName, OpenKind) ;
-    TranscriptEnable.Set(TRUE) ;
-    return status ; 
+    TranscriptOpen(Status, ExternalName, OpenKind) ;
+    return Status ; 
   end function TranscriptOpen ;
 
   ------------------------------------------------------------
