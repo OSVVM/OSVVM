@@ -29,9 +29,10 @@
 --    03/2015    2015.03    Added:  AlertIfEqual, AlertIfNotEqual, AlertIfDiff, PathTail, 
 --                          ReportNonZeroAlerts, ReadLogEnables 
 --    05/2015    2015.06    Added IncAlertCount, AffirmIf
+--    07/2015    2016.01    Fixed AlertLogID issue with > 32 IDs
 --
 --
---  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -1073,12 +1074,13 @@ package body AlertLogPkg is
     -- PT Local
     impure function GetNextAlertLogID return AlertLogIDType is
     ------------------------------------------------------------
-      variable NormNumAlertLogIDs : AlertLogIDType ;      
+      variable NewNumAlertLogIDs : AlertLogIDType ;      
     begin
-      NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ; 
-      if NumAlertLogIDsVar > NumAllocatedAlertLogIDsVar then
+      NewNumAlertLogIDs := NumAlertLogIDsVar + 1 ; 
+      if NewNumAlertLogIDs > NumAllocatedAlertLogIDsVar then
         GrowAlertStructure(NumAllocatedAlertLogIDsVar + MIN_NUM_AL_IDS) ; 
       end if ; 
+      NumAlertLogIDsVar := NewNumAlertLogIDs ; 
       return NumAlertLogIDsVar ; 
     end function GetNextAlertLogID ;
 
