@@ -156,6 +156,7 @@ package CoveragePkg is
   type IllegalModeType is (ILLEGAL_ON, ILLEGAL_FAILURE, ILLEGAL_OFF) ;
   type WeightModeType  is (AT_LEAST, WEIGHT, REMAIN, REMAIN_EXP, REMAIN_SCALED, REMAIN_WEIGHT ) ;
 
+  type OutputFormatType is (FORMAT_TEXT, FORMAT_CSV) ;
 
   -- In VHDL-2008 CovMatrix?BaseType and CovMatrix?Type will be subsumed
   -- by CovBinBaseType and CovBinType with RangeArrayType as an unconstrained array.
@@ -2743,7 +2744,7 @@ package body CoveragePkg is
         return ;
       end if ;
       -- Models with Bins
-      WriteBinName(f, "WriteBin: ", WritePrefix) ;
+      -- WriteBinName(f, "WriteBin: ", WritePrefix) ;
       for i in 1 to NumBins loop      -- CovBinPtr.all'range
         if CovBinPtr(i).action = COV_COUNT or
            (CovBinPtr(i).action = COV_ILLEGAL and IsEnabled(WriteAnyIllegal)) or
@@ -2764,11 +2765,10 @@ package body CoveragePkg is
           end if ;
           if IsEnabled(WriteBinInfo) then
             if CovBinPtr(i).action = COV_COUNT then
-              swrite(buf, "Bin:") ;
+              write(buf, CovBinPtr(i).BinVal.all) ;
             else
               swrite(buf, "Illegal Bin:") ;
             end if;
-            write(buf, CovBinPtr(i).BinVal.all) ;
           end if ;
           if IsEnabled(WriteCount) then
             write(buf, "  Count = " & integer'image(abs(CovBinPtr(i).count))) ;
@@ -2784,6 +2784,74 @@ package body CoveragePkg is
       swrite(buf, "") ;
       writeline(f, buf) ;
     end procedure WriteBin ;
+
+    procedure WriteBin2CSV (
+      file f : text ;
+      WritePassFail   : CovOptionsType ;
+      WriteBinInfo    : CovOptionsType ;
+      WriteCount      : CovOptionsType ;
+      WriteAnyIllegal : CovOptionsType ;
+      WritePrefix     : string ;
+      PassName        : string ;
+      FailName        : string
+    ) is
+    ------------------------------------------------------------
+      variable buf : line ;
+      constant CSV_DELIMITER	: string(1 to 2)	:= "; " ;
+    begin
+      -- Models with Bins
+      WriteBinName(f, "ID; Name; PassFail; IsEnable; Count; AtLeast; Weight", "# ") ;
+      
+      for i in 1 to NumBins loop      -- CovBinPtr.all'range
+        if CovBinPtr(i).action = COV_COUNT or
+           (CovBinPtr(i).action = COV_ILLEGAL and IsEnabled(WriteAnyIllegal)) or
+           CovBinPtr(i).count < 0  -- Illegal bin with errors
+        then
+          swrite(buf, integer'image(i) & CSV_DELIMITER) ;
+          -- WriteBin Info
+          if CovBinPtr(i).Name.all /= "" then
+            swrite(buf, CovBinPtr(i).Name.all & CSV_DELIMITER) ;
+					else
+            write(buf, "Bin " & integer'image(i) & CSV_DELIMITER) ;
+          end if ;
+          if IsEnabled(WritePassFail) then
+            -- For illegal bins, AtLeast = 0 and count is negative.
+            if CovBinPtr(i).count >= CovBinPtr(i).AtLeast then
+              swrite(buf, PassName & CSV_DELIMITER) ;
+            else
+              swrite(buf, FailName & CSV_DELIMITER) ;
+            end if ;
+          else
+            swrite(buf, "----" & HT & CSV_DELIMITER) ;
+          end if ;
+          if IsEnabled(WriteBinInfo) then
+            if CovBinPtr(i).action = COV_COUNT then
+              write(buf, CovBinPtr(i).BinVal.all) ;
+            else
+              swrite(buf, "ILLEGAL BIN") ;
+            end if;
+            swrite(buf, HT & CSV_DELIMITER) ;
+          else
+            swrite(buf, HT & CSV_DELIMITER) ;
+          end if ;
+          if IsEnabled(WriteCount) then
+            write(buf, integer'image(abs(CovBinPtr(i).count))) ;
+            swrite(buf, CSV_DELIMITER) ;
+            write(buf, integer'image(CovBinPtr(i).AtLeast)) ;
+            swrite(buf, CSV_DELIMITER) ;
+            if WeightMode = WEIGHT or WeightMode = REMAIN_WEIGHT then
+              -- Print Weight only when it is used
+              write(buf, integer'image(CovBinPtr(i).Weight)) ;
+						else
+              swrite(buf, "0") ;
+            end if ;
+          end if ;
+          writeline(f, buf) ;
+        end if ;
+      end loop ;
+      swrite(buf, "") ;
+      writeline(f, buf) ;
+    end procedure WriteBin2CSV ;
 
     ------------------------------------------------------------
     procedure WriteBin (
@@ -2803,31 +2871,62 @@ package body CoveragePkg is
       constant rWritePrefix     : string      := ResolveOsvvmWritePrefix(WritePrefix,       WritePrefixVar.GetOpt) ;
       constant rPassName        : string      := ResolveOsvvmPassName(PassName,             PassNameVar.GetOpt  ) ;
       constant rFailName        : string      := ResolveOsvvmFailName(FailName,             FailNameVar.GetOpt  ) ;
+      constant rOutputFormat    : OutputFormatType := FORMAT_CSV ;  -- FORMAT_TEXT
     begin
       if WriteBinFileInit then  
         -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
-        WriteBin (
-          f               => WriteBinFile,
-          WritePassFail   => rWritePassFail,
-          WriteBinInfo    => rWriteBinInfo,
-          WriteCount      => rWriteCount,
-          WriteAnyIllegal => rWriteAnyIllegal,
-          WritePrefix     => rWritePrefix,
-          PassName        => rPassName,
-          FailName        => rFailName
-        ) ;
+        if (rOutputFormat = FORMAT_TEXT) then
+          WriteBin (
+            f               => WriteBinFile,
+            WritePassFail   => rWritePassFail,
+            WriteBinInfo    => rWriteBinInfo,
+            WriteCount      => rWriteCount,
+            WriteAnyIllegal => rWriteAnyIllegal,
+            WritePrefix     => rWritePrefix,
+            PassName        => rPassName,
+            FailName        => rFailName
+          ) ;
+        elsif (rOutputFormat = FORMAT_CSV) then
+          WriteBin (
+            f               => WriteBinFile,
+            WritePassFail   => rWritePassFail,
+            WriteBinInfo    => rWriteBinInfo,
+            WriteCount      => rWriteCount,
+            WriteAnyIllegal => rWriteAnyIllegal,
+            WritePrefix     => rWritePrefix,
+            PassName        => rPassName,
+            FailName        => rFailName
+          ) ;
+        else
+          Alert(AlertLogIDVar, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteBin:" &  
+                      " Unknown output format for transcript file.", FAILURE) ;
+          return ;
+        end if ;
       elsif IsTranscriptEnabled then 
         -- Write to TranscriptFile
-        WriteBin (
-          f               => TranscriptFile,
-          WritePassFail   => rWritePassFail,
-          WriteBinInfo    => rWriteBinInfo,
-          WriteCount      => rWriteCount,
-          WriteAnyIllegal => rWriteAnyIllegal,
-          WritePrefix     => rWritePrefix,
-          PassName        => rPassName,
-          FailName        => rFailName
-        ) ;
+        if (rOutputFormat = FORMAT_TEXT) then
+          WriteBin (
+            f               => TranscriptFile,
+            WritePassFail   => rWritePassFail,
+            WriteBinInfo    => rWriteBinInfo,
+            WriteCount      => rWriteCount,
+            WriteAnyIllegal => rWriteAnyIllegal,
+            WritePrefix     => rWritePrefix,
+            PassName        => rPassName,
+            FailName        => rFailName
+          ) ;
+        elsif (rOutputFormat = FORMAT_CSV) then
+          WriteBin2CSV (
+            f               => TranscriptFile,
+            WritePassFail   => rWritePassFail,
+            WriteBinInfo    => rWriteBinInfo,
+            WriteCount      => rWriteCount,
+            WriteAnyIllegal => rWriteAnyIllegal,
+            WritePrefix     => rWritePrefix,
+            PassName        => rPassName,
+            FailName        => rFailName
+          ) ;
+        end if ;
         if IsTranscriptMirrored then
           -- Mirrored to OUTPUT
           WriteBin (
