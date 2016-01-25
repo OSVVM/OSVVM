@@ -156,7 +156,7 @@ package CoveragePkg is
   type IllegalModeType is (ILLEGAL_ON, ILLEGAL_FAILURE, ILLEGAL_OFF) ;
   type WeightModeType  is (AT_LEAST, WEIGHT, REMAIN, REMAIN_EXP, REMAIN_SCALED, REMAIN_WEIGHT ) ;
 
-  type OutputFormatType is (FORMAT_TEXT, FORMAT_CSV) ;
+  type OutputFormatType is (FORMAT_TEXT, FORMAT_CSV, FORMAT_JSON) ;
 
   -- In VHDL-2008 CovMatrix?BaseType and CovMatrix?Type will be subsumed
   -- by CovBinBaseType and CovBinType with RangeArrayType as an unconstrained array.
@@ -2853,6 +2853,86 @@ package body CoveragePkg is
       writeline(f, buf) ;
     end procedure WriteBin2CSV ;
 
+    procedure WriteBin2JSON (
+      file f : text ;
+      WritePassFail   : CovOptionsType ;
+      WriteBinInfo    : CovOptionsType ;
+      WriteCount      : CovOptionsType ;
+      WriteAnyIllegal : CovOptionsType ;
+      WritePrefix     : string ;
+      PassName        : string ;
+      FailName        : string
+    ) is
+    ------------------------------------------------------------
+      variable buf : line ;
+      constant JSON_DELIMITER	: string(1 to 2)	:= ", " ;
+    begin
+      -- Models with Bins
+      WriteBinName(f, """WriteBin"": {", "{ ") ;
+			write(buf, HT & HT & """Header"": [""ID"", ""Name"", ""PassFail"", ""IsEnable"", ""Count"", ""AtLeast"", ""Weight""]," & CR) ;
+			write(buf, HT & HT & """Data"": [") ;
+      writeline(f, buf) ;
+      
+      for i in 1 to NumBins loop      -- CovBinPtr.all'range
+        if CovBinPtr(i).action = COV_COUNT or
+           (CovBinPtr(i).action = COV_ILLEGAL and IsEnabled(WriteAnyIllegal)) or
+           CovBinPtr(i).count < 0  -- Illegal bin with errors
+        then
+          swrite(buf, HT & HT & HT & "[" & integer'image(i) & JSON_DELIMITER) ;
+          -- WriteBin Info
+          if CovBinPtr(i).Name.all /= "" then
+            swrite(buf, CovBinPtr(i).Name.all & JSON_DELIMITER) ;
+					else
+            write(buf, """Bin " & integer'image(i) & """" & JSON_DELIMITER) ;
+          end if ;
+          if IsEnabled(WritePassFail) then
+            -- For illegal bins, AtLeast = 0 and count is negative.
+            if CovBinPtr(i).count >= CovBinPtr(i).AtLeast then
+              swrite(buf, """" & PassName & """" & JSON_DELIMITER) ;
+            else
+              swrite(buf, """" & FailName & """" & JSON_DELIMITER) ;
+            end if ;
+          else
+            swrite(buf, "null" & HT & JSON_DELIMITER) ;
+          end if ;
+          if IsEnabled(WriteBinInfo) then
+            if CovBinPtr(i).action = COV_COUNT then
+              swrite(buf, """") ;
+              write(buf, CovBinPtr(i).BinVal.all) ;
+              swrite(buf, """" & JSON_DELIMITER) ;
+--              write(buf, """" & CovBinPtr(i).BinVal.all & """" & JSON_DELIMITER) ;    -- GHDL: no function declarations for operator "&"
+            else
+              swrite(buf, "false" & JSON_DELIMITER) ;
+            end if;
+          else
+            swrite(buf, "null" & JSON_DELIMITER) ;
+          end if ;
+          if IsEnabled(WriteCount) then
+            write(buf, integer'image(abs(CovBinPtr(i).count))) ;
+            swrite(buf, JSON_DELIMITER) ;
+            write(buf, integer'image(CovBinPtr(i).AtLeast)) ;
+            swrite(buf, JSON_DELIMITER) ;
+            if WeightMode = WEIGHT or WeightMode = REMAIN_WEIGHT then
+              -- Print Weight only when it is used
+              write(buf, integer'image(CovBinPtr(i).Weight)) ;
+						else
+              swrite(buf, "0") ;
+            end if ;
+          end if ;
+          if (i /= NumBins) then
+            swrite(buf, "],") ;  -- close dataset
+          else
+            swrite(buf, "]") ;   -- don't add a delimiter at last dataset
+          end if;
+          writeline(f, buf) ;
+        end if ;
+      end loop ;
+			write(buf, HT & HT & "]" & CR) ;  -- close "Data"
+			write(buf, HT & "}" & CR) ;       -- close "WriteBin"
+			write(buf, "}" & CR) ;            -- close document
+      writeline(f, buf) ;
+    end procedure WriteBin2JSON ;
+
     ------------------------------------------------------------
     procedure WriteBin (
     ------------------------------------------------------------
@@ -2871,7 +2951,7 @@ package body CoveragePkg is
       constant rWritePrefix     : string      := ResolveOsvvmWritePrefix(WritePrefix,       WritePrefixVar.GetOpt) ;
       constant rPassName        : string      := ResolveOsvvmPassName(PassName,             PassNameVar.GetOpt  ) ;
       constant rFailName        : string      := ResolveOsvvmFailName(FailName,             FailNameVar.GetOpt  ) ;
-      constant rOutputFormat    : OutputFormatType := FORMAT_CSV ;  -- FORMAT_TEXT
+      constant rOutputFormat    : OutputFormatType := FORMAT_JSON ; --FORMAT_CSV ;  -- FORMAT_TEXT
     begin
       if WriteBinFileInit then  
         -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
@@ -2887,7 +2967,18 @@ package body CoveragePkg is
             FailName        => rFailName
           ) ;
         elsif (rOutputFormat = FORMAT_CSV) then
-          WriteBin (
+          WriteBin2CSV (
+            f               => WriteBinFile,
+            WritePassFail   => rWritePassFail,
+            WriteBinInfo    => rWriteBinInfo,
+            WriteCount      => rWriteCount,
+            WriteAnyIllegal => rWriteAnyIllegal,
+            WritePrefix     => rWritePrefix,
+            PassName        => rPassName,
+            FailName        => rFailName
+          ) ;
+        elsif (rOutputFormat = FORMAT_JSON) then
+          WriteBin2JSON (
             f               => WriteBinFile,
             WritePassFail   => rWritePassFail,
             WriteBinInfo    => rWriteBinInfo,
@@ -2917,6 +3008,17 @@ package body CoveragePkg is
           ) ;
         elsif (rOutputFormat = FORMAT_CSV) then
           WriteBin2CSV (
+            f               => TranscriptFile,
+            WritePassFail   => rWritePassFail,
+            WriteBinInfo    => rWriteBinInfo,
+            WriteCount      => rWriteCount,
+            WriteAnyIllegal => rWriteAnyIllegal,
+            WritePrefix     => rWritePrefix,
+            PassName        => rPassName,
+            FailName        => rFailName
+          ) ;
+        elsif (rOutputFormat = FORMAT_JSON) then
+          WriteBin2JSON (
             f               => TranscriptFile,
             WritePassFail   => rWritePassFail,
             WriteBinInfo    => rWriteBinInfo,
