@@ -1,7 +1,7 @@
 --
 --  File Name:         OsvvmGlobalPkg.vhd
 --  Design Unit Name:  OsvvmGlobalPkg
---  Revision:          STANDARD VERSION,  revision 2015.01
+--  Revision:          DEV Cadence VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -21,6 +21,9 @@
 --  Revision History:
 --    Date       Version    Description
 --    01/2014:   2015.01    Initial revision
+--    02/2016:   -------    Reduced capability, DEV Cadence Version. 
+--                          Removed values TRUE and FALSE from OsvvmOptionsType
+--                          Updated return value of to_OsvvmOptionsType
 --
 --
 --  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
@@ -53,7 +56,7 @@ package OsvvmGlobalPkg is
 --  file     TranscriptFile : text ;
 
   -- Shared Options Type used in OSVVM
-  type OsvvmOptionsType is (OPT_INIT_PARM_DETECT, OPT_USE_DEFAULT, DISABLED, FALSE, ENABLED, TRUE) ;
+  type OsvvmOptionsType is (OPT_INIT_PARM_DETECT, OPT_USE_DEFAULT, DISABLED, ENABLED) ;
   function IsEnabled (A : OsvvmOptionsType) return boolean ;  -- Requires that TRUE is last and ENABLED is 2nd to last
   function to_OsvvmOptionsType (A : boolean) return OsvvmOptionsType ;
 
@@ -68,10 +71,10 @@ package OsvvmGlobalPkg is
   constant OSVVM_STRING_USE_DEFAULT       : string := NUL & "" ; 
 
   -- Coverage Settings
-  constant OSVVM_DEFAULT_WRITE_PASS_FAIL   : OsvvmOptionsType := FALSE ;
-  constant OSVVM_DEFAULT_WRITE_BIN_INFO    : OsvvmOptionsType := TRUE ;
-  constant OSVVM_DEFAULT_WRITE_COUNT       : OsvvmOptionsType := TRUE ;
-  constant OSVVM_DEFAULT_WRITE_ANY_ILLEGAL : OsvvmOptionsType := FALSE ;
+  constant OSVVM_DEFAULT_WRITE_PASS_FAIL   : OsvvmOptionsType := DISABLED ;
+  constant OSVVM_DEFAULT_WRITE_BIN_INFO    : OsvvmOptionsType := ENABLED ;
+  constant OSVVM_DEFAULT_WRITE_COUNT       : OsvvmOptionsType := ENABLED ;
+  constant OSVVM_DEFAULT_WRITE_ANY_ILLEGAL : OsvvmOptionsType := DISABLED ;
 
   ------------------------------------------------------------
   procedure SetOsvvmGlobalOptions (
@@ -151,9 +154,9 @@ package body OsvvmGlobalPkg is
   function to_OsvvmOptionsType (A : boolean) return OsvvmOptionsType is
   begin
     if A then 
-      return TRUE ; 
+      return ENABLED ; 
     else 
-      return FALSE ;
+      return DISABLED ;
     end if ; 
   end function to_OsvvmOptionsType ; 
   
@@ -340,10 +343,10 @@ package body OsvvmGlobalPkg is
     DoneNameVar.Deallocate ;
     PassNameVar.Deallocate ;
     FailNameVar.Deallocate ;
-    WritePassFailVar.Set(FALSE) ; -- := FALSE ;
-    WriteBinInfoVar.Set(TRUE ) ; -- := TRUE  ;
-    WriteCountVar.Set(TRUE ) ; -- := TRUE  ;
-    WriteAnyIllegalVar.Set(FALSE) ; -- := FALSE ;
+    WritePassFailVar.Set(DISABLED) ; -- := FALSE ;
+    WriteBinInfoVar.Set(ENABLED ) ; -- := TRUE  ;
+    WriteCountVar.Set(ENABLED ) ; -- := TRUE  ;
+    WriteAnyIllegalVar.Set(DISABLED) ; -- := FALSE ;
 
   end procedure OsvvmDeallocate ; 
    
