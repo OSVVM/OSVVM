@@ -1,7 +1,7 @@
 --
 --  File Name:         AlertLogPkg.vhd
 --  Design Unit Name:  AlertLogPkg
---  Revision:          STANDARD VERSION
+--  Revision:          DEV Cadence VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -32,6 +32,7 @@
 --    07/2015    2016.01    Fixed AlertLogID issue with > 32 IDs
 --    02/2016    2016.02    Fixed IsLogEnableType (for PASSED), AffirmIf (to pass AlertLevel)
 --                          Created LocalInitialize
+--    02/2016     ------    Dev Cadence version.  Replaced "?=" and "?/=" with "=" and "/=".
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -1714,7 +1715,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1723,7 +1724,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1732,7 +1733,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1741,7 +1742,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1787,7 +1788,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1796,7 +1797,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1805,7 +1806,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1814,7 +1815,7 @@ package body AlertLogPkg is
   procedure AlertIfEqual( L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?= R then
+    if L = R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfEqual ; 
@@ -1860,7 +1861,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1869,7 +1870,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1878,7 +1879,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1887,7 +1888,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1933,7 +1934,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1942,7 +1943,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1951,7 +1952,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
@@ -1960,7 +1961,7 @@ package body AlertLogPkg is
   procedure AlertIfNotEqual( L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
-    if L ?/= R then
+    if L /= R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
