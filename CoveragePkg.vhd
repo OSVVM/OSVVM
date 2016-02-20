@@ -1,7 +1,7 @@
 --
 --  File Name:         CoveragePkg.vhd
 --  Design Unit Name:  CoveragePkg
---  Revision:          STANDARD VERSION
+--  Revision:          DEV Cadence VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -43,6 +43,7 @@
 --    01/2015   2015.01    Use AlertLogPkg to count assertions and filter log messages
 --    06/2015   2015.06    AddCross[CovMatrix?Type], Mirroring for WriteBin
 --    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
+--    02/2016   -------    2016.02_DevCadence - Kludge for WriteBinFile in protected type
 --
 --  Development Notes:
 --      The coverage procedures are named ICover to avoid conflicts with
@@ -1176,6 +1177,12 @@ package body CoveragePkg is
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   ------------------------------------------------------------------------------------------
+-- Hack for Cadence issue with files being defined within a protected type.
+-- Caution as this makes it so only one coverage model can use the file.
+-- Note to have each coverage model use the same file, see the transcript 
+-- capability defined in TranscriptPkg.vhd
+  file WriteBinFile : text ;
+
   type CovPType is protected body
 
     -- Name Data Structure
@@ -1222,7 +1229,7 @@ package body CoveragePkg is
     variable RV : RandomPType ;
     variable RvSeedInit : boolean := FALSE ;
 
-    file WriteBinFile : text ;
+    -- file WriteBinFile : text ;
     variable WriteBinFileInit : boolean := FALSE ;
     variable UsingLocalFile   : boolean := FALSE ;
     variable AlertLogIDVar    : AlertLogIDType := OSVVM_ALERTLOG_ID ;
