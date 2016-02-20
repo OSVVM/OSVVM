@@ -23,6 +23,7 @@
 --    Date       Version    Description
 --    01/2015:   2015.01    Initial revision
 --    01/2016:   2016.01    TranscriptOpen function now calls procedure of same name
+--    02/2016:   -------    Dev Cadence version.  Work around for TEE
 --
 --
 --  Copyright (c) 2015-2016 by SynthWorks Design Inc.  All rights reserved.
@@ -165,11 +166,15 @@ package body TranscriptPkg is
   ------------------------------------------------------------
   procedure WriteLine(buf : inout line) is 
   ------------------------------------------------------------
+    variable copy_buf : line ; 
   begin
     if not TranscriptEnable.Get then
       WriteLine(OUTPUT, buf) ; 
     elsif TranscriptMirror.Get then
-      TEE(TranscriptFile, buf) ; 
+      -- TEE(TranscriptFile, buf) ; 
+      copy_buf := new string'(buf.all) ; 
+      WriteLine(OUTPUT, buf) ; 
+      WriteLine(TranscriptFile, copy_buf) ; 
     else
       WriteLine(TranscriptFile, buf) ; 
     end if ; 
