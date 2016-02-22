@@ -44,6 +44,7 @@
 --    06/2015   2015.06    AddCross[CovMatrix?Type], Mirroring for WriteBin
 --    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
 --    02/2016   -------    2016.02_DevCadence - Kludge for WriteBinFile in protected type
+--    02/2016   TRY2       Replaced swrite with write(string'())
 --
 --  Development Notes:
 --      The coverage procedures are named ICover to avoid conflicts with
@@ -812,7 +813,7 @@ package body CoveragePkg is
     for i in 2 to iCovPoint'right loop
       write(buf, "," & integer'image(iCovPoint(i)) ) ;
     end loop ;
-    swrite(buf, ")") ;
+    write(buf, ')') ;
   end procedure write ;
 
   ------------------------------------------------------------
@@ -845,7 +846,7 @@ package body CoveragePkg is
       if BinVal(i).min = BinVal(i).max then
         write(buf, "(" & integer'image(BinVal(i).min) & ") " ) ;
       elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
-        swrite(buf, "(ALL) " ) ;
+        write(buf, string'("(ALL) ") ) ;
       else
         write(buf, "(" & integer'image(BinVal(i).min) & " to " &
                        integer'image(BinVal(i).max) & ") " ) ;
@@ -2099,8 +2100,9 @@ package body CoveragePkg is
     impure function GetMinIndex return integer is
     ------------------------------------------------------------
       variable MinCov : real := real'right ;  -- big number
-      variable MinIndex : integer := NumBins ;
+      variable MinIndex : integer ;
     begin
+      MinIndex := NumBins ; 
       CovLoop : for i in 1 to NumBins loop
         if CovBinPtr(i).action = COV_COUNT and CovBinPtr(i).PercentCov < MinCov then
           MinCov := CovBinPtr(i).PercentCov ;
@@ -2144,8 +2146,9 @@ package body CoveragePkg is
     impure function GetMaxIndex return integer is
     ------------------------------------------------------------
       variable MaxCov : real := 0.0 ;
-      variable MaxIndex : integer := NumBins ;
+      variable MaxIndex : integer ;
     begin
+      MaxIndex := NumBins ; 
       CovLoop : for i in 1 to NumBins loop
         if CovBinPtr(i).action = COV_COUNT and CovBinPtr(i).PercentCov > MaxCov then
           MaxCov := CovBinPtr(i).PercentCov ;
@@ -2741,8 +2744,8 @@ package body CoveragePkg is
     begin
       if NumBins < 1 then
         if WriteBinFileInit or UsingLocalFile then
-          swrite(buf, WritePrefix & " " & FailName & " ") ;
-          swrite(buf, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteBin: Coverage model is empty.  Nothing to print.") ;
+          write(buf, WritePrefix & " " & FailName & " ") ;
+          write(buf, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteBin: Coverage model is empty.  Nothing to print.") ;
           writeline(f, buf) ;
         end if ; 
         Alert(AlertLogIDVar, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteBin:" &  
@@ -2757,23 +2760,23 @@ package body CoveragePkg is
            CovBinPtr(i).count < 0  -- Illegal bin with errors
         then
           -- WriteBin Info
-          swrite(buf, WritePrefix) ;
+          write(buf, WritePrefix) ;
           if CovBinPtr(i).Name.all /= "" then
-            swrite(buf, CovBinPtr(i).Name.all & "  ") ;
+            write(buf, CovBinPtr(i).Name.all & "  ") ;
           end if ;
           if IsEnabled(WritePassFail) then
             -- For illegal bins, AtLeast = 0 and count is negative.
             if CovBinPtr(i).count >= CovBinPtr(i).AtLeast then
-              swrite(buf, PassName & ' ') ;
+              write(buf, PassName & ' ') ;
             else
-              swrite(buf, FailName & ' ') ;
+              write(buf, FailName & ' ') ;
             end if ;
           end if ;
           if IsEnabled(WriteBinInfo) then
             if CovBinPtr(i).action = COV_COUNT then
-              swrite(buf, "Bin:") ;
+              write(buf, string'("Bin:")) ;
             else
-              swrite(buf, "Illegal Bin:") ;
+              write(buf, string'("Illegal Bin:")) ;
             end if;
             write(buf, CovBinPtr(i).BinVal.all) ;
           end if ;
@@ -2788,7 +2791,7 @@ package body CoveragePkg is
           writeline(f, buf) ;
         end if ;
       end loop ;
-      swrite(buf, "") ;
+      write(buf, string'("")) ;
       writeline(f, buf) ;
     end procedure WriteBin ;
 
@@ -2974,17 +2977,17 @@ package body CoveragePkg is
       --   Write(f, "%%FATAL, Coverage Model is empty.  Nothing to print." & LF ) ;
       -- end if ;
       for i in 1 to NumBins loop      -- CovBinPtr.all'range
-        swrite(buf, "%% ") ;
+        write(buf, string'("%% ")) ;
         if CovBinPtr(i).Name.all /= "" then
-          swrite(buf, CovBinPtr(i).Name.all & "  ") ;
+          write(buf, CovBinPtr(i).Name.all & "  ") ;
         end if ;
-        swrite(buf, "Bin:") ;
+        write(buf, string'("Bin:")) ;
         write(buf, CovBinPtr(i).BinVal.all) ;
         case CovBinPtr(i).action is
-          when COV_COUNT   =>   swrite(buf, "    Count = ") ;
-          when COV_IGNORE  =>   swrite(buf, "   Ignore = ") ;
-          when COV_ILLEGAL =>   swrite(buf, "  Illegal = ") ;
-          when others      =>   swrite(buf, "  BOGUS BOGUS BOGUS = ") ;
+          when COV_COUNT   =>   write(buf, string'("    Count = ")) ;
+          when COV_IGNORE  =>   write(buf, string'("   Ignore = ")) ;
+          when COV_ILLEGAL =>   write(buf, string'("  Illegal = ")) ;
+          when others      =>   write(buf, string'("  BOGUS BOGUS BOGUS = ")) ;
         end case ;
         write(buf, CovBinPtr(i).count) ;
         -- write(f, "   Count = " & integer'image(CovBinPtr(i).count)) ;
@@ -2996,7 +2999,7 @@ package body CoveragePkg is
         end if ;
         writeline(f, buf) ;
       end loop ;
-      swrite(buf, "") ;
+      write(buf, string'("")) ;
       writeline(f,buf) ;
     end procedure DumpBin ;
 
@@ -3033,7 +3036,7 @@ package body CoveragePkg is
       if NumBins < 1 then
         if WriteBinFileInit or UsingLocalFile then
           -- Duplicate Alert in specified file
-          swrite(buf, "%% Alert FAILURE  " & GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteCovHoles:" &  
+          write(buf, "%% Alert FAILURE  " & GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteCovHoles:" &  
                       " coverage model empty.  Nothing to print.") ; 
           writeline(f, buf) ;
         end if ; 
@@ -3045,11 +3048,11 @@ package body CoveragePkg is
       WriteBinName(f, "WriteCovHoles: ") ;
       CovLoop : for i in 1 to NumBins loop
         if CovBinPtr(i).action = COV_COUNT and CovBinPtr(i).PercentCov < PercentCov then
-          swrite(buf, "%% ") ;
+          write(buf, string'("%% ")) ;
           if CovBinPtr(i).Name.all /= "" then
-            swrite(buf, CovBinPtr(i).Name.all & "  ") ;
+            write(buf, CovBinPtr(i).Name.all & "  ") ;
           end if ;
-          swrite(buf, "Bin:") ;
+          write(buf, string'("Bin:")) ;
           write(buf, CovBinPtr(i).BinVal.all) ;
           write(buf, "  Count = " & integer'image(CovBinPtr(i).Count)) ;
           write(buf, "  AtLeast = " & integer'image(CovBinPtr(i).AtLeast)) ;
@@ -3060,7 +3063,7 @@ package body CoveragePkg is
           writeline(f, buf) ;
         end if ;
       end loop CovLoop ;
-      swrite(buf, "") ;
+      write(buf, string'("")) ;
       writeline(f, buf) ;
     end procedure WriteCovHoles ;
 
@@ -3480,7 +3483,7 @@ package body CoveragePkg is
       variable buf       : line ;
     begin
       -- write coverage private variables to the file
-      swrite(buf, CovNameVar.Get("Coverage_Model_Not_Named")) ;
+      write(buf, CovNameVar.Get("Coverage_Model_Not_Named")) ;
       writeline(CovDbFile, buf) ;
 
       write(buf, RV.GetSeed ) ;
@@ -3985,7 +3988,7 @@ package body CoveragePkg is
       if NumBins < 1 then
         if WriteBinFileInit or UsingLocalFile then
           -- Duplicate Alert in specified file
-          swrite(buf, "%% Alert FAILURE " & GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteCovHoles:" &  
+          write(buf, "%% Alert FAILURE " & GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg.WriteCovHoles:" &  
                       " coverage model is empty.  Nothing to print.") ;
           writeline(f, buf) ;
         end if ; 
@@ -3996,7 +3999,7 @@ package body CoveragePkg is
 --        minAtLeast := minimum(AtLeast,CovBinPtr(i).AtLeast) ;
 --         if CovBinPtr(i).action = COV_COUNT and CovBinPtr(i).Count < minAtLeast then
         if CovBinPtr(i).action = COV_COUNT and CovBinPtr(i).Count < AtLeast then
-          swrite(buf, "%% Bin:") ;
+          write(buf, string'("%% Bin:")) ;
           write(buf, CovBinPtr(i).BinVal.all) ;
           write(buf, "  Count = " & integer'image(CovBinPtr(i).Count)) ;
           write(buf, "  AtLeast = " & integer'image(CovBinPtr(i).AtLeast)) ;
@@ -4007,7 +4010,7 @@ package body CoveragePkg is
           writeline(f, buf) ;
         end if ;
       end loop CovLoop ;
-      swrite(buf, "") ;
+      write(buf, string'("")) ;
       writeline(f, buf) ;
     end procedure WriteCovHoles ;
 
@@ -4162,14 +4165,14 @@ package body CoveragePkg is
       if BinInfo1 /= BinInfo2 or BinVal1 /= BinVal2 then
         write(buf, "%% Bin:" & integer'image(i) & " miscompare." & LF) ;
         -- writeline(OUTPUT, buf) ;
-        swrite(buf, "%% Bin1: ") ;
+        write(buf, string'("%% Bin1: ")) ;
         write(buf, BinVal1) ;
         write(buf, "   Action = " & integer'image(BinInfo1.action)) ;
         write(buf, "   Count = " & integer'image(BinInfo1.count)) ;
         write(buf, "   AtLeast = " & integer'image(BinInfo1.AtLeast)) ;
         write(buf, "   Weight = " & integer'image(BinInfo1.Weight) & LF ) ;
         -- writeline(OUTPUT, buf) ;
-        swrite(buf, "%% Bin2: ") ;
+        write(buf, string'("%% Bin2: ")) ;
         write(buf, BinVal2) ;
         write(buf, "   Action = " & integer'image(BinInfo2.action)) ;
         write(buf, "   Count = " & integer'image(BinInfo2.count)) ;
