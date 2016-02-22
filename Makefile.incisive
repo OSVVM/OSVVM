@@ -1,0 +1,21 @@
+IRUNOPTS := -v200x -extv200x
+
+SRCS += TextUtilPkg.vhd
+SRCS += NamePkg.vhd
+SRCS += TranscriptPkg.vhd
+SRCS += OsvvmGlobalPkg.vhd
+SRCS += AlertLogPkg.vhd
+SRCS += MessagePkg.vhd
+SRCS += SortListPkg_int.vhd
+SRCS += RandomBasePkg.vhd
+SRCS += RandomPkg.vhd
+SRCS += CoveragePkg.vhd
+SRCS += MemoryPkg.vhd
+SRCS += OsvvmContext.vhd
+
+.PHONY: all
+all: compile
+
+.PHONY: compile
+compile: $(SRCS)
+	irun -compile -smartorder $(IRUNOPTS) $^
