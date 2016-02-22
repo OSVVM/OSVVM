@@ -45,6 +45,10 @@
 --                          Made sort, revsort from SortListPkg_int visible via aliases
 --    1/2015     2015.01    Changed Assert/Report to Alert
 --    5/2015     2015.06    Revised Alerts to Alert(OSVVM_ALERTLOG_ID, ...) ;
+--    2/2016     Try2       Dev Cadence version
+--                          removed calls to sread.
+--                          Changed:  count := ExcludeList.count ; to LocalCount := ExcludeList.count ;
+--                          Borrowed find_leftmost from numeric_std_additions
 --
 --  Copyright (c) 2006 - 2015 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -471,8 +475,8 @@ package body RandomPkg is
     variable strval : string(1 to 40) ;
     variable len    : natural ;
   begin
-    -- procedure SREAD (L : inout LINE ; VALUE : out STRING ; STRLEN : out NATURAL) ;
-    sread(L, strval, len) ;
+    -- sread(L, strval, len) ;
+    report "read of RandomDistType not supported by Cadence Version" severity FAILURE ; 
     A := RandomDistType'value(strval(1 to len)) ;
     good := len > 0 ;
   end procedure read ;
@@ -509,8 +513,8 @@ package body RandomPkg is
     variable igood  : boolean ;
   begin
     loop
-      -- procedure SREAD (L : inout LINE ; VALUE : out STRING ; STRLEN : out NATURAL) ;
-      sread(L, strval, len) ;
+      -- sread(L, strval, len) ;
+      report "read of RandomParmType not supported by Cadence Version" severity FAILURE ; 
       A.Distribution := RandomDistType'value(strval(1 to len)) ;
       igood := len > 0 ;
       exit when not igood ;
@@ -643,13 +647,13 @@ package body RandomPkg is
     impure function Uniform (Min, Max : integer ; Exclude : integer_vector) return integer is
       variable iRandomVal : integer ;
       variable ExcludeList : SortListPType ;
-      variable count : integer ;
+      variable LocalCount : integer ;
     begin
       ExcludeList.add(Exclude, Min, Max) ;
-      count := ExcludeList.count ;
-      iRandomVal := Uniform(Min, Max - count) ;
+      LocalCount := ExcludeList.count ;
+      iRandomVal := Uniform(Min, Max - LocalCount) ;
       -- adjust count, note iRandomVal changes while checking.
-      for i in 1 to count loop
+      for i in 1 to LocalCount loop
         exit when iRandomVal < ExcludeList.Get(i) ;
         iRandomVal := iRandomVal + 1 ;
       end loop ;
@@ -682,13 +686,13 @@ package body RandomPkg is
     impure function FavorSmall (Min, Max : integer ; Exclude : integer_vector) return integer is
       variable iRandomVal : integer ;
       variable ExcludeList : SortListPType ;
-      variable count : integer ;
+      variable LocalCount : integer ;
     begin
       ExcludeList.add(Exclude, Min, Max) ;
-      count := ExcludeList.count ;
-      iRandomVal := FavorSmall(Min, Max - count) ;
-      -- adjust count, note iRandomVal changes while checking.
-      for i in 1 to count loop
+      LocalCount := ExcludeList.count ;
+      iRandomVal := FavorSmall(Min, Max - LocalCount) ;
+      -- adjust LocalCount, note iRandomVal changes while checking.
+      for i in 1 to LocalCount loop
         exit when iRandomVal < ExcludeList.Get(i) ;
         iRandomVal := iRandomVal + 1 ;
       end loop ;
@@ -721,13 +725,13 @@ package body RandomPkg is
     impure function FavorBig (Min, Max : integer ; Exclude : integer_vector) return integer is
       variable iRandomVal : integer ;
       variable ExcludeList : SortListPType ;
-      variable count : integer ;
+      variable LocalCount : integer ;
     begin
       ExcludeList.add(Exclude, Min, Max) ;
-      count := ExcludeList.count ;
-      iRandomVal := FavorBig(Min, Max - count) ;
-      -- adjust count, note iRandomVal changes while checking.
-      for i in 1 to count loop
+      LocalCount := ExcludeList.count ;
+      iRandomVal := FavorBig(Min, Max - LocalCount) ;
+      -- adjust LocalCount, note iRandomVal changes while checking.
+      for i in 1 to LocalCount loop
         exit when iRandomVal < ExcludeList.Get(i) ;
         iRandomVal := iRandomVal + 1 ;
       end loop ;
@@ -1514,6 +1518,20 @@ package body RandomPkg is
       return signed(RandUnsigned(Size)) ;
     end function RandSigned ;
 
+    -- Borrowed from numeric_std.vhdl for Dev_Cadence branch only
+    -- Copyrighted by IEEE.
+    function find_leftmost (
+      arg : UNSIGNED;                        -- vector argument
+      y   : STD_ULOGIC)                      -- look for this bit
+      return INTEGER is
+    begin
+      for_loop: for i in arg'range loop
+        if arg(i) = y then  -- removed handling for '-' as it is not used here
+          return i;
+        end if;
+      end loop;
+      return -1;
+    end function find_leftmost;
 
     impure function RandUnsigned (Max : unsigned) return unsigned is
       alias normMax : unsigned (Max'length downto 1) is Max ;
