@@ -1,7 +1,7 @@
 --
 --  File Name:         MemoryPkg.vhd
 --  Design Unit Name:  MemoryPkg
---  Revision:          STANDARD VERSION
+--  Revision:          DEV Cadence
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com 
 --  Contributor(s):            
@@ -23,6 +23,10 @@
 --    06/2015:  2015.06    Updated for Alerts, ...
 --                         Numerous revisions for VHDL Testbenches and Verification
 --    01/2016:  2016.01    Update for buf.all(buf'left)
+--    02/2016:  TRY2       Dev Cadence 
+--                         Added reference to std_logic_textio for hwrite
+--                         Borrowed to_string from std_logic_1164_additions.  
+--                         Replaced calls to to_hstring with to_string in Alerts and Logs
 --
 --
 --  Copyright (c) 2005 - 2016 by SynthWorks Design Inc.  All rights reserved.
@@ -50,6 +54,8 @@ library IEEE ;
   use IEEE.numeric_std.all ; 
   use IEEE.numeric_std_unsigned.all ; 
   use IEEE.math_real.all ;
+  
+  use IEEE.std_logic_textio.all ;  -- for DEV Cadence
   
 use work.TextUtilPkg.all ;
 use work.TranscriptPkg.all ;  
@@ -121,6 +127,48 @@ end MemoryPkg ;
 
 package body MemoryPkg is 
   constant BLOCK_WIDTH : integer := 10 ; 
+  
+  ------------------------------------------------------------
+  -- package local
+  -- char_indexed_by_MVL9 and MVL9_to_char
+  -- adapted from std_logic_1164_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  type char_indexed_by_MVL9 is array (STD_ULOGIC) of CHARACTER;
+  constant MVL9_to_char : char_indexed_by_MVL9 := "UX01ZWLH-";
+
+  ------------------------------------------------------------
+  -- package local
+  -- to_string
+  -- adapted from std_logic_1164_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  function to_string (value     : STD_ULOGIC) return STRING is
+    variable result : STRING (1 to 1);
+  begin
+    result (1) := MVL9_to_char (value);
+    return result;
+  end function to_string;
+  
+  ------------------------------------------------------------
+  -- package local
+  -- to_string 
+  -- adapted from std_logic_1164_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  function to_string (value     : STD_LOGIC_VECTOR) return STRING is
+    alias ivalue    : STD_LOGIC_VECTOR(1 to value'length) is value;
+    variable result : STRING(1 to value'length);
+  begin
+    if value'length < 1 then
+      return "" ;
+    else
+      for i in ivalue'range loop
+        result(i) := MVL9_to_char(iValue(i));
+      end loop;
+      return result;
+    end if;
+  end function to_string;
 
   type MemoryPType is protected body
 
@@ -394,11 +442,11 @@ package body MemoryPkg is
             ReadHexToken(buf, Addr, StrLen) ; 
             exit ReadLineLoop when AlertIf(AlertLogIDVar, StrLen = 0, "MemoryPType.FileReadX: Address length 0 on line: " & to_string(LineNum), FAILURE) ;
             exit ItemLoop when AlertIf(AlertLogIDVar, Addr < SmallAddr, 
-                                           "MemoryPType.FileReadX: Address in file: " & to_hstring(Addr) & 
-                                           " < StartAddr: " & to_hstring(StartAddr) & " on line: " & to_string(LineNum)) ; 
+                                           "MemoryPType.FileReadX: Address in file: " & to_string(Addr) & 
+                                           " < StartAddr: " & to_string(StartAddr) & " on line: " & to_string(LineNum)) ; 
             exit ItemLoop when AlertIf(AlertLogIDVar, Addr > BigAddr, 
-                                           "MemoryPType.FileReadX: Address in file: " & to_hstring(Addr) & 
-                                           " > EndAddr: " & to_hstring(BigAddr) & " on line: " & to_string(LineNum)) ; 
+                                           "MemoryPType.FileReadX: Address in file: " & to_string(Addr) & 
+                                           " > EndAddr: " & to_string(BigAddr) & " on line: " & to_string(LineNum)) ; 
           
           elsif DataFormat = HEX and ishex(NextChar) then 
           -- Get Hex Data
@@ -406,7 +454,7 @@ package body MemoryPkg is
             exit ReadLineLoop when AlertIfNot(AlertLogIDVar, StrLen > 0, 
               "MemoryPType.FileReadH: Error while reading data on line: " & to_string(LineNum) &
               "  Item number: " & to_string(ItemNum), FAILURE) ;
-            log("MemoryPType.FileReadX:  MemWrite(Addr => " & to_hstring(Addr) & ", Data => " & to_hstring(Data) & ")", DEBUG) ; 
+            log("MemoryPType.FileReadX:  MemWrite(Addr => " & to_string(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
             MemWrite(Addr, data) ; 
             Addr := Addr + AddrInc ; 
             
@@ -418,7 +466,7 @@ package body MemoryPkg is
             exit ReadLineLoop when AlertIfNot(AlertLogIDVar, StrLen > 0, 
               "MemoryPType.FileReadB: Error while reading data on line: " & to_string(LineNum) &
               "  Item number: " & to_string(ItemNum), FAILURE) ;
-            log("MemoryPType.FileReadX:  MemWrite(Addr => " & to_hstring(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
+            log("MemoryPType.FileReadX:  MemWrite(Addr => " & to_string(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
             MemWrite(Addr, data) ; 
             Addr := Addr + AddrInc ; 
           
@@ -543,8 +591,8 @@ package body MemoryPkg is
 
       if StartAddr > EndAddr then 
       -- Only support ascending addresses
-        Alert(AlertLogIDVar, "MemoryPType.FileWriteX:  StartAddr: " & to_hstring(StartAddr) & 
-                             " > EndAddr: " & to_hstring(EndAddr), FAILURE) ;
+        Alert(AlertLogIDVar, "MemoryPType.FileWriteX:  StartAddr: " & to_string(StartAddr) & 
+                             " > EndAddr: " & to_string(EndAddr), FAILURE) ;
         return ; 
       end if ; 
             
