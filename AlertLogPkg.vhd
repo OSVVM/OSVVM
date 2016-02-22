@@ -33,6 +33,10 @@
 --    02/2016    2016.02    Fixed IsLogEnableType (for PASSED), AffirmIf (to pass AlertLevel)
 --                          Created LocalInitialize
 --    02/2016     ------    Dev Cadence version.  Replaced "?=" and "?/=" with "=" and "/=".
+--    02/2016     Try 2     Dev Cadence.  changed std.env.stop to std.env.stop(0)
+--                          Replaced LocalInitialize with allocation directly in AlertLogPtr (validated in Mentor and Aldec)  
+--                          Borrowed sread from std_textio_additions
+--                          Borrowed to_string from std_logic_1164_additions
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -75,6 +79,7 @@ package AlertLogPkg is
   subtype  LogIndexType     is LogType range DEBUG to PASSED ;
   type     LogEnableType    is array (LogIndexType) of boolean ;
 
+  -- In DEV_CADENCE, do not change these without also fixing AlertLogPtr initialization
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.  
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := 1 ; 
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
@@ -317,7 +322,72 @@ package body AlertLogPkg is
   type     LogNameType is array(LogType) of string(1 to 7) ; 
   constant LOG_NAME : LogNameType := (DEBUG => "DEBUG  ", FINAL => "FINAL  ", INFO => "INFO   ", ALWAYS => "ALWAYS ", PASSED => "PASSED ") ; -- , NEVER => "NEVER  "
 
+  
+  ------------------------------------------------------------
+  -- package local
+  -- NBSP
+  -- adapted from std_textio_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  constant NBSP : CHARACTER      := CHARACTER'val(160);
+  
+  ------------------------------------------------------------
+  -- package local
+  -- char_indexed_by_MVL9 and MVL9_to_char
+  -- adapted from std_logic_1164_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  type char_indexed_by_MVL9 is array (STD_ULOGIC) of CHARACTER;
+  constant MVL9_to_char : char_indexed_by_MVL9 := "UX01ZWLH-";
 
+  ------------------------------------------------------------
+  -- package local
+  -- to_string
+  -- adapted from std_logic_1164_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  function to_string (value     : STD_ULOGIC) return STRING is
+    variable result : STRING (1 to 1);
+  begin
+    result (1) := MVL9_to_char (value);
+    return result;
+  end function to_string;
+  
+  ------------------------------------------------------------
+  -- package local
+  -- to_string 
+  -- adapted from std_logic_1164_additions.vhdl
+  -- Copyright by IEEE
+  ------------------------------------------------------------
+  function to_string (value     : STD_LOGIC_VECTOR) return STRING is
+    alias ivalue    : STD_LOGIC_VECTOR(1 to value'length) is value;
+    variable result : STRING(1 to value'length);
+  begin
+    if value'length < 1 then
+      return "" ;
+    else
+      for i in ivalue'range loop
+        result(i) := MVL9_to_char(iValue(i));
+      end loop;
+      return result;
+    end if;
+  end function to_string;
+  
+  ------------------------------------------------------------
+  -- package local
+  -- to_string 
+  ------------------------------------------------------------
+  function to_string (value : unsigned) return string is
+  begin
+    return to_string(std_logic_vector(value)) ;
+  end function to_string ;
+  
+  function to_string (value : signed) return string is
+  begin
+    return to_string(std_logic_vector(value)) ;
+  end function to_string ;
+  
+  
   type AlertLogStructPType is protected
   
     ------------------------------------------------------------
@@ -459,14 +529,41 @@ package body AlertLogPkg is
     
     ------------------------------------------------------------
     -- Basis for AlertLog Data Structure 
-    variable NumAlertLogIDsVar          : AlertLogIDType := 0 ; -- defined by initialize 
-    variable NumAllocatedAlertLogIDsVar : AlertLogIDType := 0 ; 
+    variable NumAlertLogIDsVar          : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; -- originally defined by initialize 
+    variable NumAllocatedAlertLogIDsVar : AlertLogIDType := MIN_NUM_AL_IDS ; -- originally defined by initialize 
 --xx    variable NumPredefinedAlIDsVar      : AlertLogIDType := 0 ; -- defined by initialize 
     
     type AlertLogRecPtrType   is access AlertLogRecType ; 
     type AlertLogArrayType    is array (AlertLogIDType range <>) of AlertLogRecPtrType ; 
+    subtype InitialAlertLogArrayType is AlertLogArrayType(ALERTLOG_BASE_ID to ALERTLOG_BASE_ID + MIN_NUM_AL_IDS) ;
     type AlertLogArrayPtrType is access AlertLogArrayType ;
-    variable AlertLogPtr  : AlertLogArrayPtrType ;
+    variable AlertLogPtr  : AlertLogArrayPtrType := new InitialAlertLogArrayType'(
+      ALERTLOG_BASE_ID => new AlertLogRecType'(
+        Name            => new string'("AlertLogTop"),
+        ParentID        => ALERTLOG_BASE_ID,
+        AlertCount      => (others => 0),
+        AlertEnabled    => (others => TRUE),
+        AlertStopCount  => (FAILURE => 0, others => integer'right),
+        LogEnabled      => (others => FALSE)
+      ), 
+      ALERT_DEFAULT_ID => new AlertLogRecType'(
+        Name            => new string'("Default"),
+        ParentID        => ALERTLOG_BASE_ID,
+        AlertCount      => (others => 0),
+        AlertEnabled    => (others => TRUE),
+        AlertStopCount  => (others => integer'right),
+        LogEnabled      => (others => FALSE)
+      ), 
+      OSVVM_ALERTLOG_ID => new AlertLogRecType'(
+        Name            => new string'("OSVVM"),
+        ParentID        => ALERTLOG_BASE_ID,
+        AlertCount      => (others => 0),
+        AlertEnabled    => (others => TRUE),
+        AlertStopCount  => (others => integer'right),
+        LogEnabled      => (others => FALSE)
+      ), 
+      others => (NULL)
+    ) ;
     
     ------------------------------------------------------------
     -- Report formatting settings, with defaults
@@ -599,7 +696,8 @@ package body AlertLogPkg is
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ; 
           writeline(buf) ; 
           ReportAlerts(ReportAll => TRUE) ;
-          std.env.stop ; 
+          std.env.stop(0) ; 
+          -- report "Stopping due to stop count" severity FAILURE ; -- try this next
         end if ; 
       end if ; 
     end procedure IncAlertCount ; 
@@ -961,12 +1059,43 @@ package body AlertLogPkg is
 --        ) ; 
     end procedure NewAlertLogRec ;
     
+--    ------------------------------------------------------------
+--    -- PT Local  
+--    -- Construct initial data structure
+--    procedure LocalInitialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
+--    ------------------------------------------------------------
+--    begin
+--      if NumAllocatedAlertLogIDsVar /= 0 then
+--        Alert(ALERT_DEFAULT_ID, "AlertLogPkg: Initialize, data structure already initialized", FAILURE) ; 
+--        return ; 
+--      end if ; 
+--      -- Initialize Pointer
+--      AlertLogPtr := new AlertLogArrayType(ALERTLOG_BASE_ID to ALERTLOG_BASE_ID + NewNumAlertLogIDs) ;
+--      NumAllocatedAlertLogIDsVar := NewNumAlertLogIDs ;
+--      -- Create BASE AlertLogID (if it differs from DEFAULT
+--      if ALERTLOG_BASE_ID /= ALERT_DEFAULT_ID then
+--        NewAlertLogRec(ALERTLOG_BASE_ID, "AlertLogTop", ALERTLOG_BASE_ID) ;
+--      end if ; 
+--      -- Create DEFAULT AlertLogID
+--      NewAlertLogRec(ALERT_DEFAULT_ID, "Default", ALERTLOG_BASE_ID) ;
+--      NumAlertLogIDsVar := ALERT_DEFAULT_ID ; 
+--      -- Create OSVVM AlertLogID (if it differs from DEFAULT
+--      if OSVVM_ALERTLOG_ID /= ALERT_DEFAULT_ID then
+--        NewAlertLogRec(OSVVM_ALERTLOG_ID, "OSVVM", ALERTLOG_BASE_ID) ;
+--        NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ; 
+--      end if ; 
+--      if OSVVM_SCOREBOARD_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
+--        NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "OSVVM Scoreboard", ALERTLOG_BASE_ID) ;
+--        NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ; 
+--      end if ; 
+--    end procedure LocalInitialize ;
+    
     ------------------------------------------------------------
-    -- PT Local  
-    -- Construct initial data structure
-    procedure LocalInitialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
+    -- ReConstruct initial data structure after Deallocate
+    procedure Initialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
     ------------------------------------------------------------
     begin
+      -- LocalInitialize(NewNumAlertLogIDs) ;
       if NumAllocatedAlertLogIDsVar /= 0 then
         Alert(ALERT_DEFAULT_ID, "AlertLogPkg: Initialize, data structure already initialized", FAILURE) ; 
         return ; 
@@ -990,27 +1119,19 @@ package body AlertLogPkg is
         NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "OSVVM Scoreboard", ALERTLOG_BASE_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ; 
       end if ; 
-    end procedure LocalInitialize ;
-    
-    ------------------------------------------------------------
-    -- Construct initial data structure
-    procedure Initialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
-    ------------------------------------------------------------
-    begin
-      LocalInitialize(NewNumAlertLogIDs) ;
     end procedure Initialize ; 
     
-    ------------------------------------------------------------
-    -- PT Local
-    -- Constructs initial data structure using constant below 
-    impure function LocalInitialize return boolean is
-    ------------------------------------------------------------
-    begin
-      LocalInitialize(MIN_NUM_AL_IDS) ; 
-      return TRUE ; 
-    end function LocalInitialize ; 
-    
-    constant CONSTRUCT_ALERT_DATA_STRUCTURE : boolean := LocalInitialize ; 
+--    ------------------------------------------------------------
+--    -- PT Local
+--    -- Constructs initial data structure using constant below 
+--    impure function LocalInitialize return boolean is
+--    ------------------------------------------------------------
+--    begin
+--      LocalInitialize(MIN_NUM_AL_IDS) ; 
+--      return TRUE ; 
+--    end function LocalInitialize ; 
+--    
+--    constant CONSTRUCT_ALERT_DATA_STRUCTURE : boolean := LocalInitialize ; 
     
     ------------------------------------------------------------
     procedure Deallocate is
@@ -1313,7 +1434,7 @@ package body AlertLogPkg is
       for i in LogIndexType loop 
         if AlertLogPtr(AlertLogID).LogEnabled(i) then 
 --          write(buf, " "  & to_string(AlertLogPtr(AlertLogID).LogEnabled(i)) ) ;
-          write(buf, " "  & to_string(i)) ;
+          write(buf, " "  & LogIndexType'image(i)) ;  -- replaced to_string with LogIndexType'image
         end if ; 
       end loop ; 
       WriteLine(buf) ; 
@@ -1411,27 +1532,27 @@ package body AlertLogPkg is
       variable buf : line ; 
     begin
       -- Boolean Values
-      swrite(buf, "ReportAlertLogOptions" & LF ) ;
-      swrite(buf, "---------------------" & LF ) ;
-      swrite(buf, "FailOnWarningVar:        " & to_string(FailOnWarningVar        ) & LF ) ;
-      swrite(buf, "FailOnDisabledErrorsVar: " & to_string(FailOnDisabledErrorsVar ) & LF ) ;
-      swrite(buf, "ReportHierarchyVar:      " & to_string(ReportHierarchyVar      ) & LF ) ;
-      swrite(buf, "FoundReportHierVar:      " & to_string(FoundReportHierVar      ) & LF ) ; -- Not set by user
-      swrite(buf, "FoundAlertHierVar:       " & to_string(FoundAlertHierVar       ) & LF ) ; -- Not set by user
-      swrite(buf, "WriteAlertLevelVar:      " & to_string(WriteAlertLevelVar      ) & LF ) ;
-      swrite(buf, "WriteAlertNameVar:       " & to_string(WriteAlertNameVar       ) & LF ) ;
-      swrite(buf, "WriteAlertTimeVar:       " & to_string(WriteAlertTimeVar       ) & LF ) ;
-      swrite(buf, "WriteLogLevelVar:        " & to_string(WriteLogLevelVar        ) & LF ) ;
-      swrite(buf, "WriteLogNameVar:         " & to_string(WriteLogNameVar         ) & LF ) ;
-      swrite(buf, "WriteLogTimeVar:         " & to_string(WriteLogTimeVar         ) & LF ) ;
+      write(buf, "ReportAlertLogOptions" & LF ) ;
+      write(buf, "---------------------" & LF ) ;
+      write(buf, "FailOnWarningVar:        " & to_string(FailOnWarningVar        ) & LF ) ;
+      write(buf, "FailOnDisabledErrorsVar: " & to_string(FailOnDisabledErrorsVar ) & LF ) ;
+      write(buf, "ReportHierarchyVar:      " & to_string(ReportHierarchyVar      ) & LF ) ;
+      write(buf, "FoundReportHierVar:      " & to_string(FoundReportHierVar      ) & LF ) ; -- Not set by user
+      write(buf, "FoundAlertHierVar:       " & to_string(FoundAlertHierVar       ) & LF ) ; -- Not set by user
+      write(buf, "WriteAlertLevelVar:      " & to_string(WriteAlertLevelVar      ) & LF ) ;
+      write(buf, "WriteAlertNameVar:       " & to_string(WriteAlertNameVar       ) & LF ) ;
+      write(buf, "WriteAlertTimeVar:       " & to_string(WriteAlertTimeVar       ) & LF ) ;
+      write(buf, "WriteLogLevelVar:        " & to_string(WriteLogLevelVar        ) & LF ) ;
+      write(buf, "WriteLogNameVar:         " & to_string(WriteLogNameVar         ) & LF ) ;
+      write(buf, "WriteLogTimeVar:         " & to_string(WriteLogTimeVar         ) & LF ) ;
       
       -- String
-      swrite(buf, "AlertPrefixVar:          " & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))  & LF ) ;
-      swrite(buf, "LogPrefixVar:            " & string'(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX))      & LF ) ;
-      swrite(buf, "ReportPrefixVar:         " & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & LF ) ; 
-      swrite(buf, "DoneNameVar:             " & ResolveOsvvmDoneName(DoneNameVar.GetOpt)        & LF ) ;
-      swrite(buf, "PassNameVar:             " & ResolveOsvvmPassName(PassNameVar.GetOpt)        & LF ) ;
-      swrite(buf, "FailNameVar:             " & ResolveOsvvmFailName(FailNameVar.GetOpt)        & LF ) ;
+      write(buf, "AlertPrefixVar:          " & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))  & LF ) ;
+      write(buf, "LogPrefixVar:            " & string'(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX))      & LF ) ;
+      write(buf, "ReportPrefixVar:         " & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & LF ) ; 
+      write(buf, "DoneNameVar:             " & ResolveOsvvmDoneName(DoneNameVar.GetOpt)        & LF ) ;
+      write(buf, "PassNameVar:             " & ResolveOsvvmPassName(PassNameVar.GetOpt)        & LF ) ;
+      write(buf, "FailNameVar:             " & ResolveOsvvmFailName(FailNameVar.GetOpt)        & LF ) ;
       writeline(buf) ; 
     end procedure ReportAlertLogOptions ; 
     
@@ -2646,6 +2767,44 @@ package body AlertLogPkg is
     end if ; 
     return FALSE ;
   end function IsLogEnableType ; 
+  
+  ------------------------------------------------------------
+  -- SREAD borrowed from std_textio_additions_c.vhdl 
+  -- Copyright by IEEE.
+  -- Only used in DEV_CADENCE version
+  -- Read and Write procedure for strings
+  ------------------------------------------------------------
+  procedure SREAD (L      : inout LINE;
+                   VALUE  : out   STRING;
+                   STRLEN : out   natural) is
+    variable ok     : BOOLEAN;
+    variable c      : CHARACTER;
+    -- Result is padded with space characters
+    variable result : STRING (1 to VALUE'length) := (others => ' ');
+  begin
+    VALUE := result;
+    loop                                -- skip white space
+      read(L, c, ok);
+      exit when (ok = false) or ((c /= ' ') and (c /= NBSP) and (c /= HT));
+    end loop;
+    -- Bail out if there was a bad read
+    if not ok then
+      STRLEN := 0;
+      return;
+    end if;
+    result (1) := c;
+    STRLEN     := 1;
+    for i in 2 to VALUE'length loop
+      read(L, c, ok);
+      if (ok = false) or ((c = ' ') or (c = NBSP) or (c = HT)) then
+        exit;
+      else
+        result (i) := c;
+      end if;
+      STRLEN := i;
+    end loop;
+    VALUE := result;
+  end procedure SREAD;
 
   ------------------------------------------------------------
   procedure ReadLogEnables (file AlertLogInitFile : text) is
