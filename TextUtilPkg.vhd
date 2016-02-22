@@ -1,7 +1,7 @@
 --
 --  File Name:         TextUtilPkg.vhd
 --  Design Unit Name:  TextUtilPkg
---  Revision:          STANDARD VERSION
+--  Revision:          DEV Cadence VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -22,6 +22,7 @@
 --    Date       Version    Description
 --    01/2015:   2015.05    Initial revision
 --    01/2016:   2016.01    Update for L.all(L'left)
+--    02/2016    Try2       Dev_Cadence Branch.  Added package ieee.std_logic_textio (not required for 2008) for hwrite and read of std_logic family
 --
 --
 --  Copyright (c) 2015-2016 by SynthWorks Design Inc.  All rights reserved.
@@ -47,6 +48,7 @@
 use std.textio.all ;
 library ieee ; 
 use ieee.std_logic_1164.all ; 
+use ieee.std_logic_textio.all ; -- added for Dev_Cadence
 
 package TextUtilPkg is
   ------------------------------------------------------------
