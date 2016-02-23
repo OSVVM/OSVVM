@@ -98,9 +98,9 @@ library IEEE ;
   use std.textio.all ;
   use ieee.std_logic_textio.all ;
 
-library SynthWorks ; 
-  use SynthWorks.RandomBasePkg.all ; 
-  use SynthWorks.RandomPkg.all ; 
+library osvvm ; 
+  use osvvm.RandomBasePkg.all ; 
+  use osvvm.RandomPkg.all ; 
 
 use work.TestSupportPkg.all ; 
 
