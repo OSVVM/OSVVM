@@ -1395,7 +1395,8 @@ package body AlertLogPkg is
         if AlertLogPtr(i) /= NULL then
           AlertLogPtr(i).LogEnabled(Level) := Enable ;
         else
-          Alert("SetLogEnable: LogID " & integer'image(i) & " not initialized ") ;
+          Print("SetLogEnable: LogID " & integer'image(i) & " not initialized ") ;
+        end if ; 
       end loop ; 
     end procedure SetLogEnable ;    
 
