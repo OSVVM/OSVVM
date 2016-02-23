@@ -13,9 +13,45 @@ SRCS += CoveragePkg.vhd
 SRCS += MemoryPkg.vhd
 SRCS += OsvvmContext.vhd
 
-.PHONY: all
-all: compile
+SRCS_DEMO += demo/AlertLog_Demo_Global.vhd
+SRCS_DEMO += demo/AlertLog_Demo_Hierarchy.vhd
+SRCS_DEMO += demo/Demo_Rand.vhd
 
-.PHONY: compile
-compile: $(SRCS)
-	irun -compile -smartorder $(IRUNOPTS) $^
+OSVVM_LIBNAME := osvvm
+
+# --------------------------------------------------
+
+.PHONY: all
+all: compile_osvvm compile_demos sim_demos
+
+.PHONY: compile_osvvm
+compile_osvvm: $(SRCS)
+	irun -compile $(IRUNOPTS) -makelib $(OSVVM_LIBNAME) $^ -endlib
+
+.PHONY: compile_demos
+compile_demos: $(SRCS_DEMO)
+	irun -compile -cdslib cds.lib -reflib $(OSVVM_LIBNAME) $(IRUNOPTS) $^
+
+# --------------------------------------------------
+
+.PHONY: sim_demos
+sim_demos: AlertLog_Demo_Global AlertLog_Demo_Hierarchy Demo_Rand
+
+.PHONY: AlertLog_Demo_Hierarchy
+AlertLog_Demo_Hierarchy:
+	irun -reflib $(OSVVM_LIBNAME) $(IRUNOPTS) -top $@
+
+.PHONY: AlertLog_Demo_Global
+AlertLog_Demo_Global:
+	irun -reflib $(OSVVM_LIBNAME) $(IRUNOPTS) -top $@
+
+.PHONY: Demo_Rand
+Demo_Rand:
+	irun -reflib $(OSVVM_LIBNAME) $(IRUNOPTS) -top $@
+
+# --------------------------------------------------
+
+.PHONY: clean
+clean:
+	-rm -rf INCA_libs
+	-rm     irun.history irun.log ncvhdl_cg.log
