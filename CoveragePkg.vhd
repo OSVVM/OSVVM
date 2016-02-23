@@ -3483,7 +3483,7 @@ package body CoveragePkg is
       variable buf       : line ;
     begin
       -- write coverage private variables to the file
-      write(buf, CovNameVar.Get("Coverage_Model_Not_Named")) ;
+      write(buf, string'(CovNameVar.Get("Coverage_Model_Not_Named"))) ;
       writeline(CovDbFile, buf) ;
 
       write(buf, RV.GetSeed ) ;
