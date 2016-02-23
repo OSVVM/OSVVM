@@ -38,6 +38,7 @@
 --                          Borrowed sread from std_textio_additions
 --                          Borrowed to_string from std_logic_1164_additions
 --     02/2016    Try 3     Added debugging code for run time failure in SetLogEnable
+--     02/2016    Try 7     Removed method calls from subprogram constants in the path of Alert and Log.
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -637,14 +638,15 @@ package body AlertLogPkg is
       level        : AlertType := ERROR
     ) is
       variable buf : Line ; 
-      constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
+      -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ; 
     begin
       if GlobalAlertEnabledVar then
         -- Do not write or count when GlobalAlertEnabledVar is disabled
         if AlertLogPtr(AlertLogID).AlertEnabled(Level) then
           -- do not write when disabled
-          write(buf, AlertPrefix) ; 
+          -- write(buf, AlertPrefix) ; 
+          write(buf, string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))) ; 
           if WriteAlertLevelVar then 
             -- write(buf, " " & to_string(Level) ) ; 
             write(buf, " " & ALERT_NAME(Level)) ; -- uses constant lookup
@@ -663,7 +665,8 @@ package body AlertLogPkg is
         -- Always Count
         IncrementAlertCount(AlertLogID, Level, StopDueToCount) ;
         if StopDueToCount then 
-          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
+          -- write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
+          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
 --xx          if NumAlertLogIDsVar > NumPredefinedAlIDsVar then -- print hierarchy names even when silent
           if FoundAlertHierVar then 
             write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ; 
@@ -683,13 +686,14 @@ package body AlertLogPkg is
       level        : AlertType := ERROR
     ) is
       variable buf : Line ; 
-      constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
+      -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ; 
     begin
       if GlobalAlertEnabledVar then
         IncrementAlertCount(AlertLogID, Level, StopDueToCount) ;
         if StopDueToCount then 
-          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
+--          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
+          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
 --xx          if NumAlertLogIDsVar > NumPredefinedAlIDsVar then -- print hierarchy names even when silent
            if FoundAlertHierVar then 
             write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ; 
@@ -968,9 +972,10 @@ package body AlertLogPkg is
       Level        : LogType  
     ) is
       variable buf : line ; 
-      constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
+      -- constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
     begin
-      write(buf, LogPrefix) ; 
+--      write(buf, LogPrefix) ; 
+      write(buf, string'(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX))) ; 
       if WriteLogLevelVar then 
         write(buf, " " & LOG_NAME(Level) ) ; 
       end if ; 
