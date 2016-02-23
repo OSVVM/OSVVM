@@ -37,6 +37,7 @@
 --                          Replaced LocalInitialize with allocation directly in AlertLogPtr (validated in Mentor and Aldec)  
 --                          Borrowed sread from std_textio_additions
 --                          Borrowed to_string from std_logic_1164_additions
+--     02/2016    Try 3     Added debugging code for run time failure in SetLogEnable
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -538,7 +539,7 @@ package body AlertLogPkg is
     subtype InitialAlertLogArrayType is AlertLogArrayType(ALERTLOG_BASE_ID to ALERTLOG_BASE_ID + MIN_NUM_AL_IDS) ;
     type AlertLogArrayPtrType is access AlertLogArrayType ;
     variable AlertLogPtr  : AlertLogArrayPtrType := new InitialAlertLogArrayType'(
-      ALERTLOG_BASE_ID => new AlertLogRecType'(
+      ALERTLOG_BASE_ID    => new AlertLogRecType'(
         Name            => new string'("AlertLogTop"),
         ParentID        => ALERTLOG_BASE_ID,
         AlertCount      => (others => 0),
@@ -546,7 +547,7 @@ package body AlertLogPkg is
         AlertStopCount  => (FAILURE => 0, others => integer'right),
         LogEnabled      => (others => FALSE)
       ), 
-      ALERT_DEFAULT_ID => new AlertLogRecType'(
+      ALERTLOG_DEFAULT_ID => new AlertLogRecType'(
         Name            => new string'("Default"),
         ParentID        => ALERTLOG_BASE_ID,
         AlertCount      => (others => 0),
@@ -554,7 +555,7 @@ package body AlertLogPkg is
         AlertStopCount  => (others => integer'right),
         LogEnabled      => (others => FALSE)
       ), 
-      OSVVM_ALERTLOG_ID => new AlertLogRecType'(
+      OSVVM_ALERTLOG_ID   => new AlertLogRecType'(
         Name            => new string'("OSVVM"),
         ParentID        => ALERTLOG_BASE_ID,
         AlertCount      => (others => 0),
@@ -1390,8 +1391,11 @@ package body AlertLogPkg is
     procedure SetLogEnable(Level : LogType ;  Enable : boolean) is 
     ------------------------------------------------------------
     begin
-      for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
-        AlertLogPtr(i).LogEnabled(Level) := Enable ;
+      for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop  
+        if AlertLogPtr(i) /= NULL then
+          AlertLogPtr(i).LogEnabled(Level) := Enable ;
+        else
+          Alert("SetLogEnable: LogID " & integer'image(i) & " not initialized ") ;
       end loop ; 
     end procedure SetLogEnable ;    
 
