@@ -39,6 +39,7 @@
 --                          Borrowed to_string from std_logic_1164_additions
 --     02/2016    Try 3     Added debugging code for run time failure in SetLogEnable
 --     02/2016    Try 7     Removed method calls from subprogram constants in the path of Alert and Log.
+--     02/2016    Try 8     Removed method calls from subprogram constants in the path of ReportAlerts
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -666,7 +667,7 @@ package body AlertLogPkg is
         IncrementAlertCount(AlertLogID, Level, StopDueToCount) ;
         if StopDueToCount then 
           -- write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
-          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
+          write(buf, LF & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX)) & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
 --xx          if NumAlertLogIDsVar > NumPredefinedAlIDsVar then -- print hierarchy names even when silent
           if FoundAlertHierVar then 
             write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ; 
@@ -693,7 +694,7 @@ package body AlertLogPkg is
         IncrementAlertCount(AlertLogID, Level, StopDueToCount) ;
         if StopDueToCount then 
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
-          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
+          write(buf, LF & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX)) & " Stop Count on " & ALERT_NAME(Level) & " reached") ; 
 --xx          if NumAlertLogIDsVar > NumPredefinedAlIDsVar then -- print hierarchy names even when silent
            if FoundAlertHierVar then 
             write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ; 
@@ -821,16 +822,19 @@ package body AlertLogPkg is
       Name               : string ; 
       NumDisabledErrors  : integer  
     ) is
-      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
-      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
-      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
-      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
+--      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
+--      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
+--      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
+--      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ; 
     begin
       if NumErrors = 0 then 
         if NumDisabledErrors = 0 then 
           -- Passed
-          write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ; 
+          write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & 
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) & "  " & 
+          ResolveOsvvmPassName(PassNameVar.GetOpt     ) & "  " & 
+          Name) ; 
           if AffirmCheckCountVar > 0 then 
             write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ; 
           end if ;
@@ -838,7 +842,10 @@ package body AlertLogPkg is
           WriteLine(buf) ; 
         else
           -- Failed Due to Disabled Errors
-          write(buf, ReportPrefix & DoneName & "  " & FailName & "  " & Name) ; 
+          write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & 
+              ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) & "  " & 
+              ResolveOsvvmFailName(FailNameVar.GetOpt     ) & "  " & 
+              Name) ; 
           write(buf, "   Failed Due to Disabled Error(s) = " & to_string(NumDisabledErrors)) ;
           if AffirmCheckCountVar > 0 then 
             write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ; 
@@ -848,7 +855,10 @@ package body AlertLogPkg is
         end if ; 
       else 
         -- Failed 
-        write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ; 
+        write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & 
+                   ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) & "  " & 
+                   ResolveOsvvmFailName(FailNameVar.GetOpt     ) & "  " & 
+                   Name) ; 
         write(buf, "  Total Error(s) = "      & to_string(NumErrors) ) ;
         write(buf, "  Failures: "  & to_string(AlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
@@ -898,7 +908,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       variable NumErrors : integer ; 
       variable NumDisabledErrors : integer ; 
-      constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
+      -- constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
     begin
       if ReportJustifyAmountVar <= 0 then
         SetJustify ; 
@@ -928,7 +938,7 @@ package body AlertLogPkg is
       if (FoundReportHierVar and ReportHierarchyVar) and (NumErrors /= 0 or NumDisabledErrors /=0) then
         PrintChild(
           AlertLogID    => AlertLogID, 
-          Prefix        => ReportPrefix & "  ", 
+          Prefix        => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ", 
           IndentAmount  => 2,
           ReportAll     => ReportAll
         ) ; 
