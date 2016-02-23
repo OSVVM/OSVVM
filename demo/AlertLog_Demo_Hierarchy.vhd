@@ -95,7 +95,7 @@ begin
 -- Uncomment this line and the simulation will stop after 15 errors  
       -- SetAlertStopCount(ERROR, 15) ; 
       SetAlertLogName("AlertLog_Demo_Hierarchy") ; 
-      wait for 0 ns ;   -- make sure all processes have elaborated
+      wait for 1 ns ;   -- make sure all processes have elaborated
       SetLogEnable(DEBUG, TRUE) ;  -- Enable DEBUG Messages for all levels of the hierarchy
       TempID := GetAlertLogID("CPU_1") ;  -- Get The CPU AlertLogID
       SetLogEnable(TempID, DEBUG, FALSE) ; -- turn off DEBUG messages in CPU
@@ -119,8 +119,8 @@ begin
       -- Report Alerts with expected errors expressed as a negative ExternalErrors value
       ReportAlerts(Name => "AlertLog_Demo_Hierarchy with expected errors", ExternalErrors => -(FAILURE => 0, ERROR => 20, WARNING => 15)) ; 
       TranscriptClose ; 
-      print(LF & "The following is brought to you by std.env.stop:") ; 
-      std.env.stop ; 
+      print(LF & "The following is brought to you by std.env.stop(0):") ; 
+      std.env.stop(0) ; 
       wait ; 
     end process TbP1 ; 
 
