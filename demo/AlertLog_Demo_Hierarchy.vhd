@@ -1,7 +1,7 @@
 --
 --  File Name:         AlertLog_Demo_Hierarchy.vhd
 --  Design Unit Name:  AlertLog_Demo_Hierarchy
---  Revision:          STANDARD VERSION,  2015.01
+--  Revision:          DEV Cadence
 --
 --  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -27,6 +27,10 @@
 --  Revision History:
 --    Date      Version    Description
 --    01/2015   2015.01    Refining tests
+--    02/2016   Try 4      Dev Cadence 
+--                         Changed wait for 0 ns before SetLogEnable in TbP1 to wait for 1 ns 
+--    02/2016   Try 5      Changed concurrent call to SetLogEnble in block Uart_1 to
+--                         be in a process and have a wait for 1 ns before it.
 --
 --
 --  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
@@ -90,6 +94,8 @@ begin
       constant TB_P1_ID : AlertLogIDType := GetAlertLogID("TB P1", TB_AlertLogID) ;
       variable TempID   : AlertLogIDType ;
     begin
+-- Uncomment this line for Dev Cadence Try 6
+      -- InitializeAlertLogStruct ; 
 -- Uncomment this line to use a log file rather than OUTPUT
       -- TranscriptOpen("./Demo_Hierarchy.txt") ;   
 -- Uncomment this line and the simulation will stop after 15 errors  
@@ -199,7 +205,12 @@ begin
     -- Enable FINAL logs for every level
     -- Note it is expected that most control of alerts will occur only in the testbench block
     -- Note that this does not turn on FINAL messages for CPU - see global for settings that impact CPU
-    SetLogEnable(UART_AlertLogID, FINAL, TRUE) ;   -- Runs once at initialization time
+    UartInit : process 
+    begin 
+      wait for 1 ns ; 
+      SetLogEnable(UART_AlertLogID, FINAL, TRUE) ;   -- Runs once at initialization time
+      wait ; 
+    end process ; 
   
     ------------------------------------------------------------
     UartP1 : process
