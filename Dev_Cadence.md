@@ -19,6 +19,10 @@ Notes
   We may need to reconsider depending on Cadence's committment to 
   supporting the minimal VHDL-2008 features used by OSVVM.
   
+Try4 Updates:
+  Forgot to compile Try3 before releasing. Tisk tisk.  
+  AlertLogPkg:  In SetLogEnable debug code, added end if.  Changed Alert to Print  
+  
 Try3 Updates:
   Compilation is finally working.  We are working to address 
   run time issues with calls to SetLogEnable. The errors could be 
