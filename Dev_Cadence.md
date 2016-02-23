@@ -19,6 +19,22 @@ Notes
   We may need to reconsider depending on Cadence's committment to 
   supporting the minimal VHDL-2008 features used by OSVVM.
   
+Try3 Updates:
+  Compilation is finally working.  We are working to address 
+  run time issues with calls to SetLogEnable. The errors could be 
+  due to the data structure not being initialized.  I have added 
+  code to AlertLogPkg to try to find it and added code to 
+  the demo programs to allow a little more time for the structure 
+  to be initialized if the initialization is going to happen.
+  
+  AlertLogPkg:
+    Added debugging code to SetLogEnable to report unallocated structures more gracefully.   The structures should have been allocated during initialization of the package body.
+    
+  demo/AlertLog_Demo_Global.vhd and demo/AlertLog_Demo_Hierarchy.vhd
+    Changed std.env.stop to std.env.stop(0)
+    Changed the wait for 0 ns before SetLogEnable to wait for 1 ns 
+  
+  
 TextUtilPkg:
   Try2:  Added Reference to ieee.std_logic_textio for hwrite
   
