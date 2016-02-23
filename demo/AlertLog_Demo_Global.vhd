@@ -191,7 +191,7 @@ begin
     -- Note that this also turns on FINAL messages for CPU - see hierarchy for better control
     UartInit : process 
     begin 
-      wait for 1 ns ; 
+      wait for 5 ns ; -- make it so we don't debug this path first.
       SetLogEnable(FINAL, TRUE) ;   -- Runs once at initialization time
       wait ; 
     end process ; 
