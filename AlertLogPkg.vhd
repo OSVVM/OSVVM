@@ -42,6 +42,7 @@
 --     02/2016    Try 8     Removed method calls from subprogram constants in the path of ReportAlerts
 --     02/2016    Try 9     Added debugging code for run time failure in SetAlertLogName
 --     02/2016    Try 10    More debugging code for run time failure in SetAlertLogName
+--     02/2016    Try 11    More debugging code for run time failure in SetAlertLogName
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -1027,11 +1028,15 @@ package body AlertLogPkg is
     procedure SetAlertLogName(Name : string ) is
     ------------------------------------------------------------
     begin
-      if AlertLogPtr(ALERTLOG_BASE_ID) /= NULL then
-        if AlertLogPtr(ALERTLOG_BASE_ID).Name /= NULL then
-          Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).Name) ; 
+      if AlertLogPtr /= NULL then 
+        if AlertLogPtr(ALERTLOG_BASE_ID) /= NULL then
+          if AlertLogPtr(ALERTLOG_BASE_ID).Name /= NULL then
+            Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).Name) ; 
+          else
+            Print("AlertLog Structure:  ALERTLOG_BASE_ID.Name not allocated") ;
+          end if ; 
         else
-          Print("AlertLog Structure:  ALERTLOG_BASE_ID.Name not allocated") ;
+          Print("AlertLog Structure, ALERT_LOG_BASE_ID not initialized") ;
         end if ; 
       else
         Print("AlertLog Structure not initialized") ;
