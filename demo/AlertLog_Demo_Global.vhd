@@ -28,6 +28,8 @@
 --                         Changed wait for 0 ns before SetLogEnable in TbP1 to wait for 1 ns 
 --    02/2016   Try 5      Changed concurrent call to SetLogEnble in block Uart_1 to
 --                         be in a process and have a wait for 1 ns before it.
+--    02/2016   Try 9      Added wait for 1 ns before call to SetAlertLogName.  
+--                         To allow time for data structure to be created.
 --
 --
 --  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
@@ -94,6 +96,7 @@ begin
       -- TranscriptOpen("./Demo_Global.txt") ;   
 -- Uncomment this line and the simulation will stop after 15 errors  
       -- SetAlertStopCount(ERROR, 15) ; 
+      wait for 1 ns ;   -- make sure all processes have elaborated
       SetAlertLogName("AlertLog_Demo_Global") ; 
       wait for 1 ns ;   -- make sure all processes have elaborated
       SetLogEnable(DEBUG, TRUE) ;  -- Enable DEBUG Messages for all levels of the hierarchy
