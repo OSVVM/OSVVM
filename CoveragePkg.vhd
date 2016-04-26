@@ -392,6 +392,7 @@ package CoveragePkg is
     impure function IsCovered return boolean ;
     impure function IsCovered ( PercentCov : real ) return boolean ;
     impure function GetCov ( PercentCov : real ) return real ;
+    impure function IsBinCovered (BinIndex : integer; PercentCov : real := 100.0) return boolean ;
     impure function GetCov return real ; -- PercentCov of entire model/all bins
     impure function GetItemCount return integer ;
     impure function GetTotalCovGoal ( PercentCov : real ) return integer ;
@@ -2215,6 +2216,18 @@ package body CoveragePkg is
       -- AlertIf(NumBins < 1, OSVVM_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
       return CountCovHoles(CovTarget) = 0 ;
     end function IsCovered ;
+
+
+    ------------------------------------------------------------
+    impure function IsBinCovered (BinIndex : integer; PercentCov : real := 100.0) return boolean is
+    ------------------------------------------------------------
+    begin
+      if (CovBinPtr(BinIndex).action = COV_COUNT) then
+        return CovBinPtr(BinIndex).PercentCov >= PercentCov;
+      else
+        return false;
+      end if;
+    end function IsBinCovered ;
 
 
     ------------------------------------------------------------
