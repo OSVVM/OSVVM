@@ -235,7 +235,7 @@ package CoveragePkg is
   
   ------------------------------------------------------------  VendorCov
   -- VendorCov Conversion for Vendor supported functional coverage modeling
-  function ToVendorCovBinVal (A : RangeArrayType) return VendorCovRangeArrayType ;
+  function ToVendorCovBinVal (BinVal : RangeArrayType) return VendorCovRangeArrayType ;
 
   ------------------------------------------------------------
   function ToMinPoint (A : RangeArrayType) return integer ;
@@ -1117,7 +1117,7 @@ package body CoveragePkg is
   
   ------------------------------------------------------------  VendorCov
   -- VendorCov Conversion for Vendor supported functional coverage modeling
-  function ToVendorCovBinVal (A : RangeArrayType) return VendorCovRangeArrayType is
+  function ToVendorCovBinVal (BinVal : RangeArrayType) return VendorCovRangeArrayType is
   ------------------------------------------------------------
     variable VendorCovBinVal :  VendorCovRangeArrayType(BinVal'range);
   begin                                                        -- VendorCov
@@ -1329,7 +1329,7 @@ package body CoveragePkg is
       CovNameVar.Set(Name) ;
       -- VendorCov update if name updated after model created
       if IsInitialized then         -- VendorCov
-        VendorCovSetName(Name) ;    -- VendorCov
+        VendorCovSetName(VendorCovHandleVar, Name) ;    -- VendorCov
       end if ;                      -- VendorCov
       if not RvSeedInit then  -- Init seed if not initialized
         RV.InitSeed(Name) ;
@@ -1392,7 +1392,7 @@ package body CoveragePkg is
       CovMessageVar.Set(Message) ;
       -- VendorCov update if name updated after model created
       if IsInitialized then                -- VendorCov
-        VendorCovSetName(GetNamePlus) ;    -- VendorCov
+        VendorCovSetName(VendorCovHandleVar, GetNamePlus) ;    -- VendorCov
       end if ;                             -- VendorCov
       if not RvSeedInit then  -- Init seed if not initialized
         RV.InitSeed(Message) ;
@@ -1695,7 +1695,7 @@ package body CoveragePkg is
       PercentCov   : real := 0.0
     ) is
     begin
-      VendorCovBinAdd(CovHandle, ToVendorCovBinVal(BinVal), Action, AtLeast, Name) ;
+      VendorCovBinAdd(VendorCovHandleVar, ToVendorCovBinVal(BinVal), Action, AtLeast, Name) ;
       NumBins := NumBins + 1 ;
       CovBinPtr.all(NumBins).BinVal      := new RangeArrayType'(BinVal) ;
       CovBinPtr.all(NumBins).Action      := Action ;
@@ -2038,7 +2038,7 @@ package body CoveragePkg is
     begin
       -- Update Count, PercentCov
       CovBinPtr(Index).Count := CovBinPtr(Index).Count + CovBinPtr(Index).action ;
-      VendorCovBinInc(CovHandle,Index);   -- VendorCov
+      VendorCovBinInc(VendorCovHandleVar, Index);   -- VendorCov
       CovBinPtr(Index).PercentCov := real(CovBinPtr(Index).Count)*100.0/maximum(real(CovBinPtr(Index).AtLeast), 1.0) ;
       -- OrderCount handling - Statistics
       OrderCount := OrderCount + 1 ;
