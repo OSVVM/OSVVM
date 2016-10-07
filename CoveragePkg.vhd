@@ -100,6 +100,7 @@ use work.RandomPkg.all ;
 use work.NamePkg.all ;
 use work.MessagePkg.all ;
 use work.OsvvmGlobalPkg.all ;
+use work.VendorCovApiPkg.all ; 
 
 package CoveragePkg is
 
@@ -231,6 +232,10 @@ package CoveragePkg is
     Weight    : integer ;
   end record ;
   type CovMatrix9Type is array (natural range <>) of CovMatrix9BaseType ;
+  
+  ------------------------------------------------------------  VendorCov
+  -- VendorCov Conversion for Vendor supported functional coverage modeling
+  function ToVendorCovBinVal (A : RangeArrayType) return VendorCovRangeArrayType ;
 
   ------------------------------------------------------------
   function ToMinPoint (A : RangeArrayType) return integer ;
@@ -1109,7 +1114,21 @@ package body CoveragePkg is
     return result ;
   end function MergeWeight ;
 
+  
+  ------------------------------------------------------------  VendorCov
+  -- VendorCov Conversion for Vendor supported functional coverage modeling
+  function ToVendorCovBinVal (A : RangeArrayType) return VendorCovRangeArrayType is
+  ------------------------------------------------------------
+    variable VendorCovBinVal :  VendorCovRangeArrayType(BinVal'range);
+  begin                                                        -- VendorCov
+    for ArrIdx in BinVal'LEFT to BinVal'RIGHT loop             -- VendorCov
+      VendorCovBinVal(ArrIdx) := (min => BinVal(ArrIdx).min,   -- VendorCov
+                                  max => BinVal(ArrIdx).max) ; -- VendorCov
+    end loop;                                                  -- VendorCov
+    return VendorCovBinVal ; 
+  end function ToVendorCovBinVal ;
 
+  
   ------------------------------------------------------------
   function ToMinPoint (A : RangeArrayType) return integer is
   -- Used in testing
@@ -1181,8 +1200,11 @@ package body CoveragePkg is
   type CovPType is protected body
 
     -- Name Data Structure
-    variable CovNameVar    : NamePType ;
-    variable CovMessageVar : MessagePType ;
+    variable CovNameVar         : NamePType ;
+    variable CovMessageVar      : MessagePType ;
+    
+    -- Handle into Vendor Data Structure
+    variable VendorCovHandleVar : VendorCovHandleType ; 
 
     -- CoverageBin Data Structures
     type RangeArrayPtrType is access RangeArrayType ;
@@ -1305,6 +1327,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       CovNameVar.Set(Name) ;
+      -- VendorCov update if name updated after model created
+      if IsInitialized then         -- VendorCov
+        VendorCovSetName(Name) ;    -- VendorCov
+      end if ;                      -- VendorCov
       if not RvSeedInit then  -- Init seed if not initialized
         RV.InitSeed(Name) ;
         RvSeedInit := TRUE ;
@@ -1315,11 +1341,7 @@ package body CoveragePkg is
     impure function SetName (Name : String) return string is
     ------------------------------------------------------------
     begin
-      CovNameVar.Set(Name) ;
-      if not RvSeedInit then  -- Init seed if not initialized
-        RV.InitSeed(Name) ;
-        RvSeedInit := TRUE ;
-      end if ;
+      SetName(Name) ; -- call procedure above
       return Name ; 
     end function SetName ;
 
@@ -1368,6 +1390,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       CovMessageVar.Set(Message) ;
+      -- VendorCov update if name updated after model created
+      if IsInitialized then                -- VendorCov
+        VendorCovSetName(GetNamePlus) ;    -- VendorCov
+      end if ;                             -- VendorCov
       if not RvSeedInit then  -- Init seed if not initialized
         RV.InitSeed(Message) ;
         RvSeedInit := TRUE ;
@@ -1669,6 +1695,7 @@ package body CoveragePkg is
       PercentCov   : real := 0.0
     ) is
     begin
+      VendorCovBinAdd(CovHandle, ToVendorCovBinVal(BinVal), Action, AtLeast, Name) ;
       NumBins := NumBins + 1 ;
       CovBinPtr.all(NumBins).BinVal      := new RangeArrayType'(BinVal) ;
       CovBinPtr.all(NumBins).Action      := Action ;
@@ -1777,6 +1804,11 @@ package body CoveragePkg is
       variable calcWeight  : integer ;
     begin
       CheckBinValLength( 1, "AddBins") ;
+      
+      if not IsInitialized then                                     -- VendorCov
+        VendorCovHandleVar := VendorCovPointCreate(GetNamePlus) ;   -- VendorCov
+      end if ;                                                      -- VendorCov
+      
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         if CovBin(i).Action = COV_COUNT then
@@ -1860,6 +1892,11 @@ package body CoveragePkg is
       variable calcBinVal   : RangeArrayType(BinIndex'range) ;
     begin
       CheckBinValLength( BIN_LENS'length, "AddCross") ;
+      
+      if not IsInitialized then                                     -- VendorCov
+        VendorCovHandleVar := VendorCovCrossCreate(GetNamePlus) ;   -- VendorCov
+      end if ;                                                      -- VendorCov
+
       GrowBins(NUM_NEW_BINS) ;
       calcCount := 0 ;
       for MatrixIndex in 1 to NUM_NEW_BINS loop
@@ -2001,6 +2038,7 @@ package body CoveragePkg is
     begin
       -- Update Count, PercentCov
       CovBinPtr(Index).Count := CovBinPtr(Index).Count + CovBinPtr(Index).action ;
+      VendorCovBinInc(CovHandle,Index);   -- VendorCov
       CovBinPtr(Index).PercentCov := real(CovBinPtr(Index).Count)*100.0/maximum(real(CovBinPtr(Index).AtLeast), 1.0) ;
       -- OrderCount handling - Statistics
       OrderCount := OrderCount + 1 ;
@@ -2132,7 +2170,6 @@ package body CoveragePkg is
       end loop CovLoop ;
       return MinCount ;
     end function GetMinCount ;
-
 
 
     ------------------------------------------------------------
