@@ -8,7 +8,7 @@
 --     Jim Lewis          SynthWorks
 --     Matthias Alles     Creonic.    Inspired GetMinBinVal, GetMinPoint, GetCov
 --     Jerry Kaczynski    Aldec.      Inspired GetBin function
---
+--     Sebastian Dunst                Inspired GetBinName function
 --
 --  Package Defines
 --      Functional coverage modeling utilities and data structure
@@ -43,6 +43,7 @@
 --    01/2015   2015.01    Use AlertLogPkg to count assertions and filter log messages
 --    06/2015   2015.06    AddCross[CovMatrix?Type], Mirroring for WriteBin
 --    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
+--    03/2016   2016.03    Added GetBinName(Index) to retrieve a bin's name
 --
 --  Development Notes:
 --      The coverage procedures are named ICover to avoid conflicts with
@@ -436,6 +437,7 @@ package CoveragePkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix7BaseType ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix8BaseType ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix9BaseType ;
+    impure function GetBinName ( BinIndex : integer; DefaultName : string := "" ) return string ;
 
     ------------------------------------------------------------
     procedure WriteBin (
@@ -2716,6 +2718,17 @@ package body CoveragePkg is
       result.Weight  := CovBinPtr(BinIndex).Weight;
       return result ;
     end function GetBin ;
+    
+    -- ------------------------------------------------------------
+    impure function GetBinName ( BinIndex : integer; DefaultName : string := "" ) return string is
+    -- ------------------------------------------------------------
+    begin
+      if CovBinPtr(BinIndex).Name.all /= "" then
+        return CovBinPtr(BinIndex).Name.all ;
+      else
+        return DefaultName ;
+      end if;
+    end function GetBinName;
 
     ------------------------------------------------------------
     --  pt local for now -- file formal parameter not allowed with method

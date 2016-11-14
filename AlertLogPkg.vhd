@@ -30,7 +30,8 @@
 --                          ReportNonZeroAlerts, ReadLogEnables 
 --    05/2015    2015.06    Added IncAlertCount, AffirmIf
 --    07/2015    2016.01    Fixed AlertLogID issue with > 32 IDs
---
+--    02/2016    2016.02    Fixed IsLogEnableType (for PASSED), AffirmIf (to pass AlertLevel)
+--                          Created LocalInitialize
 --
 --  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -69,7 +70,7 @@ package AlertLogPkg is
   subtype  AlertIndexType   is AlertType range FAILURE to WARNING ;
   type     AlertCountType   is array (AlertIndexType) of integer ;
   type     AlertEnableType  is array(AlertIndexType) of boolean ;
-  type     LogType          is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER
+  type     LogType          is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER  -- See function IsLogEnableType
   subtype  LogIndexType     is LogType range DEBUG to PASSED ;
   type     LogEnableType    is array (LogIndexType) of boolean ;
 
@@ -958,10 +959,11 @@ package body AlertLogPkg is
 --          LogEnabled        => LogEnabled
 --        ) ; 
     end procedure NewAlertLogRec ;
-
+    
     ------------------------------------------------------------
+    -- PT Local  
     -- Construct initial data structure
-    procedure Initialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
+    procedure LocalInitialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
     ------------------------------------------------------------
     begin
       if NumAllocatedAlertLogIDsVar /= 0 then
@@ -971,12 +973,9 @@ package body AlertLogPkg is
       -- Initialize Pointer
       AlertLogPtr := new AlertLogArrayType(ALERTLOG_BASE_ID to ALERTLOG_BASE_ID + NewNumAlertLogIDs) ;
       NumAllocatedAlertLogIDsVar := NewNumAlertLogIDs ;
---xx      NumAlertLogIDsVar := 0 ; 
---xx      NumAlertLogIDsVar := NUM_PREDEFINED_AL_IDS ; 
       -- Create BASE AlertLogID (if it differs from DEFAULT
       if ALERTLOG_BASE_ID /= ALERT_DEFAULT_ID then
         NewAlertLogRec(ALERTLOG_BASE_ID, "AlertLogTop", ALERTLOG_BASE_ID) ;
---xx        NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ; 
       end if ; 
       -- Create DEFAULT AlertLogID
       NewAlertLogRec(ALERT_DEFAULT_ID, "Default", ALERTLOG_BASE_ID) ;
@@ -990,20 +989,27 @@ package body AlertLogPkg is
         NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "OSVVM Scoreboard", ALERTLOG_BASE_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ; 
       end if ; 
---xx      NumPredefinedAlIDsVar := NumAlertLogIDsVar ; 
-    end procedure Initialize ;
-
+    end procedure LocalInitialize ;
+    
+    ------------------------------------------------------------
+    -- Construct initial data structure
+    procedure Initialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
+    ------------------------------------------------------------
+    begin
+      LocalInitialize(NewNumAlertLogIDs) ;
+    end procedure Initialize ; 
+    
     ------------------------------------------------------------
     -- PT Local
     -- Constructs initial data structure using constant below 
-    impure function Initialize return boolean is
+    impure function LocalInitialize return boolean is
     ------------------------------------------------------------
     begin
-      Initialize(MIN_NUM_AL_IDS) ; 
+      LocalInitialize(MIN_NUM_AL_IDS) ; 
       return TRUE ; 
-    end function Initialize ; 
+    end function LocalInitialize ; 
     
-    constant CONSTRUCT_ALERT_DATA_STRUCTURE : boolean := Initialize ; 
+    constant CONSTRUCT_ALERT_DATA_STRUCTURE : boolean := LocalInitialize ; 
     
     ------------------------------------------------------------
     procedure Deallocate is
@@ -2078,7 +2084,7 @@ package body AlertLogPkg is
       AlertLogStruct.Log(AlertLogID, Message, LogLevel) ; -- call log
 --      AlertLogStruct.IncAffirmPassCount ; -- increment pass & check count
     else
-      AlertLogStruct.Alert(AlertLogID, Message, ERROR) ; -- signal failure
+      AlertLogStruct.Alert(AlertLogID, Message, AlertLevel) ; -- signal failure
     end if ;
   end procedure AffirmIf ;
 
@@ -2630,9 +2636,10 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   function IsLogEnableType (Name : String) return boolean is
   ------------------------------------------------------------
-  --   type LogType is (ALWAYS, DEBUG, FINAL, INFO) ;  -- NEVER
+  -- type LogType is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER
   begin
-    if    Name = "DEBUG" then return TRUE ; 
+    if    Name = "PASSED" then return TRUE ; 
+    elsif Name = "DEBUG" then return TRUE ; 
     elsif Name = "FINAL" then return TRUE ;
     elsif Name = "INFO"  then return TRUE ; 
     end if ; 
