@@ -54,6 +54,7 @@ context OsvvmContext is
     use OSVVM.RandomPkg.all ;
     use OSVVM.CoveragePkg.all ;
     use OSVVM.MemoryPkg.all ;
+    use OSVVM.ScoreboardPkg.all ;
     
 end context OsvvmContext ; 
 
