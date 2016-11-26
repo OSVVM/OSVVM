@@ -1,7 +1,7 @@
 --
 --  File Name:         SortListPkg_int.vhd
 --  Design Unit Name:  SortListPkg_int
---  Revision:          STANDARD VERSION,  revision 2015.01
+--  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
@@ -36,7 +36,7 @@
 --
 --
 --
---  Copyright (c) 2008 - 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2008 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
