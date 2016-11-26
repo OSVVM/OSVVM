@@ -17,7 +17,7 @@
 --
 --  Revision History:      For more details, see CoveragePkg_release_notes.pdf
 --    Date      Version    Description
---    10/2016:  1.0        Initial revision
+--    11/2016:  2016.11    Initial revision
 --
 --
 --  Copyright (c) 2016 by SynthWorks Design Inc.  All rights reserved.

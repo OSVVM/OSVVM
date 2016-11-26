@@ -9,6 +9,7 @@
 --     Matthias Alles     Creonic.    Inspired GetMinBinVal, GetMinPoint, GetCov
 --     Jerry Kaczynski    Aldec.      Inspired GetBin function
 --     Sebastian Dunst                Inspired GetBinName function
+--     ...                Aldec       Worked on VendorCov functional coverage interface
 --
 --  Package Defines
 --      Functional coverage modeling utilities and data structure
@@ -44,6 +45,7 @@
 --    06/2015   2015.06    AddCross[CovMatrix?Type], Mirroring for WriteBin
 --    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
 --    03/2016   2016.03    Added GetBinName(Index) to retrieve a bin's name
+--    11/2016   2016.11    Added VendorCovApiPkg and calls to bind it in.
 --
 --  Development Notes:
 --      The coverage procedures are named ICover to avoid conflicts with
@@ -281,7 +283,7 @@ package CoveragePkg is
     procedure SetName (Name : String) ;
     impure function SetName (Name : String) return string ;
     impure function GetName return String ;
-    impure function GetNamePlus return String ;
+    impure function GetCovModelName return String ;
     procedure SetMessage (Message : String) ;
     procedure DeallocateName ; -- clear name
     procedure DeallocateMessage ; -- clear message
@@ -1203,8 +1205,8 @@ package body CoveragePkg is
     variable CovNameVar         : NamePType ;
     variable CovMessageVar      : MessagePType ;
     
-    -- Handle into Vendor Data Structure
-    variable VendorCovHandleVar : VendorCovHandleType ; 
+    -- Handle into Vendor Data Structure                            -- VendorCov
+    variable VendorCovHandleVar : VendorCovHandleType := 0 ;        -- VendorCov
 
     -- CoverageBin Data Structures
     type RangeArrayPtrType is access RangeArrayType ;
@@ -1327,10 +1329,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       CovNameVar.Set(Name) ;
-      -- VendorCov update if name updated after model created
-      if IsInitialized then         -- VendorCov
+      -- Update if name updated after model created     -- VendorCov
+      if IsInitialized then                             -- VendorCov
         VendorCovSetName(VendorCovHandleVar, Name) ;    -- VendorCov
-      end if ;                      -- VendorCov
+      end if ;                                          -- VendorCov
       if not RvSeedInit then  -- Init seed if not initialized
         RV.InitSeed(Name) ;
         RvSeedInit := TRUE ;
@@ -1353,7 +1355,7 @@ package body CoveragePkg is
     end function GetName ;
 
     ------------------------------------------------------------
-    impure function GetNamePlus return String is
+    impure function GetCovModelName return String is
     ------------------------------------------------------------
     begin
       if CovNameVar.IsSet then
@@ -1368,7 +1370,7 @@ package body CoveragePkg is
       else
         return "" ;
       end if ;
-    end function GetNamePlus ;
+    end function GetCovModelName ;
 
     ------------------------------------------------------------
     impure function GetNamePlus(prefix, suffix : string) return String is
@@ -1391,9 +1393,11 @@ package body CoveragePkg is
     begin
       CovMessageVar.Set(Message) ;
       -- VendorCov update if name updated after model created
-      if IsInitialized then                -- VendorCov
-        VendorCovSetName(VendorCovHandleVar, GetNamePlus) ;    -- VendorCov
-      end if ;                             -- VendorCov
+      if IsInitialized then                                         -- VendorCov
+        -- Refine this?   If CovNameVar or AlertLogIDName is set,   -- VendorCov
+        -- it may be set to the same name again.                    -- VendorCov
+        VendorCovSetName(VendorCovHandleVar, GetCovModelName) ;     -- VendorCov
+      end if ;                                                      -- VendorCov
       if not RvSeedInit then  -- Init seed if not initialized
         RV.InitSeed(Message) ;
         RvSeedInit := TRUE ;
@@ -1446,7 +1450,7 @@ package body CoveragePkg is
       MessageCount := CovMessageVar.GetCount ;
       if MessageCount = 0 then
         if Prefix'length + S'length > 0 then  -- everything except WriteCovDb
-          write(buf, Prefix & S & GetNamePlus) ; -- Print name when no message
+          write(buf, Prefix & S & GetCovModelName) ; -- Print name when no message
           writeline(f, buf) ;
           -- write(f, Prefix & S & LF);
         end if ;
@@ -1695,7 +1699,14 @@ package body CoveragePkg is
       PercentCov   : real := 0.0
     ) is
     begin
-      VendorCovBinAdd(VendorCovHandleVar, ToVendorCovBinVal(BinVal), Action, AtLeast, Name) ;
+      if (not IsInitialized) then                                                              -- VendorCov
+        if (BinVal'length > 1) then  -- Cross Bin                                              -- VendorCov
+          VendorCovHandleVar := VendorCovCrossCreate(GetCovModelName) ;                            -- VendorCov
+        else                                                                                   -- VendorCov
+          VendorCovHandleVar := VendorCovPointCreate(GetCovModelName);                             -- VendorCov
+      	end if;                                                                                -- VendorCov
+      end if;                                                                                  -- VendorCov
+      VendorCovBinAdd(VendorCovHandleVar, ToVendorCovBinVal(BinVal), Action, AtLeast, Name) ;  -- VendorCov
       NumBins := NumBins + 1 ;
       CovBinPtr.all(NumBins).BinVal      := new RangeArrayType'(BinVal) ;
       CovBinPtr.all(NumBins).Action      := Action ;
@@ -1804,11 +1815,7 @@ package body CoveragePkg is
       variable calcWeight  : integer ;
     begin
       CheckBinValLength( 1, "AddBins") ;
-      
-      if not IsInitialized then                                     -- VendorCov
-        VendorCovHandleVar := VendorCovPointCreate(GetNamePlus) ;   -- VendorCov
-      end if ;                                                      -- VendorCov
-      
+            
       GrowBins(CovBin'length) ;
       for i in CovBin'range loop
         if CovBin(i).Action = COV_COUNT then
@@ -1893,10 +1900,6 @@ package body CoveragePkg is
     begin
       CheckBinValLength( BIN_LENS'length, "AddCross") ;
       
-      if not IsInitialized then                                     -- VendorCov
-        VendorCovHandleVar := VendorCovCrossCreate(GetNamePlus) ;   -- VendorCov
-      end if ;                                                      -- VendorCov
-
       GrowBins(NUM_NEW_BINS) ;
       calcCount := 0 ;
       for MatrixIndex in 1 to NUM_NEW_BINS loop
@@ -4192,7 +4195,7 @@ package body CoveragePkg is
 
     if (NumBins1 /= NumBins2) then
       ErrorCount := ErrorCount + 1 ;
-      print("CoveragePkg.CompareBins: CoverageModels " & Bin1.GetNamePlus & " and " & Bin2.GetNamePlus & 
+      print("CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & 
             " have different bin lengths") ; 
       return ;
     end if ;
@@ -4240,7 +4243,7 @@ package body CoveragePkg is
   begin
     CompareBins(Bin1, Bin2, ErrorCount) ; 
     iAlertLogID := Bin1.GetAlertLogID ;
-    AlertIf(ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetNamePlus & " and " & Bin2.GetNamePlus & " are not the same.") ; 
+    AlertIf(ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " are not the same.") ; 
   end procedure CompareBins ; 
 
   ------------------------------------------------------------
