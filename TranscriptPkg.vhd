@@ -71,6 +71,9 @@ package TranscriptPkg is
   -- Write to TranscriptFile when open.  Write to OUTPUT when not open or IsTranscriptMirrored
   procedure        WriteLine(buf : inout line)  ; 
   procedure        Print(s : string) ; 
+  
+  -- Create "count" number of blank lines
+  procedure BlankLine (count : integer := 1) ;
 
 end TranscriptPkg ;
   
@@ -183,5 +186,14 @@ package body TranscriptPkg is
     write(buf, s) ; 
     WriteLine(buf) ; 
   end procedure Print ; 
+  
+  ------------------------------------------------------------
+  procedure BlankLine (count : integer := 1) is
+  ------------------------------------------------------------
+  begin
+    for i in 1 to count loop 
+      print(" ") ; 
+    end loop ;
+  end procedure Blankline ; 
 
 end package body TranscriptPkg ;
