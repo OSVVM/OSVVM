@@ -32,6 +32,7 @@
 --                          Deleted extra variable declaration in procedure remove
 --    1/2014     2014.01    Added RevSort.  Added AllowDuplicate paramter to Add procedure
 --    1/2015     2015.01    Changed Assert/Report to Alert
+--    11/2016    2016.11    Revised Add.  When AllowDuplicate, add a matching value last.
 --
 --
 --
