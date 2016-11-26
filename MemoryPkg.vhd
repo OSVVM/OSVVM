@@ -23,6 +23,7 @@
 --    06/2015:  2015.06    Updated for Alerts, ...
 --                         Numerous revisions for VHDL Testbenches and Verification
 --    01/2016:  2016.01    Update for buf.all(buf'left)
+--    11/2016:  2016.11    Refinement to MemRead to return value, X (if X), U (if not initialized)
 --
 --
 --  Copyright (c) 2005 - 2016 by SynthWorks Design Inc.  All rights reserved.
@@ -257,13 +258,17 @@ package body MemoryPkg is
       -- Address of a word within a block
       WordAddr := to_integer(aAddr(BlockkWidthVar -1 downto 0)) ;
 
-      -- X in Word, return all X
-      if (ArrayPtrVar(BlockAddr)(WordAddr) < 0) then 
-        Data := (Data'range => 'X') ;
- 
-      -- Get the Word from the Array
-      else 
+      if ArrayPtrVar(BlockAddr)(WordAddr) >= 0 then 
+        -- Get the Word from the Array
         Data := to_slv(ArrayPtrVar(BlockAddr)(WordAddr), Data'length) ;
+
+      elsif ArrayPtrVar(BlockAddr)(WordAddr) = -1 then 
+       -- X in Word, return all X
+        Data := (Data'range => 'X') ;
+
+      else 
+       -- Location Uninitialized, return all X
+        Data := (Data'range => 'U') ;
 
       end if ;
     end procedure MemRead ; 
