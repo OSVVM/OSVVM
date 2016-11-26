@@ -50,6 +50,12 @@ use ieee.std_logic_1164.all ;
 
 package TextUtilPkg is
   ------------------------------------------------------------
+  function IsUpper (constant Char : character ) return boolean ;
+  function IsLower (constant Char : character ) return boolean ;
+  function to_lower (constant Char : character ) return character ;
+  function to_lower (constant Str : string ) return string ;
+  function to_upper (constant Char : character ) return character ;
+  function to_upper (constant Str : string ) return string ;
   function ishex (constant Char : character ) return boolean ; 
   function isstd_logic (constant Char : character ) return boolean ;
 
@@ -96,6 +102,87 @@ end TextUtilPkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body TextUtilPkg is
+  constant LOWER_TO_UPPER_OFFSET : integer := character'POS('a') - character'POS('A') ;
+  
+  ------------------------------------------------------------
+  function "-" (R : character ; L : integer ) return character is
+  ------------------------------------------------------------
+  begin
+    return character'VAL(character'pos(R) - L) ;  
+  end function "-" ; 
+  
+  ------------------------------------------------------------
+  function "+" (R : character ; L : integer ) return character is
+  ------------------------------------------------------------
+  begin
+    return character'VAL(character'pos(R) + L) ;  
+  end function "+" ; 
+
+  ------------------------------------------------------------
+  function IsUpper (constant Char : character ) return boolean is
+  ------------------------------------------------------------
+  begin
+    if Char >= 'A' and Char <= 'Z' then 
+      return TRUE ; 
+    else
+      return FALSE ; 
+    end if ; 
+  end function IsUpper ; 
+  
+  ------------------------------------------------------------
+  function IsLower (constant Char : character ) return boolean is
+  ------------------------------------------------------------
+  begin
+    if Char >= 'a' and Char <= 'z' then 
+      return TRUE ; 
+    else
+      return FALSE ; 
+    end if ; 
+  end function IsLower ;
+ 
+  ------------------------------------------------------------
+  function to_lower (constant Char : character ) return character is
+  ------------------------------------------------------------
+  begin
+    if IsUpper(Char) then 
+      return Char + LOWER_TO_UPPER_OFFSET ; 
+    else
+      return Char ; 
+    end if ; 
+  end function to_lower ;
+
+  ------------------------------------------------------------
+  function to_lower (constant Str : string ) return string is
+  ------------------------------------------------------------
+    variable result : string(Str'range) ;
+  begin
+    for i in Str'range loop 
+      result(i) := to_lower(Str(i)) ;
+    end loop ;
+    return result ; 
+  end function to_lower ;
+
+  ------------------------------------------------------------
+  function to_upper (constant Char : character ) return character is
+  ------------------------------------------------------------
+  begin
+    if IsLower(Char) then 
+      return Char - LOWER_TO_UPPER_OFFSET ; 
+    else
+      return Char ; 
+    end if ; 
+  end function to_upper ;
+
+  ------------------------------------------------------------
+  function to_upper (constant Str : string ) return string is
+  ------------------------------------------------------------
+    variable result : string(Str'range) ;
+  begin
+    for i in Str'range loop 
+      result(i) := to_upper(Str(i)) ;
+    end loop ;
+    return result ; 
+  end function to_upper ;
 
   ------------------------------------------------------------
   function ishex (constant Char : character ) return boolean is
