@@ -37,8 +37,8 @@
 --    06/2015    2015.06     Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount, 
 --                           Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
 --                           Deallocate, Initialized, Function SetName
---    09/2016    2016.07     Released as part of OSVVM 
-
+--    11/2016    2016.07     Released as part of OSVVM 
+--
 --
 --
 --  Copyright (c) 2006 - 2016 by SynthWorks Design Inc.  All rights reserved.

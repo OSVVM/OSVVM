@@ -24,7 +24,7 @@
 --    Date      Version    Description
 --    08/2012   2012.08    Generic Instance of ScoreboardGenericPkg
 --    08/2014   2013.08    Updated interface for Match and to_string
---    09/2016   2016.07    Released as part of OSVVM library
+--    11/2016   2016.07    Released as part of OSVVM library
 --
 --
 --  Copyright (c) 2006 - 2016 by SynthWorks Design Inc.  All rights reserved.
