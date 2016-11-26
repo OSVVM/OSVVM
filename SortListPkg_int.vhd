@@ -76,14 +76,14 @@ package SortListPkg_int is
   subtype ElementType is integer ;
   subtype ArrayofElementType is integer_vector ;
 
-  function inside (constant E : ElementType; constant A : in ArrayofElementType) return boolean ;
+  impure function inside (constant E : ElementType; constant A : in ArrayofElementType) return boolean ;
   impure function sort (constant A : in ArrayofElementType) return ArrayofElementType ;
   impure function revsort (constant A : in ArrayofElementType) return ArrayofElementType ;
 
   type SortListPType is protected
     procedure add ( constant A : in ElementType ; constant AllowDuplicate : Boolean := FALSE ) ;
     procedure add ( constant A : in ArrayofElementType ) ;
-    procedure add ( constant A : in ArrayofElementType ; Min, Max : integer ) ;
+    procedure add ( constant A : in ArrayofElementType ; Min, Max : ElementType ) ;
     procedure add ( variable A : inout SortListPType ) ;
     -- Count items in list
     impure function  count return integer ;
@@ -111,7 +111,7 @@ end SortListPkg_int ;
 
 package body SortListPkg_int is
 
-  function inside (constant E : ElementType; constant A : in ArrayofElementType) return boolean is
+  impure function inside (constant E : ElementType; constant A : in ArrayofElementType) return boolean is
   begin
     for i in A'range loop
       if E = A(i) then
@@ -152,9 +152,10 @@ package body SortListPkg_int is
           exit AddLoop when CurPtr.NextPtr = NULL ;
           exit AddLoop when A < CurPtr.NextPtr.A  ;
           if A = CurPtr.NextPtr.A then 
-            if AllowDuplicate then 
-              exit AddLoop ;    -- insert 
-            else
+--            if AllowDuplicate then  -- changed s.t. insert at after match rather than before
+--              exit AddLoop ;    -- insert 
+--            else
+            if not AllowDuplicate then 
               return ;  -- return without insert
             end if; 
           end if ; 
@@ -172,7 +173,7 @@ package body SortListPkg_int is
       end loop ;
     end procedure add ;
 
-    procedure add ( constant A : in ArrayofElementType ; Min, Max : integer ) is
+    procedure add ( constant A : in ArrayofElementType ; Min, Max : ElementType ) is
     begin
       for i in A'range loop
         if A(i) >= Min and A(i) <= Max then
