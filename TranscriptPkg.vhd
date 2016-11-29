@@ -23,6 +23,7 @@
 --    Date       Version    Description
 --    01/2015:   2015.01    Initial revision
 --    01/2016:   2016.01    TranscriptOpen function now calls procedure of same name
+--    11/2016:   2016.l1    Added procedure BlankLine
 --
 --
 --  Copyright (c) 2015-2016 by SynthWorks Design Inc.  All rights reserved.
