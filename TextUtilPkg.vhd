@@ -22,6 +22,7 @@
 --    Date       Version    Description
 --    01/2015:   2015.05    Initial revision
 --    01/2016:   2016.01    Update for L.all(L'left)
+--    11/2016:   2016.11    Added IsUpper, IsLower, to_upper, to_lower
 --
 --
 --  Copyright (c) 2015-2016 by SynthWorks Design Inc.  All rights reserved.
