@@ -21,8 +21,9 @@
 --    02/2009:  1.0        Initial revision and First Public Released Version
 --    03/2009   1.1        Minor tweek to printing
 --    03/2015   2015.03    Updated FAVOR_BIG to FavorBig and FAVOR_SMALL to FavorSmall
+--    11/2016   2016.11    Updated library to OSVVM
 --
---  Copyright (c) 2009 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2009 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and 
 --  distributed without restriction.   
@@ -98,9 +99,9 @@ library IEEE ;
   use std.textio.all ;
   use ieee.std_logic_textio.all ;
 
-library SynthWorks ; 
-  use SynthWorks.RandomBasePkg.all ; 
-  use SynthWorks.RandomPkg.all ; 
+library OSVVM ; 
+  use OSVVM.RandomBasePkg.all ; 
+  use OSVVM.RandomPkg.all ; 
 
 use work.TestSupportPkg.all ; 
 
