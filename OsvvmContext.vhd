@@ -1,7 +1,7 @@
 --
 --  File Name:         OsvvmContext.vhd
 --  Design Unit Name:  OsvvmContext
---  Revision:          STANDARD VERSION,  revision 2015.01
+--  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com--
 --
@@ -20,10 +20,11 @@
 --  Revision History:      
 --    Date      Version    Description
 --    01/2015   2015.01    Initial Revision
---    06/2015   205.06     Added MemoryPkg
+--    06/2015   2015.06    Added MemoryPkg
+--    11/2016   2016.11    Added TbUtilPkg and ResolutionPkg
 --
 --
---  Copyright (c) 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -49,11 +50,14 @@ context OsvvmContext is
 
     use OSVVM.NamePkg.all ;
     use OSVVM.TranscriptPkg.all ; 
+    use OSVVM.TextUtilPkg.all ; 
     use OSVVM.OsvvmGlobalPkg.all ;
     use OSVVM.AlertLogPkg.all ; 
     use OSVVM.RandomPkg.all ;
     use OSVVM.CoveragePkg.all ;
     use OSVVM.MemoryPkg.all ;
-    
+    use OSVVM.ResolutionPkg.all ;
+    use OSVVM.TbUtilPkg.all ;
+
 end context OsvvmContext ; 
 
