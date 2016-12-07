@@ -45,8 +45,10 @@
 --                          Made sort, revsort from SortListPkg_int visible via aliases
 --    1/2015     2015.01    Changed Assert/Report to Alert
 --    5/2015     2015.06    Revised Alerts to Alert(OSVVM_ALERTLOG_ID, ...) ;
+--    11/2016    2016.11    No changes.  Updated release numbers to make documentation and
+--                          package have consistent release identifiers.
 --
---  Copyright (c) 2006 - 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2006 - 2016 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
