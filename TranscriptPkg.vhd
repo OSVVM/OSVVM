@@ -193,7 +193,7 @@ package body TranscriptPkg is
   ------------------------------------------------------------
   begin
     for i in 1 to count loop 
-      print(" ") ; 
+      print("") ; 
     end loop ;
   end procedure Blankline ; 
 
