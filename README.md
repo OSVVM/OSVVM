@@ -1,5 +1,9 @@
 *"Open Source VHDL Verification Methodology" (OSVVM) Repository*
 
+[![https://gitter.im/OSVVM/Lobby](https://badges.gitter.im/OSVVM/Lobby.svg)](https://gitter.im/OSVVM/Lobby)
+![Latest tag](https://img.shields.io/github/tag/JimLewis/OSVVM.svg?style=flat)
+[![Artistic License 2.0](https://img.shields.io/github/license/JimLewis/OSVVM.svg?style=flat)](LICENSE.md)
+
 ------
 [**Open Source VHDL Verification Methodology (OSVVM)**][osvvm] is an intelligent testbench methodology that allows mixing of “Intelligent Coverage” (coverage driven randomization) with directed, algorithmic, file based, and constrained random test approaches. The methodology can be adopted in part or in whole as needed. With OSVVM you can add advanced verification methodologies to your current testbench without having to learn a new language or throw out your existing testbench or testbench models.
 
