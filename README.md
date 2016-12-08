@@ -9,6 +9,10 @@
 **Copyright:**	Copyright © 2006-2016 by [SynthWorks Design Inc.](http://www.synthworks.com/)
 
 ## Release History
+   For current release information see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)
+   
+   The following has a bad habit of falling behind the current release:
+ - Nov-2016 - **2016.11**  Added VendorCovApiPkg, ScoreboardGenericPkg, TbUtilPkg, ResolutionPkg
  - Jan-2016 - **2016.01**  Fix limit of 32 AlertLogIDs, Updates for GHDL (Purity and L.all(L'left)), 
  - Jul-2015 - **2015.06**  Addition of MemoryPkg
  - Mar-2015 - **2015.03**  Bug fixes to AlertLogPkg (primarily ClearAlerts, but also matching names)
@@ -18,8 +22,6 @@
  - Jan-2014 - **2014.01**  RandomPkg: RandTime, RandIntV, RandRealV, RandTimeV.  CoveragePkg:  Support merging of coverage bins.  
  - May-2013 - **2013.05**  RandomPkg:  Big Vector Randomization.  
  
- For more revision information, see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)
-
 
 ------
 
