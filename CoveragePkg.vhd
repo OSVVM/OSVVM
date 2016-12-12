@@ -646,7 +646,7 @@ package CoveragePkg is
   -- With VHDL-2008, there will be one GenCross that returns CovBinType
   -- and has inputs initialized to NULL_BIN - see AddCross
   ------------------------------------------------------------
-  function GenCross(  -- 2
+  impure function GenCross(  -- 2
   -- Cross existing bins
   -- Use AddCross for adding values directly to coverage database
   -- Use GenCross for constants
@@ -656,92 +656,92 @@ package CoveragePkg is
     Bin1, Bin2  : CovBinType
   ) return CovMatrix2Type ;
 
-  function GenCross(AtLeast : integer ; Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
-  function GenCross(Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
+  impure function GenCross(AtLeast : integer ; Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
+  impure function GenCross(Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 3
+  impure function GenCross(  -- 3
   ------------------------------------------------------------
     AtLeast           : integer ;
     Weight            : integer ;
     Bin1, Bin2, Bin3  : CovBinType
   ) return CovMatrix3Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
-  function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
+  impure function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 4
+  impure function GenCross(  -- 4
   ------------------------------------------------------------
     AtLeast                 : integer ;
     Weight                  : integer ;
     Bin1, Bin2, Bin3, Bin4  : CovBinType
   ) return CovMatrix4Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 5
+  impure function GenCross(  -- 5
   ------------------------------------------------------------
     AtLeast                       : integer ;
     Weight                        : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5  : CovBinType
   ) return CovMatrix5Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 6
+  impure function GenCross(  -- 6
   ------------------------------------------------------------
     AtLeast                             : integer ;
     Weight                              : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6  : CovBinType
   ) return CovMatrix6Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 7
+  impure function GenCross(  -- 7
   ------------------------------------------------------------
     AtLeast                                   : integer ;
     Weight                                    : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7  : CovBinType
   ) return CovMatrix7Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 8
+  impure function GenCross(  -- 8
   ------------------------------------------------------------
     AtLeast                                         : integer ;
     Weight                                          : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8  : CovBinType
   ) return CovMatrix8Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 9
+  impure function GenCross(  -- 9
   ------------------------------------------------------------
     AtLeast                                               : integer ;
     Weight                                                : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9  : CovBinType
   ) return CovMatrix9Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
 
 
   ------------------------------------------------------------
@@ -978,7 +978,7 @@ package body CoveragePkg is
 
 
   -- ------------------------------------------------------------
-  function ConcatenateBins (
+  impure function ConcatenateBins (
   -- package local, used by AddCross and GenCross
   -- ------------------------------------------------------------
     BinIndex : integer_vector ;
@@ -4573,7 +4573,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 2
+  impure function GenCross(  -- 2
   -- Cross existing bins
   -- Use AddCross for adding values directly to coverage database
   -- Use GenCross for constants
@@ -4604,7 +4604,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(AtLeast : integer ; Bin1, Bin2 : CovBinType) return CovMatrix2Type is
+  impure function GenCross(AtLeast : integer ; Bin1, Bin2 : CovBinType) return CovMatrix2Type is
   -- Cross existing bins  -- use AddCross instead
   ------------------------------------------------------------
   begin
@@ -4613,7 +4613,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(Bin1, Bin2 : CovBinType) return CovMatrix2Type is
+  impure function GenCross(Bin1, Bin2 : CovBinType) return CovMatrix2Type is
   -- Cross existing bins  -- use AddCross instead
   ------------------------------------------------------------
   begin
@@ -4622,7 +4622,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 3
+  impure function GenCross(  -- 3
   ------------------------------------------------------------
     AtLeast           : integer ;
     Weight            : integer ;
@@ -4650,7 +4650,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3) ;
@@ -4658,7 +4658,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type is
+  impure function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3) ;
@@ -4666,7 +4666,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 4
+  impure function GenCross(  -- 4
   ------------------------------------------------------------
     AtLeast                 : integer ;
     Weight                  : integer ;
@@ -4694,7 +4694,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4) ;
@@ -4702,7 +4702,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type is
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4) ;
@@ -4710,7 +4710,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 5
+  impure function GenCross(  -- 5
   ------------------------------------------------------------
     AtLeast                       : integer ;
     Weight                        : integer ;
@@ -4738,7 +4738,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5) ;
@@ -4746,7 +4746,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type is
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5) ;
@@ -4754,7 +4754,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 6
+  impure function GenCross(  -- 6
   ------------------------------------------------------------
     AtLeast                             : integer ;
     Weight                              : integer ;
@@ -4783,7 +4783,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6) ;
@@ -4791,7 +4791,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type is
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6) ;
@@ -4799,7 +4799,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 7
+  impure function GenCross(  -- 7
   ------------------------------------------------------------
     AtLeast                                   : integer ;
     Weight                                    : integer ;
@@ -4827,7 +4827,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7) ;
@@ -4835,7 +4835,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type is
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7) ;
@@ -4843,7 +4843,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 8
+  impure function GenCross(  -- 8
   ------------------------------------------------------------
     AtLeast                                         : integer ;
     Weight                                          : integer ;
@@ -4871,7 +4871,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8) ;
@@ -4879,7 +4879,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type is
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8) ;
@@ -4887,7 +4887,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross(  -- 9
+  impure function GenCross(  -- 9
   ------------------------------------------------------------
     AtLeast                                               : integer ;
     Weight                                                : integer ;
@@ -4915,7 +4915,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type is
+  impure function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type is
   ------------------------------------------------------------
   begin
     return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9) ;
@@ -4923,7 +4923,7 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type is
+  impure function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type is
   ------------------------------------------------------------
   begin
     return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9) ;
