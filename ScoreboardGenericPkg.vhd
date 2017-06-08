@@ -38,7 +38,7 @@
 --                           Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
 --                           Deallocate, Initialized, Function SetName
 --    11/2016    2016.11     Released as part of OSVVM 
---
+--    05/2017    2017.05     First print Actual then only print Expected if mis-match  
 --
 --
 --  Copyright (c) 2006 - 2016 by SynthWorks Design Inc.  All rights reserved.
@@ -241,7 +241,7 @@ package ScoreboardGenericPkg is
     -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
     procedure SetAlertLogID(Index : Integer ; Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;
     procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;
-    -- Use when an AlertLogID is used by multiple items (BFM or Scoreboards).  See also AlertLogPkg.GetAlertLogID
+    -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
     procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) ;  
     procedure SetAlertLogID (A : AlertLogIDType) ;
     impure function GetAlertLogID(Index : Integer) return AlertLogIDType ;
@@ -925,7 +925,7 @@ package body ScoreboardGenericPkg is
         FoundError := FALSE ; 
       end if ; 
       
-      IncAffirmCheckCount ;  
+      IncAffirmCount ;  
       
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or GetLogEnable(AlertLogIDVar(Index), PASSED) then
@@ -937,8 +937,10 @@ package body ScoreboardGenericPkg is
         if ArrayLengthVar > 1 then 
           write(WriteBuf, " (" & to_string(Index) & ") ") ; 
         end if ; 
-        write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
-        write(WriteBuf, "   Actual: " & actual_to_string(ActualData)) ;
+        write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
+        if FoundError then 
+          write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
+        end if ; 
         if PopListPointer(Index).TagPtr.all /= "" then
           write(WriteBuf, "   Tag: " & PopListPointer(Index).TagPtr.all) ;
         end if; 

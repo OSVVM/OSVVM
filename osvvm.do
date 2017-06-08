@@ -42,9 +42,11 @@
 #
 #
 # Update OSVVM_DIR to match your environment:
-set DIR_RUN [pwd]
 set OSVVM_LIB_NAME osvvm
-set OSVVM_DIR ${DIR_RUN}/../../../_osvvm/_github
+set OSVVM_DIR [pwd]
+if {$argc > 0} {
+  set OSVVM_DIR $1
+}
 
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/NamePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/OsvvmGlobalPkg.vhd

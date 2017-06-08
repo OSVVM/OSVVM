@@ -32,8 +32,12 @@
 --    07/2015    2016.01    Fixed AlertLogID issue with > 32 IDs
 --    02/2016    2016.02    Fixed IsLogEnableType (for PASSED), AffirmIf (to pass AlertLevel)
 --                          Created LocalInitialize
+--    05/2017    2017.05    AffirmIfEqual, AffirmIfDiff, 
+--                          GetAffirmCount (deprecates GetAffirmCheckCount), IncAffirmCount (deprecates IncAffirmCheckCount), 
+--                          IsAlertEnabled (alias), IsLogEnabled (alias)
+--                         
 --
---  Copyright (c) 2015 - 2016 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2015 - 2017 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -111,20 +115,12 @@ package AlertLogPkg is
   impure function  AlertIf( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
   impure function  AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
 
-  -- deprecated
-  procedure AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ; 
-  impure function  AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
-
   ------------------------------------------------------------
   -- Direct replacement for assert
   procedure AlertIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) ; 
   impure function  AlertIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
   impure function  AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
-
-  -- deprecated
-  procedure AlertIfNot( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ; 
-  impure function  AlertIfNot( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
   
   ------------------------------------------------------------
   -- overloading for common functionality
@@ -136,6 +132,7 @@ package AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : real ;              Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : character ;         Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : string ;            Message : string ; Level : AlertType := ERROR )  ; 
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : time ;              Message : string ; Level : AlertType := ERROR )  ; 
 
   procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ; 
@@ -145,6 +142,7 @@ package AlertLogPkg is
   procedure AlertIfEqual( L, R : real ;             Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR )  ; 
+  procedure AlertIfEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  ; 
 
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ; 
@@ -154,6 +152,7 @@ package AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : real ;             Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : character ;        Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : string ;           Message : string ; Level : AlertType := ERROR )  ; 
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : time ;             Message : string ; Level : AlertType := ERROR )  ; 
   
   procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNotEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ; 
@@ -163,22 +162,89 @@ package AlertLogPkg is
   procedure AlertIfNotEqual( L, R : real ;             Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNotEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR )  ; 
   procedure AlertIfNotEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR )  ; 
+  procedure AlertIfNotEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  ; 
+  
   ------------------------------------------------------------
   -- Simple Diff for file comparisons
   procedure AlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) ; 
   procedure AlertIfDiff (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) ; 
   procedure AlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ; 
   procedure AlertIfDiff (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ; 
+  
   ------------------------------------------------------------
+  ------------------------------------------------------------
+  ------------------------------------------------------------
+  procedure AffirmIf(
+  ------------------------------------------------------------
+    AlertLogID       : AlertLogIDType ;
+    condition        : boolean ;
+    ReceivedMessage  : string ;
+    ExpectedMessage  : string ;
+    Enable           : boolean  := FALSE   -- override internal enable  
+  ) ;
+    
+  procedure AffirmIf( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) ;
+  impure function AffirmIf( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIf( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;
+
   procedure AffirmIf(
     AlertLogID   : AlertLogIDType ;
     condition    : boolean ;
     Message      : string ;
-    LogLevel     : LogType := PASSED ;
-    AlertLevel   : AlertType := ERROR
+    Enable       : boolean := FALSE -- override internal enable 
   ) ;
-  procedure AffirmIf(condition : boolean ; Message : string ;  LogLevel : LogType := PASSED ; AlertLevel : AlertType := ERROR) ;
 
+  procedure AffirmIf(condition : boolean ; Message : string ;  Enable : boolean := FALSE ) ;  
+  impure function  AffirmIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;  
+  impure function  AffirmIf( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;   
+    
+  ------------------------------------------------------------
+  procedure AffirmIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) ;  
+  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;  
+  impure function  AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;   
+
+  ------------------------------------------------------------
+  procedure AffirmIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) ;  
+  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;  
+  impure function  AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;   
+    
+  ------------------------------------------------------------
+  procedure AffirmPassed( AlertLogID : AlertLogIDType ; Message : string ; Enable : boolean := FALSE ) ;
+  procedure AffirmPassed( Message : string ; Enable : boolean := FALSE ) ;
+  procedure AffirmError( AlertLogID : AlertLogIDType ; Message : string ) ;
+  procedure AffirmError( Message : string ) ;    
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ); 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+
+  -- Without AlertLogID
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ; 
+
+  ------------------------------------------------------------
+  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ; 
+  procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;     
+  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;   
+  procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;   
+  
   ------------------------------------------------------------
   procedure SetAlertLogJustify ;
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
@@ -208,7 +274,6 @@ package AlertLogPkg is
     Enable       : boolean := FALSE    -- override internal enable
   ) ; 
   procedure Log( Message : string ; Level : LogType := ALWAYS ; Enable : boolean := FALSE) ;
-
   
   ------------------------------------------------------------
   -- Accessor Methods
@@ -226,8 +291,8 @@ package AlertLogPkg is
   procedure SetGlobalAlertEnable (A : boolean := TRUE) ;
   impure function SetGlobalAlertEnable (A : boolean := TRUE) return boolean ;
   impure function GetGlobalAlertEnable return boolean ;
-  procedure IncAffirmCheckCount ;
-  impure function GetAffirmCheckCount return natural ;
+  procedure IncAffirmCount ;
+  impure function GetAffirmCount return natural ;
 --??  procedure IncAffirmPassCount ;
 --??  impure function GetAffirmPassCount return natural ;
   
@@ -240,13 +305,15 @@ package AlertLogPkg is
   procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
   impure function GetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType) return boolean ;
   impure function GetAlertEnable(Level : AlertType) return boolean ;
+  alias IsAlertEnabled is GetAlertEnable[AlertLogIDType, AlertType return boolean] ;
+  alias IsAlertEnabled is GetAlertEnable[AlertType return boolean] ;
 
   procedure SetLogEnable(Level : LogType ;  Enable : boolean) ; 
   procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
   impure function GetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType) return boolean ;
   impure function GetLogEnable(Level : LogType) return boolean ;
-  impure function IsLoggingEnabled(AlertLogID : AlertLogIDType ; Level : LogType) return boolean ;  -- same as GetLogEnable
-  impure function IsLoggingEnabled(Level : LogType) return boolean ; 
+  alias IsLogEnabled is GetLogEnable [AlertLogIDType, LogType return boolean] ;  -- same as GetLogEnable
+  alias IsLogEnabled is GetLogEnable [LogType return boolean] ;  -- same as GetLogEnable
   
   procedure ReportLogEnables ;
   
@@ -300,6 +367,37 @@ package AlertLogPkg is
   -- String Helper Functions -- This should be in a more general string package
   function PathTail (A : string) return string ; 
 
+  
+  --  ------------------------------------------------------------
+  -- Deprecated 
+  --
+  
+  -- deprecated
+  procedure AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ; 
+  impure function  AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
+
+  -- deprecated
+  procedure AlertIfNot( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ; 
+  impure function  AlertIfNot( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ; 
+
+  -- deprecated
+  procedure AffirmIf(
+    AlertLogID   : AlertLogIDType ;
+    condition    : boolean ;
+    Message      : string ;
+    LogLevel     : LogType  ;  -- := PASSED
+    AlertLevel   : AlertType := ERROR
+  )  ;
+  procedure AffirmIf( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; AlertLevel : AlertType ) ;
+  procedure AffirmIf(condition : boolean ; Message : string ;  LogLevel : LogType  ; AlertLevel : AlertType := ERROR) ;  
+  procedure AffirmIf(condition : boolean ; Message : string ;  AlertLevel : AlertType ) ;  
+  
+  alias IncAffirmCheckCount is IncAffirmCount [] ; 
+  alias GetAffirmCheckCount is GetAffirmCount [return natural] ; 
+  alias IsLoggingEnabled is GetLogEnable [AlertLogIDType, LogType return boolean] ;  -- same as IsLogEnabled
+  alias IsLoggingEnabled is GetLogEnable [LogType return boolean] ;  -- same as IsLogEnabled
+
+  
 end AlertLogPkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -375,8 +473,8 @@ package body AlertLogPkg is
     procedure SetGlobalAlertEnable (A : boolean := TRUE) ;
     impure function GetAlertLogName(AlertLogID : AlertLogIDType) return string ;
     impure function GetGlobalAlertEnable return boolean ;
-    procedure IncAffirmCheckCount ;
-    impure function GetAffirmCheckCount return natural ;
+    procedure IncAffirmCount ;
+    impure function GetAffirmCount return natural ;
 --??    procedure IncAffirmPassCount ;
 --??    impure function GetAffirmPassCount return natural ;
 
@@ -1168,20 +1266,20 @@ package body AlertLogPkg is
     end function GetGlobalAlertEnable ;
     
     ------------------------------------------------------------
-    procedure IncAffirmCheckCount is
+    procedure IncAffirmCount is
     ------------------------------------------------------------
     begin
       if GlobalAlertEnabledVar then 
           AffirmCheckCountVar := AffirmCheckCountVar + 1 ;
       end if ; 
-    end procedure IncAffirmCheckCount ;
+    end procedure IncAffirmCount ;
 
     ------------------------------------------------------------
-    impure function GetAffirmCheckCount return natural is
+    impure function GetAffirmCount return natural is
     ------------------------------------------------------------
     begin
       return AffirmCheckCountVar ;
-    end function GetAffirmCheckCount ;
+    end function GetAffirmCount ;
 
 --??    ------------------------------------------------------------
 --??    procedure IncAffirmPassCount is
@@ -1609,14 +1707,6 @@ package body AlertLogPkg is
   end procedure AlertIf ; 
 
   ------------------------------------------------------------
-  -- deprecated
-  procedure AlertIf( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
-  ------------------------------------------------------------
-  begin
-    AlertIf( AlertLogID, condition, Message, Level) ; 
-  end procedure AlertIf ; 
-
-  ------------------------------------------------------------
   procedure AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) is
   ------------------------------------------------------------
   begin
@@ -1626,7 +1716,7 @@ package body AlertLogPkg is
   end procedure AlertIf ;  
   
   ------------------------------------------------------------
-  -- useful with exit conditions in a loop:  exit when alert( not ReadValid, failure, "Read Failed") ; 
+  -- useful in a loop:  exit when AlertIf( not ReadValid, failure, "Read Failed") ; 
   impure function  AlertIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
   ------------------------------------------------------------
   begin
@@ -1634,14 +1724,6 @@ package body AlertLogPkg is
       AlertLogStruct.Alert(AlertLogID , Message, Level) ; 
     end if ; 
     return condition ; 
-  end function AlertIf ;  
-  
-  ------------------------------------------------------------
-  -- deprecated
-  impure function  AlertIf( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
-  ------------------------------------------------------------
-  begin
-    return AlertIf( AlertLogID, condition, Message, Level) ; 
   end function AlertIf ;  
   
   ------------------------------------------------------------
@@ -1664,14 +1746,6 @@ package body AlertLogPkg is
   end procedure AlertIfNot ; 
 
   ------------------------------------------------------------
-  -- deprecated
-  procedure AlertIfNot( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
-  ------------------------------------------------------------
-  begin
-    AlertIfNot( AlertLogID, condition, Message, Level) ; 
-  end procedure AlertIfNot ; 
-
-  ------------------------------------------------------------
   procedure AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) is
   ------------------------------------------------------------
   begin
@@ -1681,7 +1755,7 @@ package body AlertLogPkg is
   end procedure AlertIfNot ;  
   
   ------------------------------------------------------------
-  -- useful with exit conditions in a loop:  exit when alert( not ReadValid, failure, "Read Failed") ; 
+  -- useful in a loop:  exit when AlertIfNot( not ReadValid, failure, "Read Failed") ; 
   impure function  AlertIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
   ------------------------------------------------------------
   begin
@@ -1689,14 +1763,6 @@ package body AlertLogPkg is
       AlertLogStruct.Alert(AlertLogID, Message, Level) ; 
     end if ; 
     return not condition ; 
-  end function AlertIfNot ;  
-  
-  ------------------------------------------------------------
-  -- deprecated
-  impure function  AlertIfNot( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
-  ------------------------------------------------------------
-  begin
-    return AlertIfNot( AlertLogID, condition, Message, Level) ; 
   end function AlertIfNot ;  
   
   ------------------------------------------------------------
@@ -1708,8 +1774,10 @@ package body AlertLogPkg is
     end if ; 
     return not condition ; 
   end function AlertIfNot ;   
+  
     
-  -- With AlertLogID
+  ------------------------------------------------------------
+  -- AlertIfEqual with AlertLogID
   ------------------------------------------------------------
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
@@ -1782,7 +1850,18 @@ package body AlertLogPkg is
     end if ; 
   end procedure AlertIfEqual ; 
 
-  -- Without AlertLogID
+  ------------------------------------------------------------
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : time ;             Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    if L = R then
+      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
+    end if ; 
+  end procedure AlertIfEqual ;   
+  
+  
+  ------------------------------------------------------------
+  -- AlertIfEqual without AlertLogID
   ------------------------------------------------------------
   procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
@@ -1855,7 +1934,18 @@ package body AlertLogPkg is
     end if ; 
   end procedure AlertIfEqual ; 
 
-  -- With AlertLogID
+  ------------------------------------------------------------
+  procedure AlertIfEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    if L = R then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
+    end if ; 
+  end procedure AlertIfEqual ; 
+
+
+  ------------------------------------------------------------
+  -- AlertIfNotEqual with AlertLogID
   ------------------------------------------------------------
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
@@ -1928,7 +2018,18 @@ package body AlertLogPkg is
     end if ; 
   end procedure AlertIfNotEqual ; 
 
-  -- Without AlertLogID
+  ------------------------------------------------------------
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : time ;             Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    if L /= R then
+      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
+    end if ; 
+  end procedure AlertIfNotEqual ; 
+
+  
+  ------------------------------------------------------------
+  -- AlertIfNotEqual without AlertLogID
   ------------------------------------------------------------
   procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
@@ -2000,37 +2101,20 @@ package body AlertLogPkg is
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ; 
     end if ; 
   end procedure AlertIfNotEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AlertIfNotEqual( L, R : time ;           Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    if L /= R then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ; 
+    end if ; 
+  end procedure AlertIfNotEqual ; 
+  
 
   ------------------------------------------------------------
-  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is 
-  -- Open files and call AlertIfDiff[text, ...]    
-  ------------------------------------------------------------
-    file FileID1, FileID2 : text ; 
-    variable status1, status2 : file_open_status ; 
-  begin
-    file_open(status1, FileID1, Name1, READ_MODE) ; 
-    file_open(status2, FileID2, Name2, READ_MODE) ; 
-    if status1 = OPEN_OK and status2 = OPEN_OK then 
-      AlertIfDiff (AlertLogID, FileID1, FileID2, Message & " " & Name1 & " /= " & Name2 & ", ", Level) ; 
-    else 
-      if status1 /= OPEN_OK then
-        AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name1 & ", did not open", Level) ; 
-      end if ; 
-      if status2 /= OPEN_OK then
-        AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name2 & ", did not open", Level) ; 
-      end if ; 
-    end if; 
-  end procedure AlertIfDiff ; 
-  
-  ------------------------------------------------------------
-  procedure AlertIfDiff (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is 
-  ------------------------------------------------------------
-  begin
-    AlertIfDiff (ALERT_DEFAULT_ID, Name1, Name2, Message, Level) ; 
-  end procedure AlertIfDiff ;     
-  
-  ------------------------------------------------------------
-  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is 
+  -- Local 
+  procedure LocalAlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string ; Level : AlertType ; Valid : out boolean ) is 
   -- Simple diff.    
   ------------------------------------------------------------
     variable Buf1, Buf2 : line ; 
@@ -2059,41 +2143,477 @@ package body AlertLogPkg is
         AlertLogStruct.Alert(AlertLogID , Message & " File2 longer than File1 " & to_string(LineCount), Level) ; 
       end if ;
     end if; 
+    if File1Done and File2Done then 
+      Valid := TRUE ;
+    else
+      Valid := FALSE ;
+    end if ; 
+  end procedure LocalAlertIfDiff ;     
+
+  ------------------------------------------------------------
+  -- Local 
+  procedure LocalAlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string ; Level : AlertType ; Valid : out boolean ) is 
+  -- Open files and call AlertIfDiff[text, ...]    
+  ------------------------------------------------------------
+    file FileID1, FileID2 : text ; 
+    variable status1, status2 : file_open_status ; 
+  begin
+    Valid := FALSE ; 
+    file_open(status1, FileID1, Name1, READ_MODE) ; 
+    file_open(status2, FileID2, Name2, READ_MODE) ; 
+    if status1 = OPEN_OK and status2 = OPEN_OK then 
+      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " " & Name1 & " /= " & Name2 & ", ", Level, Valid) ; 
+    else 
+      if status1 /= OPEN_OK then
+        AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name1 & ", did not open", Level) ; 
+      end if ; 
+      if status2 /= OPEN_OK then
+        AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name2 & ", did not open", Level) ; 
+      end if ; 
+    end if; 
+  end procedure LocalAlertIfDiff ; 
+
+  ------------------------------------------------------------
+  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is 
+  -- Open files and call AlertIfDiff[text, ...]    
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, Level, Valid) ; 
+  end procedure AlertIfDiff ; 
+  
+  ------------------------------------------------------------
+  procedure AlertIfDiff (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is 
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (ALERT_DEFAULT_ID, Name1, Name2, Message, Level, Valid) ; 
+  end procedure AlertIfDiff ;     
+  
+  ------------------------------------------------------------
+  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is 
+  -- Simple diff.    
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (AlertLogID, File1, File2, Message, Level, Valid ) ; 
   end procedure AlertIfDiff ;   
   
   ------------------------------------------------------------
   procedure AlertIfDiff (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is 
   ------------------------------------------------------------
+    variable Valid : boolean ; 
   begin
-    AlertIfDiff (ALERT_DEFAULT_ID, File1, File2, Message, Level) ; 
+    LocalAlertIfDiff (ALERT_DEFAULT_ID, File1, File2, Message, Level, Valid ) ; 
   end procedure AlertIfDiff ;   
 
+  ------------------------------------------------------------
+  procedure AffirmIf(
+  ------------------------------------------------------------
+    AlertLogID       : AlertLogIDType ;
+    condition        : boolean ;
+    ReceivedMessage  : string ;
+    ExpectedMessage  : string ;
+    Enable           : boolean  := FALSE   -- override internal enable  
+  ) is
+  begin
+    AlertLogStruct.IncAffirmCount ; -- increment check count
+    if condition then
+      -- passed
+      AlertLogStruct.Log(AlertLogID, ReceivedMessage, PASSED, Enable) ; 
+--      AlertLogStruct.IncAffirmPassCount ; -- increment pass & check count
+    else
+      AlertLogStruct.Alert(AlertLogID, ReceivedMessage & ExpectedMessage, ERROR) ; 
+    end if ;
+  end procedure AffirmIf ;
+    
+  ------------------------------------------------------------
+  procedure AffirmIf( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+  end procedure AffirmIf ;  
+  
+  ------------------------------------------------------------
+  impure function AffirmIf( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+    return condition ; 
+  end function AffirmIf ;  
+
+  ------------------------------------------------------------
+  impure function AffirmIf( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+    return condition ; 
+  end function AffirmIf ;  
+
+    
   ------------------------------------------------------------
   procedure AffirmIf(
   ------------------------------------------------------------
     AlertLogID   : AlertLogIDType ;
     condition    : boolean ;
     Message      : string ;
-    LogLevel     : LogType := PASSED ;
-    AlertLevel   : AlertType := ERROR
+    Enable       : boolean  := FALSE   -- override internal enable  
   ) is
   begin
-    AlertLogStruct.IncAffirmCheckCount ; -- increment check count
+    AlertLogStruct.IncAffirmCount ; -- increment check count
     if condition then
       -- passed
-      AlertLogStruct.Log(AlertLogID, Message, LogLevel) ; -- call log
+      AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ; 
 --      AlertLogStruct.IncAffirmPassCount ; -- increment pass & check count
     else
-      AlertLogStruct.Alert(AlertLogID, Message, AlertLevel) ; -- signal failure
+      AlertLogStruct.Alert(AlertLogID, Message, ERROR) ; 
     end if ;
   end procedure AffirmIf ;
 
   ------------------------------------------------------------
-  procedure AffirmIf(condition : boolean ; Message : string ;  LogLevel : LogType := PASSED ; AlertLevel : AlertType := ERROR) is
+  procedure AffirmIf(condition : boolean ; Message : string ;  Enable : boolean := FALSE) is
   ------------------------------------------------------------
   begin
-    AffirmIf(ALERT_DEFAULT_ID, condition, Message, LogLevel, AlertLevel) ; 
+    AffirmIf(ALERT_DEFAULT_ID, condition, Message, Enable) ; 
   end procedure AffirmIf;  
+  
+  ------------------------------------------------------------
+  -- useful in a loop:  exit when AffirmIf( ID, not ReadValid, "Read Failed") ; 
+  impure function  AffirmIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, condition, Message, Enable) ;
+    return condition ; 
+  end function AffirmIf ;  
+  
+  ------------------------------------------------------------
+  impure function  AffirmIf( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, condition, Message, Enable) ;
+    return condition ; 
+  end function AffirmIf ;   
+
+  ------------------------------------------------------------
+  ------------------------------------------------------------
+  procedure AffirmIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, not condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+  end procedure AffirmIfNot ; 
+
+  ------------------------------------------------------------
+  procedure AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, not condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+  end procedure AffirmIfNot ;  
+  
+  ------------------------------------------------------------
+  -- useful in a loop:  exit when AffirmIfNot( not ReadValid, failure, "Read Failed") ; 
+  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, not condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+    return not condition ; 
+  end function AffirmIfNot ;  
+  
+  ------------------------------------------------------------
+  impure function  AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, not condition, ReceivedMessage, ExpectedMessage, Enable) ; 
+    return not condition ; 
+  end function AffirmIfNot ;  
+
+  ------------------------------------------------------------
+  procedure AffirmIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, not condition, Message, Enable) ; 
+  end procedure AffirmIfNot ; 
+
+  ------------------------------------------------------------
+  procedure AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, not condition, Message, Enable) ; 
+  end procedure AffirmIfNot ;  
+  
+  ------------------------------------------------------------
+  -- useful in a loop:  exit when AffirmIfNot( not ReadValid, failure, "Read Failed") ; 
+  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, not condition, Message, Enable) ; 
+    return not condition ; 
+  end function AffirmIfNot ;  
+  
+  ------------------------------------------------------------
+  impure function  AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, not condition, Message, Enable) ; 
+    return not condition ; 
+  end function AffirmIfNot ;  
+
+  
+  ------------------------------------------------------------
+  ------------------------------------------------------------
+  procedure AffirmPassed( AlertLogID : AlertLogIDType ; Message : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, TRUE, Message, Enable) ; 
+  end procedure AffirmPassed ;  
+  
+  ------------------------------------------------------------
+  procedure AffirmPassed( Message : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, TRUE, Message, Enable) ; 
+  end procedure AffirmPassed ;  
+
+  ------------------------------------------------------------
+  procedure AffirmError( AlertLogID : AlertLogIDType ; Message : string ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, FALSE, Message, FALSE) ; 
+  end procedure AffirmError ;  
+  
+  ------------------------------------------------------------
+  procedure AffirmError( Message : string ) is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, FALSE, Message, FALSE) ; 
+  end procedure AffirmError ;  
+
+  -- With AlertLogID
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, ??(Received ?= Expected), 
+      Message & " Received : " & to_string(Received), 
+      " ?= Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, ??(Received ?= Expected), 
+      Message & " Received : " & to_hstring(Received), 
+      " ?= Expected : " & to_hstring(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, ??(Received ?= Expected), 
+      Message & " Received : " & to_hstring(Received), 
+      " ?= Expected : " & to_hstring(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, ??(Received ?= Expected), 
+      Message & " Received : " & to_hstring(Received), 
+      " ?= Expected : " & to_hstring(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, Received = Expected, 
+      Message & " Received : " & to_string(Received), 
+      " = Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, Received = Expected, 
+      Message & " Received : " & to_string(Received, 4), 
+      " = Expected : " & to_string(Expected, 4), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, Received = Expected, 
+      Message & " Received : " & to_string(Received), 
+      " = Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, Received = Expected, 
+      Message & " Received : " & Received, 
+      " = Expected : " & Expected, 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(AlertLogID, Received = Expected, 
+      Message & " Received : " & to_string(Received), 
+      " = Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+
+  -- Without AlertLogID
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
+      Message & " Received : " & to_string(Received), 
+      " ?= Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
+      Message & " Received : " & to_string(Received), 
+      " ?= Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
+      Message & " Received : " & to_string(Received), 
+      " ?= Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
+      Message & " Received : " & to_string(Received), 
+      " ?= Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected, 
+      Message & " Received : " & to_string(Received), 
+      " = Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected, 
+      Message & " Received : " & to_string(Received, 4), 
+      " = Expected : " & to_string(Expected, 4), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected, 
+      Message & " Received : " & to_string(Received), 
+      " = Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected, 
+      Message & " Received : " & Received, 
+      " = Expected : " & Expected, 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected, 
+      Message & " Received : " & to_string(Received), 
+      " = Expected : " & to_string(Expected), 
+      Enable) ; 
+  end procedure AffirmIfEqual ; 
+
+  ------------------------------------------------------------
+  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is 
+  -- Open files and call AffirmIfDiff[text, ...]    
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ; 
+    if Valid then 
+      AlertLogStruct.Log(AlertLogID, Message & " " & Name1 & " = " & Name2, PASSED, Enable) ; 
+    end if ; 
+  end procedure AffirmIfDiff ; 
+  
+  ------------------------------------------------------------
+  procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is 
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (ALERT_DEFAULT_ID, Name1, Name2, Message, ERROR, Valid) ; 
+    if Valid then 
+      AlertLogStruct.Log(ALERT_DEFAULT_ID, Message & " " & Name1 & " = " & Name2, PASSED, Enable) ; 
+    end if ; 
+  end procedure AffirmIfDiff ;     
+  
+  ------------------------------------------------------------
+  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is 
+  -- Simple diff.    
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (AlertLogID, File1, File2, Message, ERROR, Valid ) ; 
+    if Valid then 
+      AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ; 
+    end if ; 
+  end procedure AffirmIfDiff ;   
+  
+  ------------------------------------------------------------
+  procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is 
+  ------------------------------------------------------------
+    variable Valid : boolean ; 
+  begin
+    LocalAlertIfDiff (ALERT_DEFAULT_ID, File1, File2, Message, ERROR, Valid ) ; 
+    if Valid then 
+      AlertLogStruct.Log(ALERT_DEFAULT_ID, Message, PASSED, Enable) ; 
+    end if ; 
+  end procedure AffirmIfDiff ;   
 
   ------------------------------------------------------------
   procedure SetAlertLogJustify is
@@ -2336,18 +2856,18 @@ package body AlertLogPkg is
   end function GetGlobalAlertEnable ;
   
   ------------------------------------------------------------
-  procedure IncAffirmCheckCount is 
+  procedure IncAffirmCount is 
   ------------------------------------------------------------
   begin
-    AlertLogStruct.IncAffirmCheckCount ;
-  end procedure IncAffirmCheckCount ;
+    AlertLogStruct.IncAffirmCount ;
+  end procedure IncAffirmCount ;
 
   ------------------------------------------------------------
-  impure function GetAffirmCheckCount return natural is
+  impure function GetAffirmCount return natural is
   ------------------------------------------------------------
   begin
-    return AlertLogStruct.GetAffirmCheckCount ;
-  end function GetAffirmCheckCount ;
+    return AlertLogStruct.GetAffirmCount ;
+  end function GetAffirmCount ;
 
 --??  ------------------------------------------------------------
 --??  procedure IncAffirmPassCount is
@@ -2447,20 +2967,6 @@ package body AlertLogPkg is
     return AlertLogStruct.GetLogEnable(LOG_DEFAULT_ID, Level) ;
   end function GetLogEnable ; 
 
-  ------------------------------------------------------------
-  impure function IsLoggingEnabled(AlertLogID : AlertLogIDType ; Level : LogType) return boolean is
-  ------------------------------------------------------------
-  begin
-    return AlertLogStruct.GetLogEnable(AlertLogID, Level) ;
-  end function IsLoggingEnabled ; 
-    
-  ------------------------------------------------------------
-  impure function IsLoggingEnabled(Level : LogType) return boolean is
-  ------------------------------------------------------------
-  begin
-    return AlertLogStruct.GetLogEnable(LOG_DEFAULT_ID, Level) ;
-  end function IsLoggingEnabled ; 
-    
   ------------------------------------------------------------
   procedure ReportLogEnables is
   ------------------------------------------------------------
@@ -2728,5 +3234,78 @@ package body AlertLogPkg is
     end loop ;
     return aA ; 
   end function PathTail ; 
- 
+  
+  --  ------------------------------------------------------------
+  -- Deprecated 
+  --
+  
+  ------------------------------------------------------------
+  -- deprecated
+  procedure AlertIf( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
+  begin
+    AlertIf( AlertLogID, condition, Message, Level) ; 
+  end procedure AlertIf ; 
+
+  ------------------------------------------------------------
+  -- deprecated
+  impure function  AlertIf( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  begin
+    return AlertIf( AlertLogID, condition, Message, Level) ; 
+  end function AlertIf ;  
+  
+  ------------------------------------------------------------
+  -- deprecated
+  procedure AlertIfNot( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
+  begin
+    AlertIfNot( AlertLogID, condition, Message, Level) ; 
+  end procedure AlertIfNot ; 
+
+  ------------------------------------------------------------
+  -- deprecated
+  impure function  AlertIfNot( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  begin
+    return AlertIfNot( AlertLogID, condition, Message, Level) ; 
+  end function AlertIfNot ;    
+
+  ------------------------------------------------------------
+  -- deprecated
+  procedure AffirmIf(
+    AlertLogID   : AlertLogIDType ;
+    condition    : boolean ;
+    Message      : string ;
+    LogLevel     : LogType  ;  -- := PASSED
+    AlertLevel   : AlertType := ERROR
+  ) is
+  begin
+    AlertLogStruct.IncAffirmCount ; -- increment check count
+    if condition then
+      -- passed
+      AlertLogStruct.Log(AlertLogID, Message, LogLevel) ; -- call log
+--      AlertLogStruct.IncAffirmPassCount ; -- increment pass & check count
+    else
+      AlertLogStruct.Alert(AlertLogID, Message, AlertLevel) ; -- signal failure
+    end if ;
+  end procedure AffirmIf ;
+
+  ------------------------------------------------------------
+  -- deprecated
+  procedure AffirmIf( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; AlertLevel : AlertType ) is
+  begin
+    AffirmIf(AlertLogID, condition, Message, PASSED, AlertLevel) ; 
+  end procedure AffirmIf ;
+
+  ------------------------------------------------------------
+  -- deprecated
+  procedure AffirmIf(condition : boolean ; Message : string ;  LogLevel : LogType  ; AlertLevel : AlertType := ERROR) is
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, condition, Message, LogLevel, AlertLevel) ; 
+  end procedure AffirmIf;  
+  
+  ------------------------------------------------------------
+  -- deprecated
+  procedure AffirmIf(condition : boolean ; Message : string ;  AlertLevel : AlertType ) is
+  begin
+    AffirmIf(ALERT_DEFAULT_ID, condition, Message, PASSED, AlertLevel) ; 
+  end procedure AffirmIf;  
+
 end package body AlertLogPkg ;

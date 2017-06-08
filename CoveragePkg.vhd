@@ -46,6 +46,9 @@
 --    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
 --    03/2016   2016.03    Added GetBinName(Index) to retrieve a bin's name
 --    11/2016   2016.11    Added VendorCovApiPkg and calls to bind it in.
+--    05/2017   2017.05    Updated WriteBin name printing
+--                         ClearCov (deprecates SetCovZero)
+--                         
 --
 --  Development Notes:
 --      The coverage procedures are named ICover to avoid conflicts with
@@ -56,7 +59,7 @@
 --      composites with unconstrained elements
 --
 --
---  Copyright (c) 2010 - 2016 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2010 - 2017 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -385,6 +388,7 @@ package CoveragePkg is
     procedure ICover( CovPoint : integer) ;
     procedure ICover( CovPoint : integer_vector) ;
 
+    procedure ClearCov ;
     procedure SetCovZero ;
 
     impure function IsInitialized return boolean ;
@@ -1193,6 +1197,18 @@ package body CoveragePkg is
     end loop ;
     return aMessage ;
   end function GetWord ;
+  
+    ------------------------------------------------------------
+    -- Local -- long term move to MessagePkg?   Used by WriteCovDb
+    procedure WriteMessage ( file f : text ; variable Message : inout MessagePType ) is
+    ------------------------------------------------------------
+      variable buf : line ;
+    begin
+      for i in 1 to Message.GetCount loop
+        write(buf, string'(Message.Get(i))) ;
+        writeline(f, buf) ;
+      end loop ;
+    end procedure WriteMessage ;
 
   ------------------------------------------------------------------------------------------
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1445,19 +1461,27 @@ package body CoveragePkg is
     procedure WriteBinName ( file f : text ; S : string ; Prefix : string := "%% " ) is
     ------------------------------------------------------------
       variable MessageCount : integer ;
+      variable MessageIndex : integer := 1 ;
       variable buf : line ;
     begin
       MessageCount := CovMessageVar.GetCount ;
       if MessageCount = 0 then
-        if Prefix'length + S'length > 0 then  -- everything except WriteCovDb
-          write(buf, Prefix & S & GetCovModelName) ; -- Print name when no message
-          writeline(f, buf) ;
-          -- write(f, Prefix & S & LF);
-        end if ;
-      else
-        write(buf, Prefix & S & string'(CovMessageVar.Get(1))) ;
+        write(buf, Prefix & S & GetCovModelName) ; -- Print name when no message
         writeline(f, buf) ;
-        for i in 2 to MessageCount loop
+      else
+        if CovNameVar.IsSet then
+          -- Print Name if set
+          write(buf, Prefix & S & CovNameVar.Get) ;
+        elsif AlertLogIDVar /= OSVVM_ALERTLOG_ID then
+          -- otherwise Print AlertLogName if it is set
+          write(buf, Prefix & S & GetAlertLogName(AlertLogIDVar)) ;
+        else 
+          -- otherwise print the first line of the message
+          MessageIndex := 2 ; 
+          write(buf, Prefix & S & string'(CovMessageVar.Get(1))) ;
+        end if ; 
+        writeline(f, buf) ;
+        for i in MessageIndex to MessageCount loop
           write(buf, Prefix & string'(CovMessageVar.Get(i))) ;
           writeline(f, buf) ;
         end loop ;
@@ -2103,7 +2127,7 @@ package body CoveragePkg is
 
 
     ------------------------------------------------------------
-    procedure SetCovZero is
+    procedure ClearCov is
     ------------------------------------------------------------
     begin
       for i in 1 to NumBins loop
@@ -2112,8 +2136,15 @@ package body CoveragePkg is
         CovBinPtr(i).OrderCount := 0 ;
       end loop ;
       OrderCount := 0 ;
-    end procedure SetCovZero ;
+    end procedure ClearCov ;
 
+    ------------------------------------------------------------
+    -- deprecated
+    procedure SetCovZero is
+    ------------------------------------------------------------
+    begin
+      ClearCov ;
+    end procedure SetCovZero ;
 
     ------------------------------------------------------------
     impure function IsInitialized return boolean is
@@ -2924,7 +2955,7 @@ package body CoveragePkg is
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteBin (
           WritePassFail   => WritePassFail,
           WriteBinInfo    => WriteBinInfo,
@@ -2990,7 +3021,7 @@ package body CoveragePkg is
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         UsingLocalFile := TRUE ; 
         WriteBin (
           FileName        => FileName,
@@ -3051,7 +3082,7 @@ package body CoveragePkg is
     procedure DumpBin (LogLevel : LogType := DEBUG) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         if WriteBinFileInit then
           -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
           DumpBin(WriteBinFile) ;
@@ -3136,7 +3167,7 @@ package body CoveragePkg is
     procedure WriteCovHoles ( LogLevel : LogType := ALWAYS ) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteCovHoles(CovTarget) ; 
       end if;
     end procedure WriteCovHoles ;
@@ -3146,7 +3177,7 @@ package body CoveragePkg is
     procedure WriteCovHoles ( LogLevel : LogType ; PercentCov : real ) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteCovHoles(PercentCov) ;
       end if;
     end procedure WriteCovHoles ;
@@ -3167,7 +3198,7 @@ package body CoveragePkg is
     procedure WriteCovHoles ( LogLevel : LogType ; FileName : string;  OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteCovHoles(FileName, OpenKind) ;
       end if;
     end procedure WriteCovHoles ;
@@ -3188,7 +3219,7 @@ package body CoveragePkg is
     procedure WriteCovHoles ( LogLevel : LogType ; FileName : string;  PercentCov : real ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteCovHoles(FileName, PercentCov, OpenKind) ;
       end if;
     end procedure WriteCovHoles ;
@@ -3550,7 +3581,7 @@ package body CoveragePkg is
       writeline(CovDbFile, buf) ;
       write(buf, CovMessageVar.GetCount ) ;
       writeline(CovDbFile, buf) ;
-      WriteBinName(CovDbFile, "", "") ;
+      WriteMessage(CovDbFile, CovMessageVar) ;
     end procedure WriteCovDbVars ;
 
 
@@ -4085,7 +4116,7 @@ package body CoveragePkg is
     procedure WriteCovHoles ( LogLevel : LogType ; AtLeast : integer ) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteCovHoles(AtLeast) ; 
       end if;
     end procedure WriteCovHoles ;
@@ -4105,7 +4136,7 @@ package body CoveragePkg is
     procedure WriteCovHoles ( LogLevel : LogType ; FileName : string;  AtLeast : integer ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
-      if IsLoggingEnabled(AlertLogIDVar, LogLevel) then
+      if IsLogEnabled(AlertLogIDVar, LogLevel) then
         WriteCovHoles(FileName, AtLeast, OpenKind) ;
       end if;
     end procedure WriteCovHoles ;
