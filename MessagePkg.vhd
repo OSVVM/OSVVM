@@ -68,7 +68,7 @@ package MessagePkg is
     procedure Deallocate ; -- clear message
         
   end protected MessagePType ;
-
+  
 end package MessagePkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -161,4 +161,5 @@ package body MessagePkg is
     end procedure Clear ;
 
   end protected body MessagePType ;
+  
 end package body MessagePkg ;
