@@ -69,7 +69,8 @@ use ieee.numeric_std.all ;
 
 package AlertLogPkg is
 
-  subtype  AlertLogIDType   is integer ;
+  type     AlertLogIDType       is range integer'low to integer'high ;
+  type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;  
   type     AlertType        is (FAILURE, ERROR, WARNING) ;  -- NEVER
   subtype  AlertIndexType   is AlertType range FAILURE to WARNING ;
   type     AlertCountType   is array (AlertIndexType) of integer ;
@@ -458,12 +459,12 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     procedure SetAlertLogName(Name : string ) ;
-    procedure SetNumAlertLogIDs (NewNumAlertLogIDs : integer) ;
+    procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
     impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
     impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
-    procedure Initialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) ;
+    procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) ;
     procedure Deallocate ;
 
     ------------------------------------------------------------
@@ -1061,7 +1062,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- PT Local  
     -- Construct initial data structure
-    procedure LocalInitialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
+    procedure LocalInitialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) is
     ------------------------------------------------------------
     begin
       if NumAllocatedAlertLogIDsVar /= 0 then
@@ -1091,7 +1092,7 @@ package body AlertLogPkg is
     
     ------------------------------------------------------------
     -- Construct initial data structure
-    procedure Initialize(NewNumAlertLogIDs : integer := MIN_NUM_AL_IDS) is
+    procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) is
     ------------------------------------------------------------
     begin
       LocalInitialize(NewNumAlertLogIDs) ;
@@ -1146,7 +1147,7 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local.
-    procedure GrowAlertStructure (NewNumAlertLogIDs : integer) is
+    procedure GrowAlertStructure (NewNumAlertLogIDs : AlertLogIDType) is
     ------------------------------------------------------------
       variable oldAlertLogPtr : AlertLogArrayPtrType ;
     begin
@@ -1165,7 +1166,7 @@ package body AlertLogPkg is
     -- Sets a AlertLogPtr to a particular size
     -- Use for small bins to save space or large bins to
     -- suppress the resize and copy as a CovBin autosizes.
-    procedure SetNumAlertLogIDs (NewNumAlertLogIDs : integer) is
+    procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) is
     ------------------------------------------------------------
       variable oldAlertLogPtr : AlertLogArrayPtrType ;
     begin

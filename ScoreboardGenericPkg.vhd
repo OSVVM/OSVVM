@@ -448,12 +448,15 @@ package body ScoreboardGenericPkg is
 
     type IntegerArrayType is array (integer range <>) of Integer ;  
     type IntegerArrayPointerType is access IntegerArrayType ; 
+    type AlertLogIDArrayType is array (integer range <>) of AlertLogIDType ;  
+    type AlertLogIDArrayPointerType is access AlertLogIDArrayType ; 
+
     
     variable ErrCntVar       : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable DropCountVar    : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable ItemNumberVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable CheckCountVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable AlertLogIDVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
+    variable AlertLogIDVar   : AlertLogIDArrayPointerType := new AlertLogIDArrayType'(1 => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
 
     variable NameVar         : NamePType ;
     variable ReportModeVar   : ScoreboardReportType ; 
@@ -509,7 +512,8 @@ package body ScoreboardGenericPkg is
     procedure SetArrayIndex(L, R : integer) is
     ------------------------------------------------------------
       variable OldHeadPointer, OldTailPointer, OldPopListPointer : ListArrayPointerType ;
-      variable OldErrCnt, OldDropCount, OldItemNumber, OldCheckCount, OldAlertLogIDVar : IntegerArrayPointerType ;
+      variable OldErrCnt, OldDropCount, OldItemNumber, OldCheckCount : IntegerArrayPointerType ;
+      variable OldAlertLogIDVar : AlertLogIDArrayPointerType ;
       variable Min, Max, Len, OldLen, OldMax : integer ; 
     begin
       Min := minimum(L, R) ; 
@@ -571,7 +575,7 @@ package body ScoreboardGenericPkg is
         end if ; 
 
         OldAlertLogIDVar := AlertLogIDVar ; 
-        AlertLogIDVar := new IntegerArrayType'(Min to Max => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
+        AlertLogIDVar := new AlertLogIDArrayType'(Min to Max => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
         if OldAlertLogIDVar /= NULL then 
           AlertLogIDVar(Min to OldMax) := OldAlertLogIDVar.all ; 
           Deallocate(OldAlertLogIDVar) ; 
