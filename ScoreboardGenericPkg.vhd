@@ -208,27 +208,27 @@ package ScoreboardGenericPkg is
       variable Item   : out  ExpectedType
     ) ;
 
---    ------------------------------------------------------------
---    -- Pop the top item (FIFO) from the scoreboard/FIFO
---    -- Function form supports chaining of operations
---    -- In 2013, this caused overloading issues in some simulators, will retest later
---
---      -- Simple Scoreboard, no tag
---      impure function Pop return ExpectedType ;
---      
---      -- Simple Tagged Scoreboard
---      impure function Pop (
---        constant Tag : in  string       
---      ) return ExpectedType ;
---  
---      -- Array of Scoreboards, no tag
---      impure function Pop (Index : integer) return ExpectedType ;
---  
---      -- Array of Tagged Scoreboards
---      impure function Pop (
---        constant Index  : in  integer ;
---        constant Tag    : in  string       
---      ) return ExpectedType ;
+    ------------------------------------------------------------
+    -- Pop the top item (FIFO) from the scoreboard/FIFO
+    -- Function form supports chaining of operations
+    -- In 2013, this caused overloading issues in some simulators, will retest later
+
+      -- Simple Scoreboard, no tag
+      impure function Pop return ExpectedType ;
+      
+      -- Simple Tagged Scoreboard
+      impure function Pop (
+        constant Tag : in  string       
+      ) return ExpectedType ;
+  
+      -- Array of Scoreboards, no tag
+      impure function Pop (Index : integer) return ExpectedType ;
+  
+      -- Array of Tagged Scoreboards
+      impure function Pop (
+        constant Index  : in  integer ;
+        constant Tag    : in  string       
+      ) return ExpectedType ;
 
     ------------------------------------------------------------
     -- Empty - check to see if scoreboard is empty
