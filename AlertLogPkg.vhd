@@ -69,7 +69,8 @@ use ieee.numeric_std.all ;
 
 package AlertLogPkg is
 
-  type     AlertLogIDType       is range integer'low to integer'high ;
+--  type     AlertLogIDType       is range integer'low to integer'high ; -- next revsion
+  subtype     AlertLogIDType       is integer ;
   type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;  
   type     AlertType        is (FAILURE, ERROR, WARNING) ;  -- NEVER
   subtype  AlertIndexType   is AlertType range FAILURE to WARNING ;
@@ -3227,13 +3228,17 @@ package body AlertLogPkg is
   function PathTail (A : string) return string is 
   ------------------------------------------------------------
     alias aA : string(1 to A'length) is A ;
+    variable LenA : integer := A'length ;
   begin
-    for i in aA'length - 1 downto 1 loop 
+    if aA(LenA) = ':' then 
+      LenA := LenA - 1 ; 
+    end if ;
+    for i in LenA downto 1 loop 
       if aA(i) = ':' then 
-        return aA(i+1 to aA'length-1)  ; 
+        return aA(i+1 to LenA)  ; 
       end if ; 
     end loop ;
-    return aA ; 
+    return aA(1 to LenA) ; 
   end function PathTail ; 
   
   --  ------------------------------------------------------------
