@@ -534,7 +534,8 @@ package body TbUtilPkg is
       iDelayVal := DelayVal - t_sim_resolution ; 
     else
       iDelayVal := 0 sec ; 
-      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns") ;
+      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, 
+         "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns", WARNING) ;
     end if ;
     Sig <= not Sig after iDelayVal ;
   end procedure Toggle ;
