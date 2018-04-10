@@ -22,9 +22,11 @@
 --    10/2013   2013.10    Split out Text Utilities
 --    11/2016   2016.11    First Public Release Version
 --                         Updated naming for consistency.
+--    04/2018   2018.04    Added RequestTransaction, WaitForTransaction, Toggle, WaitForToggle for bit.
+--                         Added Increment and WaitForToggle for integer.
 --
 --
---  Copyright (c) 1999 - 2016 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 1999 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and 
 --  distributed without restriction.   
@@ -75,6 +77,11 @@ package TbUtilPkg is
     signal Rdy  : Out std_logic ;
     signal Ack  : In  std_logic 
   ) ;
+
+  procedure RequestTransaction (
+    signal Rdy  : Out bit ;
+    signal Ack  : In  bit 
+  ) ;
   
   ------------------------------------------------------------
   -- WaitForTransaction
@@ -86,6 +93,13 @@ package TbUtilPkg is
     signal Rdy  : In  std_logic ;
     signal Ack  : Out std_logic 
   ) ;
+  
+  procedure WaitForTransaction (
+    signal Clk  : In  std_logic ;
+    signal Rdy  : In  bit ;
+    signal Ack  : Out bit 
+  ) ;
+
 
   -- Variation for model that stops waiting when TimeOut is asserted
   -- Intended for models that need to switch between instruction streams
@@ -131,6 +145,10 @@ package TbUtilPkg is
   procedure ToggleHS ( signal Sig : InOut bit ) ;
   function  IsToggle ( signal Sig : In bit ) return boolean ; 
   procedure WaitForToggle ( signal Sig : In bit ) ;
+  
+  -- Integer type versions
+  procedure Increment ( signal Sig : InOut integer ; constant RollOverValue : in integer := 0) ;
+  procedure WaitForToggle ( signal Sig : In integer ) ;
 
 
   ------------------------------------------------------------
@@ -313,7 +331,22 @@ package body TbUtilPkg is
     Rdy        <= '0' ;
     -- Transaction Done
     wait until Ack = '1' ;        
-  end procedure ;
+  end procedure RequestTransaction ;
+
+  procedure RequestTransaction (
+    signal Rdy  : Out bit ;
+    signal Ack  : In  bit 
+  ) is
+  begin
+    -- Record contains new transaction
+    Rdy        <= '1' ;
+    -- Find Ack low = '0' 
+    wait until Ack = '0' ;
+    -- Prepare for Next Transaction
+    Rdy        <= '0' ;
+    -- Transaction Done
+    wait until Ack = '1' ;        
+  end procedure RequestTransaction ;
 
 
   ------------------------------------------------------------
@@ -343,8 +376,32 @@ package body TbUtilPkg is
     end if ; 
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
-  end procedure ;
+  end procedure WaitForTransaction ;
 
+  procedure WaitForTransaction (
+    signal Clk  : In  std_logic ;
+    signal Rdy  : In  bit ;
+    signal Ack  : Out bit 
+  ) is
+    variable AckTime : time ; 
+  begin
+    -- End of Previous Cycle.  Signal Done
+    Ack        <= '1' ;               --  #6
+    AckTime    := NOW ; 
+    -- Find Start of Transaction
+    if Rdy /= '1' then                --   #2
+      wait until Rdy = '1' ; 
+    else
+      wait for 0 ns ; -- allow Ack to update
+    end if ; 
+    -- align to clock if needed (not back-to-back transactions)
+    if NOW /= AckTime then 
+      wait until Clk = CLK_ACTIVE ;
+    end if ; 
+    -- Model active and owns the record
+    Ack        <= '0' ;               --  #3
+  end procedure WaitForTransaction ;
+  
   -- Variation for model that stops waiting when TimeOut is asserted
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
@@ -376,14 +433,14 @@ package body TbUtilPkg is
       -- Model active and owns the record
       Ack        <= '0' ;             --  #3
     end if ;
-  end procedure ;
+  end procedure WaitForTransaction ;
   
   -- Set Ack to Model starting value
   -- Pairs with WaitForTransactionOrIrq above
   procedure StartTransaction  ( signal Ack : Out std_logic ) is
   begin
     Ack        <= '0' ;
-  end procedure ; 
+  end procedure StartTransaction ; 
 
   -- Set Ack to Model finishing value
   -- Pairs with WaitForTransactionOrIrq above
@@ -391,7 +448,7 @@ package body TbUtilPkg is
   begin
     -- End of Cycle
     Ack        <= '1' ;
-  end procedure ; 
+  end procedure FinishTransaction ; 
 
   -- If a transaction is pending, return true
   --   Used to detect presence of transaction stream, 
@@ -401,7 +458,7 @@ package body TbUtilPkg is
   ) return boolean is
   begin
     return Rdy = '1' ; 
-  end function ;
+  end function TransactionPending ;
 
   -- Variation for clockless models
   procedure WaitForTransaction (
@@ -420,7 +477,7 @@ package body TbUtilPkg is
     end if ; 
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
-  end procedure ;
+  end procedure WaitForTransaction ;
 
 
   ------------------------------------------------------------
@@ -440,67 +497,88 @@ package body TbUtilPkg is
   ) is
     variable iDelayVal : time ;
   begin
-    iDelayVal := DelayVal ; 
-    if iDelayVal > t_sim_resolution then 
-      iDelayVal := iDelayVal - t_sim_resolution ; 
+    if DelayVal > t_sim_resolution then 
+      iDelayVal := DelayVal - t_sim_resolution ; 
+    else
+      iDelayVal := 0 sec ; 
+      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns") ;
     end if ;
     Sig <= toggle_sl_table(Sig) after iDelayVal ;
-  end procedure ;
+  end procedure Toggle ;
 
   procedure Toggle ( signal Sig : InOut std_logic ) is
   begin
     Sig <= toggle_sl_table(Sig) ;
-  end procedure ;
+  end procedure Toggle ;
   
   procedure ToggleHS ( signal Sig : InOut std_logic ) is
   begin
     Sig    <= toggle_sl_table(Sig) ;
     wait for 0 ns ;  -- Sig toggles
     wait for 0 ns ;  -- new values updated into record
-  end procedure ;
+  end procedure ToggleHS ;
 
   function IsToggle ( signal Sig : In std_logic ) return boolean is 
   begin
     return Sig'event ; 
-  end function ;
+  end function IsToggle ;
 
   procedure WaitForToggle ( signal Sig : In std_logic ) is
   begin
     wait on Sig ;
-  end procedure ;
+  end procedure WaitForToggle ;
 
   -- Bit type versions
   procedure Toggle ( signal Sig : InOut bit ; constant DelayVal : time ) is
     variable iDelayVal : time ;
   begin
-    iDelayVal := DelayVal ; 
-    if iDelayVal > t_sim_resolution then 
-      iDelayVal := iDelayVal - t_sim_resolution ; 
+    if DelayVal > t_sim_resolution then 
+      iDelayVal := DelayVal - t_sim_resolution ; 
+    else
+      iDelayVal := 0 sec ; 
+      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, 
+         "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns", WARNING) ;
     end if ;
     Sig <= not Sig after iDelayVal ;
-  end procedure ;
+  end procedure Toggle ;
 
   procedure Toggle ( signal Sig : InOut bit ) is
   begin
     Sig <= not Sig ;
-  end procedure ;
+  end procedure Toggle ;
   
   procedure ToggleHS ( signal Sig : InOut bit ) is
   begin
     Sig    <= not Sig ;
     wait for 0 ns ;  -- Sig toggles
     wait for 0 ns ;  -- new values updated into record
-  end procedure ;
+  end procedure ToggleHS ;
 
   function IsToggle ( signal Sig : In bit ) return boolean is 
   begin
     return Sig'event ; 
-  end function ;
+  end function IsToggle ;
 
   procedure WaitForToggle ( signal Sig : In bit ) is
   begin
     wait on Sig ;
-  end procedure ;
+  end procedure WaitForToggle ;
+  
+  -- Integer type versions
+  procedure Increment ( signal Sig : InOut integer ; constant RollOverValue : in integer := 0) is
+  begin
+    if Sig = integer'high then 
+      Sig <= RollOverValue ; 
+    else
+      Sig <= Sig + 1 ;
+    end if ; 
+  end procedure Increment ;
+  
+  procedure WaitForToggle ( signal Sig : In integer ) is
+  begin
+    wait on Sig ;
+  end procedure WaitForToggle ;
+  
   
   
   ------------------------------------------------------------
@@ -551,7 +629,7 @@ package body TbUtilPkg is
       if s(i) /= integer'left then 
         result := s(i) + result;
       else 
-        return integer'left ;  -- removes the initialization requirement
+        result := s(i) + 1;  -- removes the initialization requirement
       end if ;
     end loop ;
     return result ; 

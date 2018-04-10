@@ -39,9 +39,10 @@
 --                           Deallocate, Initialized, Function SetName
 --    11/2016    2016.11     Released as part of OSVVM 
 --    05/2017    2017.05     First print Actual then only print Expected if mis-match  
+--    04/2018    2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
 --
 --
---  Copyright (c) 2006 - 2016 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2006 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.
@@ -208,27 +209,27 @@ package ScoreboardGenericPkg is
       variable Item   : out  ExpectedType
     ) ;
 
---    ------------------------------------------------------------
---    -- Pop the top item (FIFO) from the scoreboard/FIFO
---    -- Function form supports chaining of operations
---    -- In 2013, this caused overloading issues in some simulators, will retest later
---
---      -- Simple Scoreboard, no tag
---      impure function Pop return ExpectedType ;
---      
---      -- Simple Tagged Scoreboard
---      impure function Pop (
---        constant Tag : in  string       
---      ) return ExpectedType ;
---  
---      -- Array of Scoreboards, no tag
---      impure function Pop (Index : integer) return ExpectedType ;
---  
---      -- Array of Tagged Scoreboards
---      impure function Pop (
---        constant Index  : in  integer ;
---        constant Tag    : in  string       
---      ) return ExpectedType ;
+    ------------------------------------------------------------
+    -- Pop the top item (FIFO) from the scoreboard/FIFO
+    -- Function form supports chaining of operations
+    -- In 2013, this caused overloading issues in some simulators, will retest later
+
+      -- Simple Scoreboard, no tag
+      impure function Pop return ExpectedType ;
+      
+      -- Simple Tagged Scoreboard
+      impure function Pop (
+        constant Tag : in  string       
+      ) return ExpectedType ;
+  
+      -- Array of Scoreboards, no tag
+      impure function Pop (Index : integer) return ExpectedType ;
+  
+      -- Array of Tagged Scoreboards
+      impure function Pop (
+        constant Index  : in  integer ;
+        constant Tag    : in  string       
+      ) return ExpectedType ;
 
     ------------------------------------------------------------
     -- Empty - check to see if scoreboard is empty
@@ -448,12 +449,15 @@ package body ScoreboardGenericPkg is
 
     type IntegerArrayType is array (integer range <>) of Integer ;  
     type IntegerArrayPointerType is access IntegerArrayType ; 
+    type AlertLogIDArrayType is array (integer range <>) of AlertLogIDType ;  
+    type AlertLogIDArrayPointerType is access AlertLogIDArrayType ; 
+
     
     variable ErrCntVar       : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable DropCountVar    : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable ItemNumberVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable CheckCountVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable AlertLogIDVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
+    variable AlertLogIDVar   : AlertLogIDArrayPointerType := new AlertLogIDArrayType'(1 => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
 
     variable NameVar         : NamePType ;
     variable ReportModeVar   : ScoreboardReportType ; 
@@ -509,7 +513,8 @@ package body ScoreboardGenericPkg is
     procedure SetArrayIndex(L, R : integer) is
     ------------------------------------------------------------
       variable OldHeadPointer, OldTailPointer, OldPopListPointer : ListArrayPointerType ;
-      variable OldErrCnt, OldDropCount, OldItemNumber, OldCheckCount, OldAlertLogIDVar : IntegerArrayPointerType ;
+      variable OldErrCnt, OldDropCount, OldItemNumber, OldCheckCount : IntegerArrayPointerType ;
+      variable OldAlertLogIDVar : AlertLogIDArrayPointerType ;
       variable Min, Max, Len, OldLen, OldMax : integer ; 
     begin
       Min := minimum(L, R) ; 
@@ -571,7 +576,7 @@ package body ScoreboardGenericPkg is
         end if ; 
 
         OldAlertLogIDVar := AlertLogIDVar ; 
-        AlertLogIDVar := new IntegerArrayType'(Min to Max => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
+        AlertLogIDVar := new AlertLogIDArrayType'(Min to Max => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
         if OldAlertLogIDVar /= NULL then 
           AlertLogIDVar(Min to OldMax) := OldAlertLogIDVar.all ; 
           Deallocate(OldAlertLogIDVar) ; 
