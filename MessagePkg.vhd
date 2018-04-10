@@ -26,9 +26,10 @@
 --    07/2014:  2014.07    Moved specialization required by CoveragePkg to CoveragePkg
 --    07/2014:  2014.07a   Removed initialized pointers which can lead to memory leaks.
 --    01/2015:  2015.01    Removed initialized parameter from Get
+--    04/2018:  2018.04    Minor updates to alert message
 --
 --
---  Copyright (c) 2010 - 2015 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2010 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.

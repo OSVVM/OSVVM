@@ -39,9 +39,10 @@
 --                           Deallocate, Initialized, Function SetName
 --    11/2016    2016.11     Released as part of OSVVM 
 --    05/2017    2017.05     First print Actual then only print Expected if mis-match  
+--    04/2018    2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
 --
 --
---  Copyright (c) 2006 - 2016 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2006 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.

@@ -48,7 +48,9 @@
 --    11/2016   2016.11    Added VendorCovApiPkg and calls to bind it in.
 --    05/2017   2017.05    Updated WriteBin name printing
 --                         ClearCov (deprecates SetCovZero)
---    03/2018   2018.03    Updated PercentCov calculation so AtLeast of <= 0 is correct
+--    04/2018   2018.04    Updated PercentCov calculation so AtLeast of <= 0 is correct
+--                         String' Fix for GHDL
+--                         Removed Deprecated procedure Increment - see TbUtilPkg as it moved there
 --                         
 --
 --  Development Notes:
@@ -60,7 +62,7 @@
 --      composites with unconstrained elements
 --
 --
---  Copyright (c) 2010 - 2017 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2010 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.

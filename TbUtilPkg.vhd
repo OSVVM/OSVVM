@@ -22,9 +22,11 @@
 --    10/2013   2013.10    Split out Text Utilities
 --    11/2016   2016.11    First Public Release Version
 --                         Updated naming for consistency.
+--    04/2018   2018.04    Added RequestTransaction, WaitForTransaction, Toggle, WaitForToggle for bit.
+--                         Added Increment and WaitForToggle for integer.
 --
 --
---  Copyright (c) 1999 - 2016 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 1999 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and 
 --  distributed without restriction.   

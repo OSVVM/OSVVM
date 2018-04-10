@@ -35,9 +35,10 @@
 --    05/2017    2017.05    AffirmIfEqual, AffirmIfDiff, 
 --                          GetAffirmCount (deprecates GetAffirmCheckCount), IncAffirmCount (deprecates IncAffirmCheckCount), 
 --                          IsAlertEnabled (alias), IsLogEnabled (alias)
+--    04/2018    2018.04    Fix to PathTail.  Prep to change AlertLogIDType to a type. 
 --                         
 --
---  Copyright (c) 2015 - 2017 by SynthWorks Design Inc.  All rights reserved.
+--  Copyright (c) 2015 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
 --  Verbatim copies of this source file may be used and
 --  distributed without restriction.

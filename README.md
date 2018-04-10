@@ -16,11 +16,13 @@
    For current release information see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)
    
    The following has a bad habit of falling behind the current release:
+ - Apr-2018 - **2018.04**  Minor updates to AlertLogPkg, CoveragePkg, ScoreboardGenericPkg, TbUtilPkg, MessagePkg
+ - May-2017 - **2017.05**  Minor additions to AlertLogPkg, CoveragePkg, and ScoreboardGenericPkg
  - Nov-2016 - **2016.11**  Added VendorCovApiPkg, ScoreboardGenericPkg, TbUtilPkg, ResolutionPkg
  - Jan-2016 - **2016.01**  Fix limit of 32 AlertLogIDs, Updates for GHDL (Purity and L.all(L'left)), 
  - Jul-2015 - **2015.06**  Addition of MemoryPkg
  - Mar-2015 - **2015.03**  Bug fixes to AlertLogPkg (primarily ClearAlerts, but also matching names)
- - Jan-2015   **2015.01**  Not here. Addition of AlertLogPkg, TranscriptPkg,OsvvmContext, and OsvvmGlobalPkg.  
+ - Jan-2015 - **2015.01**  Not here. Addition of AlertLogPkg, TranscriptPkg,OsvvmContext, and OsvvmGlobalPkg.  
  - Dec-2014 - **2014.07a** Fixed memory leak in CoveragePkg.Deallocate.  Replaced initialized pointers with initialization functions
  - Jul-2014 - **2014.07**  Not here. Added names to coverage bins.  Added option during WriteBin so that a bin prints PASSED if its count is greater than the coverage goal, otherwise FAILED.  
  - Jan-2014 - **2014.01**  RandomPkg: RandTime, RandIntV, RandRealV, RandTimeV.  CoveragePkg:  Support merging of coverage bins.  
