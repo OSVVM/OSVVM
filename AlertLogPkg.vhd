@@ -2497,8 +2497,8 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
-      Message & " Received : " & to_string(Received), 
-      " ?= Expected : " & to_string(Expected), 
+      Message & " Received : " & to_hstring(Received), 
+      " ?= Expected : " & to_hstring(Expected), 
       Enable) ; 
   end procedure AffirmIfEqual ; 
   
@@ -2507,8 +2507,8 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
-      Message & " Received : " & to_string(Received), 
-      " ?= Expected : " & to_string(Expected), 
+      Message & " Received : " & to_hstring(Received), 
+      " ?= Expected : " & to_hstring(Expected), 
       Enable) ; 
   end procedure AffirmIfEqual ; 
   
@@ -2517,8 +2517,8 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected), 
-      Message & " Received : " & to_string(Received), 
-      " ?= Expected : " & to_string(Expected), 
+      Message & " Received : " & to_hstring(Received), 
+      " ?= Expected : " & to_hstring(Expected), 
       Enable) ; 
   end procedure AffirmIfEqual ; 
   

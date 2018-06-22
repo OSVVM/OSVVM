@@ -109,6 +109,29 @@ package ResolutionPkg is
   subtype  boolean_vector_max is (resolved_max) boolean_vector ; 
   type     boolean_vector_max_c is array (natural range <>) of boolean_max ; -- for non VHDL-2008  
 
+  --
+  -- ToTransaction and FromTransaction
+  -- Convert from Common types to their corresponding _max_c type
+  --
+  function Extend(A: std_logic_vector; Size : natural) return std_logic_vector ;
+  function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector ;
+
+  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
+  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max_c ;
+  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
+  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
+  function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
+  function FromTransaction (A: std_logic_vector_max_c) return integer ;
+  
+  --
+  -- ToTransaction and FromTransaction for _max provided to support a 
+  -- common methodology, conversions are not needed
+  function ToTransaction(A : std_logic_vector) return std_logic_vector_max ;
+  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max ;
+  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max ;
+  function FromTransaction (A: std_logic_vector_max) return std_logic_vector ;
+  function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector ;
+  function FromTransaction (A: std_logic_vector_max) return integer ;    
   
   -- return sum of values that /= type'left
   -- No initializations required on ports, default of type'left is ok
@@ -158,6 +181,87 @@ package ResolutionPkg is
 end package ResolutionPkg ;
 package body ResolutionPkg is 
 
+  --
+  -- ToTransaction and FromTransaction
+  -- Convert from Common types to their corresponding _max_c type
+  --
+  function Extend(A: std_logic_vector; Size : natural) return std_logic_vector is
+    variable extA : std_logic_vector(Size downto 1) := (others => '0') ;
+  begin
+    extA(A'length downto 1) := A ;
+    return extA ;
+  end function Extend ;
+
+  function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector is
+    alias aA : std_logic_vector(A'length-1 downto 0) is A ;
+  begin
+    return aA(Size-1 downto 0) ;
+  end function Reduce ;
+
+  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c is
+  begin
+    return std_logic_vector_max_c(A) ;
+  end function ToTransaction ;
+
+  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max_c is
+  begin
+    return std_logic_vector_max_c(Extend(A, Size)) ;
+  end function ToTransaction ;
+
+  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c is
+  begin
+    return std_logic_vector_max_c(to_signed(A, Size)) ;
+  end function ToTransaction ;
+
+  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector is
+  begin
+    return std_logic_vector(A) ;
+  end function FromTransaction ;
+
+  function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector is
+  begin
+    return Reduce(std_logic_vector(A), Size) ;
+  end function FromTransaction ;
+
+  function FromTransaction (A: std_logic_vector_max_c) return integer is
+  begin
+    return to_integer(signed(A)) ;
+  end function FromTransaction ;
+  
+  ----------------------
+  -- Support for _max provided to support a common methodology, 
+  -- conversions are not needed
+  function ToTransaction(A : std_logic_vector) return std_logic_vector_max is
+  begin
+    return A ;
+  end function ToTransaction ;
+
+  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max is
+  begin
+    return Extend(A, Size) ;
+  end function ToTransaction ;
+
+  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max is
+  begin
+    return std_logic_vector_max(to_signed(A, Size)) ;
+  end function ToTransaction ;
+
+  function FromTransaction (A: std_logic_vector_max) return std_logic_vector is
+  begin
+    return A ;
+  end function FromTransaction ;
+
+  function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector is
+  begin
+    return Reduce(A, Size) ;
+  end function FromTransaction ;
+
+  function FromTransaction (A: std_logic_vector_max) return integer is
+  begin
+    return to_integer(signed(A)) ;
+  end function FromTransaction ;  
+  
+  
   -- resolved_max
   -- return maximum value.  Assert FAILURE if more than 1 /= type'left
   -- No initializations required on ports, default of type'left is ok
