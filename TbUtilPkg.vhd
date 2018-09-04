@@ -24,7 +24,7 @@
 --                         Updated naming for consistency.
 --    04/2018   2018.04    Added RequestTransaction, WaitForTransaction, Toggle, WaitForToggle for bit.
 --                         Added Increment and WaitForToggle for integer.
---
+--    08/2018   2018.08    Updated WaitForTransaction to allow 0 time transactions
 --
 --  Copyright (c) 1999 - 2018 by SynthWorks Design Inc.  All rights reserved.
 --
@@ -100,16 +100,21 @@ package TbUtilPkg is
     signal Ack  : Out bit 
   ) ;
 
-
-  -- Variation for model that stops waiting when TimeOut is asserted
-  -- Intended for models that need to switch between instruction streams
-  -- such as a CPU when interrupt is pending
   procedure WaitForTransaction (
     signal   Clk       : In  std_logic ;
     signal   Rdy       : In  std_logic ;
     signal   Ack       : Out std_logic ;
     signal   TimeOut   : In  std_logic ;
     constant Polarity  : In  std_logic := '1' 
+  ) ;
+  
+  -- Variation for model that stops waiting when IntReq is asserted
+  -- Intended for models that need to switch between instruction streams
+  -- such as a CPU when interrupt is pending
+  procedure WaitForTransactionOrIrq (
+    signal Clk     : In  std_logic ;
+    signal Rdy     : In  std_logic ;
+    signal IntReq  : In  std_logic 
   ) ;
 
   -- Set Ack to Model starting value
@@ -254,16 +259,6 @@ package TbUtilPkg is
   -- Backward compatible name  
   alias SyncToClk is WaitForClock [std_logic, time] ;
 
-  ------------------------------------------------------------
-  -- Deprecated
-  -- subsumed by WaitForTransaction with Ack and TimeOut.
-  -- TimeOut works exactly like IntReq
-  ------------------------------------------------------------
-  procedure WaitForTransactionOrIrq (
-    signal Clk     : In  std_logic ;
-    signal Rdy     : In  std_logic ;
-    signal IntReq  : In  std_logic 
-  ) ;
 
   ------------------------------------------------------------
   -- Deprecated
@@ -365,10 +360,9 @@ package body TbUtilPkg is
     Ack        <= '1' ;               --  #6
     AckTime    := NOW ; 
     -- Find Start of Transaction
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
     if Rdy /= '1' then                --   #2
       wait until Rdy = '1' ; 
-    else
-      wait for 0 ns ; -- allow Ack to update
     end if ; 
     -- align to clock if needed (not back-to-back transactions)
     if NOW /= AckTime then 
@@ -376,6 +370,7 @@ package body TbUtilPkg is
     end if ; 
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
+    wait for 0 ns ; -- Allow transactions without time passing
   end procedure WaitForTransaction ;
 
   procedure WaitForTransaction (
@@ -389,6 +384,7 @@ package body TbUtilPkg is
     Ack        <= '1' ;               --  #6
     AckTime    := NOW ; 
     -- Find Start of Transaction
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
     if Rdy /= '1' then                --   #2
       wait until Rdy = '1' ; 
     else
@@ -400,11 +396,9 @@ package body TbUtilPkg is
     end if ; 
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
+    wait for 0 ns ; -- Allow transactions without time passing
   end procedure WaitForTransaction ;
   
-  -- Variation for model that stops waiting when TimeOut is asserted
-  -- Intended for models that need to switch between instruction streams
-  -- such as a CPU when interrupt is pending
   procedure WaitForTransaction (
     signal   Clk       : In  std_logic ;
     signal   Rdy       : In  std_logic ;
@@ -419,10 +413,9 @@ package body TbUtilPkg is
     Ack        <= '1' ;               --  #6
     AckTime    := NOW ; 
     -- Find Ready or Time out
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
     if (Rdy /= '1' and TimeOut /= Polarity) then 
       wait until Rdy = '1' or TimeOut = Polarity ; 
-    else
-      wait for 0 ns ; -- allow Ack to update
     end if ; 
     FoundRdy := Rdy = '1' ; 
     -- align to clock if Rdy or TimeOut does not happen within delta cycles from Ack
@@ -432,14 +425,41 @@ package body TbUtilPkg is
     if FoundRdy then 
       -- Model active and owns the record
       Ack        <= '0' ;             --  #3
+      wait for 0 ns ; -- Allow transactions without time passing
     end if ;
   end procedure WaitForTransaction ;
+  
+  -- Variation for model that stops waiting when IntReq is asserted
+  -- Intended for models that need to switch between instruction streams
+  -- such as a CPU when interrupt is pending
+  procedure WaitForTransactionOrIrq (
+    signal Clk     : In  std_logic ;
+    signal Rdy     : In  std_logic ;
+    signal IntReq  : In  std_logic 
+  ) is
+    variable AckTime : time ; 
+    constant POLARITY : std_logic := '1' ;
+  begin
+    AckTime    := NOW ; 
+    -- Find Ready or Time out
+    wait for 0 ns ; -- allow Rdy from previous cycle to clear
+    if (Rdy /= '1' and IntReq /= POLARITY) then 
+      wait until Rdy = '1' or IntReq = POLARITY ; 
+    else
+      wait for 0 ns ; -- allow Ack to update
+   end if ; 
+    -- align to clock if Rdy or IntReq does not happen within delta cycles from Ack
+    if NOW /= AckTime then 
+      wait until Clk = CLK_ACTIVE ;
+    end if ; 
+  end procedure ;
   
   -- Set Ack to Model starting value
   -- Pairs with WaitForTransactionOrIrq above
   procedure StartTransaction  ( signal Ack : Out std_logic ) is
   begin
     Ack        <= '0' ;
+    wait for 0 ns ; -- Allow transactions without time passing
   end procedure StartTransaction ; 
 
   -- Set Ack to Model finishing value
@@ -448,6 +468,7 @@ package body TbUtilPkg is
   begin
     -- End of Cycle
     Ack        <= '1' ;
+    wait for 0 ns ; -- Allow Ack to update
   end procedure FinishTransaction ; 
 
   -- If a transaction is pending, return true
@@ -470,13 +491,13 @@ package body TbUtilPkg is
     -- End of Previous Cycle.  Signal Done
     Ack        <= '1' ;               --  #6
     -- Find Start of Transaction
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
     if Rdy /= '1' then                --   #2
       wait until Rdy = '1' ; 
-    else
-      wait for 0 ns ; -- allow Ack to update
     end if ; 
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
+    wait for 0 ns ; -- allow 0 time transactions
   end procedure WaitForTransaction ;
 
 
@@ -878,32 +899,6 @@ package body TbUtilPkg is
       LogLevel    => LogLevel
     ) ; 
   end procedure LogReset ;
-
-  ------------------------------------------------------------
-  -- Deprecated
-  -- subsumed by WaitForTransaction with Ack and TimeOut.
-  -- TimeOut works exactly like IntReq
-  ------------------------------------------------------------
-  procedure WaitForTransactionOrIrq (
-    signal Clk     : In  std_logic ;
-    signal Rdy     : In  std_logic ;
-    signal IntReq  : In  std_logic 
-  ) is
-    variable AckTime : time ; 
-    constant POLARITY : std_logic := '1' ;
-  begin
-    AckTime    := NOW ; 
-    -- Find Ready or Time out
-    if (Rdy /= '1' and IntReq /= POLARITY) then 
-      wait until Rdy = '1' or IntReq = POLARITY ; 
-    else
-      wait for 0 ns ; -- allow Ack to update
-   end if ; 
-    -- align to clock if Rdy or IntReq does not happen within delta cycles from Ack
-    if NOW /= AckTime then 
-      wait until Clk = CLK_ACTIVE ;
-    end if ; 
-  end procedure ;
   
   ------------------------------------------------------------
   -- Deprecated
@@ -914,6 +909,7 @@ package body TbUtilPkg is
   begin
     -- Wait for Model to be done
     wait until Ack = '1' ;  
+    wait for 0 ns ;
   end procedure ;
 
   procedure StrobeAck  ( signal Ack  : Out std_logic ) is
@@ -922,6 +918,7 @@ package body TbUtilPkg is
     Ack        <= '0' ;
     wait for 0 ns ;
     Ack        <= '1' ;
+    wait for 0 ns ;
   end procedure ;
 
 
