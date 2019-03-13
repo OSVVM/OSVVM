@@ -273,6 +273,7 @@ package RandomPkg is
     impure function DistSlv ( Weight : integer_vector ; Size  : natural ) return std_logic_vector ;
     impure function DistUnsigned ( Weight : integer_vector ; Size  : natural ) return unsigned ;
     impure function DistSigned ( Weight : integer_vector ; Size  : natural ) return signed ;
+    impure function DistBool ( Weight : integer_vector(0 to 1) ) return boolean ;
 
     -- Distribution with just weights and with exclude values
     impure function DistInt ( Weight : integer_vector ; Exclude : integer_vector ) return integer ;
@@ -1390,6 +1391,10 @@ package body RandomPkg is
       return to_signed(DistInt(Weight), Size) ;
     end function DistSigned ;
 
+    impure function DistBool ( Weight : integer_vector(0 to 1) ) return boolean is
+    begin
+      return DistInt(Weight) = 1 ;
+    end function DistBool ;
 
     --
     --  Basic Distributions with exclude values (so can skip last or last n)
