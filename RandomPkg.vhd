@@ -310,6 +310,7 @@ package RandomPkg is
     impure function RandSlv (Max, Size : natural) return std_logic_vector ;
     impure function RandUnsigned (Max, Size : natural) return Unsigned ;
     impure function RandSigned (Max : integer ; Size : natural ) return Signed ;
+    impure function RandBool return boolean;
 
   end protected RandomPType ;
 
@@ -1641,6 +1642,11 @@ package body RandomPkg is
       -- chose 0 to Max rather than -Max to +Max to be same as RandUnsigned, either seems logical
       return to_signed(RandInt(0, Max), Size) ;
     end function RandSigned ;
+
+    impure function RandBool return boolean is
+    begin
+      return RandInt(1) = 1;
+    end function RandBool ;
 
   end protected body RandomPType ;
 
