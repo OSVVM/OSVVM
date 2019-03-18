@@ -114,7 +114,11 @@ package RandomPkg is
   end record ;
   type DistType is array (natural range <>) of DistRecType ;
 
-
+  -- Weight vectors not indexed by integers
+  type NaturalVBoolType is array (boolean range <>) of natural;
+  type NaturalVSlType is array (std_logic range <>) of natural;
+  type NaturalVBitType is array (bit range <>) of natural;
+  
   -- Parameters for randomization
   -- RandomDistType specifies the distribution to use for randomize
   type RandomDistType is (NONE, UNIFORM, FAVOR_SMALL, FAVOR_BIG, NORMAL, POISSON) ;
@@ -273,7 +277,9 @@ package RandomPkg is
     impure function DistSlv ( Weight : integer_vector ; Size  : natural ) return std_logic_vector ;
     impure function DistUnsigned ( Weight : integer_vector ; Size  : natural ) return unsigned ;
     impure function DistSigned ( Weight : integer_vector ; Size  : natural ) return signed ;
-    impure function DistBool ( Weight : integer_vector(0 to 1) ) return boolean ;
+    impure function DistBool ( Weight : NaturalVBoolType ) return boolean ;
+    impure function DistSl ( Weight : NaturalVSlType ) return std_logic ;
+    impure function DistBit ( Weight : NaturalVBitType ) return bit ;
 
     -- Distribution with just weights and with exclude values
     impure function DistInt ( Weight : integer_vector ; Exclude : integer_vector ) return integer ;
@@ -312,6 +318,8 @@ package RandomPkg is
     impure function RandUnsigned (Max, Size : natural) return Unsigned ;
     impure function RandSigned (Max : integer ; Size : natural ) return Signed ;
     impure function RandBool return boolean;
+    impure function RandSl return std_logic;
+    impure function RandBit return bit;
 
   end protected RandomPType ;
 
@@ -1391,10 +1399,26 @@ package body RandomPkg is
       return to_signed(DistInt(Weight), Size) ;
     end function DistSigned ;
 
-    impure function DistBool ( Weight : integer_vector(0 to 1) ) return boolean is
+    impure function DistBool ( Weight : NaturalVBoolType ) return boolean is
+      variable FullWeight : NaturalVBoolType(false to true) := (0, 0);
     begin
-      return DistInt(Weight) = 1 ;
+      FullWeight(Weight'range) := Weight;
+      return DistInt(integer_vector(FullWeight)) = 1 ;
     end function DistBool ;
+
+    impure function DistSl ( Weight : NaturalVSlType ) return std_logic is
+      variable FullWeight : NaturalVSlType('U' to '-') := (others => 0);
+    begin
+      FullWeight(Weight'range) := Weight;
+      return std_logic'val(DistInt(integer_vector(FullWeight))) ;
+    end function DistSl ;
+
+    impure function DistBit ( Weight : NaturalVBitType ) return bit is
+      variable FullWeight : NaturalVBitType('0' to '1') := (0, 0);
+    begin
+      FullWeight(Weight'range) := Weight;
+      return bit'val(DistInt(integer_vector(FullWeight))) ;
+    end function DistBit ;
 
     --
     --  Basic Distributions with exclude values (so can skip last or last n)
@@ -1653,6 +1677,16 @@ package body RandomPkg is
       return RandInt(1) = 1;
     end function RandBool ;
 
+    impure function RandSl return std_logic is
+    begin
+      return std_logic'val(RandInt(8));
+    end function RandSl ;
+  
+    impure function RandBit return bit is
+    begin
+      return bit'val(RandInt(1));
+    end function RandBit ;
+  
   end protected body RandomPType ;
 
 end RandomPkg ;
