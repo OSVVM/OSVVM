@@ -6,6 +6,7 @@
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
 --     Jim Lewis      jim@synthworks.com
+--     Rob Gaddi      Highland Technology.    Inspired SetAlertLogPrefix / Suffix
 --
 --
 --  Description:
