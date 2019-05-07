@@ -51,9 +51,12 @@ if {$argc > 0} {
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/NamePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/OsvvmGlobalPkg.vhd
 
-# Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and soon ActiveHDL, otherwise compile VendorCovApiPkg.vhd
-vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/VendorCovApiPkg.vhd
-# vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/VendorCovApiPkg_Aldec.vhd
+# Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
+if {[info exists aldec]} {
+  vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/VendorCovApiPkg_Aldec.vhd
+} else {
+  vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/VendorCovApiPkg.vhd
+}
 
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/TranscriptPkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/TextUtilPkg.vhd
