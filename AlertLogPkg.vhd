@@ -254,7 +254,7 @@ package AlertLogPkg is
   procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
-  procedure SetAlertLogJustify ;
+  procedure SetAlertLogJustify (Enable : boolean := TRUE) ;
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
   procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
   procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
@@ -461,7 +461,7 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     procedure IncAlertCount ( AlertLogID : AlertLogIDType ; level : AlertType := ERROR ) ;
-    procedure SetJustify ;
+    procedure SetJustify (Enable : boolean := TRUE) ;
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) ;
     procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (0,0,0) ; ReportAll : boolean := TRUE ) ;
     procedure ClearAlerts ;
@@ -787,13 +787,18 @@ package body AlertLogPkg is
     end function CalcJustify ;
 
     ------------------------------------------------------------
-    procedure SetJustify is
+    procedure SetJustify (Enable : boolean := TRUE) is
     ------------------------------------------------------------
       variable ResultValues : integer_vector(1 to 2) ;  -- 1 = Max, 2 = Indented
     begin
-      ResultValues := CalcJustify(ALERTLOG_BASE_ID, 0, 0) ;
-      AlertLogJustifyAmountVar := ResultValues(1) ;
-      ReportJustifyAmountVar   := ResultValues(2) ;
+      if Enable then 
+        ResultValues := CalcJustify(ALERTLOG_BASE_ID, 0, 0) ;
+        AlertLogJustifyAmountVar := ResultValues(1) ;
+        ReportJustifyAmountVar   := ResultValues(2) ;
+      else
+        AlertLogJustifyAmountVar := 0 ;
+        ReportJustifyAmountVar   := 0 ;
+      end if; 
     end procedure SetJustify ;
 
     ------------------------------------------------------------
@@ -960,8 +965,10 @@ package body AlertLogPkg is
       variable NumErrors : integer ;
       variable NumDisabledErrors : integer ;
       constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
+      variable TurnedOnJustify : boolean := FALSE ;
     begin
       if ReportJustifyAmountVar <= 0 then
+        TurnedOnJustify := TRUE ; 
         SetJustify ;
       end if ;
       NumErrors := SumAlertCount(  ExternalErrors + GetEnabledAlertCount(AlertLogPtr(AlertLogID).AlertCount, AlertLogPtr(AlertLogID).AlertEnabled) ) ;
@@ -993,6 +1000,10 @@ package body AlertLogPkg is
           IndentAmount  => 2,
           ReportAll     => ReportAll
         ) ;
+      end if ;
+      if TurnedOnJustify then
+        -- Turn it back off
+        SetJustify(FALSE) ;
       end if ;
     end procedure ReportAlerts ;
 
@@ -1577,11 +1588,17 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure ReportLogEnables is
     ------------------------------------------------------------
+      variable TurnedOnJustify : boolean := FALSE ;
     begin
       if ReportJustifyAmountVar <= 0 then
+        TurnedOnJustify := TRUE ; 
         SetJustify ;
       end if ;
       PrintLogLevels(ALERTLOG_BASE_ID, "", 0) ;
+      if TurnedOnJustify then
+        -- Turn it back off
+        SetJustify(FALSE) ;
+      end if ;
     end procedure ReportLogEnables ;
 
     ------------------------------------------------------------
@@ -2983,11 +3000,11 @@ package body AlertLogPkg is
   end procedure AffirmIfDiff ;
 
   ------------------------------------------------------------
-  procedure SetAlertLogJustify is
+  procedure SetAlertLogJustify (Enable : boolean := TRUE) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetJustify ;
+    AlertLogStruct.SetJustify(Enable) ;
     -- synthesis translate_on
   end procedure SetAlertLogJustify ;
 
