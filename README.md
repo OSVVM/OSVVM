@@ -52,7 +52,7 @@ The OSVVM model library provides off the shelf models for:
 **OSVVM Forums - currently broken:**     [http://www.osvvm.org/][osvvm]  
 **OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/][osvvm-blog]  
 **License:**	[Artistic License 2.0][PAL2.0]  
-**Copyright:**	Copyright © 2006-2019 by [SynthWorks Design Inc.](http://www.synthworks.com/)
+**Copyright:**	Copyright © 2006-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)
 
 ## Release History
    For current release information see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)

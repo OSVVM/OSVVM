@@ -24,44 +24,42 @@
 --
 --  Revision History:
 --    Date      Version      Description
---    12/2006:   2006.12     Initial revision
---    08/2010    2010.08     Added Tailpointer
---    05/2012    2012.05     Changed FIFO to store pointers to ExpectedType
---                           Allows usage of unconstrained arrays
---    08/2012    2012.08     Added Type and Subprogram Generics
---    08/2013    2013.08     Generics:  to_string replaced write, Match replaced check
---                           Added Tags - Experimental
---                           Added Array of Scoreboards
---    09/2013    2013.09     Added file handling, Check Count, Finish Status
---                           Find, Flush
---    06/2015    2015.06     Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount, 
---                           Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
---                           Deallocate, Initialized, Function SetName
---    11/2016    2016.11     Released as part of OSVVM 
---    05/2017    2017.05     First print Actual then only print Expected if mis-match  
---    04/2018    2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
+--    12/2006   2006.12     Initial revision
+--    08/2010   2010.08     Added Tailpointer
+--    05/2012   2012.05     Changed FIFO to store pointers to ExpectedType
+--                          Allows usage of unconstrained arrays
+--    08/2012   2012.08     Added Type and Subprogram Generics
+--    08/2013   2013.08     Generics:  to_string replaced write, Match replaced check
+--                          Added Tags - Experimental
+--                          Added Array of Scoreboards
+--    09/2013   2013.09     Added file handling, Check Count, Finish Status
+--                          Find, Flush
+--    06/2015   2015.06     Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount, 
+--                          Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
+--                          Deallocate, Initialized, Function SetName
+--    11/2016   2016.11     Released as part of OSVVM 
+--    05/2017   2017.05     First print Actual then only print Expected if mis-match  
+--    04/2018   2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
+--    01/2020   2020.01    Updated Licenses to Apache
 --
 --
---  Copyright (c) 2006 - 2018 by SynthWorks Design Inc.  All rights reserved.
---
---  Verbatim copies of this source file may be used and
---  distributed without restriction.
---
---  This source file is free software; you can redistribute it
---  and/or modify it under the terms of the ARTISTIC License
---  as published by The Perl Foundation; either version 2.0 of
---  the License, or (at your option) any later version.
---
---  This source is distributed in the hope that it will be
---  useful, but WITHOUT ANY WARRANTY; without even the implied
---  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
---  PURPOSE. See the Artistic License for details.
---
---  You should have received a copy of the license with this source.
---  If not download it from,
---     http://www.perlfoundation.org/artistic_license_2_0
---
---
+--  This file is part of OSVVM.
+--  
+--  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
+--  
+--  Licensed under the Apache License, Version 2.0 (the "License");
+--  you may not use this file except in compliance with the License.
+--  You may obtain a copy of the License at
+--  
+--      https://www.apache.org/licenses/LICENSE-2.0
+--  
+--  Unless required by applicable law or agreed to in writing, software
+--  distributed under the License is distributed on an "AS IS" BASIS,
+--  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--  See the License for the specific language governing permissions and
+--  limitations under the License.
+--  
+
 
 use std.textio.all ;
 
