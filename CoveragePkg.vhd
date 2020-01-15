@@ -1253,7 +1253,7 @@ package body CoveragePkg is
       AtLeast       : integer ;
       Weight        : integer ;
       PercentCov    : real ;
-      OrderCount    : integer ;
+--!      OrderCount    : integer ;
       Name          : line ;
     end record CovBinBaseTempType ;
     type CovBinTempType is array (natural range <>) of CovBinBaseTempType ;
@@ -1262,7 +1262,7 @@ package body CoveragePkg is
     variable CovBinPtr  : CovBinPtrType ;
     variable NumBins    : integer := 0 ;
     variable BinValLength  : integer := 1 ;
-    variable OrderCount : integer := 0 ;  -- for statistics
+--!    variable OrderCount : integer := 0 ;  -- for statistics
     variable ItemCount : integer := 0 ;  -- Count of randomizations
     variable LastIndex : integer := 1 ;  -- Index of last randomization
 
@@ -1758,7 +1758,7 @@ package body CoveragePkg is
       CovBinPtr.all(NumBins).Weight      := Weight ;
       CovBinPtr.all(NumBins).Name        := new String'(Name) ;
       CovBinPtr.all(NumBins).PercentCov  := PercentCov ;
-      CovBinPtr.all(NumBins).OrderCount  := 0 ;  --- Metrics for evaluating randomization order Temp
+--!      CovBinPtr.all(NumBins).OrderCount  := 0 ;  --- Metrics for evaluating randomization order Temp
     end procedure InsertNewBin ;
 
 
@@ -2057,7 +2057,7 @@ package body CoveragePkg is
       DeallocateMessage ;
       -- Restore internal variables to their default values
       NumBins := 0 ;
-      OrderCount := 0 ;
+--!      OrderCount := 0 ;
       BinValLength := 1 ;
       IllegalMode   := ILLEGAL_ON ;
       WeightMode    := AT_LEAST ;
@@ -2091,9 +2091,9 @@ package body CoveragePkg is
       CovBinPtr(Index).PercentCov := CalcPercentCov(
         Count => CovBinPtr.all(Index).Count,  
         AtLeast =>  CovBinPtr.all(Index).AtLeast ) ;
-      -- OrderCount handling - Statistics
-      OrderCount := OrderCount + 1 ;
-      CovBinPtr(Index).OrderCount := OrderCount + CovBinPtr(Index).OrderCount ;
+--!      -- OrderCount handling - Statistics
+--!      OrderCount := OrderCount + 1 ;
+--!      CovBinPtr(Index).OrderCount := OrderCount + CovBinPtr(Index).OrderCount ;
       if CovBinPtr(Index).action = COV_ILLEGAL then
         if IllegalMode /= ILLEGAL_OFF then
           if CovPoint = NULL_INTV then
@@ -2159,9 +2159,9 @@ package body CoveragePkg is
         CovBinPtr(i).PercentCov := CalcPercentCov(
           Count => CovBinPtr.all(i).Count,  
           AtLeast =>  CovBinPtr.all(i).AtLeast ) ;
-        CovBinPtr(i).OrderCount := 0 ;
+--!        CovBinPtr(i).OrderCount := 0 ;
       end loop ;
-      OrderCount := 0 ;
+--!      OrderCount := 0 ;
     end procedure ClearCov ;
 
     ------------------------------------------------------------
@@ -3093,10 +3093,10 @@ package body CoveragePkg is
         -- write(f, "   Count = " & integer'image(CovBinPtr(i).count)) ;
         write(buf, "   AtLeast = " & integer'image(CovBinPtr(i).AtLeast)) ;
         write(buf, "   Weight = " & integer'image(CovBinPtr(i).Weight)) ;
-        write(buf, "   OrderCount = " & integer'image(CovBinPtr(i).OrderCount)) ;
-        if CovBinPtr(i).count > 0 then
-          write(buf, "   Normalized OrderCount = " & integer'image(CovBinPtr(i).OrderCount/CovBinPtr(i).count)) ;
-        end if ;
+--!        write(buf, "   OrderCount = " & integer'image(CovBinPtr(i).OrderCount)) ;
+--!       if CovBinPtr(i).count > 0 then
+--!         write(buf, "   Normalized OrderCount = " & integer'image(CovBinPtr(i).OrderCount/CovBinPtr(i).count)) ;
+--!       end if ;
         writeline(f, buf) ;
       end loop ;
       swrite(buf, "") ;
