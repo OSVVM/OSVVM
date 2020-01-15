@@ -19,34 +19,33 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    09/2006:  0.1        Initial revision
+--    09/2006   0.1        Initial revision
 --                         Numerous revisions for VHDL Testbenches and Verification
---    02/2009:  1.0        VHDL-2008 STANDARD VERSION
+--    02/2009   1.0        VHDL-2008 STANDARD VERSION
 --    05/2015   2015.05    Added Alerts
 --    --                   Replaced Alerts with asserts as alerts are illegal in pure functions
 --    11/2016   2016.11    Removed Asserts as they are not working as intended.
 --                         See ResolutionPkg_debug as it uses Alerts to correctly detect errors
+--    01/2020   2020.01    Updated Licenses to Apache
 --
 --
---  Copyright (c) 2005 - 2016 by SynthWorks Design Inc.  All rights reserved.
---
---  Verbatim copies of this source file may be used and 
---  distributed without restriction.   
--- 								 
---  This source file may be modified and distributed under 
---  the terms of the ARTISTIC License as published by 
---  The Perl Foundation; either version 2.0 of the License, 
---  or (at your option) any later version. 						 
--- 								 
---  This source is distributed in the hope that it will be 	 
---  useful, but WITHOUT ANY WARRANTY; without even the implied  
---  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 	 
---  PURPOSE. See the Artistic License for details. 							 
--- 								 
---  You should have received a copy of the license with this source.
---  If not download it from, 
---     http://www.perlfoundation.org/artistic_license_2_0
---
+--  This file is part of OSVVM.
+--  
+--  Copyright (c) 2005 - 2020 by SynthWorks Design Inc.  
+--  
+--  Licensed under the Apache License, Version 2.0 (the "License");
+--  you may not use this file except in compliance with the License.
+--  You may obtain a copy of the License at
+--  
+--      https://www.apache.org/licenses/LICENSE-2.0
+--  
+--  Unless required by applicable law or agreed to in writing, software
+--  distributed under the License is distributed on an "AS IS" BASIS,
+--  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+--  See the License for the specific language governing permissions and
+--  limitations under the License.
+--  
+
 
 library ieee ; 
 use ieee.std_logic_1164.all ; 
