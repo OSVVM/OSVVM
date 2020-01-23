@@ -17,9 +17,6 @@
 --        11898 SW 128th Ave.  Tigard, Or  97223
 --        http://www.SynthWorks.com
 --
---  Latest standard version available at:
---        http://www.SynthWorks.com/downloads
---
 --  Revision History:
 --    Date      Version    Description
 --    06/2010   0.1        Initial revision
