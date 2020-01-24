@@ -15,7 +15,7 @@ Using these libraries you can create a simple, readable, and
 powerful testbench that is suitable for either a simple FPGA block
 or a complex ASIC.
 
-This repository contains the OSVVM Utility Library.  
+This repository contains the OSVVM Utility Library. 
 Download it using git:    
    `git clone https://github.com/OSVVM/OSVVM.git`
 
@@ -92,7 +92,7 @@ of how to use the models.
 
 **OSVVM Forums - currently broken:**     [http://www.osvvm.org/][osvvm]  
 **OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/][osvvm-blog]  
-**License:**	[Artistic License 2.0][PAL2.0]  
+**License:**	[Apache License 2.0][AL2]
 **Copyright:**	Copyright © 2006-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)
 
 ## Release History
@@ -120,7 +120,7 @@ of how to use the models.
  [osvvm]:      http://www.osvvm.org/
  [osvvm-blog]: http://www.synthworks.com/blog/osvvm/
  [aldec]:      http://www.aldec.com/
- [PAL2.0]:	   http://www.perlfoundation.org/artistic_license_2_0
+ [AL2]:	   http://www.apache.org/licenses/LICENSE-2.0
 
 
 
