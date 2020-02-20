@@ -57,6 +57,9 @@ package TextUtilPkg is
   function to_upper (constant Str : string ) return string ;
   function ishex (constant Char : character ) return boolean ; 
   function isstd_logic (constant Char : character ) return boolean ;
+  
+  -- Crutch until VHDL-2019 conditional initialization
+  function IfElse(Expr : boolean ; A, B : string) return string ; 
 
   ------------------------------------------------------------
   procedure SkipWhiteSpace (
@@ -209,6 +212,17 @@ package body TextUtilPkg is
         return FALSE ; 
     end case ; 
   end function isstd_logic ;
+  
+  ------------------------------------------------------------
+  function IfElse(Expr : boolean ; A, B : string) return string is 
+  ------------------------------------------------------------
+  begin
+    if Expr then 
+      return A ; 
+    else
+      return B ; 
+    end if ; 
+  end function IfElse ; 
   
 --  ------------------------------------------------------------
 --  function iscomment (constant Char : character ) return boolean is
