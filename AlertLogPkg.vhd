@@ -881,7 +881,7 @@ package body AlertLogPkg is
     procedure PrintTopAlerts (
     ------------------------------------------------------------
       NumErrors          : integer ;
-      AlertCount         : AlertCountType ;
+      AlertCnt           : AlertCountType ;
       Name               : string ;
       NumDisabledErrors  : integer
     ) is
@@ -914,9 +914,9 @@ package body AlertLogPkg is
         -- Failed
         write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
         write(buf, "  Total Error(s) = "      & to_string(NumErrors) ) ;
-        write(buf, "  Failures: "  & to_string(AlertCount(FAILURE)) ) ;
-        write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
-        write(buf, "  Warnings: "  & to_string(AlertCount(WARNING) ) ) ;
+        write(buf, "  Failures: "  & to_string(AlertCnt(FAILURE)) ) ;
+        write(buf, "  Errors: "    & to_string(AlertCnt(ERROR) ) ) ;
+        write(buf, "  Warnings: "  & to_string(AlertCnt(WARNING) ) ) ;
         if AffirmCheckCountVar > 0 then
 --??         write(buf, "  Affirmations Passed: " & to_string(AffirmPassedCountVar)) ;
 --??          write(buf, "  Checked: " & to_string(AffirmCheckCountVar)) ;
@@ -978,14 +978,14 @@ package body AlertLogPkg is
       if IsOsvvmStringSet(Name) then
         PrintTopAlerts (
           NumErrors          => NumErrors,
-          AlertCount         => AlertLogPtr(AlertLogID).AlertCount + ExternalErrors,
+          AlertCnt           => AlertLogPtr(AlertLogID).AlertCount + ExternalErrors,
           Name               => Name,
           NumDisabledErrors  => NumDisabledErrors
         ) ;
       else
         PrintTopAlerts (
           NumErrors          => NumErrors,
-          AlertCount         => AlertLogPtr(AlertLogID).AlertCount + ExternalErrors,
+          AlertCnt           => AlertLogPtr(AlertLogID).AlertCount + ExternalErrors,
           Name               => AlertLogPtr(AlertLogID).Name.all,
           NumDisabledErrors  => NumDisabledErrors
         ) ;
@@ -1011,7 +1011,7 @@ package body AlertLogPkg is
     begin
        PrintTopAlerts (
         NumErrors          => SumAlertCount(AlertCount),
-        AlertCount         => AlertCount,
+        AlertCnt           => AlertCount,
         Name               => Name,
         NumDisabledErrors  => 0
       ) ;
