@@ -2131,6 +2131,7 @@ package body CoveragePkg is
           -- skip this CovBin if CovPoint is not in it
           next CovLoop when not inside(CovPoint, CovBinPtr(i).BinVal.all) ;
           -- Mark Covered
+          LastIndex := i ; -- Mark found index
           ICoverIndex(i, CovPoint) ;
           exit CovLoop when CountMode = COUNT_FIRST ;   -- only find first one
         end loop CovLoop ;
