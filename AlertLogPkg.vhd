@@ -654,10 +654,13 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    impure function VerifyID(AlertLogID : AlertLogIDType) return AlertLogIDType is
+    impure function VerifyID(
+      AlertLogID : AlertLogIDType ;
+      LOWEST_ID  : AlertLogIDType := ALERTLOG_BASE_ID
+    ) return AlertLogIDType is
     ------------------------------------------------------------
     begin
-      if AlertLogID < ALERTLOG_BASE_ID or AlertLogID > NumAlertLogIDsVar then
+      if AlertLogID < LOWEST_ID or AlertLogID > NumAlertLogIDsVar then
         Alert(ALERTLOG_BASE_ID, "Invalid AlertLogID") ;
         return ALERTLOG_BASE_ID ;
       else
@@ -1344,21 +1347,30 @@ package body AlertLogPkg is
     end function FindAlertLogID ;
 
     ------------------------------------------------------------
-    impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType is
+    -- PT Local
+    impure function LocalFindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType is
     ------------------------------------------------------------
       variable CurParentID : AlertLogIDType ;
-      variable localParentID : AlertLogIDType ;
     begin
-      localParentID := VerifyID(ParentID) ;
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
         CurParentID := AlertLogPtr(i).ParentID ;
         if Name = AlertLogPtr(i).Name.all and
-          (CurParentID = localParentID or CurParentID = ALERTLOG_ID_NOT_ASSIGNED or ParentID = ALERTLOG_ID_NOT_ASSIGNED)
+          (CurParentID = ParentID or CurParentID = ALERTLOG_ID_NOT_ASSIGNED or ParentID = ALERTLOG_ID_NOT_ASSIGNED)
         then
           return i ;
         end if ;
       end loop ;
       return ALERTLOG_ID_NOT_FOUND ; -- not found
+    end function LocalFindAlertLogID ;
+
+    ------------------------------------------------------------
+    impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType is
+    ------------------------------------------------------------
+      variable CurParentID : AlertLogIDType ;
+      variable localParentID : AlertLogIDType ;
+    begin
+      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
+      return LocalFindAlertLogID(Name, localParentID) ;
     end function FindAlertLogID ;
 
     ------------------------------------------------------------
@@ -1367,8 +1379,8 @@ package body AlertLogPkg is
       variable ResultID : AlertLogIDType ;
       variable localParentID : AlertLogIDType ;
     begin
-      ResultID := FindAlertLogID(Name, ParentID) ;
-      localParentID := VerifyID(ParentID) ;
+      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
+      ResultID := LocalFindAlertLogID(Name, localParentID) ;
       if ResultID /= ALERTLOG_ID_NOT_FOUND then
         -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentID = ALERTLOG_ID_NOT_ASSIGNED then
