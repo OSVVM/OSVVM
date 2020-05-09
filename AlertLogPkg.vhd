@@ -446,6 +446,19 @@ package body AlertLogPkg is
   type     LogNameType is array(LogType) of string(1 to 7) ;
   constant LOG_NAME : LogNameType := (DEBUG => "DEBUG  ", FINAL => "FINAL  ", INFO => "INFO   ", ALWAYS => "ALWAYS ", PASSED => "PASSED ") ; -- , NEVER => "NEVER  "
 
+  ------------------------------------------------------------
+  -- Package Local
+  function LeftJustify(A : String;  Amount : integer) return string is
+  ------------------------------------------------------------
+    constant Spaces : string(1 to  maximum(1, Amount)) := (others => ' ') ;
+  begin
+    if A'length >= Amount then
+      return A ;
+    else
+      return A & Spaces(1 to Amount - A'length) ;
+    end if ;
+  end function LeftJustify ;
+
 
   type AlertLogStructPType is protected
 
@@ -641,16 +654,16 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    impure function LeftJustify(A : String;  Amount : integer) return string is
+    impure function VerifyID(AlertLogID : AlertLogIDType) return AlertLogIDType is
     ------------------------------------------------------------
-      constant Spaces : string(1 to  maximum(1, Amount)) := (others => ' ') ;
     begin
-      if A'length >= Amount then
-        return A ;
+      if AlertLogID < ALERTLOG_BASE_ID or AlertLogID > NumAlertLogIDsVar then
+        Alert(ALERTLOG_BASE_ID, "Invalid AlertLogID") ;
+        return ALERTLOG_BASE_ID ;
       else
-        return A & Spaces(1 to Amount - A'length) ;
+        return AlertLogID ;
       end if ;
-    end function LeftJustify ;
+    end function VerifyID ;
 
 
     ------------------------------------------------------------
@@ -687,11 +700,13 @@ package body AlertLogPkg is
       variable buf : Line ;
       constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ;
+      variable localAlertLogID : AlertLogIDType ;
     begin
       -- Only write and count when GlobalAlertEnabledVar is enabled
       if GlobalAlertEnabledVar then
+        localAlertLogID := VerifyID(AlertLogID) ;
          -- Write when Alert is Enabled
-        if AlertLogPtr(AlertLogID).AlertEnabled(Level) then
+        if AlertLogPtr(localAlertLogID).AlertEnabled(Level) then
           -- Print  %% Alert (nominally)
           write(buf, AlertPrefix) ;
           -- Debug Mode
@@ -704,17 +719,17 @@ package body AlertLogPkg is
           end if ;
           -- AlertLog Name
           if FoundAlertHierVar and WriteAlertNameVar then
-            write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ",", AlertLogJustifyAmountVar) ) ;
+            write(buf, " in " & LeftJustify(AlertLogPtr(localAlertLogID).Name.all & ",", AlertLogJustifyAmountVar) ) ;
           end if ;
           -- Prefix
-          if AlertLogPtr(AlertLogID).Prefix /= NULL then
-            write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all) ;
+          if AlertLogPtr(localAlertLogID).Prefix /= NULL then
+            write(buf, ' ' & AlertLogPtr(localAlertLogID).Prefix.all) ;
           end if ;
           -- Message
           write(buf, " " & Message) ;
           -- Suffix
-          if AlertLogPtr(AlertLogID).Suffix /= NULL then
-            write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
+          if AlertLogPtr(localAlertLogID).Suffix /= NULL then
+            write(buf, ' ' & AlertLogPtr(localAlertLogID).Suffix.all) ;
           end if ;
           -- Time
           if WriteAlertTimeVar then
@@ -723,18 +738,18 @@ package body AlertLogPkg is
           writeline(buf) ;
         end if ;
         -- Always Count
-        IncrementAlertCount(AlertLogID, Level, StopDueToCount) ;
+        IncrementAlertCount(localAlertLogID, Level, StopDueToCount) ;
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
           write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
-            write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ;
+            write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
           ReportAlerts(ReportAll => TRUE) ;
-          std.env.stop(1) ;
+          std.env.stop(ErrorCount) ;
         end if ;
       end if ;
     end procedure alert ;
@@ -748,20 +763,22 @@ package body AlertLogPkg is
       variable buf : Line ;
       constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ;
+      variable localAlertLogID : AlertLogIDType ;
     begin
       if GlobalAlertEnabledVar then
-        IncrementAlertCount(AlertLogID, Level, StopDueToCount) ;
+        localAlertLogID := VerifyID(AlertLogID) ;
+        IncrementAlertCount(localAlertLogID, Level, StopDueToCount) ;
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
           write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
-            write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ;
+            write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
           ReportAlerts(ReportAll => TRUE) ;
-          std.env.stop ;
+          std.env.stop(ErrorCount) ;
         end if ;
       end if ;
     end procedure IncAlertCount ;
@@ -820,17 +837,19 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     impure function GetAlertCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return AlertCountType is
     ------------------------------------------------------------
-      variable AlertCount : AlertCountType ;
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).AlertCount ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).AlertCount ;
     end function GetAlertCount ;
 
     ------------------------------------------------------------
     impure function GetEnabledAlertCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return AlertCountType is
     ------------------------------------------------------------
-      variable AlertCount : AlertCountType ;
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return GetEnabledAlertCount(AlertLogPtr(AlertLogID).AlertCount, AlertLogPtr(AlertLogID).AlertEnabled) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return GetEnabledAlertCount(AlertLogPtr(localAlertLogID).AlertCount, AlertLogPtr(localAlertLogID).AlertEnabled) ;
     end function GetEnabledAlertCount ;
 
     ------------------------------------------------------------
@@ -866,10 +885,13 @@ package body AlertLogPkg is
     impure function GetDisabledAlertCount(AlertLogID: AlertLogIDType) return AlertCountType is
     ------------------------------------------------------------
       variable Count : AlertCountType := (others => 0) ;
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      Count := GetDisabledAlertCount(AlertLogPtr(AlertLogID).AlertCount, AlertLogPtr(AlertLogID).AlertEnabled) ;
-      for i in AlertLogID+1 to NumAlertLogIDsVar loop
-        if AlertLogID = AlertLogPtr(i).ParentID then
+      localAlertLogID := VerifyID(AlertLogID) ;
+      Count := GetDisabledAlertCount(AlertLogPtr(localAlertLogID).AlertCount, AlertLogPtr(localAlertLogID).AlertEnabled) ;
+      -- Find Children of this ID
+      for i in localAlertLogID+1 to NumAlertLogIDsVar loop
+        if localAlertLogID = AlertLogPtr(i).ParentID then
           Count := Count + GetDisabledAlertCount(i) ;
         end if ;
       end loop ;
@@ -958,42 +980,49 @@ package body AlertLogPkg is
     end procedure PrintChild ;
 
     ------------------------------------------------------------
-    procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (0,0,0) ; ReportAll : boolean := TRUE) is
+    procedure ReportAlerts ( 
+      Name           : string := OSVVM_STRING_INIT_PARM_DETECT ; 
+      AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ; 
+      ExternalErrors : AlertCountType := (0,0,0) ; 
+      ReportAll      : boolean := TRUE
+    ) is
     ------------------------------------------------------------
       variable NumErrors : integer ;
       variable NumDisabledErrors : integer ;
       constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
+      variable localAlertLogID : AlertLogIDType ;
     begin
+      localAlertLogID := VerifyID(AlertLogID) ;
       if ReportJustifyAmountVar <= 0 then
         TurnedOnJustify := TRUE ; 
         SetJustify ;
       end if ;
-      NumErrors := SumAlertCount(  ExternalErrors + GetEnabledAlertCount(AlertLogPtr(AlertLogID).AlertCount, AlertLogPtr(AlertLogID).AlertEnabled) ) ;
+      NumErrors := SumAlertCount(  ExternalErrors + GetEnabledAlertCount(AlertLogPtr(localAlertLogID).AlertCount, AlertLogPtr(localAlertLogID).AlertEnabled) ) ;
       if FailOnDisabledErrorsVar then
-        NumDisabledErrors := SumAlertCount( GetDisabledAlertCount(AlertLogID) ) ;
+        NumDisabledErrors := SumAlertCount( GetDisabledAlertCount(localAlertLogID) ) ;
       else
         NumDisabledErrors := 0 ;
       end if ;
       if IsOsvvmStringSet(Name) then
         PrintTopAlerts (
           NumErrors          => NumErrors,
-          AlertCount         => AlertLogPtr(AlertLogID).AlertCount + ExternalErrors,
+          AlertCount         => AlertLogPtr(localAlertLogID).AlertCount + ExternalErrors,
           Name               => Name,
           NumDisabledErrors  => NumDisabledErrors
         ) ;
       else
         PrintTopAlerts (
           NumErrors          => NumErrors,
-          AlertCount         => AlertLogPtr(AlertLogID).AlertCount + ExternalErrors,
-          Name               => AlertLogPtr(AlertLogID).Name.all,
+          AlertCount         => AlertLogPtr(localAlertLogID).AlertCount + ExternalErrors,
+          Name               => AlertLogPtr(localAlertLogID).Name.all,
           NumDisabledErrors  => NumDisabledErrors
         ) ;
       end if ;
       --Print Hierarchy when enabled and error or disabled error
       if (FoundReportHierVar and ReportHierarchyVar) and (NumErrors /= 0 or NumDisabledErrors /=0) then
         PrintChild(
-          AlertLogID    => AlertLogID,
+          AlertLogID    => localAlertLogID,
           Prefix        => ReportPrefix & "  ",
           IndentAmount  => 2,
           ReportAll     => ReportAll
@@ -1100,11 +1129,13 @@ package body AlertLogPkg is
       Level        : LogType := ALWAYS ;
       Enable       : boolean := FALSE    -- override internal enable
     ) is
+      variable localAlertLogID : AlertLogIDType ;
     begin
+      localAlertLogID := VerifyID(AlertLogID) ;
       if Level = ALWAYS or Enable then
-        LocalLog(AlertLogID, Message, Level) ;
-      elsif AlertLogPtr(AlertLogID).LogEnabled(Level) then
-        LocalLog(AlertLogID, Message, Level) ;
+        LocalLog(localAlertLogID, Message, Level) ;
+      elsif AlertLogPtr(localAlertLogID).LogEnabled(Level) then
+        LocalLog(localAlertLogID, Message, Level) ;
       end if ;
     end procedure log ;
 
@@ -1123,8 +1154,10 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     impure function GetAlertLogName(AlertLogID : AlertLogIDType) return string is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).Name.all ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).Name.all ;
     end function GetAlertLogName ;
 
     ------------------------------------------------------------
@@ -1314,11 +1347,13 @@ package body AlertLogPkg is
     impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType is
     ------------------------------------------------------------
       variable CurParentID : AlertLogIDType ;
+      variable localParentID : AlertLogIDType ;
     begin
+      localParentID := VerifyID(ParentID) ;
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
         CurParentID := AlertLogPtr(i).ParentID ;
         if Name = AlertLogPtr(i).Name.all and
-          (CurParentID = ParentID or CurParentID = ALERTLOG_ID_NOT_ASSIGNED or ParentID = ALERTLOG_ID_NOT_ASSIGNED)
+          (CurParentID = localParentID or CurParentID = ALERTLOG_ID_NOT_ASSIGNED or ParentID = ALERTLOG_ID_NOT_ASSIGNED)
         then
           return i ;
         end if ;
@@ -1330,17 +1365,20 @@ package body AlertLogPkg is
     impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType is
     ------------------------------------------------------------
       variable ResultID : AlertLogIDType ;
+      variable localParentID : AlertLogIDType ;
     begin
       ResultID := FindAlertLogID(Name, ParentID) ;
+      localParentID := VerifyID(ParentID) ;
       if ResultID /= ALERTLOG_ID_NOT_FOUND then
-        -- found it, set ParentID
+        -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentID = ALERTLOG_ID_NOT_ASSIGNED then
-          AlertLogPtr(ResultID).ParentID := ParentID ;
-        -- else -- do not update as ParentIDs are either same or input ParentID = ALERTLOG_ID_NOT_ASSIGNED
+          AlertLogPtr(ResultID).ParentID := localParentID ;
+        -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
         end if ;
       else
+        -- Create a new ID
         ResultID := GetNextAlertLogID ;
-        NewAlertLogRec(ResultID, Name, ParentID) ;
+        NewAlertLogRec(ResultID, Name, localParentID) ;
         FoundAlertHierVar := TRUE ;
         if CreateHierarchy then
           FoundReportHierVar := TRUE ;
@@ -1352,56 +1390,70 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).ParentID ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).ParentID ;
     end function GetAlertLogParentID ;
 
     ------------------------------------------------------------
     procedure SetAlertLogPrefix(AlertLogID : AlertLogIDType; Name : string ) is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      Deallocate(AlertLogPtr(AlertLogID).Prefix) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      Deallocate(AlertLogPtr(localAlertLogID).Prefix) ;
       if Name'length > 0 then 
-        AlertLogPtr(AlertLogID).Prefix := new string'(Name) ;
+        AlertLogPtr(localAlertLogID).Prefix := new string'(Name) ;
       end if ; 
     end procedure SetAlertLogPrefix ;
 
     ------------------------------------------------------------
     procedure UnSetAlertLogPrefix(AlertLogID : AlertLogIDType) is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      Deallocate(AlertLogPtr(AlertLogID).Prefix) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      Deallocate(AlertLogPtr(localAlertLogID).Prefix) ;
     end procedure UnSetAlertLogPrefix ;
 
     ------------------------------------------------------------
     impure function GetAlertLogPrefix(AlertLogID : AlertLogIDType) return string is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).Prefix.all ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).Prefix.all ;
     end function GetAlertLogPrefix ;
 
     ------------------------------------------------------------
     procedure SetAlertLogSuffix(AlertLogID : AlertLogIDType; Name : string ) is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      Deallocate(AlertLogPtr(AlertLogID).Suffix) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      Deallocate(AlertLogPtr(localAlertLogID).Suffix) ;
       if Name'length > 0 then 
-        AlertLogPtr(AlertLogID).Suffix := new string'(Name) ;
+        AlertLogPtr(localAlertLogID).Suffix := new string'(Name) ;
       end if ; 
     end procedure SetAlertLogSuffix ;
 
     ------------------------------------------------------------
     procedure UnSetAlertLogSuffix(AlertLogID : AlertLogIDType) is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      Deallocate(AlertLogPtr(AlertLogID).Suffix) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      Deallocate(AlertLogPtr(localAlertLogID).Suffix) ;
     end procedure UnSetAlertLogSuffix ;
 
     ------------------------------------------------------------
     impure function GetAlertLogSuffix(AlertLogID : AlertLogIDType) return string is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).Suffix.all ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).Suffix.all ;
     end function GetAlertLogSuffix ;
 
     ------------------------------------------------------------
@@ -1439,23 +1491,6 @@ package body AlertLogPkg is
       return AffirmCheckCountVar ;
     end function GetAffirmCount ;
 
---??    ------------------------------------------------------------
---??    procedure IncAffirmPassCount is
---??    ------------------------------------------------------------
---??    begin
---??      if GlobalAlertEnabledVar then
---??          AffirmCheckCountVar  := AffirmCheckCountVar  + 1 ;
---??          AffirmPassedCountVar := AffirmPassedCountVar + 1 ;
---??      end if ;
---??    end procedure IncAffirmPassCount ;
---??
---??    ------------------------------------------------------------
---??    impure function GetAffirmPassCount return natural is
---??    ------------------------------------------------------------
---??    begin
---??      return AffirmPassedCountVar ;
---??    end function GetAffirmPassCount ;
-
     ------------------------------------------------------------
     -- PT LOCAL
     procedure SetOneStopCount(
@@ -1474,20 +1509,32 @@ package body AlertLogPkg is
     end procedure SetOneStopCount ;
 
     ------------------------------------------------------------
-    procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    -- PT Local
+    procedure LocalSetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
     ------------------------------------------------------------
     begin
       SetOneStopCount(AlertLogID, Level, Count) ;
       if AlertLogID /= ALERTLOG_BASE_ID then
-        SetAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count) ;
+        LocalSetAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count) ;
       end if ;
+    end procedure LocalSetAlertStopCount ;
+
+    ------------------------------------------------------------
+    procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      LocalSetAlertStopCount(AlertLogID, Level, Count) ;
     end procedure SetAlertStopCount ;
 
     ------------------------------------------------------------
     impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).AlertStopCount(Level) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).AlertStopCount(Level) ;
     end function GetAlertStopCount ;
 
     ------------------------------------------------------------
@@ -1500,24 +1547,36 @@ package body AlertLogPkg is
     end procedure SetAlertEnable ;
 
     ------------------------------------------------------------
-    procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+    -- PT Local
+    procedure LocalSetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
     ------------------------------------------------------------
     begin
       AlertLogPtr(AlertLogID).AlertEnabled(Level) := Enable ;
       if DescendHierarchy then
         for i in AlertLogID+1 to NumAlertLogIDsVar loop
           if AlertLogID = AlertLogPtr(i).ParentID then
-            SetAlertEnable(i, Level, Enable, DescendHierarchy) ;
+            LocalSetAlertEnable(i, Level, Enable, DescendHierarchy) ;
           end if ;
         end loop ;
       end if ;
+    end procedure LocalSetAlertEnable ;
+
+    ------------------------------------------------------------
+    procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      LocalSetAlertEnable(localAlertLogID, Level, Enable, DescendHierarchy) ;
     end procedure SetAlertEnable ;
 
     ------------------------------------------------------------
     impure function GetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType) return boolean is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
-      return AlertLogPtr(AlertLogID).AlertEnabled(Level) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).AlertEnabled(Level) ;
     end function GetAlertEnable ;
 
     ------------------------------------------------------------
@@ -1530,27 +1589,39 @@ package body AlertLogPkg is
     end procedure SetLogEnable ;
 
     ------------------------------------------------------------
-    procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+    -- PT Local
+    procedure LocalSetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
     ------------------------------------------------------------
     begin
       AlertLogPtr(AlertLogID).LogEnabled(Level) := Enable ;
       if DescendHierarchy then
         for i in AlertLogID+1 to NumAlertLogIDsVar loop
           if AlertLogID = AlertLogPtr(i).ParentID then
-            SetLogEnable(i, Level, Enable, DescendHierarchy) ;
+            LocalSetLogEnable(i, Level, Enable, DescendHierarchy) ;
           end if ;
         end loop ;
       end if ;
+    end procedure LocalSetLogEnable ;
+
+    ------------------------------------------------------------
+    procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      LocalSetLogEnable(localAlertLogID, Level, Enable, DescendHierarchy) ;
     end procedure SetLogEnable ;
 
     ------------------------------------------------------------
     impure function GetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType) return boolean is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
+      localAlertLogID := VerifyID(AlertLogID) ;
       if Level = ALWAYS then
         return TRUE ;
       else
-        return AlertLogPtr(AlertLogID).LogEnabled(Level) ;
+        return AlertLogPtr(localAlertLogID).LogEnabled(Level) ;
       end if ;
     end function GetLogEnable ;
 
