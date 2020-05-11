@@ -49,6 +49,8 @@
 --                         String' Fix for GHDL
 --                         Removed Deprecated procedure Increment - see TbUtilPkg as it moved there
 --    01/2020   2020.01    Updated Licenses to Apache
+--    06/2020   2020.05    Updated LastIndex to also be set during ICover.   
+--                         Updated deallocate to set all variables to their initial value
 --
 --
 --  Development Notes:
@@ -1252,7 +1254,8 @@ package body CoveragePkg is
     variable BinValLength  : integer := 1 ;
 --!    variable OrderCount : integer := 0 ;  -- for statistics
     variable ItemCount : integer := 0 ;  -- Count of randomizations
-    variable LastIndex : integer := 1 ;  -- Index of last randomization
+    variable LastIndex : integer := 1 ;  -- Index of last randomization or Coverage Collection
+    variable LastRandIndex : integer := 1 ;  -- Index of last randomization
 
     -- Internal Modes and Names
     variable IllegalMode   : IllegalModeType := ILLEGAL_ON ;
@@ -2044,10 +2047,15 @@ package body CoveragePkg is
       DeallocateName ;
       DeallocateMessage ;
       -- Restore internal variables to their default values
+      VendorCovHandleVar := 0 ;
       NumBins := 0 ;
---!      OrderCount := 0 ;
       BinValLength := 1 ;
+--!      OrderCount := 0 ;
+      ItemCount := 0 ;
+      LastIndex := 1 ;
+      LastRandIndex := 1 ;
       IllegalMode   := ILLEGAL_ON ;
+      IllegalModeLevel := ERROR ; 
       WeightMode    := AT_LEAST ;
       WeightScale   := 1.0 ;
       ThresholdingEnable := FALSE ;
@@ -2055,6 +2063,7 @@ package body CoveragePkg is
       CovTarget     := 100.0 ;
       MergingEnable := FALSE ;
       CountMode     := COUNT_FIRST ;
+      RvSeedInit    := FALSE ;
       AlertLogIDVar := OSVVM_ALERTLOG_ID ;
       -- RvSeedInit    := FALSE ;
       WritePassFailVar   := COV_OPT_INIT_PARM_DETECT ;
@@ -2104,7 +2113,7 @@ package body CoveragePkg is
     procedure ICoverLast is
     ------------------------------------------------------------
     begin
-     ICoverIndex(LastIndex, NULL_INTV) ;
+     ICoverIndex(LastRandIndex, NULL_INTV) ;
     end procedure ICoverLast ;
 
 
@@ -2124,8 +2133,8 @@ package body CoveragePkg is
         Alert(AlertLogIDVar, GetNamePlus(prefix => "in ", suffix => ", ") & "CoveragePkg." &  
         " ICover: CovPoint length = " & to_string(CovPoint'length) &
         "  does not match Coverage Bin dimensions = " & to_string(BinValLength), FAILURE) ; 
-      elsif CountMode = COUNT_FIRST and inside(CovPoint, CovBinPtr(LastIndex).BinVal.all) then
-        ICoverIndex(LastIndex, CovPoint) ;
+      elsif CountMode = COUNT_FIRST and inside(CovPoint, CovBinPtr(LastRandIndex).BinVal.all) then
+        ICoverIndex(LastRandIndex, CovPoint) ;
       else
         CovLoop : for i in 1 to NumBins loop
           -- skip this CovBin if CovPoint is not in it
@@ -2492,8 +2501,9 @@ package body CoveragePkg is
       -- DistInt returns integer range 0 to Numbins-1
       -- Caution:  DistInt can fail when sum(WeightVec) > 2**31
       --           See notes in CalcWeight for REMAIN_EXP
-      LastIndex := 1 + RV.DistInt( WeightVec )  ; -- return range 1 to NumBins
-      return LastIndex ;
+      LastRandIndex := 1 + RV.DistInt( WeightVec )  ; -- return range 1 to NumBins
+      LastIndex := LastRandIndex ;
+      return LastRandIndex ;
     end function RandHoleIndex ;
 
 
@@ -2509,7 +2519,7 @@ package body CoveragePkg is
     impure function GetLastBinVal return RangeArrayType is
     ------------------------------------------------------------
     begin
-      return CovBinPtr( LastIndex ).BinVal.all ;
+      return CovBinPtr( LastRandIndex ).BinVal.all ;
     end function GetLastBinVal ;
 
 
@@ -3997,8 +4007,9 @@ package body CoveragePkg is
         end if ;
       end loop CovLoop ;
       -- DistInt returns integer range 0 to Numbins-1
-      LastIndex := 1 + RV.DistInt( WeightVec )  ; -- return range 1 to NumBins
-      return LastIndex ;
+      LastRandIndex := 1 + RV.DistInt( WeightVec )  ; -- return range 1 to NumBins
+      LastIndex := LastRandIndex ;
+      return LastRandIndex ;
     end function RandHoleIndex ;
 
     ------------------------------------------------------------
