@@ -42,6 +42,15 @@
 --                         Added prefix and suffix
 --                         Debug printing with number of errors as prefix
 --    01/2020   2020.01    Updated Licenses to Apache
+--    05/2020   2020.05    Added internal variables AlertCount (W, E, F) and ErrorCount (integer)  
+--                         that hold the error state.   These can be displayed in wave windows
+--                         in simulation to track number of errors. 
+--                         Calls to std.env.stop now return ErrorCount
+--                         Updated calls to check for valid AlertLogIDs
+--                         Added affirmation count for each level.
+--                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
+--                         Disabled Alerts now handled in separate bins and reported 
+--                         separately.  Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
 --
 --
 --  This file is part of OSVVM.
@@ -328,7 +337,7 @@ package AlertLogPkg is
   procedure SetGlobalAlertEnable (A : boolean := TRUE) ;
   impure function SetGlobalAlertEnable (A : boolean := TRUE) return boolean ;
   impure function GetGlobalAlertEnable return boolean ;
-  procedure IncAffirmCount ;
+  procedure IncAffirmCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) ;
   impure function GetAffirmCount return natural ;
 --??  procedure IncAffirmPassCount ;
 --??  impure function GetAffirmPassCount return natural ;
@@ -351,6 +360,8 @@ package AlertLogPkg is
     WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
     WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
     WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
     AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
     ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -422,7 +433,7 @@ package AlertLogPkg is
   procedure AffirmIf(condition : boolean ; Message : string ;  LogLevel : LogType  ; AlertLevel : AlertType := ERROR) ;
   procedure AffirmIf(condition : boolean ; Message : string ;  AlertLevel : AlertType ) ;
 
-  alias IncAffirmCheckCount is IncAffirmCount [] ;
+  alias IncAffirmCheckCount is IncAffirmCount [AlertLogIDType] ;
   alias GetAffirmCheckCount is GetAffirmCount [return natural] ;
   alias IsLoggingEnabled is GetLogEnable [AlertLogIDType, LogType return boolean] ;  -- same as IsLogEnabled
   alias IsLoggingEnabled is GetLogEnable [LogType return boolean] ;  -- same as IsLogEnabled
@@ -525,7 +536,7 @@ package body AlertLogPkg is
     procedure SetGlobalAlertEnable (A : boolean := TRUE) ;
     impure function GetAlertLogName(AlertLogID : AlertLogIDType) return string ;
     impure function GetGlobalAlertEnable return boolean ;
-    procedure IncAffirmCount ;
+    procedure IncAffirmCount(AlertLogID : AlertLogIDType) ;
     impure function GetAffirmCount return natural ;
 --??    procedure IncAffirmPassCount ;
 --??    impure function GetAffirmPassCount return natural ;
@@ -557,6 +568,8 @@ package body AlertLogPkg is
       WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
       WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
       WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
       AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
       LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
       ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -597,7 +610,6 @@ package body AlertLogPkg is
     variable GlobalAlertEnabledVar     : boolean := TRUE ; -- Allows turn off and on
 
     variable AffirmCheckCountVar       : natural := 0 ;
---??    variable AffirmPassedCountVar      : natural := 0 ;
 
     variable ErrorCount : integer := 0 ;
     variable AlertCount : AlertCountType := (0, 0, 0) ;
@@ -605,14 +617,16 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     type AlertLogRecType is record
     ------------------------------------------------------------
-      Name              : Line ;
-      Prefix            : Line ;
-      Suffix            : Line ;
-      ParentID          : AlertLogIDType ;
-      AlertCount        : AlertCountType ;
-      AlertStopCount    : AlertCountType ;
-      AlertEnabled      : AlertEnableType ;
-      LogEnabled        : LogEnableType ;
+      Name                : Line ;
+      Prefix              : Line ;
+      Suffix              : Line ;
+      ParentID            : AlertLogIDType ;
+      AlertCount          : AlertCountType ;
+      DisabledAlertCount  : AlertCountType ;
+      AffirmCount         : Integer ; 
+      AlertStopCount      : AlertCountType ;
+      AlertEnabled        : AlertEnableType ;
+      LogEnabled          : LogEnableType ;
     end record AlertLogRecType ;
 
     ------------------------------------------------------------
@@ -627,6 +641,9 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- Report formatting settings, with defaults
+    variable PrintAffirmationsVar         : boolean := TRUE ; 
+    variable PrintDisabledAlertsVar       : boolean := TRUE ; 
+
     variable FailOnWarningVar          : boolean := TRUE ;
     variable FailOnDisabledErrorsVar   : boolean := TRUE ;
     variable ReportHierarchyVar        : boolean := TRUE ;
@@ -678,10 +695,8 @@ package body AlertLogPkg is
       variable StopDueToCount : inout boolean
     ) is
     begin
-      -- Always Count at this level
-      AlertLogPtr(AlertLogID).AlertCount(Level) := AlertLogPtr(AlertLogID).AlertCount(Level) + 1 ;
-      -- Only do remaining actions if enabled
       if AlertLogPtr(AlertLogID).AlertEnabled(Level) then
+        AlertLogPtr(AlertLogID).AlertCount(Level) := AlertLogPtr(AlertLogID).AlertCount(Level) + 1 ;
         -- Exceeded Stop Count at this level?
         if AlertLogPtr(AlertLogID).AlertCount(Level) >= AlertLogPtr(AlertLogID).AlertStopCount(Level) then
           StopDueToCount := TRUE ;
@@ -690,6 +705,9 @@ package body AlertLogPkg is
         if AlertLogID /= ALERTLOG_BASE_ID then
           IncrementAlertCount(AlertLogPtr(AlertLogID).ParentID, Level, StopDueToCount) ;
         end if ;
+      else
+        -- Disabled, increment disabled count
+        AlertLogPtr(AlertLogID).DisabledAlertCount(Level) := AlertLogPtr(AlertLogID).DisabledAlertCount(Level) + 1 ;
       end if ;
     end procedure IncrementAlertCount ;
 
@@ -820,24 +838,6 @@ package body AlertLogPkg is
     end procedure SetJustify ;
 
     ------------------------------------------------------------
-    -- PT Local
-    impure function GetEnabledAlertCount(AlertCount: AlertCountType;  AlertEnabled : AlertEnableType) return AlertCountType is
-    ------------------------------------------------------------
-      variable Count : AlertCountType := (others => 0) ;
-    begin
-      if AlertEnabled(FAILURE) then
-        Count(FAILURE) := AlertCount(FAILURE) ;
-      end if ;
-      if AlertEnabled(ERROR) then
-        Count(ERROR) := AlertCount(ERROR) ;
-      end if ;
-      if FailOnWarningVar and AlertEnabled(WARNING) then
-        Count(WARNING) := AlertCount(WARNING) ;
-      end if ;
-      return Count ;
-    end function GetEnabledAlertCount ;
-
-    ------------------------------------------------------------
     impure function GetAlertCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return AlertCountType is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
@@ -850,28 +850,16 @@ package body AlertLogPkg is
     impure function GetEnabledAlertCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return AlertCountType is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
+      variable Count : AlertCountType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      return GetEnabledAlertCount(AlertLogPtr(localAlertLogID).AlertCount, AlertLogPtr(localAlertLogID).AlertEnabled) ;
-    end function GetEnabledAlertCount ;
-
-    ------------------------------------------------------------
-    -- PT Local
-    impure function GetDisabledAlertCount(AlertCount: AlertCountType;  AlertEnabled : AlertEnableType) return AlertCountType is
-    ------------------------------------------------------------
-      variable Count : AlertCountType := (others => 0) ;
-    begin
-      if not AlertEnabled(FAILURE) then
-        Count(FAILURE) := AlertCount(FAILURE) ;
-      end if ;
-      if not AlertEnabled(ERROR) then
-        Count(ERROR) := AlertCount(ERROR) ;
-      end if ;
-      if FailOnWarningVar and not AlertEnabled(WARNING) then
-        Count(WARNING) := AlertCount(WARNING) ;
+      Count := AlertLogPtr(localAlertLogID).AlertCount ;
+      if not FailOnWarningVar then
+        Count(WARNING) := 0 ;
       end if ;
       return Count ;
-    end function GetDisabledAlertCount ;
+    end function GetEnabledAlertCount ;
+
 
     ------------------------------------------------------------
     impure function GetDisabledAlertCount return AlertCountType is
@@ -879,26 +867,43 @@ package body AlertLogPkg is
       variable Count : AlertCountType := (others => 0) ;
     begin
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
-        Count := Count + GetDisabledAlertCount(AlertLogPtr(i).AlertCount, AlertLogPtr(i).AlertEnabled) ;
+        Count := Count + AlertLogPtr(i).DisabledAlertCount ;
+--? Should excluded warnings get counted as disabled errors?
+--?        if not FailOnWarningVar then
+--?          Count(WARNING) := Count(WARNING) + AlertLogPtr(i).AlertCount(WARNING) ;
+--?        end if ;
       end loop ;
       return Count ;
     end function GetDisabledAlertCount ;
 
+
     ------------------------------------------------------------
-    impure function GetDisabledAlertCount(AlertLogID: AlertLogIDType) return AlertCountType is
+    impure function LocalGetDisabledAlertCount(AlertLogID: AlertLogIDType) return AlertCountType is
     ------------------------------------------------------------
-      variable Count : AlertCountType := (others => 0) ;
+      variable Count : AlertCountType ;
       variable localAlertLogID : AlertLogIDType ;
     begin
-      localAlertLogID := VerifyID(AlertLogID) ;
-      Count := GetDisabledAlertCount(AlertLogPtr(localAlertLogID).AlertCount, AlertLogPtr(localAlertLogID).AlertEnabled) ;
+      Count := AlertLogPtr(AlertLogID).DisabledAlertCount ;
       -- Find Children of this ID
-      for i in localAlertLogID+1 to NumAlertLogIDsVar loop
-        if localAlertLogID = AlertLogPtr(i).ParentID then
-          Count := Count + GetDisabledAlertCount(i) ;
+      for i in AlertLogID+1 to NumAlertLogIDsVar loop
+        if AlertLogID = AlertLogPtr(i).ParentID then
+          Count := Count + LocalGetDisabledAlertCount(i) ; -- Recursively descend into children
+--? Should excluded warnings get counted as disabled errors?
+--?          if not FailOnWarningVar then
+--?            Count(WARNING) := Count(WARNING) + AlertLogPtr(i).AlertCount(WARNING) ;
+--?          end if ;
         end if ;
       end loop ;
       return Count ;
+    end function LocalGetDisabledAlertCount ;
+
+    ------------------------------------------------------------
+    impure function GetDisabledAlertCount(AlertLogID: AlertLogIDType) return AlertCountType is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return LocalGetDisabledAlertCount(localAlertLogID) ;
     end function GetDisabledAlertCount ;
 
     ------------------------------------------------------------
@@ -908,7 +913,8 @@ package body AlertLogPkg is
       NumErrors          : integer ;
       AlertCount         : AlertCountType ;
       Name               : string ;
-      NumDisabledErrors  : integer
+      NumDisabledErrors  : integer ;
+      DisabledAlertCount : AlertCountType
     ) is
       constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
       constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
@@ -920,21 +926,21 @@ package body AlertLogPkg is
         if NumDisabledErrors = 0 then
           -- Passed
           write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
-          if AffirmCheckCountVar > 0 then
-            write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ;
-          end if ;
-          write(buf, "  at "  & to_string(NOW, 1 ns)) ;
-          WriteLine(buf) ;
         else
           -- Failed Due to Disabled Errors
           write(buf, ReportPrefix & DoneName & "  " & FailName & "  " & Name) ;
           write(buf, "   Failed Due to Disabled Error(s) = " & to_string(NumDisabledErrors)) ;
-          if AffirmCheckCountVar > 0 then
-            write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ;
-          end if ;
-          write(buf, "  at "  & to_string(NOW, 1 ns)) ;
-          WriteLine(buf) ;
+        end if; 
+        if NumDisabledErrors /= 0  and PrintDisabledAlertsVar then
+          write(buf, "  Disabled Failures: "  & to_string(DisabledAlertCount(FAILURE)) ) ;
+          write(buf, "  Errors: "    & to_string(DisabledAlertCount(ERROR) ) ) ;
+          write(buf, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) ) ;
+        end if ; 
+        if PrintAffirmationsVar or (AffirmCheckCountVar > 0) then
+          write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ;
         end if ;
+        write(buf, "  at "  & to_string(NOW, 1 ns)) ;
+        WriteLine(buf) ;
       else
         -- Failed
         write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
@@ -942,10 +948,14 @@ package body AlertLogPkg is
         write(buf, "  Failures: "  & to_string(AlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
         write(buf, "  Warnings: "  & to_string(AlertCount(WARNING) ) ) ;
-        if AffirmCheckCountVar > 0 then
---??         write(buf, "  Affirmations Passed: " & to_string(AffirmPassedCountVar)) ;
---??          write(buf, "  Checked: " & to_string(AffirmCheckCountVar)) ;
+        if PrintAffirmationsVar or (AffirmCheckCountVar > 0) then
           write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ;
+        end if ;
+        if NumDisabledErrors /= 0  and PrintDisabledAlertsVar then
+          write(buf, "  Total Disabled Error(s) = "      & to_string(NumDisabledErrors) ) ;
+          write(buf, "  Disabled Failures: "  & to_string(DisabledAlertCount(FAILURE)) ) ;
+          write(buf, "  Errors: "    & to_string(DisabledAlertCount(ERROR) ) ) ;
+          write(buf, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) ) ;
         end if ;
         Write(buf, "  at "  & to_string(NOW, 1 ns)) ;
         WriteLine(buf) ;
@@ -956,27 +966,37 @@ package body AlertLogPkg is
     -- PT Local
     procedure PrintChild(
     ------------------------------------------------------------
-      AlertLogID   : AlertLogIDType ;
-      Prefix       : string ;
-      IndentAmount : integer ;
-      ReportAll    : boolean
+      AlertLogID        : AlertLogIDType ;
+      Prefix            : string ;
+      IndentAmount      : integer ;
+      ReportAll         : boolean ;
+      NumDisabledErrors : integer 
     ) is
       variable buf : line ;
     begin
       for i in AlertLogID+1 to NumAlertLogIDsVar loop
         if AlertLogID = AlertLogPtr(i).ParentID then
           if ReportAll or SumAlertCount(AlertLogPtr(i).AlertCount) > 0 then
-            Write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(i).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
+            write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(i).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
             write(buf, "  Failures: "  & to_string(AlertLogPtr(i).AlertCount(FAILURE) ) ) ;
             write(buf, "  Errors: "    & to_string(AlertLogPtr(i).AlertCount(ERROR) ) ) ;
             write(buf, "  Warnings: "  & to_string(AlertLogPtr(i).AlertCount(WARNING) ) ) ;
+            if PrintAffirmationsVar then
+              write(buf, "  Affirmations: "  & to_string(AlertLogPtr(i).AffirmCount ) ) ;
+            end if ; 
+            if NumDisabledErrors /= 0 and PrintDisabledAlertsVar then
+              write(buf, "  Disabled Failures: "  & to_string(AlertLogPtr(i).DisabledAlertCount(FAILURE) ) ) ;
+              write(buf, "  Errors: "    & to_string(AlertLogPtr(i).DisabledAlertCount(ERROR) ) ) ;
+              write(buf, "  Warnings: "  & to_string(AlertLogPtr(i).DisabledAlertCount(WARNING) ) ) ;
+            end if ; 
             WriteLine(buf) ;
           end if ;
           PrintChild(
             AlertLogID    => i,
             Prefix        => Prefix & "  ",
             IndentAmount  => IndentAmount + 2,
-            ReportAll     => ReportAll
+            ReportAll     => ReportAll,
+            NumDisabledErrors  => NumDisabledErrors
           ) ;
         end if ;
       end loop ;
@@ -995,31 +1015,40 @@ package body AlertLogPkg is
       constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
+      variable DisabledAlertCount : AlertCountType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
       if ReportJustifyAmountVar <= 0 then
         TurnedOnJustify := TRUE ; 
         SetJustify ;
       end if ;
-      NumErrors := SumAlertCount(  ExternalErrors + GetEnabledAlertCount(AlertLogPtr(localAlertLogID).AlertCount, AlertLogPtr(localAlertLogID).AlertEnabled) ) ;
+      NumErrors := SumAlertCount(  ExternalErrors + GetEnabledAlertCount(localAlertLogID)) ;
       if FailOnDisabledErrorsVar then
-        NumDisabledErrors := SumAlertCount( GetDisabledAlertCount(localAlertLogID) ) ;
+        DisabledAlertCount := GetDisabledAlertCount(localAlertLogID) ;
+        NumDisabledErrors  := SumAlertCount( DisabledAlertCount ) ;
       else
-        NumDisabledErrors := 0 ;
+        NumDisabledErrors  := 0 ;
+        DisabledAlertCount := (0,0,0) ;
       end if ;
       if IsOsvvmStringSet(Name) then
         PrintTopAlerts (
+          -- Does not include warnings if they are not counted as an error
           NumErrors          => NumErrors,
+          -- Includes warnings, whether they cound as an error or not
           AlertCount         => AlertLogPtr(localAlertLogID).AlertCount + ExternalErrors,
           Name               => Name,
-          NumDisabledErrors  => NumDisabledErrors
+          NumDisabledErrors  => NumDisabledErrors,
+          DisabledAlertCount => DisabledAlertCount 
         ) ;
       else
         PrintTopAlerts (
+          -- Does not include warnings if they are not counted as an error
           NumErrors          => NumErrors,
+          -- Includes warnings, whether they cound as an error or not
           AlertCount         => AlertLogPtr(localAlertLogID).AlertCount + ExternalErrors,
           Name               => AlertLogPtr(localAlertLogID).Name.all,
-          NumDisabledErrors  => NumDisabledErrors
+          NumDisabledErrors  => NumDisabledErrors,
+          DisabledAlertCount => DisabledAlertCount 
         ) ;
       end if ;
       --Print Hierarchy when enabled and error or disabled error
@@ -1028,7 +1057,8 @@ package body AlertLogPkg is
           AlertLogID    => localAlertLogID,
           Prefix        => ReportPrefix & "  ",
           IndentAmount  => 2,
-          ReportAll     => ReportAll
+          ReportAll     => ReportAll,
+          NumDisabledErrors  => NumDisabledErrors
         ) ;
       end if ;
       if TurnedOnJustify then
@@ -1040,13 +1070,30 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) is
     ------------------------------------------------------------
+      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
+      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
+      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
+      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
+      variable buf : line ;
+      variable NumErrors : integer ; 
     begin
-       PrintTopAlerts (
-        NumErrors          => SumAlertCount(AlertCount),
-        AlertCount         => AlertCount,
-        Name               => Name,
-        NumDisabledErrors  => 0
-      ) ;
+      NumErrors := SumAlertCount(AlertCount) ;
+      if  NumErrors = 0 then
+        -- Passed
+        write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
+        write(buf, "  at "  & to_string(NOW, 1 ns)) ;
+        WriteLine(buf) ;
+
+      else
+        -- Failed
+        write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
+        write(buf, "  Total Error(s) = "      & to_string(NumErrors) ) ;
+        write(buf, "  Failures: "  & to_string(AlertCount(FAILURE)) ) ;
+        write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
+        write(buf, "  Warnings: "  & to_string(AlertCount(WARNING) ) ) ;
+        write(buf, "  at "  & to_string(NOW, 1 ns)) ;
+        writeLine(buf) ;
+      end if ;
     end procedure ReportAlerts ;
 
     ------------------------------------------------------------
@@ -1054,14 +1101,13 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       AffirmCheckCountVar  := 0 ;
---??      AffirmPassedCountVar := 0 ;
-
-      AlertLogPtr(ALERTLOG_BASE_ID).AlertCount := (0, 0, 0) ;
       AlertCount := (0, 0, 0) ;
       ErrorCount := 0 ;
 
-      for i in ALERTLOG_BASE_ID + 1 to NumAlertLogIDsVar loop
-        AlertLogPtr(i).AlertCount := (0, 0, 0) ;
+      for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
+        AlertLogPtr(i).AlertCount                 := (0, 0, 0) ;
+        AlertLogPtr(i).DisabledAlertCount         := (0, 0, 0) ;
+        AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := 0 ;
       end loop ;
     end procedure ClearAlerts ;
     
@@ -1186,20 +1232,14 @@ package body AlertLogPkg is
         AlertStopCount := (FAILURE => integer'right, ERROR => integer'right, WARNING => integer'right) ;
       end if ;
       AlertLogPtr(AlertLogID) := new AlertLogRecType ;
-      AlertLogPtr(AlertLogID).Name              := new string'(NAME) ;
-      AlertLogPtr(AlertLogID).ParentID          := ParentID ;
-      AlertLogPtr(AlertLogID).AlertCount        := (0, 0, 0) ;
-      AlertLogPtr(AlertLogID).AlertEnabled      := AlertEnabled ;
-      AlertLogPtr(AlertLogID).AlertStopCount    := AlertStopCount ;
-      AlertLogPtr(AlertLogID).LogEnabled        := LogEnabled ;
---      AlertLogPtr(AlertLogID) := new AlertLogRecType'(
---          Name              => new string'(NAME),
---          ParentID          => ParentID,
---          AlertCount        => (0, 0, 0),
---          AlertEnabled      => AlertEnabled,
---          AlertStopCount    => AlertStopCount,
---          LogEnabled        => LogEnabled
---        ) ;
+      AlertLogPtr(AlertLogID).Name                := new string'(NAME) ;
+      AlertLogPtr(AlertLogID).ParentID            := ParentID ;
+      AlertLogPtr(AlertLogID).AlertCount          := (0, 0, 0) ;
+      AlertLogPtr(AlertLogID).DisabledAlertCount  := (0, 0, 0) ;
+      AlertLogPtr(AlertLogID).AffirmCount         := 0 ;
+      AlertLogPtr(AlertLogID).AlertEnabled        := AlertEnabled ;
+      AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
+      AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
     end procedure NewAlertLogRec ;
 
     ------------------------------------------------------------
@@ -1270,11 +1310,12 @@ package body AlertLogPkg is
       PassNameVar.Deallocate ;
       FailNameVar.Deallocate ;
       -- Restore variables to their initial state
+      PrintAffirmationsVar     := TRUE ; 
+      PrintDisabledAlertsVar   := TRUE ; 
       NumAlertLogIDsVar           := 0 ;
       NumAllocatedAlertLogIDsVar  := 0 ;
       GlobalAlertEnabledVar    := TRUE ; -- Allows turn off and on
       AffirmCheckCountVar      := 0 ;
---??      AffirmPassedCountVar     := 0 ;
       FailOnWarningVar         := TRUE ;
       FailOnDisabledErrorsVar  := TRUE ;
       ReportHierarchyVar       := TRUE ;
@@ -1488,11 +1529,14 @@ package body AlertLogPkg is
     end function GetGlobalAlertEnable ;
 
     ------------------------------------------------------------
-    procedure IncAffirmCount is
+    procedure IncAffirmCount(AlertLogID : AlertLogIDType) is
     ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
     begin
       if GlobalAlertEnabledVar then
-          AffirmCheckCountVar := AffirmCheckCountVar + 1 ;
+        localAlertLogID := VerifyID(AlertLogID) ;
+        AlertLogPtr(localAlertLogID).AffirmCount := AlertLogPtr(localAlertLogID).AffirmCount + 1 ;
+        AffirmCheckCountVar := AffirmCheckCountVar + 1 ;
       end if ;
     end procedure IncAffirmCount ;
 
@@ -1696,6 +1740,8 @@ package body AlertLogPkg is
       WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
       WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
       WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
       AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
       LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
       ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -1736,6 +1782,12 @@ package body AlertLogPkg is
       end if ;
       if WriteLogTime /= OPT_INIT_PARM_DETECT then
         WriteLogTimeVar := IsEnabled(WriteLogTime) ;
+      end if ;
+      if PrintAffirmations /= OPT_INIT_PARM_DETECT then
+        PrintAffirmationsVar := IsEnabled(PrintAffirmations) ;
+      end if ;
+      if PrintDisabledAlerts /= OPT_INIT_PARM_DETECT then
+        PrintDisabledAlertsVar := IsEnabled(PrintDisabledAlerts) ;
       end if ;
       if AlertPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
         AlertPrefixVar.Set(AlertPrefix) ;
@@ -1778,6 +1830,8 @@ package body AlertLogPkg is
       swrite(buf, "WriteLogLevelVar:        " & to_string(WriteLogLevelVar        ) & LF ) ;
       swrite(buf, "WriteLogNameVar:         " & to_string(WriteLogNameVar         ) & LF ) ;
       swrite(buf, "WriteLogTimeVar:         " & to_string(WriteLogTimeVar         ) & LF ) ;
+      swrite(buf, "PrintAffirmationsVar:    " & to_string(PrintAffirmationsVar    ) & LF ) ;  
+      swrite(buf, "PrintDisabledAlertsVar:  " & to_string(PrintDisabledAlertsVar  ) & LF ) ; 
 
       -- String
       swrite(buf, "AlertPrefixVar:          " & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))  & LF ) ;
@@ -1879,6 +1933,20 @@ package body AlertLogPkg is
     begin
       return to_OsvvmOptionsType(WriteLogTimeVar) ;
     end function GetAlertLogWriteLogTime ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType is
+    ------------------------------------------------------------
+    begin
+      return to_OsvvmOptionsType(PrintAffirmationsVar) ;
+    end function GetAlertLogPrintAffirmations ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType is
+    ------------------------------------------------------------
+    begin
+      return to_OsvvmOptionsType(PrintDisabledAlertsVar) ;
+    end function GetAlertLogPrintDisabledAlerts ;
 
     ------------------------------------------------------------
     impure function GetAlertLogAlertPrefix          return string is
@@ -2599,7 +2667,7 @@ package body AlertLogPkg is
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.IncAffirmCount ; -- increment check count
+    AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- increment check count
     if condition then
       -- passed
       AlertLogStruct.Log(AlertLogID, ReceivedMessage, PASSED, Enable) ;
@@ -2650,7 +2718,7 @@ package body AlertLogPkg is
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.IncAffirmCount ; -- increment check count
+    AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- increment check count
     if condition then
       -- passed
       AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ;
@@ -3573,11 +3641,11 @@ package body AlertLogPkg is
   end function GetGlobalAlertEnable ;
 
   ------------------------------------------------------------
-  procedure IncAffirmCount is
+  procedure IncAffirmCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.IncAffirmCount ;
+    AlertLogStruct.IncAffirmCount(AlertLogID) ;
     -- synthesis translate_on
   end procedure IncAffirmCount ;
 
@@ -3661,6 +3729,8 @@ package body AlertLogPkg is
     WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
     WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
     WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
     AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
     ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -3997,7 +4067,7 @@ package body AlertLogPkg is
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.IncAffirmCount ; -- increment check count
+    AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- increment check count
     if condition then
       -- passed
       AlertLogStruct.Log(AlertLogID, Message, LogLevel) ; -- call log
