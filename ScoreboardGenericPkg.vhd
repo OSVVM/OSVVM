@@ -37,7 +37,8 @@
 --    11/2016   2016.11     Released as part of OSVVM 
 --    05/2017   2017.05     First print Actual then only print Expected if mis-match  
 --    04/2018   2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
---    01/2020   2020.01    Updated Licenses to Apache
+--    01/2020   2020.01     Updated Licenses to Apache
+--    05/2020   2020.05     Updated calls to IncAffirmCount
 --
 --
 --  This file is part of OSVVM.
@@ -925,7 +926,7 @@ package body ScoreboardGenericPkg is
         FoundError := FALSE ; 
       end if ; 
       
-      IncAffirmCount ;  
+      IncAffirmCount(AlertLogIDVar(Index)) ;  
       
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or GetLogEnable(AlertLogIDVar(Index), PASSED) then
