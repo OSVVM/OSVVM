@@ -388,7 +388,9 @@ package AlertLogPkg is
   impure function GetAlertLogWriteLogLevel        return AlertLogOptionsType ;
   impure function GetAlertLogWriteLogName         return AlertLogOptionsType ;
   impure function GetAlertLogWriteLogTime         return AlertLogOptionsType ;
-
+  impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType ;
+  impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType ;
+  
   impure function GetAlertLogAlertPrefix          return string ;
   impure function GetAlertLogLogPrefix            return string ;
 
@@ -592,6 +594,8 @@ package body AlertLogPkg is
     impure function GetAlertLogWriteLogLevel        return AlertLogOptionsType ;
     impure function GetAlertLogWriteLogName         return AlertLogOptionsType ;
     impure function GetAlertLogWriteLogTime         return AlertLogOptionsType ;
+    impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType ;
+    impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType ;
 
     impure function GetAlertLogAlertPrefix          return string ;
     impure function GetAlertLogLogPrefix            return string ;
@@ -3752,6 +3756,8 @@ package body AlertLogPkg is
       WriteLogLevel         => WriteLogLevel       ,
       WriteLogName          => WriteLogName       ,
       WriteLogTime          => WriteLogTime        ,
+      PrintAffirmations     => PrintAffirmations     ,
+      PrintDisabledAlerts   => PrintDisabledAlerts   ,
       AlertPrefix           => AlertPrefix         ,
       LogPrefix             => LogPrefix           ,
       ReportPrefix          => ReportPrefix        ,
@@ -3865,6 +3871,20 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogWriteLogTime ;
   end function GetAlertLogWriteLogTime ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetAlertLogPrintAffirmations ;
+  end function GetAlertLogPrintAffirmations ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetAlertLogPrintDisabledAlerts ;
+  end function GetAlertLogPrintDisabledAlerts ;
 
   ------------------------------------------------------------
   impure function GetAlertLogAlertPrefix          return string is
