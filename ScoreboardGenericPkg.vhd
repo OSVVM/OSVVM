@@ -39,6 +39,8 @@
 --    04/2018   2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
 --    01/2020   2020.01     Updated Licenses to Apache
 --    05/2020   2020.05     Updated calls to IncAffirmCount
+--                          Overloaded Check with functions that return pass/fail (T/F)
+--                          Added GetFifoCount.   Added GetPushCount which is same as GetItemCount
 --
 --
 --  This file is part of OSVVM.
@@ -179,6 +181,28 @@ package ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) ;
+    
+    -- Simple Scoreboard, no tag
+    impure function Check (ActualData : ActualType) return boolean ; 
+    
+    -- Simple Tagged Scoreboard
+    impure function Check (
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean ;
+
+    -- Array of Scoreboards, no tag
+    impure function Check (
+      constant Index        : in  integer ;
+      constant ActualData   : in ActualType
+    ) return boolean ;
+
+    -- Array of Tagged Scoreboards
+    impure function Check (
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean ;
 
     ------------------------------------------------------------
     -- Pop the top item (FIFO) from the scoreboard/FIFO
@@ -207,8 +231,7 @@ package ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     -- Pop the top item (FIFO) from the scoreboard/FIFO
-    -- Function form supports chaining of operations
-    -- In 2013, this caused overloading issues in some simulators, will retest later
+    -- Caution:  this did not work in older simulators (@2013)
 
       -- Simple Scoreboard, no tag
       impure function Pop return ExpectedType ;
@@ -258,7 +281,17 @@ package ScoreboardGenericPkg is
     -- Number of items put into scoreboard
     impure function GetItemCount return integer ;                      -- Simple, with or without tags
     impure function GetItemCount (Index  : integer) return integer ;   -- Arrays, with or without tags
+    impure function GetPushCount return integer ;                      -- Simple, with or without tags
+    impure function GetPushCount (Index  : integer) return integer ;   -- Arrays, with or without tags
     
+    -- Number of items removed from scoreboard by pop or check
+    impure function GetPopCount (Index  : integer) return integer ;
+    impure function GetPopCount return integer ; 
+
+    -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
+    impure function GetFifoCount (Index  : integer) return integer ;
+    impure function GetFifoCount return integer ; 
+
     -- Number of items checked by scoreboard
     impure function GetCheckCount return integer ;                     -- Simple, with or without tags
     impure function GetCheckCount (Index  : integer) return integer ;  -- Arrays, with or without tags
@@ -452,6 +485,7 @@ package body ScoreboardGenericPkg is
     variable ErrCntVar       : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable DropCountVar    : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable ItemNumberVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
+    variable PopCountVar     : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable CheckCountVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable AlertLogIDVar   : AlertLogIDArrayPointerType := new AlertLogIDArrayType'(1 => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
 
@@ -509,7 +543,7 @@ package body ScoreboardGenericPkg is
     procedure SetArrayIndex(L, R : integer) is
     ------------------------------------------------------------
       variable OldHeadPointer, OldTailPointer, OldPopListPointer : ListArrayPointerType ;
-      variable OldErrCnt, OldDropCount, OldItemNumber, OldCheckCount : IntegerArrayPointerType ;
+      variable OldErrCnt, OldDropCount, OldItemNumber, OldPopCount, OldCheckCount : IntegerArrayPointerType ;
       variable OldAlertLogIDVar : AlertLogIDArrayPointerType ;
       variable Min, Max, Len, OldLen, OldMax : integer ; 
     begin
@@ -562,6 +596,13 @@ package body ScoreboardGenericPkg is
         if OldItemNumber /= NULL then 
           ItemNumberVar(Min to OldMax) := OldItemNumber.all ; 
           Deallocate(OldItemNumber) ; 
+        end if ; 
+
+        OldPopCount := PopCountVar ; 
+        PopCountVar := new IntegerArrayType'(Min to Max => 0) ;
+        if OldPopCount /= NULL then 
+          PopCountVar(Min to OldMax) := OldPopCount.all ; 
+          Deallocate(OldPopCount) ; 
         end if ; 
 
         OldCheckCount := CheckCountVar ; 
@@ -628,6 +669,7 @@ package body ScoreboardGenericPkg is
       Deallocate(ErrCntVar) ; 
       Deallocate(DropCountVar) ; 
       Deallocate(ItemNumberVar) ; 
+      Deallocate(PopCountVar) ; 
       Deallocate(CheckCountVar) ; 
       Deallocate(AlertLogIDVar) ; 
 
@@ -871,6 +913,7 @@ package body ScoreboardGenericPkg is
         Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ; 
         return ;
       end if ;
+      PopCountVar(Index) := PopCountVar(Index) + 1 ;
       -- deallocate previous pointer
       if PopListPointer(Index) /= NULL then
         deallocate(PopListPointer(Index).TagPtr) ; 
@@ -903,17 +946,18 @@ package body ScoreboardGenericPkg is
       end if ;
     end procedure LocalPop ; 
     
+    
     ------------------------------------------------------------
     -- Local Only
     procedure LocalCheck (
     ------------------------------------------------------------
       constant Index        : in  integer ;
-      constant ActualData   : in ActualType
+      constant ActualData   : in ActualType ;
+      variable FoundError   : inout boolean  
     ) is
       variable ExpectedPtr    : ExpectedPointerType ;
       variable CurrentItem  : integer ;
       variable WriteBuf : line ;
-      variable FoundError : boolean ; 
     begin
       CheckCountVar(Index) := CheckCountVar(Index) + 1 ;
       ExpectedPtr := PopListPointer(Index).ExpectedPtr ;
@@ -971,12 +1015,13 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) is
+      variable FoundError   : boolean ;
     begin
       if LocalOutOfRange(Index, "Check") then 
         return ; -- error reporting in LocalOutOfRange
       end if ; 
       LocalPop(Index, Tag, "Check") ; 
-      LocalCheck(Index, ActualData) ; 
+      LocalCheck(Index, ActualData, FoundError) ; 
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -986,12 +1031,13 @@ package body ScoreboardGenericPkg is
       constant Index        : in  integer ;
       constant ActualData   : in  ActualType
     ) is
+      variable FoundError   : boolean ;
     begin
       if LocalOutOfRange(Index, "Check") then 
         return ; -- error reporting in LocalOutOfRange
       end if ; 
       LocalPop(Index, "", "Check") ; 
-      LocalCheck(Index, ActualData) ; 
+      LocalCheck(Index, ActualData, FoundError) ; 
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -1001,20 +1047,82 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) is
+      variable FoundError   : boolean ;
     begin
       LocalPop(FirstIndexVar, Tag, "Check") ; 
-      LocalCheck(FirstIndexVar, ActualData) ; 
+      LocalCheck(FirstIndexVar, ActualData, FoundError) ; 
     end procedure Check ;
     
     ------------------------------------------------------------
     -- Simple Scoreboard, no tag
     procedure Check (ActualData : ActualType) is
     ------------------------------------------------------------
+      variable FoundError   : boolean ;
     begin
       LocalPop(FirstIndexVar, "", "Check") ; 
-      LocalCheck(FirstIndexVar, ActualData) ; 
+      LocalCheck(FirstIndexVar, ActualData, FoundError) ; 
     end procedure Check ;
     
+    ------------------------------------------------------------
+    -- Array of Tagged Scoreboards
+    impure function Check (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then 
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ; 
+      LocalPop(Index, Tag, "Check") ; 
+      LocalCheck(Index, ActualData, FoundError) ; 
+      return not FoundError ; 
+    end function Check ;
+
+    ------------------------------------------------------------
+    -- Array of Scoreboards, no tag
+    impure function Check (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant ActualData   : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then 
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ; 
+      LocalPop(Index, "", "Check") ; 
+      LocalCheck(Index, ActualData, FoundError) ; 
+      return not FoundError ; 
+    end function Check ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    impure function Check (
+    ------------------------------------------------------------
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      LocalPop(FirstIndexVar, Tag, "Check") ; 
+      LocalCheck(FirstIndexVar, ActualData, FoundError) ; 
+      return not FoundError ; 
+    end function Check ;
+    
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    impure function Check (ActualData : ActualType) return boolean is
+    ------------------------------------------------------------
+      variable FoundError   : boolean ;
+    begin
+      LocalPop(FirstIndexVar, "", "Check") ; 
+      LocalCheck(FirstIndexVar, ActualData, FoundError) ; 
+      return not FoundError ; 
+    end function Check ;
+
     ------------------------------------------------------------
     -- Array of Tagged Scoreboards
     procedure Pop (
@@ -1274,6 +1382,48 @@ package body ScoreboardGenericPkg is
       return ItemNumberVar(FirstIndexVar) ; 
     end function GetItemCount ; 
 
+    ------------------------------------------------------------
+    impure function GetPushCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return ItemNumberVar(Index) ; 
+    end function GetPushCount ; 
+
+    ------------------------------------------------------------
+    impure function GetPushCount return integer is
+    ------------------------------------------------------------
+    begin
+      return ItemNumberVar(FirstIndexVar) ; 
+    end function GetPushCount ; 
+
+    ------------------------------------------------------------
+    impure function GetPopCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return PopCountVar(Index) ; 
+    end function GetPopCount ; 
+
+    ------------------------------------------------------------
+    impure function GetPopCount return integer is
+    ------------------------------------------------------------
+    begin
+      return PopCountVar(FirstIndexVar) ; 
+    end function GetPopCount ; 
+    
+    ------------------------------------------------------------
+    impure function GetFifoCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return ItemNumberVar(Index) - PopCountVar(Index) - DropCountVar(Index) ; 
+    end function GetFifoCount ; 
+
+    ------------------------------------------------------------
+    impure function GetFifoCount return integer is
+    ------------------------------------------------------------
+    begin
+      return GetFifoCount(FirstIndexVar) ; 
+    end function GetFifoCount ; 
+    
     ------------------------------------------------------------
     impure function GetCheckCount (Index  : integer) return integer is
     ------------------------------------------------------------
