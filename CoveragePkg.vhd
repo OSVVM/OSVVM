@@ -784,7 +784,8 @@ package CoveragePkg is
   function to_boolean_vector ( IV : integer_vector ) return boolean_vector ;
   function to_integer_vector ( SLV : std_logic_vector ) return integer_vector ;
   function to_std_logic_vector ( IV : integer_vector ) return std_logic_vector ;
-  
+  alias to_slv is to_std_logic_vector[integer_vector return std_logic_vector] ;
+
   
   ------------------------------------------------------------
   ------------------------------------------------------------
@@ -5358,10 +5359,7 @@ package body CoveragePkg is
     end if ; 
 
     return result ;
-  end function to_std_logic_vector ;
-  
-  alias to_slv is to_std_logic_vector[integer_vector return std_logic_vector] ;
-  
+  end function to_std_logic_vector ;  
   
   ------------------------------------------------------------
   ------------------------------------------------------------
