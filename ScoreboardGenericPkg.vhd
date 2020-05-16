@@ -958,22 +958,29 @@ package body ScoreboardGenericPkg is
       variable ExpectedPtr    : ExpectedPointerType ;
       variable CurrentItem  : integer ;
       variable WriteBuf : line ;
+      variable PassedFlagEnabled : boolean ; 
     begin
       CheckCountVar(Index) := CheckCountVar(Index) + 1 ;
       ExpectedPtr := PopListPointer(Index).ExpectedPtr ;
       CurrentItem := PopListPointer(Index).ItemNumber ; 
 
+      PassedFlagEnabled := GetLogEnable(AlertLogIDVar(Index), PASSED) ;
+      
       if not Match(ActualData, ExpectedPtr.all) then
         ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
         FoundError := TRUE ; 
+        IncAffirmCount(AlertLogIDVar(Index)) ;
       else
         FoundError := FALSE ; 
+        if not PassedFlagEnabled then 
+          IncAffirmPassedCount(AlertLogIDVar(Index)) ;
+        end if ; 
       end if ; 
       
-      IncAffirmCount(AlertLogIDVar(Index)) ;  
+--      IncAffirmCount(AlertLogIDVar(Index)) ;  
       
 --      if FoundError or ReportModeVar = REPORT_ALL then
-      if FoundError or GetLogEnable(AlertLogIDVar(Index), PASSED) then
+      if FoundError or PassedFlagEnabled then
         if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then 
           write(WriteBuf, GetName(DefaultName => "Scoreboard")) ; 
         else
@@ -1000,7 +1007,7 @@ package body ScoreboardGenericPkg is
             IncAlertCount(AlertLogIDVar(Index)) ;  -- Silent Counted Alert
           end if ; 
         else
-          -- Affirmation passed
+          -- Affirmation passed, PASSED flag increments AffirmCount
           Log(AlertLogIDVar(Index), WriteBuf.all, PASSED) ;
         end if ; 
         deallocate(WriteBuf) ; 
