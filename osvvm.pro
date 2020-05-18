@@ -7,9 +7,7 @@
 #
 #
 #  Description:
-#        Script to compile the OSVVM library for ModelSim, QuestaSim, and RivieraPro 
-#        make sure to change OSVVM_DIR
-#        If using Aldec, use VendorCovApiPkg_Aldec.vhd and not VendorCovApiPkg.vhd
+#        Script to compile the OSVVM library  
 #
 #  Developed for:
 #        SynthWorks Design Inc.

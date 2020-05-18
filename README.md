@@ -2,11 +2,24 @@
 
 [![https://gitter.im/OSVVM/Lobby](https://badges.gitter.im/OSVVM/Lobby.svg)](https://gitter.im/OSVVM/Lobby)
 ![Latest tag](https://img.shields.io/github/tag/JimLewis/OSVVM.svg?style=flat)
-[![Artistic License 2.0](https://img.shields.io/github/license/JimLewis/OSVVM.svg?style=flat)](LICENSE.md)
+[![Apache License 2.0](https://img.shields.io/github/license/JimLewis/OSVVM.svg?style=flat)](LICENSE.md)
 
 ------
-# Open Source VHDL Verification Methodology (OSVVM)
-Open Source VHDL Verification Methodology (OSVVM) reduces the complexity of your verification task by providing utility and model libraries.
+
+
+# About Open Source VHDL Verification Methodology (OSVVM) 
+Open Source VHDL Verification Methodology (OSVVM) provides 
+utility and model libraries that simplify 
+your FPGA and ASIC verification tasks.
+Using these libraries you can create a simple, readable, and 
+powerful testbench that is suitable for either a simple FPGA block
+or a complex ASIC.
+
+This repository contains the OSVVM Utility Library. 
+Download it using git:    
+   `git clone https://github.com/OSVVM/OSVVM.git`
+
+
 
 ## OSVVM is the #1 VHDL Verification Methodology 
 According to the [2018 Wilson Verification Survey](https://blogs.mentor.com/verificationhorizons/blog/2019/01/15/part-6-the-2018-wilson-research-group-functional-verification-study/), OSVVM is the:
@@ -28,9 +41,21 @@ The [OSVVM utility library](https://github.com/OSVVM/OSVVM) offers the same capa
  - Scoreboards and FIFOs (data structures for verification)
  - Memory models
  
-## The OSVVM Model Library
-The OSVVM model library provides off the shelf models for:
+Download the OSVVM Utility library using git:    
+   `git clone https://github.com/OSVVM/OSVVM.git`
 
+ 
+## The OSVVM Model Library
+The OSVVM model library is a growing set of models 
+commonly used for FPGA and ASIC verification.  
+The library currently contains the following repositories:
+
+ - [Verification IP](https://github.com/OSVVM/VerificationIP)
+   - Repository that includes all of the 
+   OSVVM model library  as submodules. 
+   - Download the entire OSVVM model library using git clone with the "--recursive" flag:  
+        `$ git clone --recursive https://github.com/OSVVM/VerificationIP.git`
+   - Note submodules are not included in the GitHub zip files
  - [AXI4 Lite](https://github.com/OSVVM/AXI4)
    - Master
    - Slave transactor model
@@ -45,13 +70,29 @@ The OSVVM model library provides off the shelf models for:
  - [OSVVM Scripts](https://github.com/OSVVM/OSVVM-Scripts)
    - Recommended.  Script layer on top of tcl
    - Common simulator compilation and execution methodology
- - Verification IP
-   - Intended to include the above as submodules, but currently something is broken in the linking in GitHub.
 
+We use the word models as short hand for 
+Transaction Based Models (TBM). 
+They are simply an entity and architecture coded in 
+an effective manner for verification.
+Some use other terminology such as 
+VHDL verification components (VVC) - 
+these are the same thing.
+Historically we used Bus Functional Models (BFM). 
+However, recently we abandoned BFM due to others using BFM to 
+refer to their own lesser capable subprogram based approach.
+
+OSVVM models use records for the transaction interfaces, 
+so connecting them to your testbench is simple - 
+connect only a single signal.
+
+Testbenches are in the Git repository, so you can 
+run a simulation and see a live example 
+of how to use the models.
 
 **OSVVM Forums - currently broken:**     [http://www.osvvm.org/][osvvm]  
 **OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/][osvvm-blog]  
-**License:**	[Artistic License 2.0][PAL2.0]  
+**License:**	[Apache License 2.0][AL2]
 **Copyright:**	Copyright © 2006-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)
 
 ## Release History
@@ -79,7 +120,7 @@ The OSVVM model library provides off the shelf models for:
  [osvvm]:      http://www.osvvm.org/
  [osvvm-blog]: http://www.synthworks.com/blog/osvvm/
  [aldec]:      http://www.aldec.com/
- [PAL2.0]:	   http://www.perlfoundation.org/artistic_license_2_0
+ [AL2]:	   http://www.apache.org/licenses/LICENSE-2.0
 
 
 
