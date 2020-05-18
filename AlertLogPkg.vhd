@@ -652,7 +652,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- Report formatting settings, with defaults
     variable PrintPassedVar            : boolean := TRUE ; 
-    variable PrintAffirmationsVar      : boolean := TRUE ; 
+    variable PrintAffirmationsVar      : boolean := FALSE ; 
     variable PrintDisabledAlertsVar    : boolean := FALSE ; 
 
     variable FailOnWarningVar          : boolean := TRUE ;
@@ -1367,7 +1367,7 @@ package body AlertLogPkg is
       FailNameVar.Deallocate ;
       -- Restore variables to their initial state
       PrintPassedVar           := TRUE ;
-      PrintAffirmationsVar     := TRUE ; 
+      PrintAffirmationsVar     := FALSE ; 
       PrintDisabledAlertsVar   := FALSE ; 
       NumAlertLogIDsVar           := 0 ;
       NumAllocatedAlertLogIDsVar  := 0 ;
