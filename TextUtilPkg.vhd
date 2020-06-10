@@ -78,6 +78,15 @@ package TextUtilPkg is
   ) ;
   
   ------------------------------------------------------------
+  procedure ReadUntilDelimiterOrEOL(
+  ------------------------------------------------------------
+    variable L         : InOut line ; 
+    variable Name      : InOut line ; 
+    constant Delimiter : In    character ;
+    variable ReadValid : Out   boolean 
+  ) ;
+
+  ------------------------------------------------------------
   procedure ReadHexToken (
   -- Reads Upto Result'length values, less is ok.
   -- Does not skip white space
@@ -319,7 +328,7 @@ package body TextUtilPkg is
         if L'ascending then 
           Next2Char := L.all(L'left to L'left+1) ;
         else 
-          Next2Char := L.all(L'left to L'left-1) ;
+          Next2Char := L.all(L'left downto L'left-1) ;
         end if; 
         exit when Next2Char = "//" ; -- C style comment
         exit when Next2Char = "--" ; -- VHDL style comment
@@ -335,6 +344,34 @@ package body TextUtilPkg is
       exit ; 
     end loop EmptyCheckLoop ;
   end procedure EmptyOrCommentLine ;
+  
+  ------------------------------------------------------------
+  procedure ReadUntilDelimiterOrEOL(
+  ------------------------------------------------------------
+    variable L         : InOut line ; 
+    variable Name      : InOut line ; 
+    constant Delimiter : In    character ;
+    variable ReadValid : Out   boolean 
+  ) is
+    variable NameStr   : string(1 to L'length) ; 
+    variable ReadLen   : integer := 1 ; 
+    variable Good      : boolean ; 
+  begin
+    ReadValid := TRUE ; 
+    for i in NameStr'range loop
+      Read(L, NameStr(i), Good) ; 
+      ReadValid := ReadValid and Good ; 
+      if NameStr(i) = Delimiter then 
+        -- Read(L, NameStr(1 to i), ReadValid) ; 
+        Name := new string'(NameStr(1 to i-1)) ;
+        exit ; 
+      elsif i = NameStr'length then 
+        -- Read(L, NameStr(1 to i), ReadValid) ; 
+        Name := new string'(NameStr(1 to i)) ;
+        exit ;
+      end if ; 
+    end loop ;        
+  end procedure ReadUntilDelimiterOrEOL ; 
   
   ------------------------------------------------------------
   procedure ReadHexToken (
