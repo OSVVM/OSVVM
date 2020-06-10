@@ -42,33 +42,41 @@
 --                         Added prefix and suffix
 --                         Debug printing with number of errors as prefix
 --    01/2020   2020.01    Updated Licenses to Apache
---    05/2020   2020.05    Added internal variables AlertCount (W, E, F) and ErrorCount (integer)  
+--    05/2020   2020.05    Added internal variables AlertCount (W, E, F) and ErrorCount (integer)
 --                         that hold the error state.   These can be displayed in wave windows
---                         in simulation to track number of errors. 
+--                         in simulation to track number of errors.
 --                         Calls to std.env.stop now return ErrorCount
 --                         Updated calls to check for valid AlertLogIDs
 --                         Added affirmation count for each level.
 --                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
---                         Disabled Alerts now handled in separate bins and reported 
---                         separately.  Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
+--                         Disabled Alerts now handled in separate bins and reported separately.
+--                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
+--    06/2020   2020.06    Added Passed Goals for Requirements tracking
+--                         Set with;  GetAlertLogID("Req ID 1", ReqParentID, PassedGoal, [CreateHierarchy])
+--                         Report with ReportAlerts
+--                         Tests fail when requirements are not met and FailOnRequirementErrors is true.
+--                             Set using:  SetAlertLogOptions(FailOnRequirementErrors => TRUE)
+--                         Turn on requirements printing in summary and details with PrintRequirements
+--                         Turn on requirements printing in summary with PrintIfHaveRequirements (Default TRUE)
+--                         Added ReadRequirements and WriteRequirements
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2015 - 2020 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2015 - 2020 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
 
 use std.textio.all ;
@@ -99,6 +107,8 @@ package AlertLogPkg is
   constant  LOG_DEFAULT_ID                 : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
   constant  OSVVM_ALERTLOG_ID              : AlertLogIDType := 2 ;
   constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := ALERTLOG_BASE_ID ; 
+  
   -- NUM_PREDEFINED_AL_IDS intended to be local, but depends on others
   -- constant  NUM_PREDEFINED_AL_IDS          : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID - ALERTLOG_BASE_ID ;  -- Not including base
   constant  ALERTLOG_ID_NOT_FOUND          : AlertLogIDType := -1 ;  -- alternately integer'right
@@ -265,6 +275,12 @@ package AlertLogPkg is
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
   procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
   procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
+  procedure WriteRequirements (
+    FileName    : string ; 
+    AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ; 
+    OpenKind    : File_Open_Kind := WRITE_MODE 
+  ) ;
+  procedure ReadRequirements (FileName : string) ;
   procedure ClearAlerts ;
   procedure ClearAlertStopCounts ;
   procedure ClearAlertCounts ;
@@ -320,6 +336,7 @@ package AlertLogPkg is
   impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
   impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
   impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
+  impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; PassedGoal : natural ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
   procedure SetAlertLogPrefix(AlertLogID : AlertLogIDType; Name : string ) ;
   procedure UnSetAlertLogPrefix(AlertLogID : AlertLogIDType) ;
@@ -349,26 +366,29 @@ package AlertLogPkg is
 
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
-    FailOnWarning         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    FailOnDisabledErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    ReportHierarchy       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertErrorCount  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertLevel       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertName        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertTime        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogErrorCount    : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintPassed           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    DoneName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    PassName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    FailName              : string := OSVVM_STRING_INIT_PARM_DETECT
+    FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
   ) ;
 
   procedure ReportAlertLogOptions ;
@@ -378,6 +398,7 @@ package AlertLogPkg is
 
   impure function GetAlertLogFailOnWarning        return AlertLogOptionsType ;
   impure function GetAlertLogFailOnDisabledErrors return AlertLogOptionsType ;
+  impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType ;
   impure function GetAlertLogReportHierarchy      return AlertLogOptionsType ;
   impure function GetAlertLogFoundReportHier      return boolean ;
   impure function GetAlertLogFoundAlertHier       return boolean ;
@@ -392,7 +413,9 @@ package AlertLogPkg is
   impure function GetAlertLogPrintPassed          return AlertLogOptionsType ;
   impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType ;
   impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType ;
-  
+  impure function GetAlertLogPrintRequirements    return AlertLogOptionsType ;
+  impure function GetAlertLogPrintIfHaveRequirements  return AlertLogOptionsType ;
+
   impure function GetAlertLogAlertPrefix          return string ;
   impure function GetAlertLogLogPrefix            return string ;
 
@@ -490,6 +513,12 @@ package body AlertLogPkg is
     procedure SetJustify (Enable : boolean := TRUE) ;
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) ;
     procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (0,0,0) ; ReportAll : boolean := TRUE ) ;
+    procedure WriteRequirements (
+      FileName    : string ; 
+      AlertLogID  : AlertLogIDType ; 
+      OpenKind    : File_Open_Kind := WRITE_MODE 
+    ) ;
+    procedure ReadRequirements (FileName : string) ;
     procedure ClearAlerts ;
     procedure ClearAlertStopCounts ;
     impure function GetAlertCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return AlertCountType ;
@@ -522,7 +551,7 @@ package body AlertLogPkg is
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
     impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
-    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
+    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; PassedGoal : natural ; CreateHierarchy : Boolean) return AlertLogIDType ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
     procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) ;
     procedure Deallocate ;
@@ -561,31 +590,35 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- Reporting Accessor
     procedure SetAlertLogOptions (
-      FailOnWarning         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      FailOnDisabledErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      ReportHierarchy       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertErrorCount  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertLevel       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertName        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertTime        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogErrorCount    : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintPassed           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      DoneName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      PassName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      FailName              : string := OSVVM_STRING_INIT_PARM_DETECT
+      FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
     ) ;
     procedure ReportAlertLogOptions ;
 
     impure function GetAlertLogFailOnWarning        return AlertLogOptionsType ;
     impure function GetAlertLogFailOnDisabledErrors return AlertLogOptionsType ;
+    impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType ;
     impure function GetAlertLogReportHierarchy      return AlertLogOptionsType ;
     impure function GetAlertLogFoundReportHier      return boolean ;
     impure function GetAlertLogFoundAlertHier       return boolean ;
@@ -600,6 +633,8 @@ package body AlertLogPkg is
     impure function GetAlertLogPrintPassed          return AlertLogOptionsType ;
     impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType ;
     impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType ;
+    impure function GetAlertLogPrintRequirements    return AlertLogOptionsType ;
+    impure function GetAlertLogPrintIfHaveRequirements  return AlertLogOptionsType ;
 
     impure function GetAlertLogAlertPrefix          return string ;
     impure function GetAlertLogLogPrefix            return string ;
@@ -632,8 +667,9 @@ package body AlertLogPkg is
       ParentID            : AlertLogIDType ;
       AlertCount          : AlertCountType ;
       DisabledAlertCount  : AlertCountType ;
-      AffirmCount         : Integer ; 
-      PassedCount         : Integer ; 
+      AffirmCount         : Integer ;
+      PassedCount         : Integer ;
+      PassedGoal          : Integer ;
       AlertStopCount      : AlertCountType ;
       AlertEnabled        : AlertEnableType ;
       LogEnabled          : LogEnableType ;
@@ -651,34 +687,38 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- Report formatting settings, with defaults
-    variable PrintPassedVar            : boolean := TRUE ; 
-    variable PrintAffirmationsVar      : boolean := FALSE ; 
-    variable PrintDisabledAlertsVar    : boolean := FALSE ; 
+    variable PrintPassedVar              : boolean := TRUE ;
+    variable PrintAffirmationsVar        : boolean := FALSE ;
+    variable PrintDisabledAlertsVar      : boolean := FALSE ;
+    variable PrintRequirementsVar        : boolean := FALSE ;
+    variable PrintIfHaveRequirementsVar  : boolean := TRUE ;
 
-    variable FailOnWarningVar          : boolean := TRUE ;
-    variable FailOnDisabledErrorsVar   : boolean := TRUE ;
-    variable ReportHierarchyVar        : boolean := TRUE ;
-    variable FoundReportHierVar        : boolean := FALSE ;
-    variable FoundAlertHierVar         : boolean := FALSE ;
+    variable FailOnWarningVar            : boolean := TRUE ;
+    variable FailOnDisabledErrorsVar     : boolean := TRUE ;
+    variable FailOnRequirementErrorsVar  : boolean := TRUE ;
+    
+    variable ReportHierarchyVar          : boolean := TRUE ;
+    variable FoundReportHierVar          : boolean := FALSE ;
+    variable FoundAlertHierVar           : boolean := FALSE ;
 
-    variable WriteAlertErrorCountVar   : boolean := FALSE ;
-    variable WriteAlertLevelVar        : boolean := TRUE ;
-    variable WriteAlertNameVar         : boolean := TRUE ;
-    variable WriteAlertTimeVar         : boolean := TRUE ;
-    variable WriteLogErrorCountVar     : boolean := FALSE ;
-    variable WriteLogLevelVar          : boolean := TRUE ;
-    variable WriteLogNameVar           : boolean := TRUE ;
-    variable WriteLogTimeVar           : boolean := TRUE ;
+    variable WriteAlertErrorCountVar     : boolean := FALSE ;
+    variable WriteAlertLevelVar          : boolean := TRUE ;
+    variable WriteAlertNameVar           : boolean := TRUE ;
+    variable WriteAlertTimeVar           : boolean := TRUE ;
+    variable WriteLogErrorCountVar       : boolean := FALSE ;
+    variable WriteLogLevelVar            : boolean := TRUE ;
+    variable WriteLogNameVar             : boolean := TRUE ;
+    variable WriteLogTimeVar             : boolean := TRUE ;
 
-    variable AlertPrefixVar            : NamePType ;
-    variable LogPrefixVar              : NamePType ;
-    variable ReportPrefixVar           : NamePType ;
-    variable DoneNameVar               : NamePType ;
-    variable PassNameVar               : NamePType ;
-    variable FailNameVar               : NamePType ;
+    variable AlertPrefixVar              : NamePType ;
+    variable LogPrefixVar                : NamePType ;
+    variable ReportPrefixVar             : NamePType ;
+    variable DoneNameVar                 : NamePType ;
+    variable PassNameVar                 : NamePType ;
+    variable FailNameVar                 : NamePType ;
 
-    variable AlertLogJustifyAmountVar  : integer := 0 ;
-    variable ReportJustifyAmountVar    : integer := 0 ;
+    variable AlertLogJustifyAmountVar    : integer := 0 ;
+    variable ReportJustifyAmountVar      : integer := 0 ;
 
     ------------------------------------------------------------
     -- PT Local
@@ -695,7 +735,7 @@ package body AlertLogPkg is
         return AlertLogID ;
       end if ;
     end function VerifyID ;
-    
+
     ------------------------------------------------------------
     procedure IncAffirmCount(AlertLogID : AlertLogIDType) is
     ------------------------------------------------------------
@@ -707,7 +747,7 @@ package body AlertLogPkg is
         AffirmCheckCountVar := AffirmCheckCountVar + 1 ;
       end if ;
     end procedure IncAffirmCount ;
-    
+
     ------------------------------------------------------------
     impure function GetAffirmCount return natural is
     ------------------------------------------------------------
@@ -790,7 +830,7 @@ package body AlertLogPkg is
           end if ;
           -- AlertLog Name
           if FoundAlertHierVar and WriteAlertNameVar then
-            write(buf, " in " & LeftJustify(AlertLogPtr(localAlertLogID).Name.all & ",", AlertLogJustifyAmountVar) ) ;
+            write(buf, " in " & LeftJustify(AlertLogPtr(localAlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
           end if ;
           -- Prefix
           if AlertLogPtr(localAlertLogID).Prefix /= NULL then
@@ -877,14 +917,14 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       variable ResultValues : integer_vector(1 to 2) ;  -- 1 = Max, 2 = Indented
     begin
-      if Enable then 
+      if Enable then
         ResultValues := CalcJustify(ALERTLOG_BASE_ID, 0, 0) ;
         AlertLogJustifyAmountVar := ResultValues(1) ;
         ReportJustifyAmountVar   := ResultValues(2) ;
       else
         AlertLogJustifyAmountVar := 0 ;
         ReportJustifyAmountVar   := 0 ;
-      end if; 
+      end if;
     end procedure SetJustify ;
 
     ------------------------------------------------------------
@@ -897,17 +937,26 @@ package body AlertLogPkg is
     end function GetAlertCount ;
 
     ------------------------------------------------------------
+    -- Local
+    impure function RemoveNonFailingWarnings(A : AlertCountType) return AlertCountType is
+    ------------------------------------------------------------
+      variable Count : AlertCountType ;
+    begin
+      Count := A ;
+      if not FailOnWarningVar then
+        Count(WARNING) := 0 ;
+      end if ;
+      return Count ;
+    end function RemoveNonFailingWarnings ;
+
+    ------------------------------------------------------------
     impure function GetEnabledAlertCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return AlertCountType is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
       variable Count : AlertCountType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      Count := AlertLogPtr(localAlertLogID).AlertCount ;
-      if not FailOnWarningVar then
-        Count(WARNING) := 0 ;
-      end if ;
-      return Count ;
+      return RemoveNonFailingWarnings( AlertLogPtr(localAlertLogID).AlertCount ) ;
     end function GetEnabledAlertCount ;
 
 
@@ -926,22 +975,16 @@ package body AlertLogPkg is
       return Count ;
     end function GetDisabledAlertCount ;
 
-
     ------------------------------------------------------------
     impure function LocalGetDisabledAlertCount(AlertLogID: AlertLogIDType) return AlertCountType is
     ------------------------------------------------------------
       variable Count : AlertCountType ;
-      variable localAlertLogID : AlertLogIDType ;
     begin
       Count := AlertLogPtr(AlertLogID).DisabledAlertCount ;
       -- Find Children of this ID
       for i in AlertLogID+1 to NumAlertLogIDsVar loop
         if AlertLogID = AlertLogPtr(i).ParentID then
           Count := Count + LocalGetDisabledAlertCount(i) ; -- Recursively descend into children
---? Should excluded warnings get counted as disabled errors?
---?          if not FailOnWarningVar then
---?            Count(WARNING) := Count(WARNING) + AlertLogPtr(i).AlertCount(WARNING) ;
---?          end if ;
         end if ;
       end loop ;
       return Count ;
@@ -957,49 +1000,130 @@ package body AlertLogPkg is
     end function GetDisabledAlertCount ;
 
     ------------------------------------------------------------
+    -- Local
+    procedure GetRequirementsCount(
+      AlertLogID              : AlertLogIDType;
+      RequirementsPassed      : out integer ;
+      RequirementsGoal        : out integer
+    )  is
+    ------------------------------------------------------------
+      variable ChildRequirementsPassed, ChildRequirementsGoal  : integer ;
+    begin
+      RequirementsPassed := 0 ; 
+      RequirementsGoal   := 0 ; 
+      if AlertLogPtr(AlertLogID).PassedGoal > 0 then
+        RequirementsGoal := 1 ;
+        if AlertLogPtr(AlertLogID).PassedCount >= AlertLogPtr(AlertLogID).PassedGoal then
+          RequirementsPassed := 1 ;
+        end if ;
+      end if ;
+      -- Find Children of this ID
+      for i in AlertLogID+1 to NumAlertLogIDsVar loop
+        if AlertLogID = AlertLogPtr(i).ParentID then
+          GetRequirementsCount(i, ChildRequirementsPassed, ChildRequirementsGoal) ;
+          RequirementsPassed := RequirementsPassed + ChildRequirementsPassed ;
+          RequirementsGoal   := RequirementsGoal   + ChildRequirementsGoal ;
+        end if ;
+      end loop ;
+    end procedure GetRequirementsCount ;
+    
+    ------------------------------------------------------------
+    -- Local
+    procedure GetPassedAffirmCount(
+      AlertLogID       : AlertLogIDType;
+      PassedCount      : out integer ;
+      AffirmCount      : out integer
+    )  is
+    ------------------------------------------------------------
+      variable ChildPassedCount, ChildAffirmCount  : integer ;
+    begin
+      PassedCount   := AlertLogPtr(AlertLogID).PassedCount ; 
+      AffirmCount   := AlertLogPtr(AlertLogID).AffirmCount ; 
+      -- Find Children of this ID
+      for i in AlertLogID+1 to NumAlertLogIDsVar loop
+        if AlertLogID = AlertLogPtr(i).ParentID then
+          GetPassedAffirmCount(i, ChildPassedCount, ChildAffirmCount) ;
+          PassedCount := PassedCount + ChildPassedCount ;
+          AffirmCount := AffirmCount + ChildAffirmCount ;
+        end if ;
+      end loop ;
+    end procedure GetPassedAffirmCount ;
+
+    ------------------------------------------------------------
     -- PT Local
     procedure PrintTopAlerts (
     ------------------------------------------------------------
-      NumErrors          : integer ;
-      AlertCount         : AlertCountType ;
-      Name               : string ;
-      NumDisabledErrors  : integer ;
-      DisabledAlertCount : AlertCountType
+      AlertLogID                  : AlertLogIDType ;
+      Name                        : string ;
+      ExternalErrors              : AlertCountType ;
+      variable HasDisabledAlerts  : inout Boolean ;
+      variable TestFailed         : inout Boolean
     ) is
       constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
       constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
       constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
       constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ;
-      variable TestFailed : boolean ;
-      variable TestErrors : integer := NumErrors ; 
+      variable TotalErrors : integer ;
+      variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
+      variable TotalRequirementsPassed, TotalRequirementsGoal, TotalRequirementErrors : integer ;
+      variable AlertCount, DisabledAlertCount : AlertCountType ;
+      variable PassedCount, AffirmCheckCount : integer ; 
     begin
-      TestFailed := (NumErrors /= 0) or ((NumDisabledErrors /= 0) and FailOnDisabledErrorsVar) ;
+      AlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
+      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCount)) ;
+
+      DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
+      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
+      HasDisabledAlerts         := TotalDisabledAlertErrors /= 0 ;
+
+      GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsGoal) ;
+      TotalRequirementErrors := TotalRequirementsGoal - TotalRequirementsPassed ;
+
+      TotalErrors := TotalAlertErrors ;
+      if FailOnDisabledErrorsVar then
+        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
+      end if ;
+      if FailOnRequirementErrorsVar then
+        TotalErrors := TotalErrors + TotalRequirementErrors ;
+      end if ;
+
+      TestFailed := TotalErrors /= 0 ;
+      
+      GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCheckCount) ;
+
       if not TestFailed then
         write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ; -- PASSED
       else
         write(buf, ReportPrefix & DoneName & "  " & FailName & "  " & Name) ; -- FAILED
-        if FailOnDisabledErrorsVar then
-          TestErrors := TestErrors + NumDisabledErrors ; 
-        end if ; 
-        write(buf, "  Total Error(s) = " & to_string(TestErrors) ) ;
+      end if ; 
+--?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
+      if TestFailed then 
+        write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
         write(buf, "  Failures: "        & to_string(AlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "          & to_string(AlertCount(ERROR) ) ) ;
         write(buf, "  Warnings: "        & to_string(AlertCount(WARNING) ) ) ;
       end if ;
-      if NumDisabledErrors /= 0 or PrintDisabledAlertsVar then   -- print if exist or enabled
-          write(buf, "   Total Disabled Error(s) = " & to_string(NumDisabledErrors)) ;
-      end if ; 
-      if (NumDisabledErrors /= 0 and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then  -- print if enabled
+      if HasDisabledAlerts or PrintDisabledAlertsVar then   -- print if exist or enabled
+          write(buf, "   Total Disabled Error(s) = " & to_string(TotalDisabledAlertErrors)) ;
+      end if ;
+      if (HasDisabledAlerts and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then  -- print if enabled
         write(buf, "  Failures: "  & to_string(DisabledAlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "    & to_string(DisabledAlertCount(ERROR) ) ) ;
         write(buf, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) ) ;
-      end if ; 
-      if PrintPassedVar or (AffirmCheckCountVar /= 0) or PrintAffirmationsVar then -- Print if passed or printing affirmations
-        write(buf, "  Passed: " & to_string(PassedCountVar)) ;
-      end if; 
-      if (AffirmCheckCountVar /= 0) or PrintAffirmationsVar then
-        write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCountVar)) ;
+      end if ;
+      if PrintPassedVar or (AffirmCheckCount /= 0) or PrintAffirmationsVar then -- Print if passed or printing affirmations
+        write(buf, "  Passed: " & to_string(PassedCount)) ;
+      end if;
+      if (AffirmCheckCount /= 0) or PrintAffirmationsVar then
+        write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCount)) ;
+      end if ;
+      if  PrintRequirementsVar or 
+          (PrintIfHaveRequirementsVar and TotalRequirementsGoal /= 0) or
+          (FailOnRequirementErrorsVar and TotalRequirementErrors /= 0) 
+      then
+        write(buf, "  Requirements Passed: " & to_string(TotalRequirementsPassed) &
+                   " of " & to_string(TotalRequirementsGoal) ) ;
       end if ;
       write(buf, "  at "  & to_string(NOW, 1 ns)) ;
       WriteLine(buf) ;
@@ -1013,30 +1137,37 @@ package body AlertLogPkg is
       Prefix            : string ;
       IndentAmount      : integer ;
       ReportAll         : boolean ;
-      NumDisabledErrors : integer 
+      HasDisabledErrors : boolean
     ) is
       variable buf : line ;
     begin
       for i in AlertLogID+1 to NumAlertLogIDsVar loop
         if AlertLogID = AlertLogPtr(i).ParentID then
-          if ReportAll or (SumAlertCount(AlertLogPtr(i).AlertCount) > 0) or
-              (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(i).DisabledAlertCount) > 0))
+          if
+             ReportAll or   -- ReportAlerts
+             -- ReportNonZeroAlerts and  (AlertCount or (FailOn and DisabledAlertCount))
+             (SumAlertCount(AlertLogPtr(i).AlertCount) > 0) or
+             (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(i).DisabledAlertCount) > 0)) or
+             (FailOnRequirementErrorsVar and (AlertLogPtr(i).PassedCount < AlertLogPtr(i).PassedGoal))
           then
             write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(i).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
             write(buf, "  Failures: "  & to_string(AlertLogPtr(i).AlertCount(FAILURE) ) ) ;
             write(buf, "  Errors: "    & to_string(AlertLogPtr(i).AlertCount(ERROR) ) ) ;
             write(buf, "  Warnings: "  & to_string(AlertLogPtr(i).AlertCount(WARNING) ) ) ;
-            if (NumDisabledErrors /= 0 and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
+            if (HasDisabledErrors and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
               write(buf, "  Disabled Failures: "  & to_string(AlertLogPtr(i).DisabledAlertCount(FAILURE) ) ) ;
               write(buf, "  Errors: "    & to_string(AlertLogPtr(i).DisabledAlertCount(ERROR) ) ) ;
               write(buf, "  Warnings: "  & to_string(AlertLogPtr(i).DisabledAlertCount(WARNING) ) ) ;
-            end if ; 
-            if PrintPassedVar then 
+            end if ;
+            if PrintPassedVar or PrintRequirementsVar then
               write(buf, "  Passed: " & to_string(AlertLogPtr(i).PassedCount)) ;
-            end if; 
+            end if;
+            if PrintRequirementsVar then
+              write(buf, " of " & to_string(AlertLogPtr(i).PassedGoal) ) ;
+            end if ;
             if PrintAffirmationsVar then
               write(buf, "  Affirmations: "  & to_string(AlertLogPtr(i).AffirmCount ) ) ;
-            end if ; 
+            end if ;
             WriteLine(buf) ;
           end if ;
           PrintChild(
@@ -1044,71 +1175,57 @@ package body AlertLogPkg is
             Prefix        => Prefix & "  ",
             IndentAmount  => IndentAmount + 2,
             ReportAll     => ReportAll,
-            NumDisabledErrors  => NumDisabledErrors
+            HasDisabledErrors  => HasDisabledErrors
           ) ;
         end if ;
       end loop ;
     end procedure PrintChild ;
 
     ------------------------------------------------------------
-    procedure ReportAlerts ( 
-      Name           : string := OSVVM_STRING_INIT_PARM_DETECT ; 
-      AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ; 
-      ExternalErrors : AlertCountType := (0,0,0) ; 
+    procedure ReportAlerts (
+      Name           : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
+      ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := TRUE
     ) is
     ------------------------------------------------------------
-      variable NumErrors : integer ;
-      variable NumDisabledErrors : integer ;
+      variable TestFailed, HasDisabledErrors : boolean ;
       constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
-      variable DisabledAlertCount : AlertCountType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
       if ReportJustifyAmountVar <= 0 then
-        TurnedOnJustify := TRUE ; 
+        TurnedOnJustify := TRUE ;
         SetJustify ;
       end if ;
-      NumErrors := SumAlertCount(  ExternalErrors + GetEnabledAlertCount(localAlertLogID)) ;
-      DisabledAlertCount := GetDisabledAlertCount(localAlertLogID) ;
-      NumDisabledErrors  := SumAlertCount( DisabledAlertCount ) ;
---old      if FailOnDisabledErrorsVar then
---old        DisabledAlertCount := GetDisabledAlertCount(localAlertLogID) ;
---old        NumDisabledErrors  := SumAlertCount( DisabledAlertCount ) ;
---old      else
---old        NumDisabledErrors  := 0 ;
---old        DisabledAlertCount := (0,0,0) ;
---old      end if ;
+
       if IsOsvvmStringSet(Name) then
         PrintTopAlerts (
-          -- Does not include warnings if they are not counted as an error
-          NumErrors          => NumErrors,
-          -- Includes warnings, whether they cound as an error or not
-          AlertCount         => AlertLogPtr(localAlertLogID).AlertCount + ExternalErrors,
+          AlertLogID         => localAlertLogID,
           Name               => Name,
-          NumDisabledErrors  => NumDisabledErrors,
-          DisabledAlertCount => DisabledAlertCount 
+          ExternalErrors     => ExternalErrors,
+          HasDisabledAlerts  => HasDisabledErrors,
+          TestFailed         => TestFailed
         ) ;
       else
         PrintTopAlerts (
-          -- Does not include warnings if they are not counted as an error
-          NumErrors          => NumErrors,
-          -- Includes warnings, whether they cound as an error or not
-          AlertCount         => AlertLogPtr(localAlertLogID).AlertCount + ExternalErrors,
+          AlertLogID         => localAlertLogID,
           Name               => AlertLogPtr(localAlertLogID).Name.all,
-          NumDisabledErrors  => NumDisabledErrors,
-          DisabledAlertCount => DisabledAlertCount 
+          ExternalErrors     => ExternalErrors,
+          HasDisabledAlerts  => HasDisabledErrors,
+          TestFailed         => TestFailed
         ) ;
       end if ;
-      --Print Hierarchy when enabled and error or disabled error
-      if (FoundReportHierVar and ReportHierarchyVar) and (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
+      --Print Hierarchy when enabled and test failed
+      if (FoundReportHierVar and ReportHierarchyVar) and TestFailed then 
+      -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
         PrintChild(
           AlertLogID    => localAlertLogID,
           Prefix        => ReportPrefix & "  ",
           IndentAmount  => 2,
           ReportAll     => ReportAll,
-          NumDisabledErrors  => NumDisabledErrors
+          HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
         ) ;
       end if ;
       if TurnedOnJustify then
@@ -1125,7 +1242,7 @@ package body AlertLogPkg is
       constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
       constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ;
-      variable NumErrors : integer ; 
+      variable NumErrors : integer ;
     begin
       NumErrors := SumAlertCount(AlertCount) ;
       if  NumErrors = 0 then
@@ -1133,7 +1250,6 @@ package body AlertLogPkg is
         write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
         write(buf, "  at "  & to_string(NOW, 1 ns)) ;
         WriteLine(buf) ;
-
       else
         -- Failed
         write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
@@ -1145,6 +1261,194 @@ package body AlertLogPkg is
         writeLine(buf) ;
       end if ;
     end procedure ReportAlerts ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteTestResults (file TestFile : text) is
+    ------------------------------------------------------------
+      variable buf : line ;
+      variable TotalErrors : integer ;
+      variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
+      variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
+--      variable TotalRequirementErrors : integer ;
+      variable AlertCount, DisabledAlertCount : AlertCountType ;
+      constant AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; 
+      variable PassedCount, AffirmCount : integer ; 
+      constant DELIMITER : character := ',' ;
+    begin
+--      AlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
+      AlertCount        := AlertLogPtr(AlertLogID).AlertCount ;
+      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCount)) ;
+
+      DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
+      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
+
+      GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsGoal) ;
+--      TotalRequirementErrors := TotalRequirementsGoal - TotalRequirementsPassed ;
+
+      TotalErrors := TotalAlertErrors ;
+      if FailOnDisabledErrorsVar then
+        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
+      end if ;
+--       if FailOnRequirementErrorsVar then
+--         TotalErrors := TotalErrors + TotalRequirementErrors ;
+--       end if ;
+      write(buf, AlertLogPtr(AlertLogID).Name.all) ;
+      write(buf, DELIMITER & to_string( TotalRequirementsGoal )) ;
+      write(buf, DELIMITER & to_string( TotalRequirementsPassed )) ;
+      write(buf, DELIMITER & to_string( TotalErrors )) ;  
+      write(buf, DELIMITER & to_string( AlertCount(FAILURE) )) ;
+      write(buf, DELIMITER & to_string( AlertCount(ERROR) )) ;
+      write(buf, DELIMITER & to_string( AlertCount(WARNING) )) ;
+      GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
+      write(buf, DELIMITER & to_string( PassedCount )) ;
+      write(buf, DELIMITER & to_string( AffirmCount )) ;
+      writeLine(TestFile, buf) ;
+    end procedure WriteTestResults ; 
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteRequirements (file RequirementsFile : text ; AlertLogID : AlertLogIDType ) is
+    ------------------------------------------------------------
+      -- Format:  Name, PassedGoal, #Passed, #TotalErrors, FAILURE, ERROR, WARNING, Affirmations
+      variable buf       : line ;
+      variable LocalAlertLogID : AlertLogIDType ; 
+      variable AlertCount : AlertCountType ; 
+      constant DELIMITER  : character := ',' ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      WriteTestResults(RequirementsFile) ; 
+      for i in localAlertLogID to NumAlertLogIDsVar loop
+--? Need a way to identify requirements when requirements are 0.  
+        if AlertLogPtr(i).PassedGoal > 0 then 
+          write(buf, AlertLogPtr(i).Name.all) ;
+          write(buf, DELIMITER & to_string(AlertLogPtr(i).PassedGoal)) ;
+          -- Minimum of PassedCount and PassedGoal 
+          write(buf, DELIMITER & to_string(AlertLogPtr(i).PassedCount)) ;
+          AlertCount := AlertLogPtr(i).AlertCount ;
+          if FailOnDisabledErrorsVar then
+            AlertCount := AlertCount + AlertLogPtr(i).DisabledAlertCount ;
+          end if; 
+          -- TotalErrors
+          write(buf, DELIMITER & to_string( SumAlertCount(RemoveNonFailingWarnings(AlertCount)))) ;  
+          write(buf, DELIMITER & to_string( AlertCount(FAILURE) )) ;
+          write(buf, DELIMITER & to_string( AlertCount(ERROR) )) ;
+          write(buf, DELIMITER & to_string( AlertCount(WARNING) )) ;
+          write(buf, DELIMITER & to_string( AlertLogPtr(i).AffirmCount )) ;
+          WriteLine(RequirementsFile, buf) ;
+        end if ;
+      end loop ;
+    end procedure WriteRequirements ;
+
+    ------------------------------------------------------------
+    procedure WriteRequirements (
+    ------------------------------------------------------------
+      FileName    : string ; 
+      AlertLogID  : AlertLogIDType ; 
+      OpenKind    : File_Open_Kind := WRITE_MODE 
+    ) is
+      -- Format:  Action Count min1 max1 min2 max2
+      file RequirementsFile : text open OpenKind is FileName ;
+    begin
+      WriteRequirements(RequirementsFile, AlertLogID) ;
+    end procedure WriteRequirements ;
+    
+    ------------------------------------------------------------
+    procedure ReadRequirements (file RequirementsFile : text ) is
+    ------------------------------------------------------------
+      variable buf,Name          : line ;
+      variable ReadValid         : boolean ;
+      variable Empty             : boolean ;
+      variable MultiLineComment  : boolean := FALSE ;
+      variable PassedGoal        : integer ; 
+      variable PassedCount       : integer ; 
+      variable ErrorCount        : integer ; 
+      variable Char              : character ; 
+      constant DELIMITER         : character := ',' ;
+      variable AlertLogID        : AlertLogIDType ; 
+    begin
+      -- Read past the first line
+      ReadLine(RequirementsFile, buf) ;
+      
+      ReadFileLoop : while not EndFile(RequirementsFile) loop 
+        ReadLoop : loop
+          ReadLine(RequirementsFile, buf) ;
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ; 
+          next when Empty ;
+          
+          -- defaults
+          PassedGoal  := 0 ; 
+          PassedCount := 0 ; 
+          ErrorCount  := 0 ; 
+
+          -- Get Name and Remove delimiter
+          ReadUntilDelimiterOrEOL(buf, Name, DELIMITER, ReadValid) ;
+          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                         "AlertLogPkg.ReadRequirements: Failed while reading Name", FAILURE) ;
+          
+          -- If rest of line is blank or comment, then skip it.
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+          exit when Empty ; 
+                                   
+          -- Read PassedGoal 
+          read(buf, PassedGoal, ReadValid) ;
+          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                         "AlertLogPkg.ReadRequirements: Failed while reading PassedGoal", FAILURE) ; 
+          
+          -- If rest of line is blank or comment, then skip it.
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+          exit when Empty ; 
+          
+          -- Read Delimiter 
+          Read(buf, Char, ReadValid) ;
+          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,  
+                         "AlertLogPkg.ReadRequirements: Failed while reading ',' following PassedGoal", FAILURE) ; 
+                         
+          -- Read PassedGoal 
+          read(buf, PassedCount, ReadValid) ;
+          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                         "AlertLogPkg.ReadRequirements: Failed while reading PassedCount", FAILURE) ; 
+          
+          -- If rest of line is blank or comment, then skip it.
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+          exit when Empty ; 
+
+          -- Read Delimiter 
+          read(buf, Char, ReadValid) ;
+          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,  
+                         "AlertLogPkg.ReadRequirements: Failed while reading ',' following PassedCount", FAILURE) ; 
+
+          -- Read ErrorCount 
+          read(buf, ErrorCount, ReadValid) ;
+          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                         "AlertLogPkg.ReadRequirements: Failed while reading ErrorCount", FAILURE) ; 
+          exit ;
+        end loop ReadLoop ;
+        AlertLogID := GetAlertLogID(Name.all, REQUIREMENT_ALERTLOG_ID) ;
+        deallocate(Name) ;
+        -- Implementation 1:  Just put the values in
+        AlertLogPtr(AlertLogID).PassedGoal          := PassedGoal ;
+        AlertLogPtr(AlertLogID).PassedCount         := PassedCount ;
+        AlertLogPtr(AlertLogID).AlertCount          := (0, ErrorCount, 0) ;
+        AlertLogPtr(AlertLogID).AffirmCount         := PassedCount + ErrorCount ;
+        
+-- How are PassedGoal, PassedCount, and ErrorCount handled?  
+-- Different handling if ID exists or not?      
+-- Merge:  Sum PassedCount and ErrorCount
+-- Merge:  Largest PassedGoal vs Sum PassedGoal?
+-- ReadRequirements - initialize DS with all requirements and goals
+-- ReadRequirements - Test name is a SubID of the requirement name
+      end loop ReadFileLoop ;
+    end procedure ReadRequirements ;
+
+    ------------------------------------------------------------
+    procedure ReadRequirements (FileName : string) is
+    ------------------------------------------------------------
+      -- Format:  Action Count min1 max1 min2 max2
+      file RequirementsFile : text open READ_MODE is FileName ;
+    begin
+      ReadRequirements(RequirementsFile) ;
+    end procedure ReadRequirements ;
 
     ------------------------------------------------------------
     procedure ClearAlerts is
@@ -1160,9 +1464,10 @@ package body AlertLogPkg is
         AlertLogPtr(i).DisabledAlertCount   := (0, 0, 0) ;
         AlertLogPtr(i).AffirmCount          := 0 ;
         AlertLogPtr(i).PassedCount          := 0 ;
+        AlertLogPtr(i).PassedGoal           := 0 ;
       end loop ;
     end procedure ClearAlerts ;
-    
+
     ------------------------------------------------------------
     procedure ClearAlertStopCounts is
     ------------------------------------------------------------
@@ -1194,7 +1499,7 @@ package body AlertLogPkg is
               write(buf, ' ' & justify(to_string(ErrorCount), RIGHT, 2)) ;
             else
               swrite(buf, "   ") ;
-            end if ; 
+            end if ;
           end if ;
       end if ;
       -- Level Name, when enabled (default)
@@ -1203,7 +1508,7 @@ package body AlertLogPkg is
       end if ;
       -- AlertLog Name
       if FoundAlertHierVar and WriteLogNameVar then
-        write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ",", AlertLogJustifyAmountVar) ) ;
+        write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
       end if ;
       -- Prefix
       if AlertLogPtr(AlertLogID).Prefix /= NULL then
@@ -1238,7 +1543,7 @@ package body AlertLogPkg is
       elsif AlertLogPtr(localAlertLogID).LogEnabled(Level) then
         LocalLog(localAlertLogID, Message, Level) ;
       end if ;
-      if Level = PASSED then 
+      if Level = PASSED then
         IncAffirmPassedCount(AlertLogID) ;  -- count the passed and affirmation
       end if ;
     end procedure log ;
@@ -1293,6 +1598,7 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).DisabledAlertCount  := (0, 0, 0) ;
       AlertLogPtr(AlertLogID).AffirmCount         := 0 ;
       AlertLogPtr(AlertLogID).PassedCount         := 0 ;
+      AlertLogPtr(AlertLogID).PassedGoal          := 0 ;
       AlertLogPtr(AlertLogID).AlertEnabled        := AlertEnabled ;
       AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
@@ -1366,27 +1672,30 @@ package body AlertLogPkg is
       PassNameVar.Deallocate ;
       FailNameVar.Deallocate ;
       -- Restore variables to their initial state
-      PrintPassedVar           := TRUE ;
-      PrintAffirmationsVar     := FALSE ; 
-      PrintDisabledAlertsVar   := FALSE ; 
+      PrintPassedVar              := TRUE ;
+      PrintAffirmationsVar        := FALSE ;
+      PrintDisabledAlertsVar      := FALSE ;
+      PrintRequirementsVar        := FALSE ;
+      PrintIfHaveRequirementsVar  := TRUE ;
       NumAlertLogIDsVar           := 0 ;
       NumAllocatedAlertLogIDsVar  := 0 ;
-      GlobalAlertEnabledVar    := TRUE ; -- Allows turn off and on
-      AffirmCheckCountVar      := 0 ;
-      PassedCountVar           := 0 ;
-      FailOnWarningVar         := TRUE ;
-      FailOnDisabledErrorsVar  := TRUE ;
-      ReportHierarchyVar       := TRUE ;
-      FoundReportHierVar       := FALSE ;
-      FoundAlertHierVar        := FALSE ;
-      WriteAlertErrorCountVar  := FALSE ;
-      WriteAlertLevelVar       := TRUE ;
-      WriteAlertNameVar        := TRUE ;
-      WriteAlertTimeVar        := TRUE ;
-      WriteLogErrorCountVar    := FALSE ;
-      WriteLogLevelVar         := TRUE ;
-      WriteLogNameVar          := TRUE ;
-      WriteLogTimeVar          := TRUE ;
+      GlobalAlertEnabledVar       := TRUE ; -- Allows turn off and on
+      AffirmCheckCountVar         := 0 ;
+      PassedCountVar              := 0 ;
+      FailOnWarningVar            := TRUE ;
+      FailOnDisabledErrorsVar     := TRUE ;
+      FailOnRequirementErrorsVar  := TRUE ;
+      ReportHierarchyVar          := TRUE ;
+      FoundReportHierVar          := FALSE ;
+      FoundAlertHierVar           := FALSE ;
+      WriteAlertErrorCountVar     := FALSE ;
+      WriteAlertLevelVar          := TRUE ;
+      WriteAlertNameVar           := TRUE ;
+      WriteAlertTimeVar           := TRUE ;
+      WriteLogErrorCountVar       := FALSE ;
+      WriteLogLevelVar            := TRUE ;
+      WriteLogNameVar             := TRUE ;
+      WriteLogTimeVar             := TRUE ;
     end procedure Deallocate ;
 
     ------------------------------------------------------------
@@ -1473,7 +1782,7 @@ package body AlertLogPkg is
     end function FindAlertLogID ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType is
+    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; PassedGoal : natural ; CreateHierarchy : Boolean) return AlertLogIDType is
     ------------------------------------------------------------
       variable ResultID : AlertLogIDType ;
       variable localParentID : AlertLogIDType ;
@@ -1495,6 +1804,7 @@ package body AlertLogPkg is
           FoundReportHierVar := TRUE ;
         end if ;
       end if ;
+      AlertLogPtr(ResultID).PassedGoal := PassedGoal ;
       return ResultID ;
     end function GetAlertLogID ;
 
@@ -1514,9 +1824,9 @@ package body AlertLogPkg is
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
       Deallocate(AlertLogPtr(localAlertLogID).Prefix) ;
-      if Name'length > 0 then 
+      if Name'length > 0 then
         AlertLogPtr(localAlertLogID).Prefix := new string'(Name) ;
-      end if ; 
+      end if ;
     end procedure SetAlertLogPrefix ;
 
     ------------------------------------------------------------
@@ -1544,9 +1854,9 @@ package body AlertLogPkg is
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
       Deallocate(AlertLogPtr(localAlertLogID).Suffix) ;
-      if Name'length > 0 then 
+      if Name'length > 0 then
         AlertLogPtr(localAlertLogID).Suffix := new string'(Name) ;
-      end if ; 
+      end if ;
     end procedure SetAlertLogSuffix ;
 
     ------------------------------------------------------------
@@ -1755,7 +2065,7 @@ package body AlertLogPkg is
       variable TurnedOnJustify : boolean := FALSE ;
     begin
       if ReportJustifyAmountVar <= 0 then
-        TurnedOnJustify := TRUE ; 
+        TurnedOnJustify := TRUE ;
         SetJustify ;
       end if ;
       PrintLogLevels(ALERTLOG_BASE_ID, "", 0) ;
@@ -1768,26 +2078,29 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure SetAlertLogOptions (
     ------------------------------------------------------------
-      FailOnWarning         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      FailOnDisabledErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      ReportHierarchy       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertErrorCount  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertLevel       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertName        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertTime        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogErrorCount    : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintPassed           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      DoneName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      PassName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      FailName              : string := OSVVM_STRING_INIT_PARM_DETECT
+      FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+      AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
       if FailOnWarning /= OPT_INIT_PARM_DETECT then
@@ -1795,6 +2108,9 @@ package body AlertLogPkg is
       end if ;
       if FailOnDisabledErrors /= OPT_INIT_PARM_DETECT then
         FailOnDisabledErrorsVar := IsEnabled(FailOnDisabledErrors) ;
+      end if ;
+      if FailOnRequirementErrors /= OPT_INIT_PARM_DETECT then
+        FailOnRequirementErrorsVar := IsEnabled(FailOnRequirementErrors) ;
       end if ;
       if ReportHierarchy /= OPT_INIT_PARM_DETECT then
         ReportHierarchyVar := IsEnabled(ReportHierarchy) ;
@@ -1832,6 +2148,12 @@ package body AlertLogPkg is
       if PrintDisabledAlerts /= OPT_INIT_PARM_DETECT then
         PrintDisabledAlertsVar := IsEnabled(PrintDisabledAlerts) ;
       end if ;
+      if PrintRequirements /= OPT_INIT_PARM_DETECT then
+        PrintRequirementsVar := IsEnabled(PrintRequirements) ;
+      end if ;
+      if PrintIfHaveRequirements /= OPT_INIT_PARM_DETECT then
+        PrintIfHaveRequirementsVar := IsEnabled(PrintIfHaveRequirements) ;
+      end if ;
       if AlertPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
         AlertPrefixVar.Set(AlertPrefix) ;
       end if ;
@@ -1860,30 +2182,34 @@ package body AlertLogPkg is
       -- Boolean Values
       swrite(buf, "ReportAlertLogOptions" & LF ) ;
       swrite(buf, "---------------------" & LF ) ;
-      swrite(buf, "FailOnWarningVar:        " & to_string(FailOnWarningVar        ) & LF ) ;
-      swrite(buf, "FailOnDisabledErrorsVar: " & to_string(FailOnDisabledErrorsVar ) & LF ) ;
-      swrite(buf, "ReportHierarchyVar:      " & to_string(ReportHierarchyVar      ) & LF ) ;
-      swrite(buf, "FoundReportHierVar:      " & to_string(FoundReportHierVar      ) & LF ) ; -- Not set by user
-      swrite(buf, "FoundAlertHierVar:       " & to_string(FoundAlertHierVar       ) & LF ) ; -- Not set by user
-      swrite(buf, "WriteAlertErrorCountVar: " & to_string(WriteAlertErrorCountVar ) & LF ) ;
-      swrite(buf, "WriteAlertLevelVar:      " & to_string(WriteAlertLevelVar      ) & LF ) ;
-      swrite(buf, "WriteAlertNameVar:       " & to_string(WriteAlertNameVar       ) & LF ) ;
-      swrite(buf, "WriteAlertTimeVar:       " & to_string(WriteAlertTimeVar       ) & LF ) ;
-      swrite(buf, "WriteLogErrorCountVar:   " & to_string(WriteLogErrorCountVar   ) & LF ) ;
-      swrite(buf, "WriteLogLevelVar:        " & to_string(WriteLogLevelVar        ) & LF ) ;
-      swrite(buf, "WriteLogNameVar:         " & to_string(WriteLogNameVar         ) & LF ) ;
-      swrite(buf, "WriteLogTimeVar:         " & to_string(WriteLogTimeVar         ) & LF ) ;
-      swrite(buf, "PrintPassedVar:          " & to_string(PrintPassedVar    ) & LF ) ;  
-      swrite(buf, "PrintAffirmationsVar:    " & to_string(PrintAffirmationsVar    ) & LF ) ;  
-      swrite(buf, "PrintDisabledAlertsVar:  " & to_string(PrintDisabledAlertsVar  ) & LF ) ; 
+      swrite(buf, "FailOnWarningVar:           " & to_string(FailOnWarningVar        ) & LF ) ;
+      swrite(buf, "FailOnDisabledErrorsVar:    " & to_string(FailOnDisabledErrorsVar ) & LF ) ;
+      swrite(buf, "FailOnRequirementErrorsVar: " & to_string(FailOnRequirementErrorsVar ) & LF ) ;
+      
+      swrite(buf, "ReportHierarchyVar:         " & to_string(ReportHierarchyVar      ) & LF ) ;
+      swrite(buf, "FoundReportHierVar:         " & to_string(FoundReportHierVar      ) & LF ) ; -- Not set by user
+      swrite(buf, "FoundAlertHierVar:          " & to_string(FoundAlertHierVar       ) & LF ) ; -- Not set by user
+      swrite(buf, "WriteAlertErrorCountVar:    " & to_string(WriteAlertErrorCountVar ) & LF ) ;
+      swrite(buf, "WriteAlertLevelVar:         " & to_string(WriteAlertLevelVar      ) & LF ) ;
+      swrite(buf, "WriteAlertNameVar:          " & to_string(WriteAlertNameVar       ) & LF ) ;
+      swrite(buf, "WriteAlertTimeVar:          " & to_string(WriteAlertTimeVar       ) & LF ) ;
+      swrite(buf, "WriteLogErrorCountVar:      " & to_string(WriteLogErrorCountVar   ) & LF ) ;
+      swrite(buf, "WriteLogLevelVar:           " & to_string(WriteLogLevelVar        ) & LF ) ;
+      swrite(buf, "WriteLogNameVar:            " & to_string(WriteLogNameVar         ) & LF ) ;
+      swrite(buf, "WriteLogTimeVar:            " & to_string(WriteLogTimeVar         ) & LF ) ;
+      swrite(buf, "PrintPassedVar:             " & to_string(PrintPassedVar    ) & LF ) ;
+      swrite(buf, "PrintAffirmationsVar:       " & to_string(PrintAffirmationsVar    ) & LF ) ;
+      swrite(buf, "PrintDisabledAlertsVar:     " & to_string(PrintDisabledAlertsVar  ) & LF ) ;
+      swrite(buf, "PrintRequirementsVar:       " & to_string(PrintRequirementsVar    ) & LF ) ;
+      swrite(buf, "PrintIfHaveRequirementsVar: " & to_string(PrintIfHaveRequirementsVar  ) & LF ) ;
 
       -- String
-      swrite(buf, "AlertPrefixVar:          " & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))  & LF ) ;
-      swrite(buf, "LogPrefixVar:            " & string'(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX))      & LF ) ;
-      swrite(buf, "ReportPrefixVar:         " & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & LF ) ;
-      swrite(buf, "DoneNameVar:             " & ResolveOsvvmDoneName(DoneNameVar.GetOpt)        & LF ) ;
-      swrite(buf, "PassNameVar:             " & ResolveOsvvmPassName(PassNameVar.GetOpt)        & LF ) ;
-      swrite(buf, "FailNameVar:             " & ResolveOsvvmFailName(FailNameVar.GetOpt)        & LF ) ;
+      swrite(buf, "AlertPrefixVar:             " & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))  & LF ) ;
+      swrite(buf, "LogPrefixVar:               " & string'(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX))      & LF ) ;
+      swrite(buf, "ReportPrefixVar:            " & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & LF ) ;
+      swrite(buf, "DoneNameVar:                " & ResolveOsvvmDoneName(DoneNameVar.GetOpt)        & LF ) ;
+      swrite(buf, "PassNameVar:                " & ResolveOsvvmPassName(PassNameVar.GetOpt)        & LF ) ;
+      swrite(buf, "FailNameVar:                " & ResolveOsvvmFailName(FailNameVar.GetOpt)        & LF ) ;
       writeline(buf) ;
     end procedure ReportAlertLogOptions ;
 
@@ -1893,13 +2219,20 @@ package body AlertLogPkg is
     begin
       return to_OsvvmOptionsType(FailOnWarningVar) ;
     end function GetAlertLogFailOnWarning ;
-
+    
     ------------------------------------------------------------
     impure function GetAlertLogFailOnDisabledErrors return AlertLogOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(FailOnDisabledErrorsVar) ;
     end function GetAlertLogFailOnDisabledErrors ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType is
+    ------------------------------------------------------------
+    begin
+      return to_OsvvmOptionsType(FailOnRequirementErrorsVar) ;
+    end function GetAlertLogFailOnRequirementErrors ;
 
     ------------------------------------------------------------
     impure function GetAlertLogReportHierarchy      return AlertLogOptionsType is
@@ -1984,7 +2317,7 @@ package body AlertLogPkg is
     begin
       return to_OsvvmOptionsType(PrintPassedVar) ;
     end function GetAlertLogPrintPassed ;
-
+    
     ------------------------------------------------------------
     impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType is
     ------------------------------------------------------------
@@ -1999,6 +2332,20 @@ package body AlertLogPkg is
       return to_OsvvmOptionsType(PrintDisabledAlertsVar) ;
     end function GetAlertLogPrintDisabledAlerts ;
 
+    ------------------------------------------------------------
+    impure function GetAlertLogPrintRequirements    return AlertLogOptionsType is
+    ------------------------------------------------------------
+    begin
+      return to_OsvvmOptionsType(PrintRequirementsVar) ;
+    end function GetAlertLogPrintRequirements ;
+    
+    ------------------------------------------------------------
+    impure function GetAlertLogPrintIfHaveRequirements    return AlertLogOptionsType is
+    ------------------------------------------------------------
+    begin
+      return to_OsvvmOptionsType(PrintIfHaveRequirementsVar) ;
+    end function GetAlertLogPrintIfHaveRequirements ;
+    
     ------------------------------------------------------------
     impure function GetAlertLogAlertPrefix          return string is
     ------------------------------------------------------------
@@ -2737,6 +3084,16 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIf ;
 
+--  ------------------------------------------------------------
+--  procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
+--  ------------------------------------------------------------
+--  begin
+--    -- synthesis translate_off
+----?? Set Goal to 1?  Should the ID already exist?
+--    AffirmIf(GetAlertLogID(RequirementsIDName), condition, ReceivedMessage, ExpectedMessage, Enable) ;
+--    -- synthesis translate_on
+--  end procedure AffirmIf ;
+
   ------------------------------------------------------------
   impure function AffirmIf( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
@@ -3230,6 +3587,28 @@ package body AlertLogPkg is
     AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE) ;
     -- synthesis translate_on
   end procedure ReportNonZeroAlerts ;
+  
+  ------------------------------------------------------------
+  procedure WriteRequirements (
+  ------------------------------------------------------------
+    FileName    : string ; 
+    AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ; 
+    OpenKind    : File_Open_Kind := WRITE_MODE 
+  ) is
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.WriteRequirements(FileName, AlertLogID, OpenKind) ;
+    -- synthesis translate_on
+  end procedure WriteRequirements ;
+  
+  ------------------------------------------------------------
+  procedure ReadRequirements (FileName : string) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ReadRequirements(FileName) ;
+    -- synthesis translate_on
+  end procedure ReadRequirements ;
 
   ------------------------------------------------------------
   procedure ClearAlerts is
@@ -3239,7 +3618,7 @@ package body AlertLogPkg is
     AlertLogStruct.ClearAlerts ;
     -- synthesis translate_on
   end procedure ClearAlerts ;
-  
+
   ------------------------------------------------------------
   procedure ClearAlertStopCounts is
   ------------------------------------------------------------
@@ -3258,7 +3637,7 @@ package body AlertLogPkg is
     AlertLogStruct.ClearAlertStopCounts ;
     -- synthesis translate_on
   end procedure ClearAlertCounts ;
-  
+
   ------------------------------------------------------------
   function "ABS" (L : AlertCountType) return AlertCountType is
   ------------------------------------------------------------
@@ -3586,10 +3965,22 @@ package body AlertLogPkg is
     variable result : AlertLogIDType ;
   begin
     -- synthesis translate_off
-    result := AlertLogStruct.GetAlertLogID(Name, ParentID, CreateHierarchy ) ;
+    result := AlertLogStruct.GetAlertLogID(Name, ParentID, 0, CreateHierarchy ) ;
     -- synthesis translate_on
     return result ;
   end function GetAlertLogID ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; PassedGoal : natural ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType is
+  ------------------------------------------------------------
+    variable result : AlertLogIDType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertLogID(Name, ParentID, PassedGoal, CreateHierarchy) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertLogID ;
+
 
   ------------------------------------------------------------
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType is
@@ -3771,50 +4162,56 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
   ------------------------------------------------------------
-    FailOnWarning         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    FailOnDisabledErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    ReportHierarchy       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertErrorCount  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertLevel       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertName        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertTime        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogErrorCount    : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogLevel         : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogName          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogTime          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintPassed           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintAffirmations     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintDisabledAlerts   : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    AlertPrefix           : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    LogPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    ReportPrefix          : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    DoneName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    PassName              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    FailName              : string := OSVVM_STRING_INIT_PARM_DETECT
+    FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
   ) is
   begin
     -- synthesis translate_off
     AlertLogStruct.SetAlertLogOptions (
-      FailOnWarning         => FailOnWarning       ,
-      FailOnDisabledErrors  => FailOnDisabledErrors,
-      ReportHierarchy       => ReportHierarchy     ,
-      WriteAlertErrorCount  => WriteAlertErrorCount     ,
-      WriteAlertLevel       => WriteAlertLevel     ,
-      WriteAlertName        => WriteAlertName     ,
-      WriteAlertTime        => WriteAlertTime      ,
-      WriteLogErrorCount    => WriteLogErrorCount       ,
-      WriteLogLevel         => WriteLogLevel       ,
-      WriteLogName          => WriteLogName       ,
-      WriteLogTime          => WriteLogTime        ,
-      PrintPassed           => PrintPassed     ,
-      PrintAffirmations     => PrintAffirmations     ,
-      PrintDisabledAlerts   => PrintDisabledAlerts   ,
-      AlertPrefix           => AlertPrefix         ,
-      LogPrefix             => LogPrefix           ,
-      ReportPrefix          => ReportPrefix        ,
-      DoneName              => DoneName            ,
-      PassName              => PassName            ,
-      FailName              => FailName
+      FailOnWarning            => FailOnWarning,
+      FailOnDisabledErrors     => FailOnDisabledErrors,
+      FailOnRequirementErrors  => FailOnRequirementErrors,
+      ReportHierarchy          => ReportHierarchy,
+      WriteAlertErrorCount     => WriteAlertErrorCount,
+      WriteAlertLevel          => WriteAlertLevel,
+      WriteAlertName           => WriteAlertName,
+      WriteAlertTime           => WriteAlertTime,
+      WriteLogErrorCount       => WriteLogErrorCount,
+      WriteLogLevel            => WriteLogLevel,
+      WriteLogName             => WriteLogName,
+      WriteLogTime             => WriteLogTime,
+      PrintPassed              => PrintPassed,
+      PrintAffirmations        => PrintAffirmations,
+      PrintDisabledAlerts      => PrintDisabledAlerts,
+      PrintRequirements        => PrintRequirements,
+      PrintIfHaveRequirements  => PrintIfHaveRequirements,
+      AlertPrefix              => AlertPrefix,
+      LogPrefix                => LogPrefix,
+      ReportPrefix             => ReportPrefix,
+      DoneName                 => DoneName,
+      PassName                 => PassName,
+      FailName                 => FailName
     );
     -- synthesis translate_on
   end procedure SetAlertLogOptions ;
@@ -3847,6 +4244,13 @@ package body AlertLogPkg is
   end function GetAlertLogFailOnDisabledErrors ;
 
   ------------------------------------------------------------
+  impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetAlertLogFailOnRequirementErrors ;
+  end function GetAlertLogFailOnRequirementErrors ;
+
+  ------------------------------------------------------------
   impure function GetAlertLogReportHierarchy      return AlertLogOptionsType is
   ------------------------------------------------------------
   begin
@@ -3866,7 +4270,7 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogFoundAlertHier ;
   end function GetAlertLogFoundAlertHier ;
-  
+
   ------------------------------------------------------------
   impure function GetAlertLogWriteAlertErrorCount return AlertLogOptionsType is
   ------------------------------------------------------------
@@ -3944,6 +4348,20 @@ package body AlertLogPkg is
     return AlertLogStruct.GetAlertLogPrintDisabledAlerts ;
   end function GetAlertLogPrintDisabledAlerts ;
 
+  ------------------------------------------------------------
+  impure function GetAlertLogPrintRequirements    return AlertLogOptionsType is
+  ------------------------------------------------------------
+  begin
+  return AlertLogStruct.GetAlertLogPrintRequirements ;
+  end function GetAlertLogPrintRequirements ;
+  
+  ------------------------------------------------------------
+  impure function GetAlertLogPrintIfHaveRequirements    return AlertLogOptionsType is
+  ------------------------------------------------------------
+  begin
+  return AlertLogStruct.GetAlertLogPrintIfHaveRequirements ;
+  end function GetAlertLogPrintIfHaveRequirements ;
+    
   ------------------------------------------------------------
   impure function GetAlertLogAlertPrefix          return string is
   ------------------------------------------------------------
