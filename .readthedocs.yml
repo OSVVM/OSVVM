@@ -1,3 +1,22 @@
-requirements_file: docs/requirements.txt
+version: 2
+
+submodules:
+  include: []
+
+build:
+  image: latest
+
 python:
-  version: 3
+  version: 3.8
+  install:
+    - requirements: docs/requirements.txt
+
+sphinx:
+  builder: html
+  configuration: docs/conf.py
+
+formats: []
+#  - htmlzip
+#  - pdf
+#  - epub
+
