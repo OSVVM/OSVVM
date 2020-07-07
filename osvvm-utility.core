@@ -1,0 +1,80 @@
+CAPI=2:
+
+name : osvvm:osvvm:utility:2020.05
+
+# The Vivado simulator (xsim) does not currently (2020.1) support the VHDL
+# 2008 tee function used by this core.
+#
+# ModelSim ships with OSVVM and maps the library to the system install. This
+# default mapping will likely result in the build failing due to the user not
+# having permission to write to the system library. Removing or commenting out
+# this mapping will allow the local library to be created.
+
+filesets:
+
+  # The OSVVM release notes provide the required compilation order that would
+  # be easiest to fulfill in one fileset. However, there are two different
+  # versions of the vendor coverage API package, one for Aldec and another for
+  # other tools. Therefore, the files are divided into filesets that should be
+  # compiled before and after the coverage API package, along with separate
+  # filesets for the two versions of the coverage API package.
+
+  pre_coverage:
+    files:
+      - NamePkg.vhd
+      - OsvvmGlobalPkg.vhd
+    file_type: vhdlSource-2008
+    logical_name: osvvm
+
+  coverage_api:
+    files: [VendorCovApiPkg.vhd]
+    file_type: vhdlSource-2008
+    logical_name: osvvm
+
+  coverage_api_aldec:
+    files: [VendorCovApiPkg_Aldec.vhd]
+    file_type: vhdlSource-2008
+    logical_name: osvvm
+
+  post_coverage:
+    files:
+      - TranscriptPkg.vhd
+      - TextUtilPkg.vhd
+      - AlertLogPkg.vhd
+      - MessagePkg.vhd
+      - SortListPkg_int.vhd
+      - RandomBasePkg.vhd
+      - RandomPkg.vhd
+      - CoveragePkg.vhd
+      - MemoryPkg.vhd
+      - ScoreboardGenericPkg.vhd
+      - ScoreboardPkg_slv.vhd
+      - ScoreboardPkg_int.vhd
+      - ResolutionPkg.vhd
+      - TbUtilPkg.vhd
+      - OsvvmContext.vhd
+    file_type: vhdlSource-2008
+    logical_name: osvvm
+
+targets:
+
+  default: &default
+    filesets:
+      - pre_coverage
+      - "tool_rivierapro?  (coverage_api_aldec)"
+      - "!tool_rivierapro? (coverage_api)"
+      - post_coverage
+    tools:
+      # GHDLs compile-osvvm script currently sets the following options for
+      # building OSVVM:
+      #
+      # -fexplicit -frelaxed-rules --no-vital-checks --warn-binding
+      # --mb-comments
+      #
+      # The build will fail without relaxed-rules. The default -Whide option
+      # produced a number of warnings in the coverage package that we will
+      # ignore.
+      #
+      ghdl:
+        analyze_options: ["-frelaxed-rules", "-Wno-hide"]
+
