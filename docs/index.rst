@@ -28,7 +28,7 @@ Download the OSVVM Utility library using git:
    :caption: Main Documentation
 
    overview
-   AlertLogPkg
+   AlertLogPkg_user_guide
 
 .. toctree::
    :caption: Appendix
