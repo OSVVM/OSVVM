@@ -51,7 +51,7 @@
 --                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
 --                         Disabled Alerts now handled in separate bins and reported separately.
 --                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
---    06/2020   2020.06    Added Passed Goals for Requirements tracking
+--    07/2020   2020.07    Added Passed Goals for Requirements tracking
 --                         Set with;  GetAlertLogID("Req ID 1", ReqParentID, PassedGoal, [CreateHierarchy])
 --                         Report with ReportAlerts
 --                         Tests fail when requirements are not met and FailOnRequirementErrors is true.
@@ -1067,11 +1067,11 @@ package body AlertLogPkg is
       variable TotalErrors : integer ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
       variable TotalRequirementsPassed, TotalRequirementsGoal, TotalRequirementErrors : integer ;
-      variable AlertCount, DisabledAlertCount : AlertCountType ;
+      variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       variable PassedCount, AffirmCheckCount : integer ; 
     begin
-      AlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
-      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCount)) ;
+      AlertCountVar        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
+      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCountVar)) ;
 
       DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
       TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
@@ -1100,9 +1100,9 @@ package body AlertLogPkg is
 --?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
       if TestFailed then 
         write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
-        write(buf, "  Failures: "        & to_string(AlertCount(FAILURE)) ) ;
-        write(buf, "  Errors: "          & to_string(AlertCount(ERROR) ) ) ;
-        write(buf, "  Warnings: "        & to_string(AlertCount(WARNING) ) ) ;
+        write(buf, "  Failures: "        & to_string(AlertCountVar(FAILURE)) ) ;
+        write(buf, "  Errors: "          & to_string(AlertCountVar(ERROR) ) ) ;
+        write(buf, "  Warnings: "        & to_string(AlertCountVar(WARNING) ) ) ;
       end if ;
       if HasDisabledAlerts or PrintDisabledAlertsVar then   -- print if exist or enabled
           write(buf, "   Total Disabled Error(s) = " & to_string(TotalDisabledAlertErrors)) ;
@@ -1271,14 +1271,14 @@ package body AlertLogPkg is
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
       variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
 --      variable TotalRequirementErrors : integer ;
-      variable AlertCount, DisabledAlertCount : AlertCountType ;
+      variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       constant AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; 
       variable PassedCount, AffirmCount : integer ; 
       constant DELIMITER : character := ',' ;
     begin
 --      AlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
-      AlertCount        := AlertLogPtr(AlertLogID).AlertCount ;
-      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCount)) ;
+      AlertCountVar        := AlertLogPtr(AlertLogID).AlertCount ;
+      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCountVar)) ;
 
       DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
       TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
@@ -1297,9 +1297,9 @@ package body AlertLogPkg is
       write(buf, DELIMITER & to_string( TotalRequirementsGoal )) ;
       write(buf, DELIMITER & to_string( TotalRequirementsPassed )) ;
       write(buf, DELIMITER & to_string( TotalErrors )) ;  
-      write(buf, DELIMITER & to_string( AlertCount(FAILURE) )) ;
-      write(buf, DELIMITER & to_string( AlertCount(ERROR) )) ;
-      write(buf, DELIMITER & to_string( AlertCount(WARNING) )) ;
+      write(buf, DELIMITER & to_string( AlertCountVar(FAILURE) )) ;
+      write(buf, DELIMITER & to_string( AlertCountVar(ERROR) )) ;
+      write(buf, DELIMITER & to_string( AlertCountVar(WARNING) )) ;
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
       write(buf, DELIMITER & to_string( PassedCount )) ;
       write(buf, DELIMITER & to_string( AffirmCount )) ;
@@ -1313,8 +1313,8 @@ package body AlertLogPkg is
       -- Format:  Name, PassedGoal, #Passed, #TotalErrors, FAILURE, ERROR, WARNING, Affirmations
       variable buf       : line ;
       variable LocalAlertLogID : AlertLogIDType ; 
-      variable AlertCount : AlertCountType ; 
-      constant DELIMITER  : character := ',' ;
+      variable AlertCountVar   : AlertCountType ; 
+      constant DELIMITER       : character := ',' ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
       WriteTestResults(RequirementsFile) ; 
@@ -1325,15 +1325,15 @@ package body AlertLogPkg is
           write(buf, DELIMITER & to_string(AlertLogPtr(i).PassedGoal)) ;
           -- Minimum of PassedCount and PassedGoal 
           write(buf, DELIMITER & to_string(AlertLogPtr(i).PassedCount)) ;
-          AlertCount := AlertLogPtr(i).AlertCount ;
+          AlertCountVar := AlertLogPtr(i).AlertCount ;
           if FailOnDisabledErrorsVar then
-            AlertCount := AlertCount + AlertLogPtr(i).DisabledAlertCount ;
+            AlertCountVar := AlertCountVar + AlertLogPtr(i).DisabledAlertCount ;
           end if; 
           -- TotalErrors
-          write(buf, DELIMITER & to_string( SumAlertCount(RemoveNonFailingWarnings(AlertCount)))) ;  
-          write(buf, DELIMITER & to_string( AlertCount(FAILURE) )) ;
-          write(buf, DELIMITER & to_string( AlertCount(ERROR) )) ;
-          write(buf, DELIMITER & to_string( AlertCount(WARNING) )) ;
+          write(buf, DELIMITER & to_string( SumAlertCount(RemoveNonFailingWarnings(AlertCountVar)))) ;  
+          write(buf, DELIMITER & to_string( AlertCountVar(FAILURE) )) ;
+          write(buf, DELIMITER & to_string( AlertCountVar(ERROR) )) ;
+          write(buf, DELIMITER & to_string( AlertCountVar(WARNING) )) ;
           write(buf, DELIMITER & to_string( AlertLogPtr(i).AffirmCount )) ;
           WriteLine(RequirementsFile, buf) ;
         end if ;
