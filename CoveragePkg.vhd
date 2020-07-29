@@ -5252,9 +5252,9 @@ package body CoveragePkg is
   ------------------------------------------------------------
   begin
     if not CheckInteger_1_0(I) then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_boolean: invalid integer value: " & to_string(I) &
-      " returning FALSE", WARNING) ;
+      report
+        "CoveragePkg.to_boolean: invalid integer value: " & to_string(I) &
+        " returning FALSE" severity WARNING ;
     end if ; 
     
     return local_to_boolean(I) ;
@@ -5289,9 +5289,9 @@ package body CoveragePkg is
   -------------------------------------------------------------
   begin
     if not CheckInteger_1_0(I) then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_std_logic: invalid integer value: " & to_string(I) &
-      " returning X", WARNING) ;
+      report
+        "CoveragePkg.to_std_logic: invalid integer value: " & to_string(I) &
+        " returning X" severity WARNING ;
     end if ; 
     
     return local_to_std_logic(I) ;
@@ -5324,9 +5324,9 @@ package body CoveragePkg is
     end loop ;
  
     if HasError then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_boolean_vector: invalid integer value" &
-      " returning FALSE", WARNING) ;
+      report
+        "CoveragePkg.to_boolean_vector: invalid integer value" &
+        " returning FALSE" severity WARNING ;
     end if ; 
 
     return result ;
@@ -5359,9 +5359,9 @@ package body CoveragePkg is
     end loop ;
  
     if HasError then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_std_logic_vector: invalid integer value" &
-      " returning FALSE", WARNING) ;
+      report
+        "CoveragePkg.to_std_logic_vector: invalid integer value" &
+        " returning FALSE" severity WARNING ;
     end if ; 
 
     return result ;
