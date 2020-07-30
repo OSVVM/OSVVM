@@ -50,11 +50,10 @@ The OSVVM model library is a growing set of models
 commonly used for FPGA and ASIC verification.  
 The library currently contains the following repositories:
 
- - [Verification IP](https://github.com/OSVVM/VerificationIP)
-   - Repository that includes all of the 
-   OSVVM model library  as submodules. 
-   - Download the entire OSVVM model library using git clone with the "--recursive" flag:  
-        `$ git clone --recursive https://github.com/OSVVM/VerificationIP.git`
+ - [OSVVM-Libraries](https://github.com/osvvm/OsvvmLibraries)  
+   - Repository that contains all of the OSVVM libraries as submodules.
+   - Download all OSVVM libraries using git clone with the "--recursive" flag:  
+        `$ git clone --recursive https://github.com/OSVVM/OsvvmLibraries.git`
    - Note submodules are not included in the GitHub zip files
  - [AXI4 Lite](https://github.com/OSVVM/AXI4)
    - Master
@@ -98,19 +97,6 @@ of how to use the models.
 ## Release History
    For current release information see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)
    
-   The following has a bad habit of falling behind the current release:
- - Apr-2018 - **2018.04**  Minor updates to AlertLogPkg, CoveragePkg, ScoreboardGenericPkg, TbUtilPkg, MessagePkg
- - May-2017 - **2017.05**  Minor additions to AlertLogPkg, CoveragePkg, and ScoreboardGenericPkg
- - Nov-2016 - **2016.11**  Added VendorCovApiPkg, ScoreboardGenericPkg, TbUtilPkg, ResolutionPkg
- - Jan-2016 - **2016.01**  Fix limit of 32 AlertLogIDs, Updates for GHDL (Purity and L.all(L'left)), 
- - Jul-2015 - **2015.06**  Addition of MemoryPkg
- - Mar-2015 - **2015.03**  Bug fixes to AlertLogPkg (primarily ClearAlerts, but also matching names)
- - Jan-2015 - **2015.01**  Not here. Addition of AlertLogPkg, TranscriptPkg,OsvvmContext, and OsvvmGlobalPkg.  
- - Dec-2014 - **2014.07a** Fixed memory leak in CoveragePkg.Deallocate.  Replaced initialized pointers with initialization functions
- - Jul-2014 - **2014.07**  Not here. Added names to coverage bins.  Added option during WriteBin so that a bin prints PASSED if its count is greater than the coverage goal, otherwise FAILED.  
- - Jan-2014 - **2014.01**  RandomPkg: RandTime, RandIntV, RandRealV, RandTimeV.  CoveragePkg:  Support merging of coverage bins.  
- - May-2013 - **2013.05**  RandomPkg:  Big Vector Randomization.  
- 
 
 ------
 
