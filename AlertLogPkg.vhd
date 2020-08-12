@@ -51,14 +51,19 @@
 --                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
 --                         Disabled Alerts now handled in separate bins and reported separately.
 --                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
---    07/2020   2020.07    Added Passed Goals for Requirements tracking
---                         Set with;  GetAlertLogID("Req ID 1", ReqParentID, PassedGoal, [CreateHierarchy])
+--    08/2020   2020.08    Alpha Test Release of integrated Specification Tracking
+--                         Added Passed Goals for Requirements tracking
+--                         Added Requirements Bin
+--                         Added ReadSpecification - Alternative to GetReqID
+--                         Added GetReqID("Req ID 1", [PassedGoal,] [ReqParentID,] [CreateHierarchy]) -- Uses regular AffirmIf
+--                         Added Basic AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
+--                         For now, for others, use AffirmIf(GetReqID(""))
 --                         Report with ReportAlerts
---                         Tests fail when requirements are not met and FailOnRequirementErrors is true.
+--                         Tests fail when requirements are not met and FailOnRequirementErrors is true (default TRUE).
 --                             Set using:  SetAlertLogOptions(FailOnRequirementErrors => TRUE)
---                         Turn on requirements printing in summary and details with PrintRequirements
+--                         Turn on requirements printing in summary and details with PrintRequirements (default FALSE, 
 --                         Turn on requirements printing in summary with PrintIfHaveRequirements (Default TRUE)
---                         Added ReadRequirements and WriteRequirements
+--                         ReadRequirements and WriteRequirements
 --
 --
 --  This file is part of OSVVM.
@@ -90,7 +95,7 @@ use ieee.numeric_std.all ;
 
 package AlertLogPkg is
 
---  type     AlertLogIDType       is range integer'low to integer'high ; -- next revsion
+--  type     AlertLogIDType       is range integer'low to integer'high ; -- next revision
   subtype     AlertLogIDType       is integer ;
   type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;
   type     AlertType        is (FAILURE, ERROR, WARNING) ;  -- NEVER
@@ -103,14 +108,15 @@ package AlertLogPkg is
 
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := 1 ;
+  constant  OSVVM_ALERTLOG_ID              : AlertLogIDType := 2 ; -- reporting for packages
+  constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := 3 ; 
+  -- May have its own ID or OSVVM_ALERTLOG_ID as default - most scoreboards allocate their own ID
+  constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  
+  -- Same as ALERTLOG_DEFAULT_ID
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
   constant  LOG_DEFAULT_ID                 : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
-  constant  OSVVM_ALERTLOG_ID              : AlertLogIDType := 2 ;
-  constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
-  constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := ALERTLOG_BASE_ID ; 
   
-  -- NUM_PREDEFINED_AL_IDS intended to be local, but depends on others
-  -- constant  NUM_PREDEFINED_AL_IDS          : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID - ALERTLOG_BASE_ID ;  -- Not including base
   constant  ALERTLOG_ID_NOT_FOUND          : AlertLogIDType := -1 ;  -- alternately integer'right
   constant  ALERTLOG_ID_NOT_ASSIGNED       : AlertLogIDType := -1 ;
   constant  MIN_NUM_AL_IDS                 : AlertLogIDType := 32 ; -- Number IDs initially allocated
@@ -269,6 +275,11 @@ package AlertLogPkg is
   procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
+  
+  ------------------------------------------------------------
+  -- Support for Specification / Requirements Tracking
+  procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) ;
+  procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
   procedure SetAlertLogJustify (Enable : boolean := TRUE) ;
@@ -280,6 +291,7 @@ package AlertLogPkg is
     AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ; 
     OpenKind    : File_Open_Kind := WRITE_MODE 
   ) ;
+  procedure ReadSpecification (FileName : string) ;
   procedure ReadRequirements (FileName : string) ;
   procedure ClearAlerts ;
   procedure ClearAlertStopCounts ;
@@ -336,7 +348,7 @@ package AlertLogPkg is
   impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
   impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
   impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
-  impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; PassedGoal : natural ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
+  impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
   procedure SetAlertLogPrefix(AlertLogID : AlertLogIDType; Name : string ) ;
   procedure UnSetAlertLogPrefix(AlertLogID : AlertLogIDType) ;
@@ -518,6 +530,7 @@ package body AlertLogPkg is
       AlertLogID  : AlertLogIDType ; 
       OpenKind    : File_Open_Kind := WRITE_MODE 
     ) ;
+    procedure ReadSpecification (FileName : string) ;
     procedure ReadRequirements (FileName : string) ;
     procedure ClearAlerts ;
     procedure ClearAlertStopCounts ;
@@ -551,7 +564,8 @@ package body AlertLogPkg is
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
     impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
-    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; PassedGoal : natural ; CreateHierarchy : Boolean) return AlertLogIDType ;
+    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
+    impure function GetReqID(Name : string ; PassedGoal : integer ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
     procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) ;
     procedure Deallocate ;
@@ -673,6 +687,7 @@ package body AlertLogPkg is
       AlertStopCount      : AlertCountType ;
       AlertEnabled        : AlertEnableType ;
       LogEnabled          : LogEnableType ;
+      IsRequirment        : boolean ; 
     end record AlertLogRecType ;
 
     ------------------------------------------------------------
@@ -691,7 +706,10 @@ package body AlertLogPkg is
     variable PrintAffirmationsVar        : boolean := FALSE ;
     variable PrintDisabledAlertsVar      : boolean := FALSE ;
     variable PrintRequirementsVar        : boolean := FALSE ;
+    variable HasRequirementsVar          : boolean := FALSE ;
     variable PrintIfHaveRequirementsVar  : boolean := TRUE ;
+    
+    variable DefaultPassedGoalVar        : integer := 1 ; 
 
     variable FailOnWarningVar            : boolean := TRUE ;
     variable FailOnDisabledErrorsVar     : boolean := TRUE ;
@@ -903,6 +921,7 @@ package body AlertLogPkg is
       ResultValues(1) := CurrentLength + 1 ;            -- AlertLogJustifyAmountVar
       ResultValues(2) := CurrentLength + IndentAmount ; -- ReportJustifyAmountVar
       for i in AlertLogID+1 to NumAlertLogIDsVar loop
+        next when i = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE ;
         if AlertLogID = AlertLogPtr(i).ParentID then
           LowerLevelValues := CalcJustify(i, AlertLogPtr(i).Name'length, IndentAmount + 2) ;
           ResultValues(1)  := maximum(ResultValues(1), LowerLevelValues(1)) ;
@@ -1143,6 +1162,9 @@ package body AlertLogPkg is
     begin
       for i in AlertLogID+1 to NumAlertLogIDsVar loop
         if AlertLogID = AlertLogPtr(i).ParentID then
+          -- Don't print requirements if there no requirements
+          next when i = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE ;
+          
           if
              ReportAll or   -- ReportAlerts
              -- ReportNonZeroAlerts and  (AlertCount or (FailOn and DisabledAlertCount))
@@ -1354,6 +1376,78 @@ package body AlertLogPkg is
     end procedure WriteRequirements ;
     
     ------------------------------------------------------------
+    procedure ReadSpecification (file SpecificationFile : text ) is
+    ------------------------------------------------------------
+      variable buf,Name,Description  : line ;
+      variable ReadValid             : boolean ;
+      variable Empty                 : boolean ;
+      variable MultiLineComment      : boolean := FALSE ;
+      variable PassedGoal            : integer ; 
+      variable Char                  : character ; 
+      constant DELIMITER             : character := ',' ;
+      variable AlertLogID            : AlertLogIDType ; 
+    begin
+      HasRequirementsVar := TRUE ; 
+            
+      -- Format:   Spec Name, [Spec Description = "",] [Requirement Goal = 0]
+      ReadFileLoop : while not EndFile(SpecificationFile) loop 
+        ReadLoop : loop
+          ReadLine(SpecificationFile, buf) ;
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ; 
+          next ReadFileLoop when Empty ;
+          
+          -- defaults
+          PassedGoal  := DefaultPassedGoalVar ; 
+
+          -- Read Name and Remove delimiter
+          ReadUntilDelimiterOrEOL(buf, Name, DELIMITER, ReadValid) ;
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                         "AlertLogPkg.ReadSpecification: Failed while reading Name", FAILURE) ;
+          
+          -- If rest of line is blank or comment, then skip it.
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+          exit ReadLoop when Empty ; 
+                                   
+          -- Optional: Read Description 
+          ReadUntilDelimiterOrEOL(buf, Description, DELIMITER, ReadValid) ;
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                         "AlertLogPkg.ReadSpecification: Failed while reading Description", FAILURE) ;
+
+          if IsNumber(Description.all) then
+            read(Description, PassedGoal, ReadValid) ;
+            deallocate(Description) ;
+            exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                           "AlertLogPkg.ReadSpecification: Failed while reading PassedGoal (while skipping Description)", FAILURE) ; 
+          else
+            -- If rest of line is blank or comment, then skip it.
+            EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+            exit ReadLoop when Empty ; 
+                                     
+            -- Read PassedGoal 
+            read(buf, PassedGoal, ReadValid) ;
+            exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+                           "AlertLogPkg.ReadSpecification: Failed while reading PassedGoal", FAILURE) ; 
+          end if ; 
+          exit ReadLoop ;
+        end loop ReadLoop ;
+        AlertLogID := GetAlertLogID(Name.all, REQUIREMENT_ALERTLOG_ID) ;
+        deallocate(Name) ;
+        deallocate(Description) ;  -- not used
+        -- Implementation 1:  Just put the values in
+        AlertLogPtr(AlertLogID).PassedGoal          := PassedGoal ;
+      end loop ReadFileLoop ;
+    end procedure ReadSpecification ;
+
+    ------------------------------------------------------------
+    procedure ReadSpecification (FileName : string) is
+    ------------------------------------------------------------
+      -- Format:  Action Count min1 max1 min2 max2
+      file SpecificationFile : text open READ_MODE is FileName ;
+    begin
+      ReadSpecification(SpecificationFile) ;
+    end procedure ReadSpecification ;
+
+    ------------------------------------------------------------
     procedure ReadRequirements (file RequirementsFile : text ) is
     ------------------------------------------------------------
       variable buf,Name          : line ;
@@ -1374,7 +1468,7 @@ package body AlertLogPkg is
         ReadLoop : loop
           ReadLine(RequirementsFile, buf) ;
           EmptyOrCommentLine(buf, Empty, MultiLineComment) ; 
-          next when Empty ;
+          next ReadFileLoop when Empty ;
           
           -- defaults
           PassedGoal  := 0 ; 
@@ -1383,46 +1477,46 @@ package body AlertLogPkg is
 
           -- Get Name and Remove delimiter
           ReadUntilDelimiterOrEOL(buf, Name, DELIMITER, ReadValid) ;
-          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
                          "AlertLogPkg.ReadRequirements: Failed while reading Name", FAILURE) ;
           
           -- If rest of line is blank or comment, then skip it.
           EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
-          exit when Empty ; 
+          exit ReadLoop when Empty ; 
                                    
           -- Read PassedGoal 
           read(buf, PassedGoal, ReadValid) ;
-          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
                          "AlertLogPkg.ReadRequirements: Failed while reading PassedGoal", FAILURE) ; 
           
           -- If rest of line is blank or comment, then skip it.
           EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
-          exit when Empty ; 
+          exit ReadLoop when Empty ; 
           
           -- Read Delimiter 
           Read(buf, Char, ReadValid) ;
-          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,  
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,  
                          "AlertLogPkg.ReadRequirements: Failed while reading ',' following PassedGoal", FAILURE) ; 
                          
           -- Read PassedGoal 
           read(buf, PassedCount, ReadValid) ;
-          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
                          "AlertLogPkg.ReadRequirements: Failed while reading PassedCount", FAILURE) ; 
           
           -- If rest of line is blank or comment, then skip it.
           EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
-          exit when Empty ; 
+          exit ReadLoop when Empty ; 
 
           -- Read Delimiter 
           read(buf, Char, ReadValid) ;
-          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,  
+          exit ReadFileLoop  when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,  
                          "AlertLogPkg.ReadRequirements: Failed while reading ',' following PassedCount", FAILURE) ; 
 
           -- Read ErrorCount 
           read(buf, ErrorCount, ReadValid) ;
-          exit when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
                          "AlertLogPkg.ReadRequirements: Failed while reading ErrorCount", FAILURE) ; 
-          exit ;
+          exit ReadLoop ;
         end loop ReadLoop ;
         AlertLogID := GetAlertLogID(Name.all, REQUIREMENT_ALERTLOG_ID) ;
         deallocate(Name) ;
@@ -1629,6 +1723,10 @@ package body AlertLogPkg is
         NewAlertLogRec(OSVVM_ALERTLOG_ID, "OSVVM", ALERTLOG_BASE_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
+      if REQUIREMENT_ALERTLOG_ID /= ALERT_DEFAULT_ID then
+        NewAlertLogRec(REQUIREMENT_ALERTLOG_ID, "Requirements", ALERTLOG_BASE_ID) ;
+        NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
+      end if ;
       if OSVVM_SCOREBOARD_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
         NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "OSVVM Scoreboard", ALERTLOG_BASE_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
@@ -1782,15 +1880,14 @@ package body AlertLogPkg is
     end function FindAlertLogID ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; PassedGoal : natural ; CreateHierarchy : Boolean) return AlertLogIDType is
+    impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType is
     ------------------------------------------------------------
       variable ResultID : AlertLogIDType ;
       variable localParentID : AlertLogIDType ;
     begin
       localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
       ResultID := LocalFindAlertLogID(Name, localParentID) ;
-      if ResultID /= ALERTLOG_ID_NOT_FOUND then
-        -- found it, set localParentID
+      if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentID = ALERTLOG_ID_NOT_ASSIGNED then
           AlertLogPtr(ResultID).ParentID := localParentID ;
         -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
@@ -1803,10 +1900,41 @@ package body AlertLogPkg is
         if CreateHierarchy then
           FoundReportHierVar := TRUE ;
         end if ;
+        AlertLogPtr(ResultID).PassedGoal := 0 ;
       end if ;
-      AlertLogPtr(ResultID).PassedGoal := PassedGoal ;
       return ResultID ;
     end function GetAlertLogID ;
+    
+    ------------------------------------------------------------
+    impure function GetReqID(Name : string ; PassedGoal : integer ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType is
+    ------------------------------------------------------------
+      variable ResultID : AlertLogIDType ;
+      variable localParentID : AlertLogIDType ;
+    begin
+      HasRequirementsVar := TRUE ; 
+      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
+      ResultID := LocalFindAlertLogID(Name, localParentID) ;
+      if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
+        if AlertLogPtr(ResultID).ParentID = ALERTLOG_ID_NOT_ASSIGNED then
+          AlertLogPtr(ResultID).ParentID := localParentID ;
+        -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
+        end if ;
+      else
+        -- Create a new ID
+        ResultID := GetNextAlertLogID ;
+        NewAlertLogRec(ResultID, Name, localParentID) ;
+        FoundAlertHierVar := TRUE ;
+        if CreateHierarchy then
+          FoundReportHierVar := TRUE ;
+        end if ;
+        if PassedGoal >= 0 then 
+          AlertLogPtr(ResultID).PassedGoal := PassedGoal ;
+        else 
+          AlertLogPtr(ResultID).PassedGoal := DefaultPassedGoalVar ;
+        end if ; 
+      end if ;
+      return ResultID ;
+    end function GetReqID ;
 
     ------------------------------------------------------------
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType is
@@ -2049,6 +2177,9 @@ package body AlertLogPkg is
       end loop ;
       WriteLine(buf) ;
       for i in AlertLogID+1 to NumAlertLogIDsVar loop
+-- Always print requirements
+--        -- Only print requirements if have requirements
+--        next when i = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE ;
         if AlertLogID = AlertLogPtr(i).ParentID then
           PrintLogLevels(
             AlertLogID    => i,
@@ -3084,16 +3215,6 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIf ;
 
---  ------------------------------------------------------------
---  procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
---  ------------------------------------------------------------
---  begin
---    -- synthesis translate_off
-----?? Set Goal to 1?  Should the ID already exist?
---    AffirmIf(GetAlertLogID(RequirementsIDName), condition, ReceivedMessage, ExpectedMessage, Enable) ;
---    -- synthesis translate_on
---  end procedure AffirmIf ;
-
   ------------------------------------------------------------
   impure function AffirmIf( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
@@ -3551,6 +3672,28 @@ package body AlertLogPkg is
     AffirmIfDiff(ALERT_DEFAULT_ID, File1, File2, Message, Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfDiff ;
+  
+  
+  -- Support for Specification / Requirements Tracking
+  ------------------------------------------------------------
+  procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+--?? Set Goal to 1?  Should the ID already exist?
+    AffirmIf(GetReqID(RequirementsIDName), condition, ReceivedMessage, ExpectedMessage, Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIf ;
+
+  ------------------------------------------------------------
+  procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+--?? Set Goal to 1?  Should the ID already exist?
+    AffirmIf(GetReqID(RequirementsIDName), condition, Message, Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIf ;
 
   ------------------------------------------------------------
   procedure SetAlertLogJustify (Enable : boolean := TRUE) is
@@ -3601,6 +3744,15 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure WriteRequirements ;
   
+  ------------------------------------------------------------
+  procedure ReadSpecification (FileName : string) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ReadSpecification(FileName) ;
+    -- synthesis translate_on
+  end procedure ReadSpecification ;
+
   ------------------------------------------------------------
   procedure ReadRequirements (FileName : string) is
   ------------------------------------------------------------
@@ -3965,22 +4117,21 @@ package body AlertLogPkg is
     variable result : AlertLogIDType ;
   begin
     -- synthesis translate_off
-    result := AlertLogStruct.GetAlertLogID(Name, ParentID, 0, CreateHierarchy ) ;
+    result := AlertLogStruct.GetAlertLogID(Name, ParentID, CreateHierarchy ) ;
     -- synthesis translate_on
     return result ;
   end function GetAlertLogID ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; PassedGoal : natural ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType is
+  impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType is
   ------------------------------------------------------------
     variable result : AlertLogIDType ;
   begin
     -- synthesis translate_off
-    result := AlertLogStruct.GetAlertLogID(Name, ParentID, PassedGoal, CreateHierarchy) ;
+    result := AlertLogStruct.GetReqID(Name, PassedGoal, ParentID, CreateHierarchy) ;
     -- synthesis translate_on
     return result ;
-  end function GetAlertLogID ;
-
+  end function GetReqID ;
 
   ------------------------------------------------------------
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType is
