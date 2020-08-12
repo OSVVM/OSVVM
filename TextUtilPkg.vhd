@@ -55,7 +55,10 @@ package TextUtilPkg is
   function to_lower (constant Str : string ) return string ;
   function to_upper (constant Char : character ) return character ;
   function to_upper (constant Str : string ) return string ;
-  function ishex (constant Char : character ) return boolean ; 
+  function IsHex (constant Char : character ) return boolean ; 
+  function IsNumber (constant Char : character ) return boolean ; 
+  function IsNumber (Name : string ) return boolean ; 
+
   function isstd_logic (constant Char : character ) return boolean ;
   
   -- Crutch until VHDL-2019 conditional initialization
@@ -196,7 +199,7 @@ package body TextUtilPkg is
   end function to_upper ;
 
   ------------------------------------------------------------
-  function ishex (constant Char : character ) return boolean is
+  function IsHex (constant Char : character ) return boolean is
   ------------------------------------------------------------
   begin
     if Char >= '0' and Char <= '9' then 
@@ -208,8 +211,27 @@ package body TextUtilPkg is
     else
       return FALSE ; 
     end if ; 
-  end function ishex ; 
+  end function IsHex ; 
   
+  ------------------------------------------------------------
+  function IsNumber (constant Char : character ) return boolean is 
+  ------------------------------------------------------------
+  begin
+    return Char >= '0' and Char <= '9' ;
+  end function IsNumber ; 
+  
+  ------------------------------------------------------------
+  function IsNumber (Name : string ) return boolean is
+  ------------------------------------------------------------
+  begin
+    for i in Name'range loop 
+      if not IsNumber(Name(i)) then 
+        return FALSE ; 
+      end if ; 
+    end loop ; 
+    return TRUE ; 
+  end function IsNumber ; 
+
   ------------------------------------------------------------
   function isstd_logic (constant Char : character ) return boolean is
   ------------------------------------------------------------
