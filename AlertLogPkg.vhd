@@ -52,18 +52,14 @@
 --                         Disabled Alerts now handled in separate bins and reported separately.
 --                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
 --    08/2020   2020.08    Alpha Test Release of integrated Specification Tracking
---                         Added Passed Goals for Requirements tracking
---                         Added Requirements Bin
---                         Added ReadSpecification - Alternative to GetReqID
---                         Added GetReqID("Req ID 1", [PassedGoal,] [ReqParentID,] [CreateHierarchy]) -- Uses regular AffirmIf
---                         Added Basic AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
---                         For now, for others, use AffirmIf(GetReqID(""))
---                         Report with ReportAlerts
+--                         Added Passed Goals - reported with ReportAlerts
 --                         Tests fail when requirements are not met and FailOnRequirementErrors is true (default TRUE).
 --                             Set using:  SetAlertLogOptions(FailOnRequirementErrors => TRUE)
 --                         Turn on requirements printing in summary and details with PrintRequirements (default FALSE, 
 --                         Turn on requirements printing in summary with PrintIfHaveRequirements (Default TRUE)
---                         ReadRequirements and WriteRequirements
+--                         Added Requirements Bin, ReadSpecification, GetReqID, SetPassedGoal
+--                         Added AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
+--                         Not done yet.  ReadRequirements and WriteRequirements
 --
 --
 --  This file is part of OSVVM.
@@ -1388,6 +1384,7 @@ package body AlertLogPkg is
       variable Empty                 : boolean ;
       variable MultiLineComment      : boolean := FALSE ;
       variable PassedGoal            : integer ; 
+      variable PassedGoalSet         : boolean ; 
       variable Char                  : character ; 
       constant DELIMITER             : character := ',' ;
       variable AlertLogID            : AlertLogIDType ; 
@@ -1403,6 +1400,7 @@ package body AlertLogPkg is
           
           -- defaults
           PassedGoal  := DefaultPassedGoalVar ; 
+          PassedGoalSet := FALSE ;
 
           -- Read Name and Remove delimiter
           ReadUntilDelimiterOrEOL(buf, Name, DELIMITER, ReadValid) ;
@@ -1423,6 +1421,7 @@ package body AlertLogPkg is
             deallocate(Description) ;
             exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
                            "AlertLogPkg.ReadSpecification: Failed while reading PassedGoal (while skipping Description)", FAILURE) ; 
+            PassedGoalSet := TRUE ; 
           else
             -- If rest of line is blank or comment, then skip it.
             EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
@@ -1432,14 +1431,16 @@ package body AlertLogPkg is
             read(buf, PassedGoal, ReadValid) ;
             exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,  
                            "AlertLogPkg.ReadSpecification: Failed while reading PassedGoal", FAILURE) ; 
+            PassedGoalSet := TRUE ; 
           end if ; 
           exit ReadLoop ;
         end loop ReadLoop ;
-        AlertLogID := GetAlertLogID(Name.all, REQUIREMENT_ALERTLOG_ID) ;
+        AlertLogID := GetReqID(Name.all) ;
         deallocate(Name) ;
         deallocate(Description) ;  -- not used
         -- Implementation 1:  Just put the values in
-        AlertLogPtr(AlertLogID).PassedGoal          := PassedGoal ;
+        AlertLogPtr(AlertLogID).PassedGoal := PassedGoal ;
+        AlertLogPtr(AlertLogID).PassedGoalSet := PassedGoalSet ;
       end loop ReadFileLoop ;
     end procedure ReadSpecification ;
 
@@ -1523,7 +1524,7 @@ package body AlertLogPkg is
                          "AlertLogPkg.ReadRequirements: Failed while reading ErrorCount", FAILURE) ; 
           exit ReadLoop ;
         end loop ReadLoop ;
-        AlertLogID := GetAlertLogID(Name.all, REQUIREMENT_ALERTLOG_ID) ;
+        AlertLogID := GetReqID(Name.all) ;
         deallocate(Name) ;
         -- Implementation 1:  Just put the values in
         AlertLogPtr(AlertLogID).PassedGoal          := PassedGoal ;
