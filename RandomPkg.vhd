@@ -5,7 +5,8 @@
 --
 --  Maintainer :        Jim Lewis      email :  jim@synthworks.com
 --  Contributor(s) :
---     Jim Lewis      email :  jim@synthworks.com
+--     Jim Lewis      email:  jim@synthworks.com
+--     Lars Asplund   email:  lars.anders.asplund@gmail.com
 --     *
 --
 --   * In writing procedures normal, poisson, the following sources were referenced :
@@ -48,11 +49,13 @@
 --    11/2016    2016.11    No changes.  Updated release numbers to make documentation and
 --                          package have consistent release identifiers.
 --    01/2020    2020.01    Updated Licenses to Apache
+--    08/2020    2020.08    RandBool, RandSl, RandBit, DistBool, DistSl, DistBit (from Lars)
 --
 --
 --  This file is part of OSVVM.
 --  
 --  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
+--  Copyright (C) 2020 by OSVVM Authors   
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -113,7 +116,11 @@ package RandomPkg is
   end record ;
   type DistType is array (natural range <>) of DistRecType ;
 
-
+  -- Weight vectors not indexed by integers
+  type NaturalVBoolType is array (boolean range <>) of natural;
+  type NaturalVSlType is array (std_logic range <>) of natural;
+  type NaturalVBitType is array (bit range <>) of natural;
+  
   -- Parameters for randomization
   -- RandomDistType specifies the distribution to use for randomize
   type RandomDistType is (NONE, UNIFORM, FAVOR_SMALL, FAVOR_BIG, NORMAL, POISSON) ;
@@ -272,6 +279,9 @@ package RandomPkg is
     impure function DistSlv ( Weight : integer_vector ; Size  : natural ) return std_logic_vector ;
     impure function DistUnsigned ( Weight : integer_vector ; Size  : natural ) return unsigned ;
     impure function DistSigned ( Weight : integer_vector ; Size  : natural ) return signed ;
+    impure function DistBool ( Weight : NaturalVBoolType ) return boolean ;
+    impure function DistSl ( Weight : NaturalVSlType ) return std_logic ;
+    impure function DistBit ( Weight : NaturalVBitType ) return bit ;
 
     -- Distribution with just weights and with exclude values
     impure function DistInt ( Weight : integer_vector ; Exclude : integer_vector ) return integer ;
@@ -309,6 +319,9 @@ package RandomPkg is
     impure function RandSlv (Max, Size : natural) return std_logic_vector ;
     impure function RandUnsigned (Max, Size : natural) return Unsigned ;
     impure function RandSigned (Max : integer ; Size : natural ) return Signed ;
+    impure function RandBool return boolean;
+    impure function RandSl return std_logic;
+    impure function RandBit return bit;
 
   end protected RandomPType ;
 
@@ -1388,6 +1401,26 @@ package body RandomPkg is
       return to_signed(DistInt(Weight), Size) ;
     end function DistSigned ;
 
+    impure function DistBool ( Weight : NaturalVBoolType ) return boolean is
+      variable FullWeight : NaturalVBoolType(false to true) := (0, 0);
+    begin
+      FullWeight(Weight'range) := Weight;
+      return DistInt(integer_vector(FullWeight)) = 1 ;
+    end function DistBool ;
+
+    impure function DistSl ( Weight : NaturalVSlType ) return std_logic is
+      variable FullWeight : NaturalVSlType('U' to '-') := (others => 0);
+    begin
+      FullWeight(Weight'range) := Weight;
+      return std_logic'val(DistInt(integer_vector(FullWeight))) ;
+    end function DistSl ;
+
+    impure function DistBit ( Weight : NaturalVBitType ) return bit is
+      variable FullWeight : NaturalVBitType('0' to '1') := (0, 0);
+    begin
+      FullWeight(Weight'range) := Weight;
+      return bit'val(DistInt(integer_vector(FullWeight))) ;
+    end function DistBit ;
 
     --
     --  Basic Distributions with exclude values (so can skip last or last n)
@@ -1641,6 +1674,21 @@ package body RandomPkg is
       return to_signed(RandInt(0, Max), Size) ;
     end function RandSigned ;
 
+    impure function RandBool return boolean is
+    begin
+      return RandInt(1) = 1;
+    end function RandBool ;
+
+    impure function RandSl return std_logic is
+    begin
+      return std_logic'val(RandInt(8));
+    end function RandSl ;
+  
+    impure function RandBit return bit is
+    begin
+      return bit'val(RandInt(1));
+    end function RandBit ;
+  
   end protected body RandomPType ;
 
 end RandomPkg ;
