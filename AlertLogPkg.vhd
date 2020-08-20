@@ -59,7 +59,7 @@
 --                         Turn on requirements printing in summary with PrintIfHaveRequirements (Default TRUE)
 --                         Added Requirements Bin, ReadSpecification, GetReqID, SetPassedGoal
 --                         Added AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
---                         Not done yet.  ReadRequirements and WriteRequirements
+--                         Work in progress and will change: ReadRequirements and WriteRequirements
 --
 --
 --  This file is part of OSVVM.
@@ -1139,7 +1139,7 @@ package body AlertLogPkg is
         write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCount)) ;
       end if ;
       if  PrintRequirementsVar or 
-          (PrintIfHaveRequirementsVar and TotalRequirementsGoal /= 0) or
+          (PrintIfHaveRequirementsVar and HasRequirementsVar) or
           (FailOnRequirementErrorsVar and TotalRequirementErrors /= 0) 
       then
         write(buf, "  Requirements Passed: " & to_string(TotalRequirementsPassed) &
@@ -3249,7 +3249,7 @@ package body AlertLogPkg is
       AlertLogStruct.Log(AlertLogID, ReceivedMessage, PASSED, Enable) ;
     else
       AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
-      AlertLogStruct.Alert(AlertLogID, ReceivedMessage & ExpectedMessage, ERROR) ;
+      AlertLogStruct.Alert(AlertLogID, ReceivedMessage & ' ' & ExpectedMessage, ERROR) ;
     end if ;
     -- synthesis translate_on
   end procedure AffirmIf ;
@@ -3459,7 +3459,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, ??(Received ?= Expected),
       Message & " Received : " & to_string(Received),
-      " ?= Expected : " & to_string(Expected),
+      "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3471,7 +3471,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, ??(Received ?= Expected),
       Message & " Received : " & to_hstring(Received),
-      " ?= Expected : " & to_hstring(Expected),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3483,7 +3483,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, ??(Received ?= Expected),
       Message & " Received : " & to_hstring(Received),
-      " ?= Expected : " & to_hstring(Expected),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3495,7 +3495,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, ??(Received ?= Expected),
       Message & " Received : " & to_hstring(Received),
-      " ?= Expected : " & to_hstring(Expected),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3507,7 +3507,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
       Message & " Received : " & to_string(Received),
-      " = Expected : " & to_string(Expected),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3519,7 +3519,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
       Message & " Received : " & to_string(Received, 4),
-      " = Expected : " & to_string(Expected, 4),
+      "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3531,7 +3531,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
       Message & " Received : " & to_string(Received),
-      " = Expected : " & to_string(Expected),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3543,7 +3543,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
       Message & " Received : " & Received,
-      " = Expected : " & Expected,
+      "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3555,7 +3555,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
       Message & " Received : " & to_string(Received),
-      " = Expected : " & to_string(Expected),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3568,7 +3568,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
       Message & " Received : " & to_string(Received),
-      " ?= Expected : " & to_string(Expected),
+      "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3580,7 +3580,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
       Message & " Received : " & to_hstring(Received),
-      " ?= Expected : " & to_hstring(Expected),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3592,7 +3592,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
       Message & " Received : " & to_hstring(Received),
-      " ?= Expected : " & to_hstring(Expected),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3604,7 +3604,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
       Message & " Received : " & to_hstring(Received),
-      " ?= Expected : " & to_hstring(Expected),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3616,7 +3616,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : " & to_string(Received),
-      " = Expected : " & to_string(Expected),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3628,7 +3628,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : " & to_string(Received, 4),
-      " = Expected : " & to_string(Expected, 4),
+      "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3640,7 +3640,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : " & to_string(Received),
-      " = Expected : " & to_string(Expected),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3652,7 +3652,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : " & Received,
-      " = Expected : " & Expected,
+      "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -3664,7 +3664,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : " & to_string(Received),
-      " = Expected : " & to_string(Expected),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
