@@ -679,6 +679,9 @@ package body AlertLogPkg is
       Suffix              : Line ;
       ParentID            : AlertLogIDType ;
       ParentIDSet         : Boolean ; 
+      SiblingID           : AlertLogIDType ;
+      ChildID             : AlertLogIDType ;
+      ChildIDLast         : AlertLogIDType ;
       AlertCount          : AlertCountType ;
       DisabledAlertCount  : AlertCountType ;
       AffirmCount         : Integer ;
@@ -1669,6 +1672,38 @@ package body AlertLogPkg is
       localAlertLogID := VerifyID(AlertLogID) ;
       return AlertLogPtr(localAlertLogID).Name.all ;
     end function GetAlertLogName ;
+    
+    ------------------------------------------------------------
+    -- PT Local
+    impure function IsRequirement(AlertLogID : AlertLogIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      if AlertLogID = REQUIREMENT_ALERTLOG_ID then
+        return TRUE ;
+      elsif AlertLogID <= ALERTLOG_BASE_ID then
+        return FALSE ;
+      else 
+        return IsRequirement(AlertLogPtr(AlertLogID).ParentID) ;
+      end if ;
+    end function IsRequirement ;
+    
+    ------------------------------------------------------------
+    -- PT Local
+    procedure DeQueueID(AlertLogID : AlertLogIDType) is
+    ------------------------------------------------------------
+    begin
+      -- Currently do nothing
+
+    end procedure DeQueueID ;
+
+    ------------------------------------------------------------
+    -- PT Local
+    procedure EnQueueID(AlertLogID, ParentID : AlertLogIDType ; ParentIDSet : boolean := TRUE) is
+    ------------------------------------------------------------
+    begin
+      AlertLogPtr(AlertLogID).ParentIDSet := ParentIDSet ; 
+      AlertLogPtr(AlertLogID).ParentID    := ParentID ;
+    end procedure EnQueueID ;
 
     ------------------------------------------------------------
     -- PT Local
@@ -1683,19 +1718,22 @@ package body AlertLogPkg is
         AlertEnabled := (TRUE, TRUE, TRUE) ;
         LogEnabled   := (others => FALSE) ;
         AlertStopCount := (FAILURE => 0, ERROR => integer'right, WARNING => integer'right) ;
-        AlertLogPtr(AlertLogID).ParentIDSet := TRUE ; 
-        AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
+--        AlertLogPtr(AlertLogID).ParentIDSet := TRUE ; 
+--        AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
+        EnQueueID(AlertLogID, ALERTLOG_BASE_ID, TRUE) ;
       else
         if ParentID < ALERTLOG_BASE_ID then
           AlertEnabled := AlertLogPtr(ALERTLOG_BASE_ID).AlertEnabled ;
           LogEnabled   := AlertLogPtr(ALERTLOG_BASE_ID).LogEnabled ;
-          AlertLogPtr(AlertLogID).ParentIDSet := FALSE ; 
-          AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
+--          AlertLogPtr(AlertLogID).ParentIDSet := FALSE ; 
+--          AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
+          EnQueueID(AlertLogID, ALERTLOG_BASE_ID, FALSE) ;
         else
           AlertEnabled := AlertLogPtr(ParentID).AlertEnabled ;
           LogEnabled   := AlertLogPtr(ParentID).LogEnabled ;
-          AlertLogPtr(AlertLogID).ParentIDSet := TRUE ; 
-          AlertLogPtr(AlertLogID).ParentID    := ParentID ;
+--          AlertLogPtr(AlertLogID).ParentIDSet := TRUE ; 
+--          AlertLogPtr(AlertLogID).ParentID    := ParentID ;
+          EnQueueID(AlertLogID, ParentID, TRUE) ;
         end if ;
         AlertStopCount := (FAILURE => integer'right, ERROR => integer'right, WARNING => integer'right) ;
       end if ;
@@ -1892,17 +1930,31 @@ package body AlertLogPkg is
     end function FindAlertLogID ;
 
     ------------------------------------------------------------
+    -- PT Local
+    procedure AdjustID(AlertLogID, ParentID : AlertLogIDType ; ParentIDSet : boolean := TRUE) is
+    ------------------------------------------------------------
+    begin
+      if IsRequirement(AlertLogID) and not IsRequirement(ParentID) then 
+        Alert(AlertLogID, "GetAlertLogID/GetReqID: Parent of a Requirement must be a Requirement") ;
+      else
+        DeQueueID(AlertLogID) ;
+        EnQueueID(AlertLogID, ParentID, TRUE) ;
+      end if ; 
+    end procedure AdjustID ;
+
+    ------------------------------------------------------------
     impure function GetAlertLogID(Name : string ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType is
     ------------------------------------------------------------
       variable ResultID : AlertLogIDType ;
       variable localParentID : AlertLogIDType ;
     begin
       localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
-      ResultID := LocalFindAlertLogID(Name, localParentID) ;
+      ResultID      := LocalFindAlertLogID(Name, localParentID) ;
       if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentIDSet = FALSE and localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
-          AlertLogPtr(ResultID).ParentID    := localParentID ;
-          AlertLogPtr(ResultID).ParentIDSet := TRUE ;
+--          AlertLogPtr(ResultID).ParentID    := localParentID ;
+--          AlertLogPtr(ResultID).ParentIDSet := TRUE ;
+          AdjustID(ResultID, localParentID, TRUE) ;
         -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
         end if ;
       else
@@ -1931,13 +1983,14 @@ package body AlertLogPkg is
       if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentIDSet = FALSE then 
           if localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
-            AlertLogPtr(ResultID).ParentID    := localParentID ;
-            AlertLogPtr(ResultID).ParentIDSet := TRUE ;
+--            AlertLogPtr(ResultID).ParentID    := localParentID ;
+--            AlertLogPtr(ResultID).ParentIDSet := TRUE ;
+            AdjustID(ResultID, localParentID, TRUE) ;
           else
-            AlertLogPtr(ResultID).ParentID    := REQUIREMENT_ALERTLOG_ID ;
-            AlertLogPtr(ResultID).ParentIDSet := FALSE ;
+--            AlertLogPtr(ResultID).ParentID    := REQUIREMENT_ALERTLOG_ID ;
+--            AlertLogPtr(ResultID).ParentIDSet := FALSE ;
+            AdjustID(ResultID, REQUIREMENT_ALERTLOG_ID, FALSE) ;
           end if ; 
-        -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
         end if ;
         if AlertLogPtr(ResultID).PassedGoalSet = FALSE then 
           if PassedGoal >= 0 then 
