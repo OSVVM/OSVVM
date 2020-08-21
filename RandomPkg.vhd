@@ -6,7 +6,7 @@
 --  Maintainer :        Jim Lewis      email :  jim@synthworks.com
 --  Contributor(s) :
 --     Jim Lewis      email:  jim@synthworks.com
---     Lars Asplund   email:  lars.anders.asplund@gmail.com
+--     Lars Asplund   email:  lars.anders.asplund@gmail.com - RandBool, RandSl, RandBit, DistBool, DistSl, DistBit
 --     *
 --
 --   * In writing procedures normal, poisson, the following sources were referenced :
