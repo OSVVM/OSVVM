@@ -284,7 +284,7 @@ package AlertLogPkg is
   procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
   procedure WriteRequirements (
     FileName    : string ; 
-    AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ; 
+    AlertLogID  : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ; 
     OpenKind    : File_Open_Kind := WRITE_MODE 
   ) ;
   procedure ReadSpecification (FileName : string) ;
@@ -936,15 +936,6 @@ package body AlertLogPkg is
         ResultValues(2)  := maximum(ResultValues(2), LowerLevelValues(2)) ;
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
----!!!
---      for i in AlertLogID+1 to NumAlertLogIDsVar loop
---        next when i = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE ;
---        if AlertLogID = AlertLogPtr(i).ParentID then
---          LowerLevelValues := CalcJustify(i, AlertLogPtr(i).Name'length, IndentAmount + 2) ;
---          ResultValues(1)  := maximum(ResultValues(1), LowerLevelValues(1)) ;
---          ResultValues(2)  := maximum(ResultValues(2), LowerLevelValues(2)) ;
---        end if ;
---      end loop ;
       return ResultValues ;
     end function CalcJustify ;
 
@@ -1024,12 +1015,6 @@ package body AlertLogPkg is
         Count := Count + LocalGetDisabledAlertCount(CurID) ; -- Recursively descend into children
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
----!!!
---      for i in AlertLogID+1 to NumAlertLogIDsVar loop
---        if AlertLogID = AlertLogPtr(i).ParentID then
---          Count := Count + LocalGetDisabledAlertCount(i) ; -- Recursively descend into children
---        end if ;
---      end loop ;
       return Count ;
     end function LocalGetDisabledAlertCount ;
 
@@ -1069,14 +1054,6 @@ package body AlertLogPkg is
         RequirementsGoal   := RequirementsGoal   + ChildRequirementsGoal ;
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
----!!!
---      for i in AlertLogID+1 to NumAlertLogIDsVar loop
---        if AlertLogID = AlertLogPtr(i).ParentID then
---          GetRequirementsCount(i, ChildRequirementsPassed, ChildRequirementsGoal) ;
---          RequirementsPassed := RequirementsPassed + ChildRequirementsPassed ;
---          RequirementsGoal   := RequirementsGoal   + ChildRequirementsGoal ;
---        end if ;
---      end loop ;
     end procedure GetRequirementsCount ;
     
     ------------------------------------------------------------
@@ -1100,14 +1077,6 @@ package body AlertLogPkg is
         AffirmCount := AffirmCount + ChildAffirmCount ;
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
----!!!
---      for i in AlertLogID+1 to NumAlertLogIDsVar loop
---        if AlertLogID = AlertLogPtr(i).ParentID then
---          GetPassedAffirmCount(i, ChildPassedCount, ChildAffirmCount) ;
---          PassedCount := PassedCount + ChildPassedCount ;
---          AffirmCount := AffirmCount + ChildAffirmCount ;
---        end if ;
---      end loop ;
     end procedure GetPassedAffirmCount ;
 
     ------------------------------------------------------------
@@ -1205,14 +1174,11 @@ package body AlertLogPkg is
     begin
       CurID := AlertLogPtr(AlertLogID).ChildID ; 
       while CurID > ALERTLOG_BASE_ID loop 
---      for i in AlertLogID+1 to NumAlertLogIDsVar loop
---        if AlertLogID = AlertLogPtr(i).ParentID then
-          -- Don't print requirements if there no requirements
+        -- Don't print requirements if there no requirements
         if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ; 
---          next when i = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE ;
           
         if
            ReportAll or   -- ReportAlerts
@@ -1248,7 +1214,6 @@ package body AlertLogPkg is
           ReportAll     => ReportAll,
           HasDisabledErrors  => HasDisabledErrors
         ) ;
---        end if ;
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
     end procedure PrintChild ;
@@ -1335,6 +1300,20 @@ package body AlertLogPkg is
     end procedure ReportAlerts ;
     
     ------------------------------------------------------------
+    -- PT Local
+    impure function IsRequirement(AlertLogID : AlertLogIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      if AlertLogID = REQUIREMENT_ALERTLOG_ID then
+        return TRUE ;
+      elsif AlertLogID <= ALERTLOG_BASE_ID then
+        return FALSE ;
+      else 
+        return IsRequirement(AlertLogPtr(AlertLogID).ParentID) ;
+      end if ;
+    end function IsRequirement ;
+    
+    ------------------------------------------------------------
     --  pt local
     procedure WriteTestResults (file TestFile : text) is
     ------------------------------------------------------------
@@ -1348,7 +1327,6 @@ package body AlertLogPkg is
       variable PassedCount, AffirmCount : integer ; 
       constant DELIMITER : character := ',' ;
     begin
---      AlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
       AlertCountVar        := AlertLogPtr(AlertLogID).AlertCount ;
       TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCountVar)) ;
 
@@ -1384,33 +1362,29 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       -- Format:  Name, PassedGoal, #Passed, #TotalErrors, FAILURE, ERROR, WARNING, Affirmations
       variable buf       : line ;
-      variable LocalAlertLogID : AlertLogIDType ; 
       variable AlertCountVar   : AlertCountType ; 
       constant DELIMITER       : character := ',' ;
+      variable CurID : AlertLogIDType ;
     begin
----!!!    
----!!! Update s.t. REQUIREMENT_ALERTLOG_ID is the top of the structure to be printed.
-      localAlertLogID := VerifyID(AlertLogID) ;
-      WriteTestResults(RequirementsFile) ; 
-      for i in localAlertLogID to NumAlertLogIDsVar loop
---? Need a way to identify requirements when requirements are 0.  
-        if AlertLogPtr(i).PassedGoal > 0 then 
-          write(buf, AlertLogPtr(i).Name.all) ;
-          write(buf, DELIMITER & to_string(AlertLogPtr(i).PassedGoal)) ;
-          -- Minimum of PassedCount and PassedGoal 
-          write(buf, DELIMITER & to_string(AlertLogPtr(i).PassedCount)) ;
-          AlertCountVar := AlertLogPtr(i).AlertCount ;
-          if FailOnDisabledErrorsVar then
-            AlertCountVar := AlertCountVar + AlertLogPtr(i).DisabledAlertCount ;
-          end if; 
-          -- TotalErrors
-          write(buf, DELIMITER & to_string( SumAlertCount(RemoveNonFailingWarnings(AlertCountVar)))) ;  
-          write(buf, DELIMITER & to_string( AlertCountVar(FAILURE) )) ;
-          write(buf, DELIMITER & to_string( AlertCountVar(ERROR) )) ;
-          write(buf, DELIMITER & to_string( AlertCountVar(WARNING) )) ;
-          write(buf, DELIMITER & to_string( AlertLogPtr(i).AffirmCount )) ;
-          WriteLine(RequirementsFile, buf) ;
-        end if ;
+      CurID := AlertLogPtr(AlertLogID).ChildID ; 
+      while CurID > ALERTLOG_BASE_ID loop 
+        write(buf, AlertLogPtr(CurID).Name.all) ;
+        write(buf, DELIMITER & to_string(AlertLogPtr(CurID).PassedGoal)) ;
+        -- Minimum of PassedCount and PassedGoal 
+        write(buf, DELIMITER & to_string(AlertLogPtr(CurID).PassedCount)) ;
+        AlertCountVar := AlertLogPtr(CurID).AlertCount ;
+        if FailOnDisabledErrorsVar then
+          AlertCountVar := AlertCountVar + AlertLogPtr(CurID).DisabledAlertCount ;
+        end if; 
+        -- TotalErrors
+        write(buf, DELIMITER & to_string( SumAlertCount(RemoveNonFailingWarnings(AlertCountVar)))) ;  
+        write(buf, DELIMITER & to_string( AlertCountVar(FAILURE) )) ;
+        write(buf, DELIMITER & to_string( AlertCountVar(ERROR) )) ;
+        write(buf, DELIMITER & to_string( AlertCountVar(WARNING) )) ;
+        write(buf, DELIMITER & to_string( AlertLogPtr(CurID).AffirmCount )) ;
+        WriteLine(RequirementsFile, buf) ;
+        WriteRequirements(RequirementsFile, CurID) ;
+        CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
     end procedure WriteRequirements ;
 
@@ -1423,8 +1397,16 @@ package body AlertLogPkg is
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       file RequirementsFile : text open OpenKind is FileName ;
+      variable LocalAlertLogID : AlertLogIDType ; 
     begin
-      WriteRequirements(RequirementsFile, AlertLogID) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      WriteTestResults(RequirementsFile) ; 
+      if IsRequirement(localAlertLogID) then
+        WriteRequirements(RequirementsFile, localAlertLogID) ;
+      else
+        Alert("WriteRequirements: Called without a Requirement") ;
+        WriteRequirements(RequirementsFile, REQUIREMENT_ALERTLOG_ID) ;
+      end if ; 
     end procedure WriteRequirements ;
     
     ------------------------------------------------------------
@@ -1723,20 +1705,6 @@ package body AlertLogPkg is
     
     ------------------------------------------------------------
     -- PT Local
-    impure function IsRequirement(AlertLogID : AlertLogIDType) return boolean is
-    ------------------------------------------------------------
-    begin
-      if AlertLogID = REQUIREMENT_ALERTLOG_ID then
-        return TRUE ;
-      elsif AlertLogID <= ALERTLOG_BASE_ID then
-        return FALSE ;
-      else 
-        return IsRequirement(AlertLogPtr(AlertLogID).ParentID) ;
-      end if ;
-    end function IsRequirement ;
-    
-    ------------------------------------------------------------
-    -- PT Local
     procedure DeQueueID(AlertLogID : AlertLogIDType) is
     ------------------------------------------------------------
       variable ParentID, CurID : AlertLogIDType ; 
@@ -1795,21 +1763,15 @@ package body AlertLogPkg is
         AlertEnabled := (TRUE, TRUE, TRUE) ;
         LogEnabled   := (others => FALSE) ;
         AlertStopCount := (FAILURE => 0, ERROR => integer'right, WARNING => integer'right) ;
---        AlertLogPtr(AlertLogID).ParentIDSet := TRUE ; 
---        AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
         EnQueueID(AlertLogID, ALERTLOG_BASE_ID, TRUE) ;
       else
         if ParentID < ALERTLOG_BASE_ID then
           AlertEnabled := AlertLogPtr(ALERTLOG_BASE_ID).AlertEnabled ;
           LogEnabled   := AlertLogPtr(ALERTLOG_BASE_ID).LogEnabled ;
---          AlertLogPtr(AlertLogID).ParentIDSet := FALSE ; 
---          AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
           EnQueueID(AlertLogID, ALERTLOG_BASE_ID, FALSE) ;
         else
           AlertEnabled := AlertLogPtr(ParentID).AlertEnabled ;
           LogEnabled   := AlertLogPtr(ParentID).LogEnabled ;
---          AlertLogPtr(AlertLogID).ParentIDSet := TRUE ; 
---          AlertLogPtr(AlertLogID).ParentID    := ParentID ;
           EnQueueID(AlertLogID, ParentID, TRUE) ;
         end if ;
         AlertStopCount := (FAILURE => integer'right, ERROR => integer'right, WARNING => integer'right) ;
@@ -1845,8 +1807,6 @@ package body AlertLogPkg is
       NumAllocatedAlertLogIDsVar := NewNumAlertLogIDs ;
       -- Create BASE AlertLogID (if it differs from DEFAULT
       NewAlertLogRec(ALERTLOG_BASE_ID, "AlertLogTop", ALERTLOG_BASE_ID) ;
--- Alt Fix in place      AlertLogPtr(ALERTLOG_BASE_ID).ChildID     := -1 ;
--- Alt Fix in place     AlertLogPtr(ALERTLOG_BASE_ID).ChildIDLast := -1 ;
       -- Create DEFAULT AlertLogID
       NewAlertLogRec(ALERT_DEFAULT_ID, "Default", ALERTLOG_BASE_ID) ;
       NumAlertLogIDsVar := ALERT_DEFAULT_ID ;
@@ -1991,7 +1951,6 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       constant NameLower : string := to_lower(Name) ;
     begin
----!!!  -- refactor s.t ParentID = ALERTLOG_ID_NOT_ASSIGNED calls FindAlertLogID(Name)
       if ParentID = ALERTLOG_ID_NOT_ASSIGNED then
         return FindAlertLogID(Name) ;
       else
@@ -2042,8 +2001,6 @@ package body AlertLogPkg is
       ResultID      := LocalFindAlertLogID(Name, localParentID) ;
       if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentIDSet = FALSE and localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
---          AlertLogPtr(ResultID).ParentID    := localParentID ;
---          AlertLogPtr(ResultID).ParentIDSet := TRUE ;
           AdjustID(ResultID, localParentID, TRUE) ;
         -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
         end if ;
@@ -2073,12 +2030,8 @@ package body AlertLogPkg is
       if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
         if AlertLogPtr(ResultID).ParentIDSet = FALSE then 
           if localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
---            AlertLogPtr(ResultID).ParentID    := localParentID ;
---            AlertLogPtr(ResultID).ParentIDSet := TRUE ;
             AdjustID(ResultID, localParentID, TRUE) ;
           else
---            AlertLogPtr(ResultID).ParentID    := REQUIREMENT_ALERTLOG_ID ;
---            AlertLogPtr(ResultID).ParentIDSet := FALSE ;
             AdjustID(ResultID, REQUIREMENT_ALERTLOG_ID, FALSE) ;
           end if ; 
         end if ;
@@ -2286,14 +2239,6 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
         end loop ;
       end if ;
----!!!    
---      if DescendHierarchy then
---        for i in AlertLogID+1 to NumAlertLogIDsVar loop
---          if AlertLogID = AlertLogPtr(i).ParentID then
---            LocalSetAlertEnable(i, Level, Enable, DescendHierarchy) ;
---          end if ;
---        end loop ;
---      end if ;
     end procedure LocalSetAlertEnable ;
 
     ------------------------------------------------------------
@@ -2337,14 +2282,6 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
         end loop ;
       end if ;
----!!!
---      if DescendHierarchy then
---        for i in AlertLogID+1 to NumAlertLogIDsVar loop
---          if AlertLogID = AlertLogPtr(i).ParentID then
---            LocalSetLogEnable(i, Level, Enable, DescendHierarchy) ;
---          end if ;
---        end loop ;
---      end if ;
     end procedure LocalSetLogEnable ;
 
     ------------------------------------------------------------
@@ -2402,19 +2339,6 @@ package body AlertLogPkg is
         ) ;
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;      
----!!!
---       for i in AlertLogID+1 to NumAlertLogIDsVar loop
--- -- Always print requirements
--- --        -- Only print requirements if have requirements
--- --        next when i = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE ;
---         if AlertLogID = AlertLogPtr(i).ParentID then
---           PrintLogLevels(
---             AlertLogID    => i,
---             Prefix        => Prefix & "  ",
---             IndentAmount  => IndentAmount + 2
---           ) ;
---         end if ;
---       end loop ;
     end procedure PrintLogLevels ;
 
     ------------------------------------------------------------
@@ -3962,7 +3886,7 @@ package body AlertLogPkg is
   procedure WriteRequirements (
   ------------------------------------------------------------
     FileName    : string ; 
-    AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ; 
+    AlertLogID  : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ; 
     OpenKind    : File_Open_Kind := WRITE_MODE 
   ) is
   begin
