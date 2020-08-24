@@ -769,8 +769,8 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       if AlertLogID < LOWEST_ID or AlertLogID > NumAlertLogIDsVar then
-        Alert(ALERTLOG_BASE_ID, "Invalid AlertLogID") ;
-        return ALERTLOG_BASE_ID ;
+        Alert("Invalid AlertLogID") ;
+        return LOWEST_ID ;
       else
         return AlertLogID ;
       end if ;
