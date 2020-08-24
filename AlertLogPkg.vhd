@@ -280,6 +280,7 @@ package AlertLogPkg is
   ------------------------------------------------------------
   procedure SetAlertLogJustify (Enable : boolean := TRUE) ;
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
+  procedure ReportRequirements ;
   procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
   procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
   procedure WriteTestResults ( FileName : string ; OpenKind : File_Open_Kind := APPEND_MODE ) ;
@@ -529,6 +530,7 @@ package body AlertLogPkg is
     procedure IncAlertCount ( AlertLogID : AlertLogIDType ; level : AlertType := ERROR ) ;
     procedure SetJustify (Enable : boolean := TRUE) ;
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) ;
+    procedure ReportRequirements ;
     procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (0,0,0) ; ReportAll : boolean := TRUE ) ;
     procedure WriteTestResults ( FileName : string ; OpenKind : File_Open_Kind ) ;
     procedure WriteAlerts (
@@ -1178,7 +1180,49 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    procedure PrintChild(
+    procedure PrintOneChild(
+    ------------------------------------------------------------
+      AlertLogID        : AlertLogIDType ;
+      Prefix            : string ;
+      IndentAmount      : integer ;
+      ReportAll         : boolean ;
+      HasDisabledErrors : boolean
+    ) is
+      variable buf : line ;
+      alias CurID : AlertLogIDType is AlertLogID ;
+    begin
+      if
+         ReportAll or   -- ReportAlerts
+         -- ReportNonZeroAlerts and  (AlertCount or (FailOn and DisabledAlertCount))
+         (SumAlertCount(AlertLogPtr(CurID).AlertCount) > 0) or
+         (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(CurID).DisabledAlertCount) > 0)) or
+         (FailOnRequirementErrorsVar and (AlertLogPtr(CurID).PassedCount < AlertLogPtr(CurID).PassedGoal))
+      then
+        write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(CurID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
+        write(buf, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
+        write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
+        write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).AlertCount(WARNING) ) ) ;
+        if (HasDisabledErrors and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
+          write(buf, "  Disabled Failures: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(FAILURE) ) ) ;
+          write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).DisabledAlertCount(ERROR) ) ) ;
+          write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(WARNING) ) ) ;
+        end if ;
+        if PrintPassedVar or PrintRequirementsVar then
+          write(buf, "  Passed: " & to_string(AlertLogPtr(CurID).PassedCount)) ;
+        end if;
+        if PrintRequirementsVar then
+          write(buf, " of " & to_string(AlertLogPtr(CurID).PassedGoal) ) ;
+        end if ;
+        if PrintAffirmationsVar then
+          write(buf, "  Affirmations: "  & to_string(AlertLogPtr(CurID).AffirmCount ) ) ;
+        end if ;
+        WriteLine(buf) ;
+      end if ;
+    end procedure PrintOneChild ;
+
+    ------------------------------------------------------------
+    -- PT Local
+    procedure IterateAndPrintChildren(
     ------------------------------------------------------------
       AlertLogID        : AlertLogIDType ;
       Prefix            : string ;
@@ -1196,44 +1240,23 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ;
-
-        if
-           ReportAll or   -- ReportAlerts
-           -- ReportNonZeroAlerts and  (AlertCount or (FailOn and DisabledAlertCount))
-           (SumAlertCount(AlertLogPtr(CurID).AlertCount) > 0) or
-           (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(CurID).DisabledAlertCount) > 0)) or
-           (FailOnRequirementErrorsVar and (AlertLogPtr(CurID).PassedCount < AlertLogPtr(CurID).PassedGoal))
-        then
-          write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(CurID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
-          write(buf, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
-          write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
-          write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).AlertCount(WARNING) ) ) ;
-          if (HasDisabledErrors and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
-            write(buf, "  Disabled Failures: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(FAILURE) ) ) ;
-            write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).DisabledAlertCount(ERROR) ) ) ;
-            write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(WARNING) ) ) ;
-          end if ;
-          if PrintPassedVar or PrintRequirementsVar then
-            write(buf, "  Passed: " & to_string(AlertLogPtr(CurID).PassedCount)) ;
-          end if;
-          if PrintRequirementsVar then
-            write(buf, " of " & to_string(AlertLogPtr(CurID).PassedGoal) ) ;
-          end if ;
-          if PrintAffirmationsVar then
-            write(buf, "  Affirmations: "  & to_string(AlertLogPtr(CurID).AffirmCount ) ) ;
-          end if ;
-          WriteLine(buf) ;
-        end if ;
-        PrintChild(
-          AlertLogID    => CurID,
-          Prefix        => Prefix & "  ",
-          IndentAmount  => IndentAmount + 2,
-          ReportAll     => ReportAll,
+        PrintOneChild(
+          AlertLogID         => CurID,
+          Prefix             => Prefix,
+          IndentAmount       => IndentAmount,
+          ReportAll          => ReportAll,
+          HasDisabledErrors  => HasDisabledErrors
+        ) ;
+        IterateAndPrintChildren(
+          AlertLogID         => CurID,
+          Prefix             => Prefix & "  ",
+          IndentAmount       => IndentAmount + 2,
+          ReportAll          => ReportAll,
           HasDisabledErrors  => HasDisabledErrors
         ) ;
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
-    end procedure PrintChild ;
+    end procedure IterateAndPrintChildren ;
 
     ------------------------------------------------------------
     procedure ReportAlerts (
@@ -1274,7 +1297,7 @@ package body AlertLogPkg is
       --Print Hierarchy when enabled and test failed
       if (FoundReportHierVar and ReportHierarchyVar) and TestFailed then
       -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
-        PrintChild(
+        IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
           Prefix             => ReportPrefix & "  ",
           IndentAmount       => 2,
@@ -1287,6 +1310,51 @@ package body AlertLogPkg is
         SetJustify(FALSE) ;
       end if ;
     end procedure ReportAlerts ;
+
+    ------------------------------------------------------------
+    procedure ReportRequirements is
+    ------------------------------------------------------------
+      variable TestFailed, HasDisabledErrors : boolean ;
+      constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
+      variable TurnedOnJustify : boolean := FALSE ;
+    begin
+      if ReportJustifyAmountVar <= 0 then
+        TurnedOnJustify := TRUE ;
+        SetJustify ;
+      end if ;
+      PrintTopAlerts (
+        AlertLogID         => ALERTLOG_BASE_ID,
+        Name               => AlertLogPtr(ALERTLOG_BASE_ID).Name.all,
+        ExternalErrors     => (0,0,0),
+        HasDisabledAlerts  => HasDisabledErrors,
+        TestFailed         => TestFailed
+      ) ;
+--      PrintOneChild(
+--        AlertLogID         => REQUIREMENT_ALERTLOG_ID,
+--        Prefix             => ReportPrefix & "  ",
+--        IndentAmount       => 2,
+--        ReportAll          => TRUE,
+--        HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
+--      ) ;
+--      IterateAndPrintChildren(
+--        AlertLogID         => REQUIREMENT_ALERTLOG_ID,
+--        Prefix             => ReportPrefix & "  " & "  ",
+--        IndentAmount       => 4,
+--        ReportAll          => TRUE,
+--        HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
+--      ) ;
+      IterateAndPrintChildren(
+        AlertLogID         => REQUIREMENT_ALERTLOG_ID,
+        Prefix             => ReportPrefix & "  ",
+        IndentAmount       => 2,
+        ReportAll          => TRUE,
+        HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
+      ) ;
+      if TurnedOnJustify then
+        -- Turn it back off
+        SetJustify(FALSE) ;
+      end if ;
+    end procedure ReportRequirements ;
 
     ------------------------------------------------------------
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) is
@@ -1360,17 +1428,17 @@ package body AlertLogPkg is
 --       if FailOnRequirementErrorsVar then
 --         TotalErrors := TotalErrors + TotalRequirementErrors ;
 --       end if ;
+      GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
       write(buf, AlertLogPtr(AlertLogID).Name.all) ;
-      write(buf, DELIMITER & to_string( TotalRequirementsGoal )) ;
-      write(buf, DELIMITER & to_string( TotalRequirementsPassed )) ;
+      write(buf, DELIMITER & to_string( AffirmCount )) ;
+      write(buf, DELIMITER & to_string( PassedCount )) ;
       write(buf, DELIMITER & to_string( TotalErrors )) ;
       write(buf, DELIMITER & to_string( AlertCountVar(FAILURE) )) ;
       write(buf, DELIMITER & to_string( AlertCountVar(ERROR) )) ;
       write(buf, DELIMITER & to_string( AlertCountVar(WARNING) )) ;
-      GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
-      write(buf, DELIMITER & to_string( PassedCount )) ;
-      write(buf, DELIMITER & to_string( AffirmCount )) ;
-      writeLine(TestFile, buf) ;
+      write(buf, DELIMITER & to_string( TotalRequirementsGoal )) ;
+      write(buf, DELIMITER & to_string( TotalRequirementsPassed )) ;
+     writeLine(TestFile, buf) ;
     end procedure WriteTestResults ;
 
     ------------------------------------------------------------
@@ -3932,6 +4000,15 @@ package body AlertLogPkg is
     AlertLogStruct.ReportAlerts(Name, AlertCount) ;
     -- synthesis translate_on
   end procedure ReportAlerts ;
+  
+  ------------------------------------------------------------
+  procedure ReportRequirements is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ReportRequirements ;
+    -- synthesis translate_on
+  end procedure ReportRequirements ;
 
   ------------------------------------------------------------
   procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) is
