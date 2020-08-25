@@ -1406,7 +1406,7 @@ package body AlertLogPkg is
       variable TotalErrors : integer ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
       variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
---      variable TotalRequirementErrors : integer ;
+      variable TotalRequirementErrors : integer ;
       variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       constant AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ;
       variable PassedCount, AffirmCount : integer ;
@@ -1419,15 +1419,15 @@ package body AlertLogPkg is
       TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
 
       GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsGoal) ;
---      TotalRequirementErrors := TotalRequirementsGoal - TotalRequirementsPassed ;
+      TotalRequirementErrors := TotalRequirementsGoal - TotalRequirementsPassed ;
 
       TotalErrors := TotalAlertErrors ;
       if FailOnDisabledErrorsVar then
         TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
       end if ;
---       if FailOnRequirementErrorsVar then
---         TotalErrors := TotalErrors + TotalRequirementErrors ;
---       end if ;
+      if FailOnRequirementErrorsVar then
+        TotalErrors := TotalErrors + TotalRequirementErrors ;
+      end if ;
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
       write(buf, AlertLogPtr(AlertLogID).Name.all) ;
       write(buf, DELIMITER & to_string( AffirmCount )) ;
