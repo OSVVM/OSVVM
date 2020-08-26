@@ -618,30 +618,30 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- Reporting Accessor
     procedure SetAlertLogOptions (
-      FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      DefaultPassedGoal        : integer             := integer'left ;
-      AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
+      FailOnWarning            : AlertLogOptionsType ;
+      FailOnDisabledErrors     : AlertLogOptionsType ;
+      FailOnRequirementErrors  : AlertLogOptionsType ;
+      ReportHierarchy          : AlertLogOptionsType ;
+      WriteAlertErrorCount     : AlertLogOptionsType ;
+      WriteAlertLevel          : AlertLogOptionsType ;
+      WriteAlertName           : AlertLogOptionsType ;
+      WriteAlertTime           : AlertLogOptionsType ;
+      WriteLogErrorCount       : AlertLogOptionsType ;
+      WriteLogLevel            : AlertLogOptionsType ;
+      WriteLogName             : AlertLogOptionsType ;
+      WriteLogTime             : AlertLogOptionsType ;
+      PrintPassed              : AlertLogOptionsType ;
+      PrintAffirmations        : AlertLogOptionsType ;
+      PrintDisabledAlerts      : AlertLogOptionsType ;
+      PrintRequirements        : AlertLogOptionsType ;
+      PrintIfHaveRequirements  : AlertLogOptionsType ;
+      DefaultPassedGoal        : integer ;
+      AlertPrefix              : string ;
+      LogPrefix                : string ;
+      ReportPrefix             : string ;
+      DoneName                 : string ;
+      PassName                 : string ;
+      FailName                 : string 
     ) ;
     procedure ReportAlertLogOptions ;
 
@@ -1586,10 +1586,10 @@ package body AlertLogPkg is
         deallocate(Description) ;  -- not used
         -- Implementation 1:  Just put the values in
         if PassedGoalIn < 0 then
-          AlertLogPtr(AlertLogID).PassedGoal := PassedGoal ;
+          AlertLogPtr(AlertLogID).PassedGoal    := PassedGoal ;
           AlertLogPtr(AlertLogID).PassedGoalSet := PassedGoalSet ;
         else
-          AlertLogPtr(AlertLogID).PassedGoal := PassedGoalIn ;
+          AlertLogPtr(AlertLogID).PassedGoal    := PassedGoalIn ;
           AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ;
         end if ;
       end loop ReadFileLoop ;
@@ -2486,30 +2486,30 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure SetAlertLogOptions (
     ------------------------------------------------------------
-      FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-      DefaultPassedGoal        : integer             := integer'left ;
-      AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
+      FailOnWarning            : AlertLogOptionsType ;
+      FailOnDisabledErrors     : AlertLogOptionsType ;
+      FailOnRequirementErrors  : AlertLogOptionsType ;
+      ReportHierarchy          : AlertLogOptionsType ;
+      WriteAlertErrorCount     : AlertLogOptionsType ;
+      WriteAlertLevel          : AlertLogOptionsType ;
+      WriteAlertName           : AlertLogOptionsType ;
+      WriteAlertTime           : AlertLogOptionsType ;
+      WriteLogErrorCount       : AlertLogOptionsType ;
+      WriteLogLevel            : AlertLogOptionsType ;
+      WriteLogName             : AlertLogOptionsType ;
+      WriteLogTime             : AlertLogOptionsType ;
+      PrintPassed              : AlertLogOptionsType ;
+      PrintAffirmations        : AlertLogOptionsType ;
+      PrintDisabledAlerts      : AlertLogOptionsType ;
+      PrintRequirements        : AlertLogOptionsType ;
+      PrintIfHaveRequirements  : AlertLogOptionsType ;
+      DefaultPassedGoal        : integer ;
+      AlertPrefix              : string ;
+      LogPrefix                : string ;
+      ReportPrefix             : string ;
+      DoneName                 : string ;
+      PassName                 : string ;
+      FailName                 : string 
     ) is
     begin
       if FailOnWarning /= OPT_INIT_PARM_DETECT then
@@ -4689,6 +4689,7 @@ package body AlertLogPkg is
       PrintDisabledAlerts      => PrintDisabledAlerts,
       PrintRequirements        => PrintRequirements,
       PrintIfHaveRequirements  => PrintIfHaveRequirements,
+      DefaultPassedGoal        => DefaultPassedGoal,
       AlertPrefix              => AlertPrefix,
       LogPrefix                => LogPrefix,
       ReportPrefix             => ReportPrefix,
