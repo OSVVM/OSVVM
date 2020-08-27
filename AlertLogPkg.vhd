@@ -296,7 +296,7 @@ package AlertLogPkg is
   ) ;
   procedure ReadSpecification (FileName : string ; PassedGoal : integer := -1) ;
   procedure ReadRequirements (
-    FileName        : string ;  
+    FileName        : string ;
     ThresholdPassed : boolean := FALSE ;
     Merge           : boolean := TRUE
   ) ;
@@ -540,18 +540,18 @@ package body AlertLogPkg is
     procedure WriteAlerts (
       FileName    : string ;
       AlertLogID  : AlertLogIDType ;
-      OpenKind    : File_Open_Kind 
+      OpenKind    : File_Open_Kind
     ) ;
     procedure WriteRequirements (
       FileName    : string ;
       AlertLogID  : AlertLogIDType ;
-      OpenKind    : File_Open_Kind 
+      OpenKind    : File_Open_Kind
     ) ;
     procedure ReadSpecification (FileName : string ; PassedGoal : integer ) ;
     procedure ReadRequirements (
-      FileName        : string ;  
+      FileName        : string ;
       ThresholdPassed : boolean ;
-      Merge           : boolean 
+      Merge           : boolean
     ) ;
     procedure ClearAlerts ;
     procedure ClearAlertStopCounts ;
@@ -649,7 +649,7 @@ package body AlertLogPkg is
       ReportPrefix             : string ;
       DoneName                 : string ;
       PassName                 : string ;
-      FailName                 : string 
+      FailName                 : string
     ) ;
     procedure ReportAlertLogOptions ;
 
@@ -1325,11 +1325,11 @@ package body AlertLogPkg is
       variable TestFailed, HasDisabledErrors : boolean ;
       constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
-      variable SavedPrintRequirementsVar : boolean ; 
+      variable SavedPrintRequirementsVar : boolean ;
     begin
-      SavedPrintRequirementsVar := PrintRequirementsVar ; 
-      PrintRequirementsVar := TRUE ; 
-      
+      SavedPrintRequirementsVar := PrintRequirementsVar ;
+      PrintRequirementsVar := TRUE ;
+
       if ReportJustifyAmountVar <= 0 then
         TurnedOnJustify := TRUE ;
         SetJustify ;
@@ -1352,7 +1352,7 @@ package body AlertLogPkg is
         -- Turn it back off
         SetJustify(FALSE) ;
       end if ;
-      PrintRequirementsVar := SavedPrintRequirementsVar ; 
+      PrintRequirementsVar := SavedPrintRequirementsVar ;
     end procedure ReportRequirements ;
 
     ------------------------------------------------------------
@@ -1444,7 +1444,7 @@ package body AlertLogPkg is
     procedure WriteTestSummary (
     ------------------------------------------------------------
       FileName    : string ;
-      OpenKind    : File_Open_Kind 
+      OpenKind    : File_Open_Kind
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       file TestFile : text open OpenKind is FileName ;
@@ -1455,8 +1455,8 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     --  pt local
     procedure WriteAlerts (    -- pt local
-      file AlertsFile : text ; 
-      AlertLogID : AlertLogIDType 
+      file AlertsFile : text ;
+      AlertLogID : AlertLogIDType
     ) is
     ------------------------------------------------------------
       -- Format:  Name, PassedGoal, #Passed, #TotalErrors, FAILURE, ERROR, WARNING, Affirmations
@@ -1481,7 +1481,7 @@ package body AlertLogPkg is
         write(buf, DELIMITER & to_string( AlertCountVar(ERROR) )) ;
         write(buf, DELIMITER & to_string( AlertCountVar(WARNING) )) ;
         write(buf, DELIMITER & to_string( AlertLogPtr(CurID).AffirmCount )) ;
-        write(buf, DELIMITER & to_string(AlertLogPtr(CurID).PassedCount)) ;  -- redundancy intentional, for reading WriteTestSummary
+--        write(buf, DELIMITER & to_string(AlertLogPtr(CurID).PassedCount)) ;  -- redundancy intentional, for reading WriteTestSummary
         WriteLine(AlertsFile, buf) ;
         WriteAlerts(AlertsFile, CurID) ;
         CurID := AlertLogPtr(CurID).SiblingID ;
@@ -1493,7 +1493,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       FileName    : string ;
       AlertLogID  : AlertLogIDType ;
-      OpenKind    : File_Open_Kind 
+      OpenKind    : File_Open_Kind
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       file RequirementsFile : text open OpenKind is FileName ;
@@ -1514,7 +1514,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       FileName    : string ;
       AlertLogID  : AlertLogIDType ;
-      OpenKind    : File_Open_Kind 
+      OpenKind    : File_Open_Kind
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       file AlertsFile : text open OpenKind is FileName ;
@@ -1609,26 +1609,28 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    procedure ReadRequirements (
-      file RequirementsFile : text ; 
+    procedure ReadRequirements (  -- PT Local
+      file RequirementsFile : text ;
       ThresholdPassed : boolean ;
-      Merge : boolean 
+      Merge : boolean
     ) is
     ------------------------------------------------------------
+      constant DELIMITER         : character := ',' ;
       variable buf,Name          : line ;
       variable ReadValid         : boolean ;
       variable Empty             : boolean ;
       variable MultiLineComment  : boolean := FALSE ;
+      variable StopDueToCount    : boolean := FALSE ;
+      variable ReadFailed        : boolean := TRUE ;
+      variable Found             : boolean ;
+
       variable ReqPassedGoal     : integer ;
       variable ReqPassedCount    : integer ;
       variable TotalErrorCount   : integer ;
-      variable AlertCount        : AlertCountType ; 
-      variable AffirmCount       : integer ; 
-      variable AffirmPassedCount : integer ; 
-      variable Char              : character ;
-      constant DELIMITER         : character := ',' ;
+      variable AlertCount        : AlertCountType ;
+      variable AffirmCount       : integer ;
+      variable AffirmPassedCount : integer ;
       variable AlertLogID        : AlertLogIDType ;
-      variable StopDueToCount    : boolean := FALSE ; 
     begin
       ReadFileLoop : while not EndFile(RequirementsFile) loop
         ReadLoop : loop
@@ -1637,82 +1639,126 @@ package body AlertLogPkg is
           next ReadFileLoop when Empty ;
 
           -- defaults
-          ReqPassedGoal  := 0 ;
-          ReqPassedCount := 0 ;
-          TotalErrorCount  := 0 ;
+          ReadFailed         := TRUE ;
+          ReqPassedGoal      := 0 ;
+          ReqPassedCount     := 0 ;
+          TotalErrorCount    := 0 ;
+          AlertCount         := (0, 0, 0) ;
+          AffirmCount        := 0 ;
+          AffirmPassedCount  := 0 ;
 
-          -- Get Name and Remove delimiter
+        -- Read Name. Remove delimiter
           ReadUntilDelimiterOrEOL(buf, Name, DELIMITER, ReadValid) ;
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
                          "AlertLogPkg.ReadRequirements: Failed while reading Name", FAILURE) ;
 
           -- If rest of line is blank or comment, then skip it.
           EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
-          exit ReadLoop when Empty ;
+          exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, Empty,
+                         "AlertLogPkg.ReadRequirements: Line empty after reading Name", FAILURE) ;
 
-          -- Read ReqPassedGoal
+        -- Read ReqPassedGoal
           read(buf, ReqPassedGoal, ReadValid) ;
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
-                         "AlertLogPkg.ReadRequirements: Failed while reading ReqPassedGoal", FAILURE) ;
+                         "AlertLogPkg.ReadRequirements: Failed while reading PassedGoal", FAILURE) ;
 
-          -- If rest of line is blank or comment, then skip it.
-          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
-          exit ReadLoop when Empty ;
+          AffirmPassedCount := ReqPassedGoal ;
+          
+          FindDelimiter(buf, DELIMITER, Found, Empty, MultiLineComment) ;
+          exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, Empty,
+                         "AlertLogPkg.ReadRequirements: Failed after reading PassedGoal", FAILURE) ;
 
-          -- Read Delimiter
-          Read(buf, Char, ReadValid) ;
-          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,
-                         "AlertLogPkg.ReadRequirements: Failed while reading ',' following ReqPassedGoal", FAILURE) ;
-
-          -- Read ReqPassedCount
+        -- Read ReqPassedCount
           read(buf, ReqPassedCount, ReadValid) ;
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
-                         "AlertLogPkg.ReadRequirements: Failed while reading ReqPassedCount", FAILURE) ;
+                         "AlertLogPkg.ReadRequirements: Failed while reading PassedCount", FAILURE) ;
 
-          -- If rest of line is blank or comment, then skip it.
-          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
-          exit ReadLoop when Empty ;
+          FindDelimiter(buf, DELIMITER, Found, Empty, MultiLineComment) ;
+          exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, Empty,
+                         "AlertLogPkg.ReadRequirements: Failed after reading PassedCount", FAILURE) ;
 
-          -- Read Delimiter
-          read(buf, Char, ReadValid) ;
-          exit ReadFileLoop  when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid or Char /= DELIMITER,
-                         "AlertLogPkg.ReadRequirements: Failed while reading ',' following ReqPassedCount", FAILURE) ;
-
-          -- Read TotalErrorCount
+        -- Read TotalErrorCount
           read(buf, TotalErrorCount, ReadValid) ;
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
                          "AlertLogPkg.ReadRequirements: Failed while reading TotalErrorCount", FAILURE) ;
+          AlertCount := (0, TotalErrorCount, 0) ;  -- Default
+
+          FindDelimiter(buf, DELIMITER, Found, Empty, MultiLineComment) ;
+          exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, Empty,
+                         "AlertLogPkg.ReadRequirements: Failed after reading PassedCount", FAILURE) ;
+
+        -- Read AlertCount
+          for i in AlertType'left to AlertType'right loop
+            read(buf, AlertCount(i), ReadValid) ;
+            exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
+                           "AlertLogPkg.ReadRequirements: Failed while reading " &
+                           "AlertCount(" & to_string(i) & ")", FAILURE) ;
+
+            FindDelimiter(buf, DELIMITER, Found, Empty, MultiLineComment) ;
+            exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, Empty,
+                           "AlertLogPkg.ReadRequirements: Failed after reading " & 
+                           "AlertCount(" & to_string(i) & ")", FAILURE) ;
+          end loop ;
+
+        -- Read AffirmCount
+          read(buf, AffirmCount, ReadValid) ;
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
+                         "AlertLogPkg.ReadRequirements: Failed while reading AffirmCount", FAILURE) ;
+
+          FindDelimiter(buf, DELIMITER, Found, Empty, MultiLineComment) ;
+          exit ReadLoop when Empty ;   -- Next value optional
+
+        -- Read AffirmPassedCount
+          read(buf, AffirmPassedCount, ReadValid) ;
+          exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
+                         "AlertLogPkg.ReadRequirements: Failed while reading AffirmPassedCount", FAILURE) ;
+
+          -- Allow line to end with a multiline comment
+          EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+
           exit ReadLoop ;
         end loop ReadLoop ;
         AlertLogID := GetReqID(Name.all) ;
         deallocate(Name) ;
-        if Merge then
+--        if Merge then
+          -- Passed Goal
           if AlertLogPtr(AlertLogID).PassedGoalSet then
             AlertLogPtr(AlertLogID).PassedGoal        := maximum(AlertLogPtr(AlertLogID).PassedGoal, ReqPassedGoal) ;
-          else 
+          else
             AlertLogPtr(AlertLogID).PassedGoal        := ReqPassedGoal ;
           end if ;
+          -- Requirements Passed Count
           if  ThresholdPassed then
             ReqPassedCount := minimum(ReqPassedCount, ReqPassedGoal) ;
-          end if ; 
+          end if ;
           AlertLogPtr(AlertLogID).PassedCount         := AlertLogPtr(AlertLogID).PassedCount + ReqPassedCount ;
-          IncrementAlertCount(AlertLogID, ERROR, StopDueToCount, TotalErrorCount) ; 
---          AlertLogPtr(AlertLogID).AlertCount          := AlertLogPtr(AlertLogID).AlertCount + (0, TotalErrorCount, 0) ;
-          AlertLogPtr(AlertLogID).AffirmCount         := AlertLogPtr(AlertLogID).AffirmCount + ReqPassedCount + TotalErrorCount ;
-        else
-          AlertLogPtr(AlertLogID).PassedGoal          := ReqPassedGoal ;
-          AlertLogPtr(AlertLogID).PassedCount         := ReqPassedCount ;
-          IncrementAlertCount(AlertLogID, ERROR, StopDueToCount, TotalErrorCount) ; 
---          AlertLogPtr(AlertLogID).AlertCount          := (0, TotalErrorCount, 0) ;
-          AlertLogPtr(AlertLogID).AffirmCount         := ReqPassedCount + TotalErrorCount ;
-        end if;
-        AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ; 
+
+          -- AlertCount
+          IncrementAlertCount(AlertLogID, FAILURE, StopDueToCount, AlertCount(FAILURE)) ;
+          IncrementAlertCount(AlertLogID, ERROR,   StopDueToCount, AlertCount(ERROR)) ;
+          IncrementAlertCount(AlertLogID, WARNING, StopDueToCount, AlertCount(WARNING)) ;
+
+          -- AffirmCount
+          AlertLogPtr(AlertLogID).AffirmCount         := AlertLogPtr(AlertLogID).AffirmCount + AffirmCount ;
+-- AffirmPassedCount  
+        
+--        else
+--          AlertLogPtr(AlertLogID).PassedGoal          := ReqPassedGoal ;
+--          AlertLogPtr(AlertLogID).PassedCount         := ReqPassedCount ;
+--
+--          IncrementAlertCount(AlertLogID, FAILURE, StopDueToCount, AlertCount(FAILURE)) ;
+--          IncrementAlertCount(AlertLogID, ERROR,   StopDueToCount, AlertCount(ERROR)) ;
+--          IncrementAlertCount(AlertLogID, WARNING, StopDueToCount, AlertCount(WARNING)) ;
+--
+--          AlertLogPtr(AlertLogID).AffirmCount         := ReqPassedCount + TotalErrorCount ;
+--        end if;
+        AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ;
       end loop ReadFileLoop ;
     end procedure ReadRequirements ;
 
     ------------------------------------------------------------
     procedure ReadRequirements (
-      FileName        : string ; 
+      FileName        : string ;
       ThresholdPassed : boolean ;
       Merge           : boolean
     ) is
@@ -2528,7 +2574,7 @@ package body AlertLogPkg is
       ReportPrefix             : string ;
       DoneName                 : string ;
       PassName                 : string ;
-      FailName                 : string 
+      FailName                 : string
     ) is
     begin
       if FailOnWarning /= OPT_INIT_PARM_DETECT then
@@ -4019,7 +4065,7 @@ package body AlertLogPkg is
     AlertLogStruct.ReportAlerts(Name, AlertCount) ;
     -- synthesis translate_on
   end procedure ReportAlerts ;
-  
+
   ------------------------------------------------------------
   procedure ReportRequirements is
   ------------------------------------------------------------
@@ -4096,7 +4142,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   procedure ReadRequirements (
-    FileName        : string ;  
+    FileName        : string ;
     ThresholdPassed : boolean := FALSE ;
     Merge           : boolean := TRUE
   ) is

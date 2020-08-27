@@ -417,7 +417,7 @@ package body TextUtilPkg is
     variable Char       : Character ; 
     variable ReadValid  : boolean ; 
   begin
-    Found := FALSE : 
+    Found := FALSE ; 
     ReadLoop : loop 
       EmptyOrCommentLine(L, Empty, MultiLineComment) ;
       exit when Empty ; 
