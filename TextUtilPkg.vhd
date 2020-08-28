@@ -94,9 +94,7 @@ package TextUtilPkg is
   ------------------------------------------------------------
     variable L                : InOut line ; 
     constant Delimiter        : In    character ;
-    variable Found            : Out   boolean ;
-    variable Empty            : InOut boolean ;
-    variable MultiLineComment : InOut boolean 
+    variable Found            : Out   boolean 
   ) ;
 
   ------------------------------------------------------------
@@ -410,29 +408,22 @@ package body TextUtilPkg is
   ------------------------------------------------------------
     variable L                : InOut line ; 
     constant Delimiter        : In    character ;
-    variable Found            : Out   boolean ;
-    variable Empty            : InOut boolean ;
-    variable MultiLineComment : InOut boolean 
+    variable Found            : Out   boolean 
   ) is
     variable Char       : Character ; 
     variable ReadValid  : boolean ; 
   begin
     Found := FALSE ; 
     ReadLoop : loop 
-      EmptyOrCommentLine(L, Empty, MultiLineComment) ;
-      exit when Empty ; 
+      if Delimiter /= ' ' then 
+        SkipWhiteSpace(L) ; 
+      end if ; 
       
-      Empty := TRUE ; 
       Read(L, Char, ReadValid) ;
       exit when ReadValid = FALSE or Char /= Delimiter ; 
       Found := TRUE ; 
-        
-      EmptyOrCommentLine(L, Empty, MultiLineComment) ;
-      exit when Empty ; 
-      
-      Empty := FALSE ; 
       exit ; 
-    end loop ; 
+    end loop ;
   end procedure FindDelimiter ; 
 
   ------------------------------------------------------------
