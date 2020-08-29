@@ -283,7 +283,9 @@ package AlertLogPkg is
   procedure ReportRequirements ;
   procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
   procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
-  procedure WriteTestSummary ( FileName : string ; OpenKind : File_Open_Kind := APPEND_MODE ) ;
+  procedure WriteTestSummary   ( FileName : string ; OpenKind : File_Open_Kind := APPEND_MODE ) ;
+  procedure WriteTestSummaries ( FileName : string ; OpenKind : File_Open_Kind := WRITE_MODE ) ;
+  procedure ReportTestSummaries ;
   procedure WriteAlerts (
     FileName    : string ;
     AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ;
@@ -539,7 +541,9 @@ package body AlertLogPkg is
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) ;
     procedure ReportRequirements ;
     procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (0,0,0) ; ReportAll : boolean := TRUE ) ;
-    procedure WriteTestSummary ( FileName : string ; OpenKind : File_Open_Kind ) ;
+    procedure WriteTestSummary   ( FileName : string ; OpenKind : File_Open_Kind ) ;
+    procedure WriteTestSummaries ( FileName : string ; OpenKind : File_Open_Kind ) ;
+    procedure ReportTestSummaries ;
     procedure WriteAlerts (
       FileName    : string ;
       AlertLogID  : AlertLogIDType ;
@@ -720,6 +724,9 @@ package body AlertLogPkg is
       AlertStopCount      : AlertCountType ;
       AlertEnabled        : AlertEnableType ;
       LogEnabled          : LogEnableType ;
+      -- Used only by ReadTestSummaries
+      TotalErrors         : integer ;
+      AffirmPassedCount   : integer ; 
 --      IsRequirment        : boolean ;
     end record AlertLogRecType ;
 
@@ -1489,25 +1496,34 @@ package body AlertLogPkg is
     end procedure WriteTestSummary ;
     
     ------------------------------------------------------------
-    procedure WriteTestSummaries (
+    procedure WriteTestSummaries (  -- PT Local
     ------------------------------------------------------------
       file TestFile : text ;
       AlertLogID    : AlertLogIDType
     ) is
      variable CurID : AlertLogIDType ; 
+     variable TotalErrors, RequirementsGoal, RequirementsPassed : integer ; 
     begin
       -- Descend from WriteRequirements
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
+        TotalErrors        := AlertLogPtr(CurID).TotalErrors ;
+        RequirementsGoal   := AlertLogPtr(CurID).PassedGoal ;
+        RequirementsPassed := AlertLogPtr(CurID).PassedCount ;
+        if AlertLogPtr(CurID).AffirmCount <= 0 and FailOnRequirementErrorsVar and 
+            (RequirementsGoal > RequirementsPassed) then 
+          -- Add errors for tests that did not run.   
+          TotalErrors := RequirementsGoal - RequirementsPassed ; 
+        end if ; 
         WriteOneTestSummary(
           TestFile             =>  TestFile,
           AlertLogID           =>  CurID,        
-          RequirementsGoal     =>  AlertLogPtr(CurID).PassedGoal,  
-          RequirementsPassed   =>  AlertLogPtr(CurID).PassedCount,
-          TotalErrors          =>  SumAlertCount(RemoveNonFailingWarnings(AlertLogPtr(CurID).AlertCount)),  -- Update this to stored value     
+          RequirementsGoal     =>  RequirementsGoal,  
+          RequirementsPassed   =>  RequirementsPassed,
+          TotalErrors          =>  TotalErrors,
           AlertCount           =>  AlertLogPtr(CurID).AlertCount,        
           AffirmCount          =>  AlertLogPtr(CurID).AffirmCount,       
-          PassedCount          =>  AlertLogPtr(CurID).PassedCount, -- Update this to stored value
+          PassedCount          =>  AlertLogPtr(CurID).AffirmPassedCount, 
           Delimiter            =>  ","        
         ) ;        
         WriteTestSummaries(TestFile, CurID) ;
@@ -1548,21 +1564,23 @@ package body AlertLogPkg is
       constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
     begin
       write(buf, ReportPrefix &  " ") ; 
-      if (TotalErrors = 0) then
+      
+      if (AffirmCount > 0) and (TotalErrors = 0) then
         write(buf, PassName) ; 
-      else
+      elsif TotalErrors > 0 then
         write(buf, FailName) ; 
+      else
+        write(buf, string'("??????")) ; 
       end if ; 
-      write(buf, LeftJustify(AlertLogPtr(AlertLogID).Name.all, ReportJustifyAmountVar)) ;
+      write(buf, " " & LeftJustify(AlertLogPtr(AlertLogID).Name.all, ReportJustifyAmountVar)) ;
       write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
       write(buf, "  Failures: "  & to_string(AlertCount(FAILURE) ) ) ;
       write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
       write(buf, "  Warnings: "  & to_string(AlertCount(WARNING) ) ) ;
--- Should there be disabled errors and handle them?
+      write(buf, "  Affirmations Passed: "  & to_string(PassedCount) &
+                 " of " & to_string(AffirmCount)) ;
       write(buf, "  Requirements Passed: " & to_string(RequirementsPassed) &
                  " of " & to_string(RequirementsGoal) ) ;
-      write(buf, "  Affirmations Passed"  & to_string(PassedCount) &
-                 " of " & to_string(AffirmCount)) ;
       WriteLine(buf) ;
     end procedure ReportOneTestSummary ;
     
@@ -1571,18 +1589,27 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       AlertLogID    : AlertLogIDType 
     ) is
-     variable CurID : AlertLogIDType ; 
+     variable CurID       : AlertLogIDType ; 
+     variable TotalErrors, RequirementsGoal, RequirementsPassed : integer ; 
     begin
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
+        TotalErrors        := AlertLogPtr(CurID).TotalErrors ;
+        RequirementsGoal   := AlertLogPtr(CurID).PassedGoal ;
+        RequirementsPassed := AlertLogPtr(CurID).PassedCount ;
+        if AlertLogPtr(CurID).AffirmCount <= 0 and FailOnRequirementErrorsVar and 
+            (RequirementsGoal > RequirementsPassed) then 
+          -- Add errors for tests that did not run.   
+          TotalErrors := RequirementsGoal - RequirementsPassed ; 
+        end if ; 
         ReportOneTestSummary(
           AlertLogID           =>  CurID,        
-          RequirementsGoal     =>  AlertLogPtr(CurID).PassedGoal,  
-          RequirementsPassed   =>  AlertLogPtr(CurID).PassedCount,
-          TotalErrors          =>  SumAlertCount(RemoveNonFailingWarnings(AlertLogPtr(CurID).AlertCount)),  -- Update this to stored value     
+          RequirementsGoal     =>  RequirementsGoal,  
+          RequirementsPassed   =>  RequirementsPassed,
+          TotalErrors          =>  TotalErrors,
           AlertCount           =>  AlertLogPtr(CurID).AlertCount,        
           AffirmCount          =>  AlertLogPtr(CurID).AffirmCount,       
-          PassedCount          =>  AlertLogPtr(CurID).PassedCount, -- Update this to stored value
+          PassedCount          =>  AlertLogPtr(CurID).AffirmPassedCount, 
           Delimiter            =>  ","        
         ) ;        
         ReportTestSummaries(
@@ -1591,7 +1618,8 @@ package body AlertLogPkg is
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
     end procedure ReportTestSummaries ;
-    
+
+
     ------------------------------------------------------------
     procedure ReportTestSummaries is
     ------------------------------------------------------------
@@ -1678,7 +1706,7 @@ package body AlertLogPkg is
     end procedure WriteAlerts ;
 
     ------------------------------------------------------------
-    procedure ReadSpecification (file SpecificationFile : text  ; PassedGoalIn : integer ) is
+    procedure ReadSpecification (file SpecificationFile : text  ; PassedGoalIn : integer ) is  -- PT Local
     ------------------------------------------------------------
       variable buf,Name,Description  : line ;
       variable ReadValid             : boolean ;
@@ -1700,7 +1728,7 @@ package body AlertLogPkg is
           next ReadFileLoop when Empty ;
 
           -- defaults
-          PassedGoal  := DefaultPassedGoalVar ;
+          PassedGoal    := DefaultPassedGoalVar ;
           PassedGoalSet := FALSE ;
 
           -- Read Name and Remove delimiter
@@ -1736,15 +1764,24 @@ package body AlertLogPkg is
           end if ;
           exit ReadLoop ;
         end loop ReadLoop ;
-        AlertLogID := GetReqID(Name.all) ;
+        AlertLogID := GetReqID(Name.all) ;  -- For new items, sets DefaultPassedGoalVar and PassedGoalSet = FALSE.
         deallocate(Name) ;
         deallocate(Description) ;  -- not used
         -- Implementation 1:  Just put the values in
-        if PassedGoalIn < 0 then
-          AlertLogPtr(AlertLogID).PassedGoal    := PassedGoal ;
-          AlertLogPtr(AlertLogID).PassedGoalSet := PassedGoalSet ;
-        else
-          AlertLogPtr(AlertLogID).PassedGoal    := PassedGoalIn ;
+        -- If Override values specified, then use them.
+        if PassedGoalIn >= 0 then
+          PassedGoal    := PassedGoalIn ; 
+          PassedGoalSet := TRUE ; 
+        end if ; 
+        if PassedGoalSet then
+        -- Is there a goal to update?
+          if AlertLogPtr(AlertLogID).PassedGoalSet then
+            -- Merge Old and New
+            AlertLogPtr(AlertLogID).PassedGoal    := maximum(PassedGoal,   AlertLogPtr(AlertLogID).PassedGoal) ;
+          else 
+            -- No Old, Just use New
+            AlertLogPtr(AlertLogID).PassedGoal    := PassedGoal ;
+          end if ;
           AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ;
         end if ;
       end loop ReadFileLoop ;
@@ -1814,8 +1851,6 @@ package body AlertLogPkg is
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
                          "AlertLogPkg.ReadRequirements: Failed while reading PassedGoal", FAILURE) ;
 
-          AffirmPassedCount := ReqPassedGoal ;
-          
           FindDelimiter(buf, DELIMITER, Found) ;
           exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, not Found,
                          "AlertLogPkg.ReadRequirements: Failed after reading PassedGoal", FAILURE) ;
@@ -1824,7 +1859,9 @@ package body AlertLogPkg is
           read(buf, ReqPassedCount, ReadValid) ;
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
                          "AlertLogPkg.ReadRequirements: Failed while reading PassedCount", FAILURE) ;
-
+                         
+          AffirmPassedCount := ReqPassedGoal ;
+          
           FindDelimiter(buf, DELIMITER, Found) ;
             exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, not Found,
                          "AlertLogPkg.ReadRequirements: Failed after reading PassedCount", FAILURE) ;
@@ -1864,8 +1901,11 @@ package body AlertLogPkg is
 
           -- Read AffirmPassedCount
             read(buf, AffirmPassedCount, ReadValid) ;
-            exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
-                           "AlertLogPkg.ReadRequirements: Failed while reading AffirmPassedCount", FAILURE) ;
+            if not ReadValid then 
+              AffirmPassedCount := ReqPassedGoal ;
+              Alert(OSVVM_ALERTLOG_ID, "AlertLogPkg.ReadRequirements: Failed while reading AffirmPassedCount", FAILURE) ;
+              exit ReadFileLoop ;
+            end if ; 
           end if ; 
             
           exit ReadLoop ;
@@ -1885,6 +1925,8 @@ package body AlertLogPkg is
             ReqPassedCount := minimum(ReqPassedCount, ReqPassedGoal) ;
           end if ;
           AlertLogPtr(AlertLogID).PassedCount         := AlertLogPtr(AlertLogID).PassedCount + ReqPassedCount ;
+          
+          AlertLogPtr(AlertLogID).TotalErrors         := AlertLogPtr(AlertLogID).TotalErrors + TotalErrorCount ;
 
           -- AlertCount
           IncrementAlertCount(AlertLogID, FAILURE, StopDueToCount, AlertCount(FAILURE)) ;
@@ -1893,8 +1935,8 @@ package body AlertLogPkg is
 
           -- AffirmCount
           AlertLogPtr(AlertLogID).AffirmCount         := AlertLogPtr(AlertLogID).AffirmCount + AffirmCount ;
--- AffirmPassedCount  
-        
+          AlertLogPtr(AlertLogID).AffirmPassedCount   := AlertLogPtr(AlertLogID).AffirmPassedCount + AffirmPassedCount ;
+
 --        else
 --          AlertLogPtr(AlertLogID).PassedGoal          := ReqPassedGoal ;
 --          AlertLogPtr(AlertLogID).PassedCount         := ReqPassedCount ;
@@ -2129,6 +2171,8 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).SiblingID           := ALERTLOG_ID_NOT_ASSIGNED ;
       AlertLogPtr(AlertLogID).ChildID             := ALERTLOG_ID_NOT_ASSIGNED ;
       AlertLogPtr(AlertLogID).ChildIDLast         := ALERTLOG_ID_NOT_ASSIGNED ;
+      AlertLogPtr(AlertLogID).TotalErrors         := 0 ;
+      AlertLogPtr(AlertLogID).AffirmPassedCount   := 0 ;
     end procedure NewAlertLogRec ;
 
     ------------------------------------------------------------
@@ -4253,6 +4297,27 @@ package body AlertLogPkg is
     AlertLogStruct.WriteTestSummary(FileName, OpenKind) ;
     -- synthesis translate_on
   end procedure WriteTestSummary ;
+  
+  ------------------------------------------------------------
+  procedure WriteTestSummaries (
+  ------------------------------------------------------------
+    FileName    : string ;
+    OpenKind    : File_Open_Kind := WRITE_MODE
+  ) is
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.WriteTestSummaries(FileName, OpenKind) ;
+    -- synthesis translate_on
+  end procedure WriteTestSummaries ;
+  
+  ------------------------------------------------------------
+  procedure ReportTestSummaries is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ReportTestSummaries ;
+    -- synthesis translate_on
+  end procedure ReportTestSummaries ;
 
   ------------------------------------------------------------
   procedure WriteAlerts (
@@ -4317,7 +4382,7 @@ package body AlertLogPkg is
 --    -- synthesis translate_off
 --    AlertLogStruct.ReadRequirements(FileName, ThresholdPassed => FALSE, TestSummary => TRUE) ;
 --    -- synthesis translate_on
---  end procedure ReadTestSummaries ;
+--  end procedure ReportTestSummaries ;
 
   ------------------------------------------------------------
   procedure ClearAlerts is
