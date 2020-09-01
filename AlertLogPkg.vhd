@@ -51,15 +51,17 @@
 --                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
 --                         Disabled Alerts now handled in separate bins and reported separately.
 --                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
---    08/2020   2020.08    Alpha Test Release of integrated Specification Tracking
---                         Added Passed Goals - reported with ReportAlerts
+--    08/2020   2020.08    Alpha Test Release of Specification Tracking - Changes are provisional and subject to change
+--                         Added Passed Goals - reported with ReportAlerts and ReportRequirements.
+--                         Added WriteAlerts - CSV format of the information in ReportAlerts
 --                         Tests fail when requirements are not met and FailOnRequirementErrors is true (default TRUE).
 --                             Set using:  SetAlertLogOptions(FailOnRequirementErrors => TRUE)
 --                         Turn on requirements printing in summary and details with PrintRequirements (default FALSE,
 --                         Turn on requirements printing in summary with PrintIfHaveRequirements (Default TRUE)
 --                         Added Requirements Bin, ReadSpecification, GetReqID, SetPassedGoal
 --                         Added AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
---                         Work in progress and will change: ReadRequirements and WriteRequirements
+--                         Added ReportRequirements, WriteRequirements, and ReadRequirements (to merge results of multiple tests) 
+--                         Added WriteTestSummary, ReadTestSummaries, ReportTestSummaries, and WriteTestSummaries.
 --
 --
 --  This file is part of OSVVM.
