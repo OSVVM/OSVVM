@@ -24,6 +24,7 @@
 --    01/2016   2016.01    Update for L.all(L'left)
 --    11/2016   2016.11    Added IsUpper, IsLower, to_upper, to_lower
 --    01/2020   2020.01    Updated Licenses to Apache
+--    08/2020   2020.08    Added ReadUntilDelimiterOrEOL and FindDelimiter
 --
 --
 --  This file is part of OSVVM.
@@ -55,7 +56,10 @@ package TextUtilPkg is
   function to_lower (constant Str : string ) return string ;
   function to_upper (constant Char : character ) return character ;
   function to_upper (constant Str : string ) return string ;
-  function ishex (constant Char : character ) return boolean ; 
+  function IsHex (constant Char : character ) return boolean ; 
+  function IsNumber (constant Char : character ) return boolean ; 
+  function IsNumber (Name : string ) return boolean ; 
+
   function isstd_logic (constant Char : character ) return boolean ;
   
   -- Crutch until VHDL-2019 conditional initialization
@@ -77,6 +81,23 @@ package TextUtilPkg is
     variable MultiLineComment : inout  boolean 
   ) ;
   
+  ------------------------------------------------------------
+  procedure ReadUntilDelimiterOrEOL(
+  ------------------------------------------------------------
+    variable L         : InOut line ; 
+    variable Name      : InOut line ; 
+    constant Delimiter : In    character ;
+    variable ReadValid : Out   boolean 
+  ) ;
+
+  ------------------------------------------------------------
+  procedure FindDelimiter(
+  ------------------------------------------------------------
+    variable L                : InOut line ; 
+    constant Delimiter        : In    character ;
+    variable Found            : Out   boolean 
+  ) ;
+
   ------------------------------------------------------------
   procedure ReadHexToken (
   -- Reads Upto Result'length values, less is ok.
@@ -187,7 +208,7 @@ package body TextUtilPkg is
   end function to_upper ;
 
   ------------------------------------------------------------
-  function ishex (constant Char : character ) return boolean is
+  function IsHex (constant Char : character ) return boolean is
   ------------------------------------------------------------
   begin
     if Char >= '0' and Char <= '9' then 
@@ -199,8 +220,27 @@ package body TextUtilPkg is
     else
       return FALSE ; 
     end if ; 
-  end function ishex ; 
+  end function IsHex ; 
   
+  ------------------------------------------------------------
+  function IsNumber (constant Char : character ) return boolean is 
+  ------------------------------------------------------------
+  begin
+    return Char >= '0' and Char <= '9' ;
+  end function IsNumber ; 
+  
+  ------------------------------------------------------------
+  function IsNumber (Name : string ) return boolean is
+  ------------------------------------------------------------
+  begin
+    for i in Name'range loop 
+      if not IsNumber(Name(i)) then 
+        return FALSE ; 
+      end if ; 
+    end loop ; 
+    return TRUE ; 
+  end function IsNumber ; 
+
   ------------------------------------------------------------
   function isstd_logic (constant Char : character ) return boolean is
   ------------------------------------------------------------
@@ -319,7 +359,7 @@ package body TextUtilPkg is
         if L'ascending then 
           Next2Char := L.all(L'left to L'left+1) ;
         else 
-          Next2Char := L.all(L'left to L'left-1) ;
+          Next2Char := L.all(L'left downto L'left-1) ;
         end if; 
         exit when Next2Char = "//" ; -- C style comment
         exit when Next2Char = "--" ; -- VHDL style comment
@@ -336,6 +376,57 @@ package body TextUtilPkg is
     end loop EmptyCheckLoop ;
   end procedure EmptyOrCommentLine ;
   
+  ------------------------------------------------------------
+  procedure ReadUntilDelimiterOrEOL(
+  ------------------------------------------------------------
+    variable L         : InOut line ; 
+    variable Name      : InOut line ; 
+    constant Delimiter : In    character ;
+    variable ReadValid : Out   boolean 
+  ) is
+    variable NameStr   : string(1 to L'length) ; 
+    variable ReadLen   : integer := 1 ; 
+    variable Good      : boolean ; 
+  begin
+    ReadValid := TRUE ; 
+    for i in NameStr'range loop
+      Read(L, NameStr(i), Good) ; 
+      ReadValid := ReadValid and Good ; 
+      if NameStr(i) = Delimiter then 
+        -- Read(L, NameStr(1 to i), ReadValid) ; 
+        Name := new string'(NameStr(1 to i-1)) ;
+        exit ; 
+      elsif i = NameStr'length then 
+        -- Read(L, NameStr(1 to i), ReadValid) ; 
+        Name := new string'(NameStr(1 to i)) ;
+        exit ;
+      end if ; 
+    end loop ;        
+  end procedure ReadUntilDelimiterOrEOL ; 
+  
+  ------------------------------------------------------------
+  procedure FindDelimiter(
+  ------------------------------------------------------------
+    variable L                : InOut line ; 
+    constant Delimiter        : In    character ;
+    variable Found            : Out   boolean 
+  ) is
+    variable Char       : Character ; 
+    variable ReadValid  : boolean ; 
+  begin
+    Found := FALSE ; 
+    ReadLoop : loop 
+      if Delimiter /= ' ' then 
+        SkipWhiteSpace(L) ; 
+      end if ; 
+      
+      Read(L, Char, ReadValid) ;
+      exit when ReadValid = FALSE or Char /= Delimiter ; 
+      Found := TRUE ; 
+      exit ; 
+    end loop ;
+  end procedure FindDelimiter ; 
+
   ------------------------------------------------------------
   procedure ReadHexToken (
   -- Reads Upto Result'length values, less is ok.

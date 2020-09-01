@@ -1,35 +1,9 @@
-*"Open Source VHDL Verification Methodology" (OSVVM) Repository*
+# The OSVVM Utility Library 
+The [OSVVM utility library](https://github.com/OSVVM/OSVVM) offers
+the same capabilities as those provided by other verification
+languages (such as SystemVerilog and UVM):
 
-[![https://gitter.im/OSVVM/Lobby](https://badges.gitter.im/OSVVM/Lobby.svg)](https://gitter.im/OSVVM/Lobby)
-![Latest tag](https://img.shields.io/github/tag/JimLewis/OSVVM.svg?style=flat)
-[![Apache License 2.0](https://img.shields.io/github/license/JimLewis/OSVVM.svg?style=flat)](LICENSE.md)
-
-------
-
-
-# About Open Source VHDL Verification Methodology (OSVVM) 
-Open Source VHDL Verification Methodology (OSVVM) provides 
-utility and model libraries that simplify 
-your FPGA and ASIC verification tasks.
-Using these libraries you can create a simple, readable, and 
-powerful testbench that is suitable for either a simple FPGA block
-or a complex ASIC.
-
-This repository contains the OSVVM Utility Library. 
-Download it using git:    
-   `git clone https://github.com/OSVVM/OSVVM.git`
-
-
-
-## OSVVM is the #1 VHDL Verification Methodology 
-According to the [2018 Wilson Verification Survey](https://blogs.mentor.com/verificationhorizons/blog/2019/01/15/part-6-the-2018-wilson-research-group-functional-verification-study/), OSVVM is the:
- - #1 VHDL Verification Methodology
- - #1 FPGA Verification Methodology in Europe (ahead of SystemVerilog + UVM)
-
-## The OSVVM Utility Library 
-The [OSVVM utility library](https://github.com/OSVVM/OSVVM) offers the same capabilities as those provided by other verification languages (such as SystemVerilog and UVM):
-
- - Transaction-Level Modeling
+ - Transaction-Level Modeling and verification components
  - Constrained Random test generation
  - Functional Coverage with hooks for UCIS coverage database integration
  - Intelligent Coverage Random test generation
@@ -41,74 +15,62 @@ The [OSVVM utility library](https://github.com/OSVVM/OSVVM) offers the same capa
  - Scoreboards and FIFOs (data structures for verification)
  - Memory models
  
-Download the OSVVM Utility library using git:    
-   `git clone https://github.com/OSVVM/OSVVM.git`
-
+ [Documentation for the Utility library can be found here](https://github.com/OSVVM/Documentation)
  
-## The OSVVM Model Library
-The OSVVM model library is a growing set of models 
-commonly used for FPGA and ASIC verification.  
-The library currently contains the following repositories:
-
- - [OSVVM-Libraries](https://github.com/osvvm/OsvvmLibraries)  
-   - Repository that contains all of the OSVVM libraries as submodules.
-   - Download all OSVVM libraries using git clone with the "--recursive" flag:  
-        `$ git clone --recursive https://github.com/OSVVM/OsvvmLibraries.git`
-   - Note submodules are not included in the GitHub zip files
- - [AXI4 Lite](https://github.com/OSVVM/AXI4)
-   - Master
-   - Slave transactor model
- - [AXI Stream](https://github.com/OSVVM/AXI4)
-   - Master
-   - Slave
- - [UART](https://github.com/OSVVM/AXI4)
-   - Transmitter (aka master) - with error injection
-   - Receiver (aka slave) - with error injection
- - [OSVVM Common - Required](https://github.com/OSVVM/OSVVM-Common)
-   - Shared transcript interfaces
- - [OSVVM Scripts](https://github.com/OSVVM/OSVVM-Scripts)
-   - Recommended.  Script layer on top of tcl
-   - Common simulator compilation and execution methodology
-
-We use the word models as short hand for 
-Transaction Based Models (TBM). 
-They are simply an entity and architecture coded in 
-an effective manner for verification.
-Some use other terminology such as 
-VHDL verification components (VVC) - 
-these are the same thing.
-Historically we used Bus Functional Models (BFM). 
-However, recently we abandoned BFM due to others using BFM to 
-refer to their own lesser capable subprogram based approach.
-
-OSVVM models use records for the transaction interfaces, 
-so connecting them to your testbench is simple - 
-connect only a single signal.
-
-Testbenches are in the Git repository, so you can 
-run a simulation and see a live example 
-of how to use the models.
-
-**OSVVM Forums - currently broken:**     [http://www.osvvm.org/][osvvm]  
-**OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/][osvvm-blog]  
-**License:**	[Apache License 2.0][AL2]
-**Copyright:**	Copyright © 2006-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)
+## OSVVM is the #1 VHDL Verification Methodology 
+According to the [2018 Wilson Verification Survey](https://blogs.mentor.com/verificationhorizons/blog/2019/01/15/part-6-the-2018-wilson-research-group-functional-verification-study/), OSVVM is the:
+ - #1 VHDL Verification Methodology
+ - #1 FPGA Verification Methodology in Europe (ahead of SystemVerilog + UVM)
 
 ## Release History
-   For current release information see [osvvm_release_notes.pdf](doc/osvvm_release_notes.pdf)
+   For current release information see [CHNAGELOG.md](CHNAGELOG.md)
    
+## Downloading the libraries
+The library [OSVVM-Libraries](https://github.com/OSVVM/OsvvmLibraries) 
+contains all of the OSVVM libraries as submodules.
+Download the entire OSVVM model library using git clone with the "--recursive" flag:  
+        `$ git clone --recursive https://github.com/OSVVM/OsvvmLibraries`
+        
+Alternately just the OSVVM library can be downloaded using:  
+        `$ git clone https://github.com/OSVVM/OSVVM`
 
-------
+## Participating and Project Organization 
+The OSVVM project welcomes your participation with either 
+issue reports or pull requests.
+For details on [how to participate see](https://github.com/OSVVM/OsvvmLibraries/-/blob/master/CONTRIBUTING.md)
 
-*Starting with 2016.01, this repository was handed off to Jim Lewis (OSVVM Developer) and became the GIT site for OSVVM*  
-*Releases prior to 2016.01 were uploaded by Patrick Lehmann*
-
- [osvvm]:      http://www.osvvm.org/
- [osvvm-blog]: http://www.synthworks.com/blog/osvvm/
- [aldec]:      http://www.aldec.com/
- [AL2]:	   http://www.apache.org/licenses/LICENSE-2.0
+You can find the project [Authors here](https://github.com/OSVVM/OsvvmLibraries/-/blob/master/AUTHORS.md) and
+[Contributors here](https://github.com/OSVVM/OsvvmLibraries/-/blob/master/CONTRIBUTORS.md).
 
 
+## The OSVVM Family of libraries
+The OSVVM family of libraries includes the Utility library (this one)
+as well as verification components and scripting.  These are all kept
+as submodules of [OSVVM-Libraries](https://github.com/osvvm/OsvvmLibraries).
 
+## More Information on OSVVM
+
+**OSVVM Forums and Blog:**     [http://www.osvvm.org/](http://www.osvvm.org/)   
+**SynthWorks OSVVM Blog:** [http://www.synthworks.com/blog/osvvm/](http://www.synthworks.com/blog/osvvm/)    
+**Gitter:** [https://gitter.im/OSVVM/Lobby](https://gitter.im/OSVVM/Lobby)  
+**Documentation:** [Documentation for the OSVVM libraries can be found here](https://github.com/OSVVM/Documentation)
+
+## Copyright and License
+Copyright (C) 2006-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)  
+Copyright (C) 2020 by [OSVVM contributors](CONTRIBUTOR.md)   
+
+This file is part of OSVVM.
+
+    Licensed under Apache License, Version 2.0 (the "License")
+    You may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+  [http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
 

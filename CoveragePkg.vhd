@@ -53,10 +53,16 @@
 --                         Updated deallocate to set all variables to their initial value
 --                         Added GetInc{Index, BinVal, Point}
 --                         Added GetNext{Index, BinVal, Point}[(Mode => {RANDOM|INCREMENT|MIN})]
---                         Added NextPointModeType = (RANDOM, INCREMENT, MIN)
---                         Added SetNextPointMode[(Mode => {RANDOM|INCREMENT|MIN})
+--                         Added NextPointModeType = (RANDOM, INCREMENT, MODE_MINIMUM)
+--                         Added SetNextPointMode[(Mode => {RANDOM|INCREMENT|MODE_MINIMUM})
 --                         Added to_std_logic(integer), to_boolean(integer) + vector forms
 --                         RandCov{Point|BinVal} is deprecated, renamed to GetRand{Point|BinVal}
+--    05/2020   2020.07    Adjusted NextPointModeType:  Changed MIN to MODE_MINIMUM.  
+--                         The preferred MINIMUM will not work in some tools  
+--                         Added GetNext{Index, BinVal, Point}[(Mode => {RANDOM|INCREMENT|MODE_MINIMUM})]
+--                         Added NextPointModeType = (RANDOM, INCREMENT, MODE_MINIMUM)
+--                         Added SetNextPointMode[(Mode => {RANDOM|INCREMENT|MODE_MINIMUM})
+
 --
 --
 --  Development Notes:
@@ -158,7 +164,7 @@ package CoveragePkg is
   constant ONE_BIN     : CovBinType := (0 => ( BinVal => (1=>(1,1)), Action => COV_COUNT,   Count => 0, AtLeast => 1, Weight => 1 )) ;
   constant NULL_BIN    : CovBinType(work.RandomPkg.NULL_RANGE_TYPE) := (others => ( BinVal => ALL_RANGE,  Action => integer'high, Count => 0, AtLeast => integer'high, Weight => integer'high )) ;
 
-  type NextPointModeType is (RANDOM, INCREMENT, MIN) ; 
+  type NextPointModeType is (RANDOM, INCREMENT, MODE_MINIMUM) ; 
 
   type CountModeType   is (COUNT_FIRST, COUNT_ALL) ;
   type IllegalModeType is (ILLEGAL_ON, ILLEGAL_FAILURE, ILLEGAL_OFF) ;
@@ -2544,9 +2550,9 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       case Mode is 
-        when RANDOM =>     return GetRandIndex ; 
-        when INCREMENT =>  return GetIncIndex ;
-        when MIN =>        return GetMinIndex ; 
+        when RANDOM =>      return GetRandIndex ; 
+        when INCREMENT =>   return GetIncIndex ;
+        when others =>      return GetMinIndex ; 
       end case ;
     end function GetNextIndex;  
 
@@ -5246,9 +5252,9 @@ package body CoveragePkg is
   ------------------------------------------------------------
   begin
     if not CheckInteger_1_0(I) then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_boolean: invalid integer value: " & to_string(I) &
-      " returning FALSE", WARNING) ;
+      report
+        "CoveragePkg.to_boolean: invalid integer value: " & to_string(I) &
+        " returning FALSE" severity WARNING ;
     end if ; 
     
     return local_to_boolean(I) ;
@@ -5283,9 +5289,9 @@ package body CoveragePkg is
   -------------------------------------------------------------
   begin
     if not CheckInteger_1_0(I) then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_std_logic: invalid integer value: " & to_string(I) &
-      " returning X", WARNING) ;
+      report
+        "CoveragePkg.to_std_logic: invalid integer value: " & to_string(I) &
+        " returning X" severity WARNING ;
     end if ; 
     
     return local_to_std_logic(I) ;
@@ -5318,9 +5324,9 @@ package body CoveragePkg is
     end loop ;
  
     if HasError then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_boolean_vector: invalid integer value" &
-      " returning FALSE", WARNING) ;
+      report
+        "CoveragePkg.to_boolean_vector: invalid integer value" &
+        " returning FALSE" severity WARNING ;
     end if ; 
 
     return result ;
@@ -5353,9 +5359,9 @@ package body CoveragePkg is
     end loop ;
  
     if HasError then
-      Alert(OSVVM_ALERTLOG_ID, 
-      "CoveragePkg.to_std_logic_vector: invalid integer value" &
-      " returning FALSE", WARNING) ;
+      report
+        "CoveragePkg.to_std_logic_vector: invalid integer value" &
+        " returning FALSE" severity WARNING ;
     end if ; 
 
     return result ;
