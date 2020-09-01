@@ -24,6 +24,7 @@
 --    01/2016   2016.01    Update for L.all(L'left)
 --    11/2016   2016.11    Added IsUpper, IsLower, to_upper, to_lower
 --    01/2020   2020.01    Updated Licenses to Apache
+--    08/2020   2020.08    Added ReadUntilDelimiterOrEOL and FindDelimiter
 --
 --
 --  This file is part of OSVVM.
