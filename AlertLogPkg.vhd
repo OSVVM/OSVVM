@@ -1766,7 +1766,8 @@ package body AlertLogPkg is
           end if ;
           exit ReadLoop ;
         end loop ReadLoop ;
-        AlertLogID := GetReqID(Name.all) ;  -- For new items, sets DefaultPassedGoalVar and PassedGoalSet = FALSE.
+--        AlertLogID := GetReqID(Name.all) ;  -- For new items, sets DefaultPassedGoalVar and PassedGoalSet = FALSE.
+        AlertLogID := GetReqID(Name => Name.all, PassedGoal => -1, ParentID=> ALERTLOG_ID_NOT_ASSIGNED, CreateHierarchy => TRUE) ;
         deallocate(Name) ;
         deallocate(Description) ;  -- not used
         -- Implementation 1:  Just put the values in
@@ -1913,7 +1914,8 @@ package body AlertLogPkg is
           exit ReadLoop ;
         end loop ReadLoop ;
         
-        AlertLogID := GetReqID(Name.all) ;
+--        AlertLogID := GetReqID(Name.all) ;  
+        AlertLogID := GetReqID(Name => Name.all, PassedGoal => -1, ParentID=> ALERTLOG_ID_NOT_ASSIGNED, CreateHierarchy => TRUE) ;  --! GHDL
         deallocate(Name) ;
 --        if Merge then
           -- Passed Goal
