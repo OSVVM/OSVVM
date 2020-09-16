@@ -1402,24 +1402,39 @@ package body RandomPkg is
     end function DistSigned ;
 
     impure function DistBool ( Weight : NaturalVBoolType ) return boolean is
-      variable FullWeight : NaturalVBoolType(false to true) := (0, 0);
+--      variable FullWeight : NaturalVBoolType(false to true) := (0, 0);
+      variable FullWeight : integer_vector(0 to 1) := (0, 0);
     begin
-      FullWeight(Weight'range) := Weight;
-      return DistInt(integer_vector(FullWeight)) = 1 ;
+      for i in Weight'range loop
+        FullWeight(boolean'pos(i)) := Weight(i) ;
+      end loop ; 
+      return boolean'val(DistInt(FullWeight)) ;
+--      FullWeight(Weight'range) := Weight;
+--      return DistInt(integer_vector(FullWeight)) = 1 ;
     end function DistBool ;
 
     impure function DistSl ( Weight : NaturalVSlType ) return std_logic is
-      variable FullWeight : NaturalVSlType('U' to '-') := (others => 0);
+--      variable FullWeight : NaturalVSlType('U' to '-') := (others => 0);
+      variable FullWeight : integer_vector(0 to 8) := (others => 0);
     begin
-      FullWeight(Weight'range) := Weight;
-      return std_logic'val(DistInt(integer_vector(FullWeight))) ;
+      for i in Weight'range loop
+        FullWeight(std_logic'pos(i)) := Weight(i) ;
+      end loop ; 
+      return std_logic'val(DistInt(FullWeight)) ;
+--      FullWeight(Weight'range) := Weight;
+--      return std_logic'val(DistInt(integer_vector(FullWeight))) ;
     end function DistSl ;
 
     impure function DistBit ( Weight : NaturalVBitType ) return bit is
-      variable FullWeight : NaturalVBitType('0' to '1') := (0, 0);
+--      variable FullWeight : NaturalVBitType('0' to '1') := (0, 0);
+      variable FullWeight : integer_vector(0 to 1) := (others => 0);
     begin
-      FullWeight(Weight'range) := Weight;
-      return bit'val(DistInt(integer_vector(FullWeight))) ;
+      for i in Weight'range loop
+        FullWeight(bit'pos(i)) := Weight(i) ;
+      end loop ; 
+      return bit'val(DistInt(FullWeight)) ;
+--      FullWeight(Weight'range) := Weight;
+--      return bit'val(DistInt(integer_vector(FullWeight))) ;
     end function DistBit ;
 
     --
