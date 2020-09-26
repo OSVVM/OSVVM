@@ -17,13 +17,8 @@ languages (such as SystemVerilog and UVM):
  
  [Documentation for the Utility library can be found here](https://github.com/OSVVM/Documentation)
  
-## OSVVM is the #1 VHDL Verification Methodology 
-According to the [2018 Wilson Verification Survey](https://blogs.mentor.com/verificationhorizons/blog/2019/01/15/part-6-the-2018-wilson-research-group-functional-verification-study/), OSVVM is the:
- - #1 VHDL Verification Methodology
- - #1 FPGA Verification Methodology in Europe (ahead of SystemVerilog + UVM)
-
 ## Release History
-   For current release information see [CHNAGELOG.md](CHNAGELOG.md)
+   For current release information see [CHANGELOG.md](CHANGELOG.md)
    
 ## Downloading the libraries
 The library [OSVVM-Libraries](https://github.com/OSVVM/OsvvmLibraries) 
@@ -37,10 +32,10 @@ Alternately just the OSVVM library can be downloaded using:
 ## Participating and Project Organization 
 The OSVVM project welcomes your participation with either 
 issue reports or pull requests.
-For details on [how to participate see](https://github.com/OSVVM/OsvvmLibraries/-/blob/master/CONTRIBUTING.md)
+For details on [how to participate see](https://opensource.ieee.org/osvvm/OsvvmLibraries/-/blob/master/CONTRIBUTING.md)
 
-You can find the project [Authors here](https://github.com/OSVVM/OsvvmLibraries/-/blob/master/AUTHORS.md) and
-[Contributors here](https://github.com/OSVVM/OsvvmLibraries/-/blob/master/CONTRIBUTORS.md).
+You can find the project [Authors here](AUTHORS.md) and
+[Contributors here](CONTRIBUTORS.md).
 
 
 ## The OSVVM Family of libraries
