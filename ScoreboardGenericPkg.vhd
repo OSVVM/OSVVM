@@ -41,6 +41,7 @@
 --    05/2020   2020.05     Updated calls to IncAffirmCount
 --                          Overloaded Check with functions that return pass/fail (T/F)
 --                          Added GetFifoCount.   Added GetPushCount which is same as GetItemCount
+--    10/2020   2020.10     Added Peek
 --
 --
 --  This file is part of OSVVM.
@@ -250,6 +251,53 @@ package ScoreboardGenericPkg is
         constant Tag    : in  string       
       ) return ExpectedType ;
 
+
+    ------------------------------------------------------------
+    -- Peek at the top item (FIFO) from the scoreboard/FIFO
+    
+    -- Array of Tagged Scoreboards
+    procedure Peek (
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      variable Item   : out ExpectedType
+    ) ;
+
+    -- Array of Scoreboards, no tag
+    procedure Peek (
+      constant Index  : in  integer ;
+      variable Item   : out  ExpectedType
+    ) ;
+
+    -- Simple Tagged Scoreboard
+    procedure Peek (
+      constant Tag    : in  string ;
+      variable Item   : out  ExpectedType
+    ) ;
+
+    -- Simple Scoreboard, no tag
+    procedure Peek (variable Item : out  ExpectedType) ;
+    
+    ------------------------------------------------------------
+    -- Peek at the top item (FIFO) from the scoreboard/FIFO
+    -- Caution:  this did not work in older simulators (@2013)
+    
+    -- Array of Tagged Scoreboards
+    impure function Peek (
+      constant Index  : in  integer ;
+      constant Tag    : in  string       
+    ) return ExpectedType ;
+
+    -- Array of Scoreboards, no tag
+    impure function Peek (Index : integer) return ExpectedType ;
+
+    -- Simple Tagged Scoreboard
+    impure function Peek (
+      constant Tag : in  string       
+    ) return ExpectedType ;
+
+    -- Simple Scoreboard, no tag
+    impure function Peek return ExpectedType ;
+    
     ------------------------------------------------------------
     -- Empty - check to see if scoreboard is empty
     impure function Empty return boolean ;                                   -- Simple 
@@ -924,8 +972,8 @@ package body ScoreboardGenericPkg is
       CurPtr := HeadPointer(Index) ;
       if CurPtr.TagPtr.all = Tag then 
         -- Non-tagged scoreboards find this one.
-        PopListPointer(Index)     := HeadPointer(Index) ; 
-        HeadPointer(Index) := HeadPointer(Index).NextPtr ;
+        PopListPointer(Index)  := HeadPointer(Index) ; 
+        HeadPointer(Index)     := HeadPointer(Index).NextPtr ;
       else 
         loop 
           if CurPtr.NextPtr = NULL then
@@ -933,12 +981,12 @@ package body ScoreboardGenericPkg is
             Alert(AlertLogIDVar(Index), GetName & " Pop/Check (" & Name & "), tag: " & Tag & " not found", FAILURE) ; 
             exit ; 
           elsif CurPtr.NextPtr.TagPtr.all = Tag then 
-              PopListPointer(Index) := CurPtr.NextPtr ; 
-              CurPtr.NextPtr := CurPtr.NextPtr.NextPtr ;
-              if CurPtr.NextPtr = NULL then 
-                TailPointer(Index) := CurPtr ; 
-              end if ;
-              exit ; 
+            PopListPointer(Index) := CurPtr.NextPtr ; 
+            CurPtr.NextPtr := CurPtr.NextPtr.NextPtr ;
+            if CurPtr.NextPtr = NULL then 
+              TailPointer(Index) := CurPtr ; 
+            end if ;
+            exit ; 
           else
             CurPtr := CurPtr.NextPtr ;
           end if ; 
@@ -1230,6 +1278,179 @@ package body ScoreboardGenericPkg is
       LocalPop(FirstIndexVar, "", "Pop") ;
       return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
     end function Pop ;
+
+    ------------------------------------------------------------
+    -- Local Only similar to LocalPop
+    -- Returns a pointer to the highest element matching Tag  
+    impure function LocalPeek (Index : integer ; Tag : string) return ListPointerType is
+    ------------------------------------------------------------
+      variable CurPtr : ListPointerType ;
+    begin
+--!! LocalPeek does this, but so do each of the indexed calls
+--!!      if LocalOutOfRange(Index, "Peek") then 
+--!!        return NULL ; -- error reporting in LocalOutOfRange
+--!!      end if ; 
+      if HeadPointer(Index) = NULL then
+        ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+        Alert(AlertLogIDVar(Index), GetName & " Empty during Peek", FAILURE) ; 
+        return NULL ;
+      end if ;
+      -- Descend to find Tag field and extract
+      CurPtr := HeadPointer(Index) ;
+      if CurPtr.TagPtr.all = Tag then 
+        -- Non-tagged scoreboards find this one.
+        return CurPtr ; 
+      else 
+        loop 
+          if CurPtr.NextPtr = NULL then
+            ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+            Alert(AlertLogIDVar(Index), GetName & " Peek, tag: " & Tag & " not found", FAILURE) ; 
+            return NULL ; 
+          elsif CurPtr.NextPtr.TagPtr.all = Tag then 
+            return CurPtr ; 
+          else
+            CurPtr := CurPtr.NextPtr ;
+          end if ; 
+        end loop ;
+      end if ;
+    end function LocalPeek ; 
+
+    ------------------------------------------------------------
+    -- Array of Tagged Scoreboards
+    procedure Peek (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      variable Item   : out ExpectedType
+    ) is
+      variable CurPtr : ListPointerType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then 
+        return ; -- error reporting in LocalOutOfRange
+      end if ; 
+      CurPtr := LocalPeek(Index, Tag) ; 
+      if CurPtr /= NULL then 
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ; 
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Array of Scoreboards, no tag
+    procedure Peek (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      variable Item   : out  ExpectedType
+    ) is
+      variable CurPtr : ListPointerType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then 
+        return ; -- error reporting in LocalOutOfRange
+      end if ; 
+      CurPtr := LocalPeek(Index, "") ; 
+      if CurPtr /= NULL then 
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ; 
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    procedure Peek (
+    ------------------------------------------------------------
+      constant Tag    : in  string ;
+      variable Item   : out  ExpectedType
+    ) is
+      variable CurPtr : ListPointerType ;
+    begin
+      CurPtr := LocalPeek(FirstIndexVar, Tag) ; 
+      if CurPtr /= NULL then 
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ; 
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    procedure Peek (variable Item : out  ExpectedType) is
+    ------------------------------------------------------------
+      variable CurPtr : ListPointerType ;
+    begin
+      CurPtr := LocalPeek(FirstIndexVar, "") ; 
+      if CurPtr /= NULL then 
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ; 
+    end procedure Peek ;
+    
+    ------------------------------------------------------------
+    -- Array of Tagged Scoreboards
+    impure function Peek (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string       
+    ) return ExpectedType is
+      variable CurPtr : ListPointerType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then 
+        -- error reporting in LocalOutOfRange
+        return PopListPointer(FirstIndexVar).ExpectedPtr.all ; 
+      end if ; 
+      CurPtr := LocalPeek(Index, Tag) ; 
+      if CurPtr /= NULL then 
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      end if ; 
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Array of Scoreboards, no tag
+    impure function Peek (Index : integer) return ExpectedType is
+    ------------------------------------------------------------
+      variable CurPtr : ListPointerType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then 
+        -- error reporting in LocalOutOfRange
+        return PopListPointer(FirstIndexVar).ExpectedPtr.all ; 
+      end if ; 
+      CurPtr := LocalPeek(Index, "") ; 
+      if CurPtr /= NULL then 
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      end if ; 
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    impure function Peek (
+    ------------------------------------------------------------
+      constant Tag : in  string       
+    ) return ExpectedType is
+      variable CurPtr : ListPointerType ;
+    begin
+      CurPtr := LocalPeek(FirstIndexVar, Tag) ; 
+      if CurPtr /= NULL then 
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      end if ; 
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    impure function Peek return ExpectedType is
+    ------------------------------------------------------------
+      variable CurPtr : ListPointerType ;
+    begin
+      CurPtr := LocalPeek(FirstIndexVar, "") ; 
+      if CurPtr /= NULL then 
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      end if ; 
+    end function Peek ;
 
     ------------------------------------------------------------
     -- Array of Tagged Scoreboards
