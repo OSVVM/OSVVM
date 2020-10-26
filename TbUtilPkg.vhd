@@ -67,6 +67,12 @@ package TbUtilPkg is
   function OneHot ( constant A : in std_logic_vector ) return boolean ;  
   function ZeroOneHot ( constant A : in std_logic_vector ) return boolean ;  
 
+  ------------------------------------------------------------
+  -- IfElse
+  --   Crutch until VHDL-2019 conditional initialization
+  --   If condition is true return first parameter otherwise return second
+  ------------------------------------------------------------
+  function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector ; 
 
   ------------------------------------------------------------
   -- RequestTransaction
@@ -306,6 +312,22 @@ package body TbUtilPkg is
     end loop ;
     return TRUE ;  -- all zero or found a one
   end function ZeroOneHot ; 
+
+
+  ------------------------------------------------------------
+  -- IfElse
+  --   Crutch until VHDL-2019 conditional initialization
+  --   If condition is true return first parameter otherwise return second
+  ------------------------------------------------------------
+  function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector is 
+  ------------------------------------------------------------
+  begin
+    if Expr then 
+      return A ; 
+    else
+      return B ; 
+    end if ; 
+  end function IfElse ; 
 
 
   ------------------------------------------------------------
