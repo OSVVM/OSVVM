@@ -669,10 +669,11 @@ package body TbUtilPkg is
     variable result : integer := 0 ; 
   begin
     for i in s'RANGE loop
-      if s(i) /= integer'left then 
-        result := s(i) + result;
-      else 
-        result := s(i) + 1;  -- removes the initialization requirement
+--      if s(i) /= integer'left then 
+--        result := result + s(i);
+--      else 
+      if s(i) /= 0 then 
+        result := result + 1;  -- removes the initialization requirement
       end if ;
     end loop ;
     return result ; 
