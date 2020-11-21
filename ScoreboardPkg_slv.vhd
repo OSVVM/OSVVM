@@ -23,6 +23,7 @@
 --    08/2014   2013.08    Updated interface for Match and to_string
 --    11/2016   2016.11    Released as part of OSVVM library
 --    01/2020   2020.01    Updated Licenses to Apache
+--    10/2020   2020.10    Replaced STD_MATCH for std_logic family with AlertLogPkg.MetaMatch
 --
 --
 --  This file is part of OSVVM.
@@ -48,13 +49,14 @@ use std.textio.all ;
 library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
-
+ 
 
 package ScoreBoardPkg_slv is new work.ScoreboardGenericPkg
   generic map (
     ExpectedType        => std_logic_vector,  
     ActualType          => std_logic_vector,  
-    Match               => std_match,  -- "=", [std_logic_vector, std_logic_vector return boolean]
+--    Match               => std_match,  -- "=", [std_logic_vector, std_logic_vector return boolean]
+    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [std_logic_vector, std_logic_vector return boolean]
     expected_to_string  => to_hstring, --      [std_logic_vector return string] 
     actual_to_string    => to_hstring  --      [std_logic_vector return string]  
   ) ;  

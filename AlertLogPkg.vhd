@@ -62,6 +62,8 @@
 --                         Added AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
 --                         Added ReportRequirements, WriteRequirements, and ReadRequirements (to merge results of multiple tests) 
 --                         Added WriteTestSummary, ReadTestSummaries, ReportTestSummaries, and WriteTestSummaries.
+--    10/2020   2020.10    Added MetaMatch.
+--                         Updated AlertIfEqual and AlertIfNotEqual for std_logic family to use MetaMatch
 --
 --
 --  This file is part of OSVVM.
@@ -86,6 +88,7 @@ use std.textio.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
+
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -457,10 +460,23 @@ package AlertLogPkg is
 
   -- String Helper Functions -- This should be in a more general string package
   function PathTail (A : string) return string ;
-
+  
+  ------------------------------------------------------------
+  -- MetaMatch
+  --   Similar to STD_MATCH, except 
+  --   it returns TRUE for U=U, X=X, Z=Z, and W=W 
+  --   All other values are consistent with STD_MATCH
+  --   MetaMatch, BooleanTableType, and MetaMatchTable are derivatives
+  --   of STD_MATCH from IEEE.Numeric_Std copyright by IEEE.
+  --   Numeric_Std is also released under the Apache License, Version 2.0.
+  --   Coding Styles were updated to match OSVVM
+  ------------------------------------------------------------
+  function MetaMatch (l, r : std_ulogic) return boolean ;
+  function MetaMatch (L, R : std_ulogic_vector) return boolean ;
+  function MetaMatch (L, R : unresolved_unsigned) return boolean ;
+  function MetaMatch (L, R : unresolved_signed) return boolean ;
 
   -- synthesis translate_on
-
 
   --  ------------------------------------------------------------
   -- Deprecated
@@ -3227,7 +3243,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3238,7 +3254,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3249,7 +3265,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3260,7 +3276,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3329,7 +3345,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3340,7 +3356,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3351,7 +3367,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3362,7 +3378,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?= R then
+    if MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3431,7 +3447,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3442,7 +3458,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3453,7 +3469,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if  not MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3464,7 +3480,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3533,7 +3549,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3544,7 +3560,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3555,7 +3571,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -3566,7 +3582,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L ?/= R then
+    if not MetaMatch(L, R) then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
@@ -5299,9 +5315,67 @@ package body AlertLogPkg is
     return aA(1 to LenA) ;
   end function PathTail ;
 
+  
+  ------------------------------------------------------------
+  -- MetaMatch
+  --   Similar to STD_MATCH, except 
+  --   it returns TRUE for U=U, X=X, Z=Z, and W=W 
+  --   All other values are consistent with STD_MATCH
+  --   MetaMatch, BooleanTableType, and MetaMatchTable are derivatives
+  --   of STD_MATCH from IEEE.Numeric_Std copyright by IEEE.
+  --   Numeric_Std is also released under the Apache License, Version 2.0.
+  --   Coding Styles were updated to match OSVVM
+  ------------------------------------------------------------
 
+  type BooleanTableType is array(std_ulogic, std_ulogic) of boolean;
+
+  constant MetaMatchTable : BooleanTableType := (
+    --------------------------------------------------------------------------
+    -- U      X      0      1      Z      W      L      H      -
+    --------------------------------------------------------------------------
+    (TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),  -- | U |
+    (FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),  -- | X |
+    (FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE,  FALSE, TRUE),  -- | 0 |
+    (FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE,  TRUE),  -- | 1 |
+    (FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE),  -- | Z |
+    (FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE, TRUE),  -- | W |
+    (FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE,  FALSE, TRUE),  -- | L |
+    (FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE,  TRUE),  -- | H |
+    (TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE)   -- | - |
+    );
+
+  function MetaMatch (l, r : std_ulogic) return boolean is
+  begin
+    return MetaMatchTable(l, r);
+  end function MetaMatch;
+
+  function MetaMatch (L, R : std_ulogic_vector) return boolean is
+    alias aL : std_ulogic_vector(1 to L'length) is L;
+    alias aR : std_ulogic_vector(1 to R'length) is R;
+  begin
+    if aL'length /= aR'length then
+      --! log(OSVVM_ALERTLOG_ID, "AlertLogPkg.MetaMatch: Length Mismatch", DEBUG) ;
+      return FALSE;
+    else
+      for i in aL'range loop
+        if not (MetaMatchTable(aL(i), aR(i))) then
+          return FALSE;
+        end if;
+      end loop;
+      return TRUE;
+    end if;
+  end function MetaMatch;
+  
+  function MetaMatch (L, R : unresolved_unsigned) return boolean is
+  begin
+    return MetaMatch( std_ulogic_vector(L), std_ulogic_vector(R)) ;
+  end function MetaMatch;
+
+  function MetaMatch (L, R : unresolved_signed) return boolean is
+  begin
+    return MetaMatch( std_ulogic_vector(L), std_ulogic_vector(R)) ;
+  end function MetaMatch;
   -- synthesis translate_on
-
 
   --  ------------------------------------------------------------
   -- Deprecated
