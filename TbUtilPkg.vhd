@@ -265,7 +265,6 @@ package TbUtilPkg is
   -- Backward compatible name  
   alias SyncToClk is WaitForClock [std_logic, time] ;
 
-
   ------------------------------------------------------------
   -- Deprecated
   -- WaitForAck, StrobeAck
@@ -946,4 +945,3 @@ package body TbUtilPkg is
 
 
 end TbUtilPkg ;
-
