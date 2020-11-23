@@ -64,7 +64,7 @@
 --                         Added WriteTestSummary, ReadTestSummaries, ReportTestSummaries, and WriteTestSummaries.
 --    10/2020   2020.10    Added MetaMatch.
 --                         Updated AlertIfEqual and AlertIfNotEqual for std_logic family to use MetaMatch
---
+--    12/2020   2020.12    Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual for std_logic family to use MetaMatch
 --
 --  This file is part of OSVVM.
 --
@@ -3975,7 +3975,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, ??(Received ?= Expected),
+    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
       Message & " Received : " & to_string(Received),
       "?= Expected : " & to_string(Expected),
       Enable) ;
@@ -3987,7 +3987,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, ??(Received ?= Expected),
+    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
       Message & " Received : " & to_hstring(Received),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
@@ -3999,7 +3999,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, ??(Received ?= Expected),
+    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
       Message & " Received : " & to_hstring(Received),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
@@ -4011,7 +4011,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, ??(Received ?= Expected),
+    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
       Message & " Received : " & to_hstring(Received),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
@@ -4084,7 +4084,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
       Message & " Received : " & to_string(Received),
       "?= Expected : " & to_string(Expected),
       Enable) ;
@@ -4096,7 +4096,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
       Message & " Received : " & to_hstring(Received),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
@@ -4108,7 +4108,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
       Message & " Received : " & to_hstring(Received),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
@@ -4120,7 +4120,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, ??(Received ?= Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
       Message & " Received : " & to_hstring(Received),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
