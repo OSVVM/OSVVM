@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |
 ----------------|---------------- 
+| 2020.10  | October 2020   
 | 2020.08  | August 2020   
 | 2020.05  | May 2020   
 | 2020.01  | January 2020   
@@ -44,7 +45,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2020.08 August 2020
+## Revision 2020.10 October 2020
 
 ### Current Revision and Compile Order
 
@@ -61,7 +62,7 @@ scripts directory) or osvvm.tcl script.
   | VendorCovApiPkg.vhd or VendorCovApiPkg_Aldec.vhd   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.01  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | 2020.08  | 
+  | AlertLogPkg.vhd                                    | 2020.10  | 
   | MessagePkg.vhd                                     | 2020.01  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2020.01  |
@@ -69,12 +70,21 @@ scripts directory) or osvvm.tcl script.
   | CoveragePkg.vhd                                    | 2020.05  |
   | MemoryPkg.vhd                                      | 2020.01  |
   | ScoreboardGenericPkg.vhd                           | 2020.05  |
-  | ScoreboardPkg_slv.vhd                              | 2020.01  |
+  | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
   | ResolutionPkg.vhd                                  | 2020.01  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
 
+### AlertLogPkg.vhd 2020.10
+Added function MetaMatch.   It is similar to STD_MATCH and ?=,
+except that U=U, X=X, Z=Z, and W=W.  All else is the same as STD_MATCH.
+AlertIfEqual and AlertIfNotEqual for std_logic family use MetaMatch rather than ?=.
+
+### ScoreboardPkg_int.vhd 2020.08
+Uses MetaMatch for the Match function instead of STD_MATCH.
+
+## Revision 2020.08 August 2020
 ### AlertLogPkg.vhd 2020.08
 
 2020.08 is a major update to AlertLogPkg.
