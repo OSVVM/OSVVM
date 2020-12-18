@@ -73,6 +73,7 @@ package TbUtilPkg is
   --   If condition is true return first parameter otherwise return second
   ------------------------------------------------------------
   function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector ; 
+  function IfElse(Expr : boolean ; A, B : integer) return integer ; 
 
   ------------------------------------------------------------
   -- RequestTransaction
@@ -319,7 +320,6 @@ package body TbUtilPkg is
   --   If condition is true return first parameter otherwise return second
   ------------------------------------------------------------
   function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector is 
-  ------------------------------------------------------------
   begin
     if Expr then 
       return A ; 
@@ -328,6 +328,14 @@ package body TbUtilPkg is
     end if ; 
   end function IfElse ; 
 
+  function IfElse(Expr : boolean ; A, B : integer) return integer is 
+  begin
+    if Expr then 
+      return A ; 
+    else
+      return B ; 
+    end if ; 
+  end function IfElse ; 
 
   ------------------------------------------------------------
   -- RequestTransaction
