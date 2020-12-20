@@ -65,6 +65,7 @@
 --    10/2020   2020.10    Added MetaMatch.
 --                         Updated AlertIfEqual and AlertIfNotEqual for std_logic family to use MetaMatch
 --    12/2020   2020.12    Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual for std_logic family to use MetaMatch
+--                         Added AffirmIfEqual for boolean
 --
 --  This file is part of OSVVM.
 --
@@ -249,6 +250,7 @@ package AlertLogPkg is
   procedure AffirmError( Message : string ) ;
 
   ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
@@ -261,6 +263,7 @@ package AlertLogPkg is
 
   -- Without AlertLogID
   ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
@@ -3971,6 +3974,18 @@ package body AlertLogPkg is
 
   -- With AlertLogID
   ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(AlertLogID, Received = Expected,
+      Message & " Received : " & to_string(Received),
+      "?= Expected : " & to_string(Expected),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfEqual ;
+
+  ------------------------------------------------------------
   procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
@@ -4079,6 +4094,18 @@ package body AlertLogPkg is
   end procedure AffirmIfEqual ;
 
   -- Without AlertLogID
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
+      Message & " Received : " & to_string(Received),
+      "?= Expected : " & to_string(Expected),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfEqual ;
+
   ------------------------------------------------------------
   procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
