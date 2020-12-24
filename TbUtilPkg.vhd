@@ -26,6 +26,8 @@
 --                         Added Increment and WaitForToggle for integer.
 --    08/2018   2018.08    Updated WaitForTransaction to allow 0 time transactions
 --    01/2020   2020.01    Updated Licenses to Apache
+--    12/2020   2020.12    Added IfElse functions for string and integer.
+--                         Added Increment function for integer
 --
 --
 --  This file is part of OSVVM.
@@ -160,6 +162,7 @@ package TbUtilPkg is
   
   -- Integer type versions
   procedure Increment ( signal Sig : InOut integer ; constant RollOverValue : in integer := 0) ;
+  function  Increment (constant Sig : in integer ; constant Amount : in integer := 1) return integer ;
   procedure WaitForToggle ( signal Sig : In integer ) ;
 
 
@@ -615,14 +618,20 @@ package body TbUtilPkg is
   end procedure WaitForToggle ;
   
   -- Integer type versions
-  procedure Increment ( signal Sig : InOut integer ; constant RollOverValue : in integer := 0) is
+  procedure Increment (signal Sig : InOut integer ; constant RollOverValue : in integer := 0) is
   begin
-    if Sig = integer'high then 
+--!!    if Sig = integer'high then 
+    if Sig = 2**30-1 then -- for consistency with function increment
       Sig <= RollOverValue ; 
     else
       Sig <= Sig + 1 ;
     end if ; 
   end procedure Increment ;
+
+  function Increment (constant Sig : in integer ; constant Amount : in integer := 1) return integer is
+  begin
+    return (Sig + Amount) mod 2**30 ; 
+  end function Increment ;
   
   procedure WaitForToggle ( signal Sig : In integer ) is
   begin
