@@ -116,20 +116,20 @@ package ResolutionPkg is
   function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector ;
 
   function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max_c ;
+  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c ;
   function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
   function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
+  impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
   function FromTransaction (A: std_logic_vector_max_c) return integer ;
   
   --
   -- ToTransaction and FromTransaction for _max provided to support a 
   -- common methodology, conversions are not needed
   function ToTransaction(A : std_logic_vector) return std_logic_vector_max ;
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max ;
+  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max ;
   function ToTransaction(A : integer; Size : natural) return std_logic_vector_max ;
   function FromTransaction (A: std_logic_vector_max) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector ;
+  impure function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector ;
   function FromTransaction (A: std_logic_vector_max) return integer ;    
   
   -- return sum of values that /= type'left
@@ -196,15 +196,31 @@ package body ResolutionPkg is
   begin
     return aA(Size-1 downto 0) ;
   end function Reduce ;
+  
+  -- SafeResize - handles std_logic_vector as unsigned
+  impure function SafeResize(A: std_logic_vector; Size : natural) return std_logic_vector is
+    variable Result : std_logic_vector(Size-1 downto 0) := (others => '0') ;
+    alias aA : std_logic_vector(A'length-1 downto 0) is A ;
+  begin
+    if A'length <= Size then
+      -- Extend A
+      Result(A'length-1 downto 0) := aA ;
+    else
+      -- Reduce A and Error if any extra bits of A are a '1'
+      AlertIf((OR aA(A'length-1 downto Size) = '1'), "ToTransaction/FromTransaction, threw away a 1") ;
+      Result := aA(Size-1 downto 0) ;
+    end if ;    
+    return Result ;
+  end function SafeResize ;
 
   function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c is
   begin
     return std_logic_vector_max_c(A) ;
   end function ToTransaction ;
 
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max_c is
+  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c is
   begin
-    return std_logic_vector_max_c(Extend(A, Size)) ;
+    return std_logic_vector_max_c(SafeResize(A, Size)) ;
   end function ToTransaction ;
 
   function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c is
@@ -217,9 +233,9 @@ package body ResolutionPkg is
     return std_logic_vector(A) ;
   end function FromTransaction ;
 
-  function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector is
+  impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector is
   begin
-    return Reduce(std_logic_vector(A), Size) ;
+    return SafeResize(std_logic_vector(A), Size) ;
   end function FromTransaction ;
 
   function FromTransaction (A: std_logic_vector_max_c) return integer is
@@ -235,9 +251,9 @@ package body ResolutionPkg is
     return A ;
   end function ToTransaction ;
 
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max is
+  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max is
   begin
-    return Extend(A, Size) ;
+    return SafeResize(A, Size) ;
   end function ToTransaction ;
 
   function ToTransaction(A : integer; Size : natural) return std_logic_vector_max is
@@ -250,9 +266,9 @@ package body ResolutionPkg is
     return A ;
   end function FromTransaction ;
 
-  function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector is
+  impure function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector is
   begin
-    return Reduce(A, Size) ;
+    return SafeResize(A, Size) ;
   end function FromTransaction ;
 
   function FromTransaction (A: std_logic_vector_max) return integer is
