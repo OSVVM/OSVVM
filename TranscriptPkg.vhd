@@ -25,6 +25,7 @@
 --    01/2016   2016.01    TranscriptOpen function now calls procedure of same name
 --    11/2016   2016.l1    Added procedure BlankLine
 --    01/2020   2020.01    Updated Licenses to Apache
+--    12/2020   2020.12    Updated Status : Out to InOut to work around simulator bug.
 --
 --
 --  This file is part of OSVVM.
@@ -54,7 +55,7 @@ package TranscriptPkg is
   subtype WRITE_APPEND_OPEN_KIND is FILE_OPEN_KIND range WRITE_MODE to APPEND_MODE ; 
   
   -- Open and close TranscriptFile.  Function allows declarative opens 
-  procedure        TranscriptOpen (Status: out FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+  procedure        TranscriptOpen (Status: InOut FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
   procedure        TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;  
   impure function  TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) return FILE_OPEN_STATUS ;
   
@@ -103,7 +104,7 @@ package body TranscriptPkg is
   shared variable TranscriptMirror : LocalBooleanPType ; 
 
   ------------------------------------------------------------
-  procedure TranscriptOpen (Status: out FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
+  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
   begin
     file_open(Status, TranscriptFile, ExternalName, OpenKind) ;
