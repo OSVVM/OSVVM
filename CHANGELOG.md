@@ -1,29 +1,30 @@
 # OSVVM Utility Library (aka OSVVM) Change Log 
 
-| Revision name | Revision  Date |
-----------------|---------------- 
-| 2020.10  | October 2020   
-| 2020.08  | August 2020   
-| 2020.05  | May 2020   
-| 2020.01  | January 2020   
-| 2018.04  | April 2018  
-| 2017.05  | May 2017   
-| 2016.11  | November 2016   
-| 2016.01  | January 2016   
-| 2015.06  | June 2015   
-| 2015.03  | March 2015   
-| 2015.01  | January 2015   
-| 2014.07a | December 2014   
-| 2014.07  | July 2014   
-| 2014.01  | January 2014   
-| 2013.05  | May 2013   
-| 2013.04  | April 2013   
-| 2.4      | January 2012   
-| 2.3      | January 2012   
-| 2.2      | July 2011   
-| 2.1      | June 2011   
-| 2.0      | April 2011   
-| 1.X      | June 2010   
+| Revision name | Revision  Date |  Summary |
+----------------|----------------|----------- 
+| 2020.12  | December 2020   |  Minor Updates
+| 2020.10  | October 2020    |  Minor Updates
+| 2020.08  | August 2020     |  Specification Tracking
+| 2020.05  | May 2020        |  PASSED Counting
+| 2020.01  | January 2020    |  Apache Licensing
+| 2018.04  | April 2018      | 
+| 2017.05  | May 2017        | 
+| 2016.11  | November 2016   | 
+| 2016.01  | January 2016    | 
+| 2015.06  | June 2015       | 
+| 2015.03  | March 2015      | 
+| 2015.01  | January 2015    | 
+| 2014.07a | December 2014   | 
+| 2014.07  | July 2014       | 
+| 2014.01  | January 2014    | 
+| 2013.05  | May 2013        | 
+| 2013.04  | April 2013      | 
+| 2.4      | January 2012    | 
+| 2.3      | January 2012    | 
+| 2.2      | July 2011       | 
+| 2.1      | June 2011       | 
+| 2.0      | April 2011      | 
+| 1.X      | June 2010       | 
 
 
 ## Copyright and License
@@ -45,7 +46,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2020.10 October 2020
+## Revision 2020.12 December 2020
 
 ### Current Revision and Compile Order
 
@@ -59,29 +60,53 @@ scripts directory) or osvvm.tcl script.
   -----------------------------------------------------|----------
   | NamePkg.vhd                                        | 2020.01  |  
   | OsvvmGlobalPkg.vhd                                 | 2020.01  |  
-  | VendorCovApiPkg.vhd or VendorCovApiPkg_Aldec.vhd   | 2020.01  |
-  | TranscriptPkg.vhd                                  | 2020.01  |  
+  | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
+  | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
+  | TranscriptPkg.vhd                                  | **2020.12**  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | 2020.10  | 
+  | AlertLogPkg.vhd                                    | **2020.12**  | 
   | MessagePkg.vhd                                     | 2020.01  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2020.01  |
   | RandomPkg.vhd                                      | 2020.08  |
   | CoveragePkg.vhd                                    | 2020.05  |
   | MemoryPkg.vhd                                      | 2020.01  |
-  | ScoreboardGenericPkg.vhd                           | 2020.05  |
+  | MemoryPkg_2019.vhd                                 | **2020.12**  |
+  | ScoreboardGenericPkg.vhd                           | 2020.10  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ResolutionPkg.vhd                                  | 2020.01  |
+  | ResolutionPkg.vhd                                  | **2020.12**  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
+
+
+### Resolution.vhd 2020.12    
+Updated ToTransaction and FromTransaction with length parameter.
+Downsizing now permitted when it does not change the value.
+
+### MemoryPkg_2019.vhd 2020.12    
+Beta version of MemoryPType with VHDL-2019 generics.
+Used in place of MemoryPkg.  Tested in RivieraPro. 
+Requires compile switch -2019. 
+
+### AlertLogPkg.vhd 2020.12    
+Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual 
+for std_logic family to use MetaMatch.
+Added AffirmIfEqual for boolean.
+Oversight as MetaMatch was added to AlertIfEqual and AlertIfNotEqual in 2020.10.  
+
+### Transcript.vhd 2020.12    
+Updated TranscriptOpen parameter Status to InOut to work around simulator bug.
+
+
+## Revision 2020.10 October 2020
 
 ### AlertLogPkg.vhd 2020.10
 Added function MetaMatch.   It is similar to STD_MATCH and ?=,
 except that U=U, X=X, Z=Z, and W=W.  All else is the same as STD_MATCH.
 AlertIfEqual and AlertIfNotEqual for std_logic family use MetaMatch rather than ?=.
 
-### ScoreboardPkg_int.vhd 2020.08
+### ScoreboardPkg_int.vhd 2020.10
 Uses MetaMatch for the Match function instead of STD_MATCH.
 
 ## Revision 2020.08 August 2020
