@@ -25,7 +25,7 @@
 --    01/2016   2016.01    TranscriptOpen function now calls procedure of same name
 --    11/2016   2016.l1    Added procedure BlankLine
 --    01/2020   2020.01    Updated Licenses to Apache
---    12/2020   2020.12    Updated Status : Out to InOut to work around simulator bug.
+--    12/2020   2020.12    Updated TranscriptOpen parameter Status to InOut to work around simulator bug.
 --
 --
 --  This file is part of OSVVM.

@@ -27,6 +27,8 @@
 --    11/2016   2016.11    Removed Asserts as they are not working as intended.
 --                         See ResolutionPkg_debug as it uses Alerts to correctly detect errors
 --    01/2020   2020.01    Updated Licenses to Apache
+--    12/2020   2020.12    Updated ToTransaction and FromTransaction with length parameter.
+--                         Downsizing now permitted when it does not change the value.
 --
 --
 --  This file is part of OSVVM.

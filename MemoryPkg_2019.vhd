@@ -25,6 +25,8 @@
 --    01/2016   2016.01    Update for buf.all(buf'left)
 --    11/2016   2016.11    Refinement to MemRead to return value, X (if X), U (if not initialized)
 --    01/2020   2020.01    Updated Licenses to Apache
+--    12/2020   2020.12    Beta version of MemoryPType with VHDL-2019 generics.
+--                         Used in place of MemoryPkg.  Tested in RivieraPro.  
 --
 --
 --  This file is part of OSVVM.
