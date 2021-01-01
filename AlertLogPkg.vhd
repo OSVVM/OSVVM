@@ -5310,7 +5310,8 @@ package body AlertLogPkg is
               Alert(OSVVM_ALERTLOG_ID, "AlertLogPkg.ReadLogEnables: Found Invalid LogEnable: " & Name(1 to NameLen)) ;
               exit ReadNameLoop ;
             end if ;
-            LogLevel := LogType'value(Name(1 to NameLen)) ;
+--            Log(OSVVM_ALERTLOG_ID, "SetLogEnable(OSVVM_ALERTLOG_ID, " & Name(1 to NameLen) & ", TRUE) ;", DEBUG) ; 
+            LogLevel := LogType'value("" & Name(1 to NameLen)) ;  -- "" & added for RivieraPro 2020.10
             SetLogEnable(AlertLogID, LogLevel, TRUE) ;
         end case ;
       end loop ReadNameLoop ;
