@@ -111,7 +111,9 @@ package ScoreboardGenericPkg is
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;  
 
   ------------------------------------------------------------
-  impure function NewID (Name : String) return ScoreboardIDType ;
+  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
+  impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
@@ -226,11 +228,11 @@ package ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- Empty - check to see if scoreboard is empty
   -- Simple 
-  impure function Empty (
+  impure function ScoreboardEmpty (
     constant ID     : in  ScoreboardIDType 
   ) return boolean ; 
   -- Tagged 
-  impure function Empty (
+  impure function ScoreboardEmpty (
     constant ID     : in  ScoreboardIDType ;
     constant Tag    : in  string       
   ) return boolean ;                    -- Simple, Tagged
@@ -374,7 +376,8 @@ package ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Used by Scoreboard Store
     procedure SetPrintIndex (Enable : boolean := TRUE) ;
-    impure function NewID (Name : String) return ScoreboardIDType ;
+    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
+    impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
     ------------------------------------------------------------
 
     ------------------------------------------------------------
@@ -820,12 +823,27 @@ package body ScoreboardGenericPkg is
 
     type ListArrayType is array (integer range <>) of ListPointerType ;  
     type ListArrayPointerType is access ListArrayType ; 
-
+    
     variable ArrayLengthVar  : integer := 1 ; 
-    variable HeadPointer     : ListArrayPointerType := new ListArrayType(1 to 1) ;
-    variable TailPointer     : ListArrayPointerType := new ListArrayType(1 to 1)  ;
+    
+-- Original Code
+--    variable HeadPointer     : ListArrayPointerType := new ListArrayType(1 to 1) ;
+--    variable TailPointer     : ListArrayPointerType := new ListArrayType(1 to 1)  ;
+--    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
+--    variable PopListPointer  : ListArrayPointerType := new ListArrayType(1 to 1) ; 
+--
+-- Legal, but crashes simulator more thoroughly 
+--    variable HeadPointer     : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
+--    variable TailPointer     : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
+--    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
+--    variable PopListPointer  : ListArrayPointerType := new ListArrayType'(1 => NULL) ; 
+-- Working work around for QS 2020.04 and 2021.02
+    variable Template : ListArrayType(1 to 1) ;  -- Work around for QS 2020.04 and 2021.02
+
+    variable HeadPointer     : ListArrayPointerType := new ListArrayType'(Template) ;
+    variable TailPointer     : ListArrayPointerType := new ListArrayType'(Template) ;
     -- PopListPointer needed for Pop to be a function - alternately need 2019 features
-    variable PopListPointer  : ListArrayPointerType := new ListArrayType(1 to 1) ; 
+    variable PopListPointer  : ListArrayPointerType := new ListArrayType'(Template) ; 
 
     type IntegerArrayType is array (integer range <>) of Integer ;  
     type IntegerArrayPointerType is access IntegerArrayType ; 
@@ -874,19 +892,41 @@ package body ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     -- Used by Scoreboard Store
-    impure function NewID (Name : String) return ScoreboardIDType is
+    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
     ------------------------------------------------------------
       variable Result : ScoreboardIDType ; 
-      variable NewNumItems : integer ;
+      variable MinNewNumItems : integer ;
     begin
       SetPrintIndex(FALSE) ; 
-      NewNumItems := NumItems + 1 ; 
-      if NewNumItems > HeadPointer'length then
-        SetArrayIndex(1, NormalizeArraySize(NewNumItems, MIN_NUM_ITEMS)) ;
+      MinNewNumItems := NumItems + 1 ; 
+      if MinNewNumItems > HeadPointer'length then
+        SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
       end if ;
-      Result.ID := NewNumItems ; 
-      NumItems  := NewNumItems ;
-      SetAlertLogID(Result.ID, Name) ; 
+      Result.ID := MinNewNumItems ; 
+      SetAlertLogID(Result.ID, Name, ParentAlertLogID) ; 
+      NumItems  := MinNewNumItems ;
+      return Result ; 
+    end function NewID ;
+
+    ------------------------------------------------------------
+    -- Used by Scoreboard Store
+    impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    ------------------------------------------------------------
+      variable Result         : ScoreboardIDArrayType(1 to Size) ; 
+      variable MinNewNumItems : integer ;
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      SetPrintIndex(FALSE) ; 
+      MinNewNumItems := NumItems + Size ; 
+      if MinNewNumItems > HeadPointer'length then
+        SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
+      end if ;
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      for i in Result'range loop
+        Result(i).ID := NumItems + i ; 
+        SetAlertLogID(Result(i).ID, Name & "(" & to_string(i) & ")", ArrayParentID) ; 
+      end loop ;
+      NumItems  := MinNewNumItems ;
       return Result ; 
     end function NewID ;
 
@@ -2302,10 +2342,18 @@ package body ScoreboardGenericPkg is
   shared variable ScoreboardStore : ScoreBoardPType ;
   
   ------------------------------------------------------------
-  impure function NewID (Name : String) return ScoreboardIDType is
+  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
   ------------------------------------------------------------
   begin
-    return ScoreboardStore.NewID(Name) ; 
+    return ScoreboardStore.NewID(Name, ParentAlertLogID) ; 
+  end function NewID ;
+
+  ------------------------------------------------------------
+  -- Used by Scoreboard Store
+  impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, Size, ParentAlertLogID) ; 
   end function NewID ;
 
   ------------------------------------------------------------
@@ -2465,23 +2513,23 @@ package body ScoreboardGenericPkg is
   end function Peek ;
   
   ------------------------------------------------------------
-  -- Empty - check to see if scoreboard is empty
+  -- ScoreboardEmpty - check to see if scoreboard is empty
   -- Simple 
-  impure function Empty (
+  impure function ScoreboardEmpty (
     constant ID     : in  ScoreboardIDType 
   ) return boolean is
   begin
     return ScoreboardStore.Empty(ID.ID) ; 
-  end function Empty ;
+  end function ScoreboardEmpty ;
   
   -- Tagged 
-  impure function Empty (
+  impure function ScoreboardEmpty (
     constant ID     : in  ScoreboardIDType ;
     constant Tag    : in  string       
   ) return boolean is
   begin
     return ScoreboardStore.Empty(ID.ID, Tag) ; 
-  end function Empty ;
+  end function ScoreboardEmpty ;
   
   ------------------------------------------------------------
   -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
