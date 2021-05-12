@@ -112,8 +112,14 @@ package ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
-  impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
-
+  -- Vector: 1 to Size
+  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+  -- Vector: X(X'Left) to X(X'Right)
+  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+  -- Matrix: 1 to X, 1 to Y
+  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+  -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
@@ -377,7 +383,14 @@ package ScoreboardGenericPkg is
     -- Used by Scoreboard Store
     procedure SetPrintIndex (Enable : boolean := TRUE) ;
     impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
-    impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    -- Vector: 1 to Size
+    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    -- Vector: X(X'Left) to X(X'Right)
+    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    -- Matrix: 1 to X, 1 to Y
+    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
     ------------------------------------------------------------
 
     ------------------------------------------------------------
@@ -889,7 +902,7 @@ package body ScoreboardGenericPkg is
       end if ; 
       return NormNumItems ; 
     end function NormalizeArraySize ;
-
+    
     ------------------------------------------------------------
     -- Used by Scoreboard Store
     impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
@@ -909,27 +922,98 @@ package body ScoreboardGenericPkg is
     end function NewID ;
 
     ------------------------------------------------------------
-    -- Used by Scoreboard Store
-    impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    -- Vector. Assumes valid range (done by NewID)
+    impure function LocalNewID (Name : String ; X : integer_vector ; ArrayParentID : AlertLogIDType) return ScoreboardIDArrayType is
     ------------------------------------------------------------
-      variable Result         : ScoreboardIDArrayType(1 to Size) ; 
+      variable Result         : ScoreboardIDArrayType(X(X'left) to X(X'right)) ; 
       variable MinNewNumItems : integer ;
-      variable ArrayParentID  : AlertLogIDType ; 
     begin
       SetPrintIndex(FALSE) ; 
-      MinNewNumItems := NumItems + Size ; 
+      MinNewNumItems := NumItems + X(X'right) - X(X'left) + 1 ; 
       if MinNewNumItems > HeadPointer'length then
         SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
       end if ;
-      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
       for i in Result'range loop
-        Result(i).ID := NumItems + i ; 
+        NumItems := NumItems + 1 ;
+        Result(i).ID := NumItems ; 
         SetAlertLogID(Result(i).ID, Name & "(" & to_string(i) & ")", ArrayParentID) ; 
       end loop ;
-      NumItems  := MinNewNumItems ;
+--      NumItems  := MinNewNumItems ;
       return Result ; 
+    end function LocalNewID ;
+    
+    ------------------------------------------------------------
+    -- Vector: 1 to Size
+    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      -- AlertIf(ArrayParentID, Size < 1, "Size parameter is " & to_string(Size) & ".  Required to be >= 1", FAILURE) ; 
+      return LocalNewID(Name, (1, Size) , ArrayParentID) ; 
     end function NewID ;
 
+    ------------------------------------------------------------
+    -- Vector: X(X'Left) to X(X'Right)
+    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      AlertIf(ArrayParentID, X'length /= 2, "X parameter has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ; 
+      AlertIf(ArrayParentID, X(X'Left) > X(X'right), "X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ; 
+      return LocalNewID(Name, X, ArrayParentID) ; 
+    end function NewID ;
+
+    ------------------------------------------------------------
+    -- Matrix. Assumes valid indices (done by NewID)
+    impure function LocalNewID (Name : String ; X, Y : integer_vector ; ArrayParentID : AlertLogIDType ) return ScoreboardIdMatrixType is
+    ------------------------------------------------------------
+      variable Result         : ScoreboardIdMatrixType(X(X'left) to X(X'right), Y(Y'left) to Y(Y'right)) ; 
+      variable MinNewNumItems : integer ;
+    begin
+      SetPrintIndex(FALSE) ; 
+      MinNewNumItems := NumItems + ( (X(X'right) - X(X'left) + 1) * (Y(Y'right) - Y(Y'left) + 1) ) ; 
+      if MinNewNumItems > HeadPointer'length then
+        SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
+      end if ;
+      for i in X(X'left) to X(X'right) loop
+        for j in Y(Y'left) to Y(Y'right) loop
+          NumItems := NumItems + 1 ;
+          Result(i, j).ID := NumItems ; 
+          SetAlertLogID(Result(i,j).ID, Name & "(" & to_string(i) & ", " & to_string(j) & ")", ArrayParentID) ; 
+        end loop ;
+      end loop ;
+      -- NumItems  := MinNewNumItems ;
+      return Result ; 
+    end function LocalNewID ;        
+    
+    ------------------------------------------------------------
+    -- Matrix: 1 to X, 1 to Y
+    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+--      AlertIf(ArrayParentID, X < 1, "X parameter is " & to_string(X) & ".  Required to be >= 1", FAILURE) ; 
+--      AlertIf(ArrayParentID, Y < 1, "Y parameter is " & to_string(Y) & ".  Required to be >= 1", FAILURE) ; 
+      return LocalNewID(Name, (1,X), (1,Y), ArrayParentID) ; 
+    end function NewID ;        
+     
+    ------------------------------------------------------------
+    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      AlertIf(ArrayParentID, X'length /= 2, "X parameter has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ; 
+      AlertIf(ArrayParentID, Y'length /= 2, "Y parameter has " & to_string(Y'length) & "dimensions.  Required to be 2", FAILURE) ; 
+      AlertIf(ArrayParentID, X(X'Left) > X(X'right), "X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ; 
+      AlertIf(ArrayParentID, Y(Y'Left) > Y(Y'right), "Y(Y'left): " & to_string(Y'Left) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ; 
+      return LocalNewID(Name, X, Y, ArrayParentID) ; 
+    end function NewID ; 
+    
     ------------------------------------------------------------
     procedure SetName (Name : String) is
     ------------------------------------------------------------
@@ -2349,12 +2433,36 @@ package body ScoreboardGenericPkg is
   end function NewID ;
 
   ------------------------------------------------------------
-  -- Used by Scoreboard Store
-  impure function NewID (Name : String ; Size : natural ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  -- Vector: 1 to Size
+  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
   ------------------------------------------------------------
   begin
     return ScoreboardStore.NewID(Name, Size, ParentAlertLogID) ; 
   end function NewID ;
+  
+  ------------------------------------------------------------
+  -- Vector: X(X'Left) to X(X'Right)
+  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, X, ParentAlertLogID) ; 
+  end function NewID ;
+  
+  ------------------------------------------------------------
+  -- Matrix: 1 to X, 1 to Y
+  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID) ; 
+  end function NewID ;        
+   
+  ------------------------------------------------------------
+  -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID) ; 
+  end function NewID ; 
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
