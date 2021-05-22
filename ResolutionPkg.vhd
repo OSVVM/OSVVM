@@ -19,21 +19,22 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    09/2006   0.1        Initial revision
---                         Numerous revisions for VHDL Testbenches and Verification
---    02/2009   1.0        VHDL-2008 STANDARD VERSION
---    05/2015   2015.05    Added Alerts
---    --                   Replaced Alerts with asserts as alerts are illegal in pure functions
---    11/2016   2016.11    Removed Asserts as they are not working as intended.
---                         See ResolutionPkg_debug as it uses Alerts to correctly detect errors
---    01/2020   2020.01    Updated Licenses to Apache
+--    05/2021   2021.05    Moved To/FromTransaction and SafeResize to Resize package
 --    12/2020   2020.12    Updated ToTransaction and FromTransaction with length parameter.
 --                         Downsizing now permitted when it does not change the value.
+--    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Removed Asserts as they are not working as intended.
+--                         See ResolutionPkg_debug as it uses Alerts to correctly detect errors
+--    05/2015   2015.05    Added Alerts
+--    --                   Replaced Alerts with asserts as alerts are illegal in pure functions
+--    02/2009   1.0        VHDL-2008 STANDARD VERSION
+--    09/2006   0.1        Initial revision
+--                         Numerous revisions for VHDL Testbenches and Verification
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2005 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2005 - 2021 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -48,13 +49,9 @@
 --  limitations under the License.
 --  
 
-
 library ieee ; 
 use ieee.std_logic_1164.all ; 
 use ieee.numeric_std.all ; 
-
-library osvvm ; 
-use osvvm.AlertLogPkg.all ; 
 
 package ResolutionPkg is 
   constant MULTIPLE_DRIVER_SEVERITY : severity_level := ERROR ; 
@@ -110,30 +107,6 @@ package ResolutionPkg is
   subtype  boolean_vector_max is (resolved_max) boolean_vector ; 
   type     boolean_vector_max_c is array (natural range <>) of boolean_max ; -- for non VHDL-2008  
 
-  --
-  -- ToTransaction and FromTransaction
-  -- Convert from Common types to their corresponding _max_c type
-  --
-  function Extend(A: std_logic_vector; Size : natural) return std_logic_vector ;
-  function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector ;
-
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
-  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c ;
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
-  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
-  impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max_c) return integer ;
-  
-  --
-  -- ToTransaction and FromTransaction for _max provided to support a 
-  -- common methodology, conversions are not needed
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max ;
-  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max ;
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max ;
-  function FromTransaction (A: std_logic_vector_max) return std_logic_vector ;
-  impure function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max) return integer ;    
-  
   -- return sum of values that /= type'left
   -- No initializations required on ports, default of type'left is ok
   function resolved_sum ( s : integer_vector ) return integer ;      
@@ -182,103 +155,6 @@ package ResolutionPkg is
 end package ResolutionPkg ;
 package body ResolutionPkg is 
 
-  --
-  -- ToTransaction and FromTransaction
-  -- Convert from Common types to their corresponding _max_c type
-  --
-  function Extend(A: std_logic_vector; Size : natural) return std_logic_vector is
-    variable extA : std_logic_vector(Size downto 1) := (others => '0') ;
-  begin
-    extA(A'length downto 1) := A ;
-    return extA ;
-  end function Extend ;
-
-  function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector is
-    alias aA : std_logic_vector(A'length-1 downto 0) is A ;
-  begin
-    return aA(Size-1 downto 0) ;
-  end function Reduce ;
-  
-  -- SafeResize - handles std_logic_vector as unsigned
-  impure function SafeResize(A: std_logic_vector; Size : natural) return std_logic_vector is
-    variable Result : std_logic_vector(Size-1 downto 0) := (others => '0') ;
-    alias aA : std_logic_vector(A'length-1 downto 0) is A ;
-  begin
-    if A'length <= Size then
-      -- Extend A
-      Result(A'length-1 downto 0) := aA ;
-    else
-      -- Reduce A and Error if any extra bits of A are a '1'
-      AlertIf((OR aA(A'length-1 downto Size) = '1'), "ToTransaction/FromTransaction, threw away a 1") ;
-      Result := aA(Size-1 downto 0) ;
-    end if ;    
-    return Result ;
-  end function SafeResize ;
-
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c is
-  begin
-    return std_logic_vector_max_c(A) ;
-  end function ToTransaction ;
-
-  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c is
-  begin
-    return std_logic_vector_max_c(SafeResize(A, Size)) ;
-  end function ToTransaction ;
-
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c is
-  begin
-    return std_logic_vector_max_c(to_signed(A, Size)) ;
-  end function ToTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector is
-  begin
-    return std_logic_vector(A) ;
-  end function FromTransaction ;
-
-  impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector is
-  begin
-    return SafeResize(std_logic_vector(A), Size) ;
-  end function FromTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max_c) return integer is
-  begin
-    return to_integer(signed(A)) ;
-  end function FromTransaction ;
-  
-  ----------------------
-  -- Support for _max provided to support a common methodology, 
-  -- conversions are not needed
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max is
-  begin
-    return A ;
-  end function ToTransaction ;
-
-  impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max is
-  begin
-    return SafeResize(A, Size) ;
-  end function ToTransaction ;
-
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max is
-  begin
-    return std_logic_vector_max(to_signed(A, Size)) ;
-  end function ToTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max) return std_logic_vector is
-  begin
-    return A ;
-  end function FromTransaction ;
-
-  impure function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector is
-  begin
-    return SafeResize(A, Size) ;
-  end function FromTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max) return integer is
-  begin
-    return to_integer(signed(A)) ;
-  end function FromTransaction ;  
-  
-  
   -- resolved_max
   -- return maximum value.  Assert FAILURE if more than 1 /= type'left
   -- No initializations required on ports, default of type'left is ok
