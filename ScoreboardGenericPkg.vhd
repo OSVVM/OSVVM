@@ -70,14 +70,10 @@ library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
   
---  use work.TranscriptPkg.all ; 
---  use work.AlertLogPkg.all ; 
---  use work.NamePkg.all ; 
--- Temporary for dev
-library osvvm ; 
-  use osvvm.TranscriptPkg.all ; 
-  use osvvm.AlertLogPkg.all ; 
-  use osvvm.NamePkg.all ; 
+  use work.TranscriptPkg.all ; 
+  use work.AlertLogPkg.all ; 
+  use work.NamePkg.all ; 
+  use work.ResolutionPkg.all ; 
 
 
 package ScoreboardGenericPkg is
@@ -105,7 +101,7 @@ package ScoreboardGenericPkg is
   type ScoreboardReportType is (REPORT_ERROR, REPORT_ALL, REPORT_NONE) ;   -- replaced by affirmations
 
   type ScoreboardIdType is record
-    Id : integer ;
+    Id : integer_max ;
   end record ScoreboardIdType ; 
   type ScoreboardIdArrayType  is array (integer range <>) of ScoreboardIdType ;  
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;  
@@ -239,6 +235,15 @@ package ScoreboardGenericPkg is
   ) return boolean ; 
   -- Tagged 
   impure function ScoreboardEmpty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return boolean ;                    -- Simple, Tagged
+
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType 
+  ) return boolean ; 
+  -- Tagged 
+  impure function Empty (
     constant ID     : in  ScoreboardIDType ;
     constant Tag    : in  string       
   ) return boolean ;                    -- Simple, Tagged
@@ -2638,6 +2643,22 @@ package body ScoreboardGenericPkg is
   begin
     return ScoreboardStore.Empty(ID.ID, Tag) ; 
   end function ScoreboardEmpty ;
+  
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType 
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID) ; 
+  end function Empty ;
+  
+  -- Tagged 
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID, Tag) ; 
+  end function Empty ;
   
   ------------------------------------------------------------
   -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
