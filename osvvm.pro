@@ -38,6 +38,7 @@
 #  limitations under the License.
 #  
 library osvvm
+analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
 analyze OsvvmGlobalPkg.vhd
 
@@ -63,7 +64,7 @@ analyze ScoreboardGenericPkg.vhd
 analyze ScoreboardPkg_slv.vhd
 analyze ScoreboardPkg_int.vhd
 
-analyze ResolutionPkg.vhd
+analyze ResizePkg.vhd
 analyze TbUtilPkg.vhd
 
 analyze OsvvmContext.vhd 

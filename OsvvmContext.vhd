@@ -51,6 +51,7 @@ context OsvvmContext is
     use OSVVM.CoveragePkg.all ;
     use OSVVM.MemoryPkg.all ;
     use OSVVM.ResolutionPkg.all ;
+    use OSVVM.ResizePkg.all ;
     use OSVVM.TbUtilPkg.all ;
 
 end context OsvvmContext ; 
