@@ -40,6 +40,7 @@
 library osvvm
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
+analyze NameStorePkg.vhd
 analyze OsvvmGlobalPkg.vhd
 
 # Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
