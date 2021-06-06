@@ -43,6 +43,7 @@ context OsvvmContext is
     library OSVVM ;  
 
     use OSVVM.NamePkg.all ;
+    use OSVVM.NameStorePkg.all ;
     use OSVVM.TranscriptPkg.all ; 
     use OSVVM.TextUtilPkg.all ; 
     use OSVVM.OsvvmGlobalPkg.all ;
@@ -51,6 +52,7 @@ context OsvvmContext is
     use OSVVM.CoveragePkg.all ;
     use OSVVM.MemoryPkg.all ;
     use OSVVM.ResolutionPkg.all ;
+    use OSVVM.ResizePkg.all ;
     use OSVVM.TbUtilPkg.all ;
 
 end context OsvvmContext ; 

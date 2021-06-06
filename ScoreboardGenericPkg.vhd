@@ -20,33 +20,35 @@
 --        http://www.SynthWorks.com
 --
 --  Revision History:
---    Date      Version      Description
---    12/2006   2006.12     Initial revision
---    08/2010   2010.08     Added Tailpointer
---    05/2012   2012.05     Changed FIFO to store pointers to ExpectedType
---                          Allows usage of unconstrained arrays
---    08/2012   2012.08     Added Type and Subprogram Generics
---    08/2013   2013.08     Generics:  to_string replaced write, Match replaced check
---                          Added Tags - Experimental
---                          Added Array of Scoreboards
---    09/2013   2013.09     Added file handling, Check Count, Finish Status
---                          Find, Flush
---    06/2015   2015.06     Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount, 
---                          Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
---                          Deallocate, Initialized, Function SetName
---    11/2016   2016.11     Released as part of OSVVM 
---    05/2017   2017.05     First print Actual then only print Expected if mis-match  
---    04/2018   2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
---    01/2020   2020.01     Updated Licenses to Apache
+--    Date      Version     Description
+--    05/2021   2021.05     Updated Data Structure, IDs for new use model, and Wrapper Subprograms
+--    10/2020   2020.10     Added Peek
 --    05/2020   2020.05     Updated calls to IncAffirmCount
 --                          Overloaded Check with functions that return pass/fail (T/F)
 --                          Added GetFifoCount.   Added GetPushCount which is same as GetItemCount
---    10/2020   2020.10     Added Peek
+--    01/2020   2020.01     Updated Licenses to Apache
+--    04/2018   2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
+--    05/2017   2017.05     First print Actual then only print Expected if mis-match  
+--    11/2016   2016.11     Released as part of OSVVM 
+--    06/2015   2015.06     Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount, 
+--                          Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
+--                          Deallocate, Initialized, Function SetName
+--    09/2013   2013.09     Added file handling, Check Count, Finish Status
+--                          Find, Flush
+--    08/2013   2013.08     Generics:  to_string replaced write, Match replaced check
+--                          Added Tags - Experimental
+--                          Added Array of Scoreboards
+--    08/2012   2012.08     Added Type and Subprogram Generics
+--    05/2012   2012.05     Changed FIFO to store pointers to ExpectedType
+--                          Allows usage of unconstrained arrays
+--    08/2010   2010.08     Added Tailpointer
+--    12/2006   2006.12     Initial revision
+--
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2006 - 2021 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -71,6 +73,7 @@ library ieee ;
   use work.TranscriptPkg.all ; 
   use work.AlertLogPkg.all ; 
   use work.NamePkg.all ; 
+  use work.ResolutionPkg.all ; 
 
 
 package ScoreboardGenericPkg is
@@ -96,8 +99,304 @@ package ScoreboardGenericPkg is
   -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag
   type ScoreboardReportType is (REPORT_ERROR, REPORT_ALL, REPORT_NONE) ;   -- replaced by affirmations
+
+  type ScoreboardIdType is record
+    Id : integer_max ;
+  end record ScoreboardIdType ; 
+  type ScoreboardIdArrayType  is array (integer range <>) of ScoreboardIdType ;  
+  type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;  
+
+  ------------------------------------------------------------
+  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
+  -- Vector: 1 to Size
+  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+  -- Vector: X(X'Left) to X(X'Right)
+  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+  -- Matrix: 1 to X, 1 to Y
+  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+  -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+
+  ------------------------------------------------------------
+  -- Push items into the scoreboard/FIFO
+
+  -- Simple Scoreboard, no tag
+  procedure Push (
+    constant ID     : in  ScoreboardIDType ;
+    constant Item   : in  ExpectedType
+  ) ;
   
+  -- Simple Tagged Scoreboard
+  procedure Push (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    constant Item   : in  ExpectedType
+  ) ;
+  
+  ------------------------------------------------------------
+  -- Check received item with item in the scoreboard/FIFO
+  
+  -- Simple Scoreboard, no tag
+  procedure Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant ActualData   : in ActualType
+  ) ;
+  
+  -- Simple Tagged Scoreboard
+  procedure Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ActualData   : in  ActualType
+  ) ;
+  
+  -- Simple Scoreboard, no tag
+  impure function Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant ActualData   : in ActualType
+  ) return boolean ; 
+  
+  -- Simple Tagged Scoreboard
+  impure function Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ActualData   : in  ActualType
+  ) return boolean ;
+
+
+  ------------------------------------------------------------
+  -- Pop the top item (FIFO) from the scoreboard/FIFO
+  
+  -- Simple Scoreboard, no tag
+  procedure Pop (
+    constant ID     : in  ScoreboardIDType ;
+    variable Item   : out  ExpectedType
+  ) ;
+  
+  -- Simple Tagged Scoreboard
+  procedure Pop (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    variable Item   : out  ExpectedType
+  ) ;
+
+
+  ------------------------------------------------------------
+  -- Pop the top item (FIFO) from the scoreboard/FIFO
+  -- Caution:  this did not work in older simulators (@2013)
+
+  -- Simple Scoreboard, no tag
+  impure function Pop (
+    constant ID     : in  ScoreboardIDType 
+  ) return ExpectedType ;
+  
+  -- Simple Tagged Scoreboard
+  impure function Pop (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return ExpectedType ;
+
+
+  ------------------------------------------------------------
+  -- Peek at the top item (FIFO) from the scoreboard/FIFO
+  
+  -- Simple Tagged Scoreboard
+  procedure Peek (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    variable Item   : out ExpectedType
+  ) ;
+
+  -- Simple Scoreboard, no tag
+  procedure Peek (
+    constant ID     : in  ScoreboardIDType ;
+    variable Item   : out  ExpectedType
+  ) ;
+  
+  ------------------------------------------------------------
+  -- Peek at the top item (FIFO) from the scoreboard/FIFO
+  -- Caution:  this did not work in older simulators (@2013)
+  
+  -- Tagged Scoreboards
+  impure function Peek (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return ExpectedType ;
+
+  -- Simple Scoreboard
+  impure function Peek (
+    constant ID     : in  ScoreboardIDType 
+  ) return ExpectedType ;
+  
+  ------------------------------------------------------------
+  -- Empty - check to see if scoreboard is empty
+  -- Simple 
+  impure function ScoreboardEmpty (
+    constant ID     : in  ScoreboardIDType 
+  ) return boolean ; 
+  -- Tagged 
+  impure function ScoreboardEmpty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return boolean ;                    -- Simple, Tagged
+
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType 
+  ) return boolean ; 
+  -- Tagged 
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return boolean ;                    -- Simple, Tagged
+
+  ------------------------------------------------------------
+  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+  procedure SetAlertLogID(
+    constant ID              : in  ScoreboardIDType ;
+    constant Name            : in  string ; 
+    constant ParentID        : in  AlertLogIDType := ALERTLOG_BASE_ID ; 
+    constant CreateHierarchy : in  Boolean := TRUE
+  ) ;
+
+  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
+  procedure SetAlertLogID (
+    constant ID     : in  ScoreboardIDType ;
+    constant A      : AlertLogIDType
+  ) ; 
+    
+  impure function GetAlertLogID (
+    constant ID     : in  ScoreboardIDType 
+  ) return AlertLogIDType ;
+  
+
+  ------------------------------------------------------------
+  -- Scoreboard Introspection  
+  
+  -- Number of items put into scoreboard
+  impure function GetItemCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;   -- Simple, with or without tags
+
+  impure function GetPushCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;   -- Simple, with or without tags
+  
+  -- Number of items removed from scoreboard by pop or check
+  impure function GetPopCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;
+
+  -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
+  impure function GetFifoCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;
+
+  -- Number of items checked by scoreboard
+  impure function GetCheckCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;  -- Simple, with or without tags
+  
+  -- Number of items dropped by scoreboard.  See Find/Flush
+  impure function GetDropCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;   -- Simple, with or without tags
+
+  ------------------------------------------------------------
+  -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard. 
+  -- Find returns integer'left if no match found
+  -- Also See Flush.  Flush will drop items up through the ItemNumber
+  
+  -- Simple Scoreboard
+  impure function Find (
+    constant ID          : in  ScoreboardIDType ;
+    constant ActualData  :  in  ActualType 
+  ) return integer ; 
+
+  -- Tagged Scoreboard
+  impure function Find (
+    constant ID          : in  ScoreboardIDType ;
+    constant Tag         :  in  string; 
+    constant ActualData  :  in  ActualType 
+  ) return integer ; 
+  
+  ------------------------------------------------------------
+  -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
+  -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
+  
+  -- Simple Scoreboards
+  procedure Flush (
+    constant ID          : in  ScoreboardIDType ;
+    constant ItemNumber  :  in  integer 
+  ) ; 
+
+  -- Tagged Scoreboards - only removes items that also match the tag
+  procedure Flush (
+    constant ID          : in  ScoreboardIDType ;
+    constant Tag         :  in  string ; 
+    constant ItemNumber  :  in  integer 
+  ) ; 
+  
+  ------------------------------------------------------------
+  -- Generally these are not required.  When a simulation ends and 
+  -- another simulation is started, a simulator will release all allocated items.  
+  procedure Deallocate (
+    constant ID     : in  ScoreboardIDType 
+  ) ;  -- Deletes all allocated items
+  procedure Initialize (
+    constant ID     : in  ScoreboardIDType 
+  ) ;  -- Creates initial data structure if it was destroyed with Deallocate 
+      
+  ------------------------------------------------------------
+  -- Get error count
+  -- Deprecated, replaced by usage of Alerts
+  -- AlertFLow:      Instead use AlertLogPkg.ReportAlerts or AlertLogPkg.GetAlertCount
+  -- Not AlertFlow:  use GetErrorCount to get total error count 
+  
+  -- Scoreboards, with or without tag
+  impure function GetErrorCount(
+    constant ID     : in  ScoreboardIDType 
+  ) return integer ;
+  
+  ------------------------------------------------------------
+  procedure CheckFinish (
+  ------------------------------------------------------------
+    ID                 : ScoreboardIDType ; 
+    FinishCheckCount   : integer ;
+    FinishEmpty        : boolean 
+  ) ; 
+
+  ------------------------------------------------------------
+  -- SetReportMode  
+  -- Not AlertFlow
+  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
+  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
+  --     REPORT_NONE:    Deprecated, do not use.
+  -- AlertFlow:      
+  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, TRUE)
+  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, FALSE)
+  --     REPORT_NONE:    Replaced by AlertLogPkg.SetAlertEnable(AlertLogID, ERROR, FALSE)
+  procedure SetReportMode (
+    constant ID           : in  ScoreboardIDType ;
+    constant ReportModeIn : in  ScoreboardReportType
+  ) ;
+  impure function GetReportMode (
+    constant ID           : in  ScoreboardIDType
+    ) return ScoreboardReportType ;
+
   type ScoreBoardPType is protected
+
+    ------------------------------------------------------------
+    -- Used by Scoreboard Store
+    procedure SetPrintIndex (Enable : boolean := TRUE) ;
+    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
+    -- Vector: 1 to Size
+    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    -- Vector: X(X'Left) to X(X'Right)
+    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    -- Matrix: 1 to X, 1 to Y
+    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+    ------------------------------------------------------------
 
     ------------------------------------------------------------
     -- Emulate arrays of scoreboards 
@@ -516,19 +815,58 @@ package body ScoreboardGenericPkg is
       ExpectedPtr    : ExpectedPointerType ;
       NextPtr        : ListPointerType ;
     end record ;
+    
+--!! Replace the following with
+--    type ScoreboardRecType is record
+--      HeadPointer    : ListPointerType ;
+--      TailPointer    : ListPointerType ; 
+--      PopListPointer : ListPointerType ;
+--
+--      ErrCnt         : integer ; 
+--      DropCount      : integer ;
+--      ItemNumber     : integer ;
+--      PopCount       : integer ;
+--      CheckCount     : integer ;
+--      AlertLogID     : AlertLogIDType ;
+--      Name           : NameStoreIDType ; 
+--      ReportMode     : ScoreboardReportType ; 
+--    end record ScoreboardRecType ; 
+--
+--    type ScoreboardRecArrayType is array (integer range <>) of ScoreboardRecType ;  
+--    type ScoreboardRecArrayPointerType is access ScoreboardRecArrayType ;
+--    variable ScoreboardPointer : ScoreboardRecArrayPointerType ;
+--
+--    -- Alas unfortunately aliases don't word as follows:
+--    -- alias HeadPointer(I) is ScoreboardPointer(I).HeadPointer ;
+
     type ListArrayType is array (integer range <>) of ListPointerType ;  
     type ListArrayPointerType is access ListArrayType ; 
-
+    
     variable ArrayLengthVar  : integer := 1 ; 
-    variable HeadPointer     : ListArrayPointerType := new ListArrayType(1 to 1) ;
-    variable TailPointer     : ListArrayPointerType := new ListArrayType(1 to 1)  ;
-    variable PopListPointer  : ListArrayPointerType := new ListArrayType(1 to 1) ; 
+    
+-- Original Code
+--    variable HeadPointer     : ListArrayPointerType := new ListArrayType(1 to 1) ;
+--    variable TailPointer     : ListArrayPointerType := new ListArrayType(1 to 1)  ;
+--    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
+--    variable PopListPointer  : ListArrayPointerType := new ListArrayType(1 to 1) ; 
+--
+-- Legal, but crashes simulator more thoroughly 
+--    variable HeadPointer     : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
+--    variable TailPointer     : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
+--    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
+--    variable PopListPointer  : ListArrayPointerType := new ListArrayType'(1 => NULL) ; 
+-- Working work around for QS 2020.04 and 2021.02
+    variable Template : ListArrayType(1 to 1) ;  -- Work around for QS 2020.04 and 2021.02
+
+    variable HeadPointer     : ListArrayPointerType := new ListArrayType'(Template) ;
+    variable TailPointer     : ListArrayPointerType := new ListArrayType'(Template) ;
+    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
+    variable PopListPointer  : ListArrayPointerType := new ListArrayType'(Template) ; 
 
     type IntegerArrayType is array (integer range <>) of Integer ;  
     type IntegerArrayPointerType is access IntegerArrayType ; 
     type AlertLogIDArrayType is array (integer range <>) of AlertLogIDType ;  
     type AlertLogIDArrayPointerType is access AlertLogIDArrayType ; 
-
     
     variable ErrCntVar       : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
     variable DropCountVar    : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
@@ -540,7 +878,146 @@ package body ScoreboardGenericPkg is
     variable NameVar         : NamePType ;
     variable ReportModeVar   : ScoreboardReportType ; 
     variable FirstIndexVar   : integer := 1 ;
+    
+    variable PrintIndexVar   : boolean := TRUE ; 
 
+    ------------------------------------------------------------
+    -- Used by ScoreboardStore
+    variable NumItems       : integer := 0 ; 
+    constant MIN_NUM_ITEMS  : integer := 4 ; -- Temporarily small for testing
+--    constant MIN_NUM_ITEMS      : integer := 32 ; -- Min amount to resize array
+    
+    ------------------------------------------------------------
+    procedure SetPrintIndex (Enable : boolean := TRUE) is
+    ------------------------------------------------------------
+    begin
+      PrintIndexVar := Enable ; 
+    end procedure SetPrintIndex ;
+
+    ------------------------------------------------------------
+    -- Package Local
+    function NormalizeArraySize( NewNumItems, MinNumItems : integer ) return integer is
+    ------------------------------------------------------------
+      variable NormNumItems : integer := NewNumItems ;
+      variable ModNumItems  : integer := 0;
+    begin
+      ModNumItems := NewNumItems mod MinNumItems ; 
+      if ModNumItems > 0 then 
+        NormNumItems := NormNumItems + (MinNumItems - ModNumItems) ; 
+      end if ; 
+      return NormNumItems ; 
+    end function NormalizeArraySize ;
+    
+    ------------------------------------------------------------
+    -- Used by Scoreboard Store
+    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
+    ------------------------------------------------------------
+      variable Result : ScoreboardIDType ; 
+      variable MinNewNumItems : integer ;
+    begin
+      SetPrintIndex(FALSE) ; 
+      MinNewNumItems := NumItems + 1 ; 
+      if MinNewNumItems > HeadPointer'length then
+        SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
+      end if ;
+      Result.ID := MinNewNumItems ; 
+      SetAlertLogID(Result.ID, Name, ParentAlertLogID) ; 
+      NumItems  := MinNewNumItems ;
+      return Result ; 
+    end function NewID ;
+
+    ------------------------------------------------------------
+    -- Vector. Assumes valid range (done by NewID)
+    impure function LocalNewID (Name : String ; X : integer_vector ; ArrayParentID : AlertLogIDType) return ScoreboardIDArrayType is
+    ------------------------------------------------------------
+      variable Result         : ScoreboardIDArrayType(X(X'left) to X(X'right)) ; 
+      variable MinNewNumItems : integer ;
+    begin
+      SetPrintIndex(FALSE) ; 
+      MinNewNumItems := NumItems + X(X'right) - X(X'left) + 1 ; 
+      if MinNewNumItems > HeadPointer'length then
+        SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
+      end if ;
+      for i in Result'range loop
+        NumItems := NumItems + 1 ;
+        Result(i).ID := NumItems ; 
+        SetAlertLogID(Result(i).ID, Name & "(" & to_string(i) & ")", ArrayParentID) ; 
+      end loop ;
+--      NumItems  := MinNewNumItems ;
+      return Result ; 
+    end function LocalNewID ;
+    
+    ------------------------------------------------------------
+    -- Vector: 1 to Size
+    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      -- AlertIf(ArrayParentID, Size < 1, "Size parameter is " & to_string(Size) & ".  Required to be >= 1", FAILURE) ; 
+      return LocalNewID(Name, (1, Size) , ArrayParentID) ; 
+    end function NewID ;
+
+    ------------------------------------------------------------
+    -- Vector: X(X'Left) to X(X'Right)
+    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      AlertIf(ArrayParentID, X'length /= 2, "X parameter has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ; 
+      AlertIf(ArrayParentID, X(X'Left) > X(X'right), "X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ; 
+      return LocalNewID(Name, X, ArrayParentID) ; 
+    end function NewID ;
+
+    ------------------------------------------------------------
+    -- Matrix. Assumes valid indices (done by NewID)
+    impure function LocalNewID (Name : String ; X, Y : integer_vector ; ArrayParentID : AlertLogIDType ) return ScoreboardIdMatrixType is
+    ------------------------------------------------------------
+      variable Result         : ScoreboardIdMatrixType(X(X'left) to X(X'right), Y(Y'left) to Y(Y'right)) ; 
+      variable MinNewNumItems : integer ;
+    begin
+      SetPrintIndex(FALSE) ; 
+      MinNewNumItems := NumItems + ( (X(X'right) - X(X'left) + 1) * (Y(Y'right) - Y(Y'left) + 1) ) ; 
+      if MinNewNumItems > HeadPointer'length then
+        SetArrayIndex(1, NormalizeArraySize(MinNewNumItems, MIN_NUM_ITEMS)) ;
+      end if ;
+      for i in X(X'left) to X(X'right) loop
+        for j in Y(Y'left) to Y(Y'right) loop
+          NumItems := NumItems + 1 ;
+          Result(i, j).ID := NumItems ; 
+          SetAlertLogID(Result(i,j).ID, Name & "(" & to_string(i) & ", " & to_string(j) & ")", ArrayParentID) ; 
+        end loop ;
+      end loop ;
+      -- NumItems  := MinNewNumItems ;
+      return Result ; 
+    end function LocalNewID ;        
+    
+    ------------------------------------------------------------
+    -- Matrix: 1 to X, 1 to Y
+    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+--      AlertIf(ArrayParentID, X < 1, "X parameter is " & to_string(X) & ".  Required to be >= 1", FAILURE) ; 
+--      AlertIf(ArrayParentID, Y < 1, "Y parameter is " & to_string(Y) & ".  Required to be >= 1", FAILURE) ; 
+      return LocalNewID(Name, (1,X), (1,Y), ArrayParentID) ; 
+    end function NewID ;        
+     
+    ------------------------------------------------------------
+    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+    ------------------------------------------------------------
+      variable ArrayParentID  : AlertLogIDType ; 
+    begin
+      ArrayParentID := GetAlertLogID(Name, ParentAlertLogID) ; 
+      AlertIf(ArrayParentID, X'length /= 2, "X parameter has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ; 
+      AlertIf(ArrayParentID, Y'length /= 2, "Y parameter has " & to_string(Y'length) & "dimensions.  Required to be 2", FAILURE) ; 
+      AlertIf(ArrayParentID, X(X'Left) > X(X'right), "X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ; 
+      AlertIf(ArrayParentID, Y(Y'Left) > Y(Y'right), "Y(Y'left): " & to_string(Y'Left) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ; 
+      return LocalNewID(Name, X, Y, ArrayParentID) ; 
+    end function NewID ; 
     
     ------------------------------------------------------------
     procedure SetName (Name : String) is
@@ -1034,7 +1511,7 @@ package body ScoreboardGenericPkg is
         else
           write(WriteBuf, GetName(DefaultName => "")) ; 
         end if ; 
-        if ArrayLengthVar > 1 then 
+        if ArrayLengthVar > 1 and PrintIndexVar then 
           write(WriteBuf, " (" & to_string(Index) & ") ") ; 
         end if ; 
         write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
@@ -1949,6 +2426,437 @@ package body ScoreboardGenericPkg is
       -- return Message.all ;
       return GetName("Scoreboard") ;
     end function GetMessage ;
-    
   end protected body ScoreBoardPType ;
+  
+  shared variable ScoreboardStore : ScoreBoardPType ;
+  
+  ------------------------------------------------------------
+  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, ParentAlertLogID) ; 
+  end function NewID ;
+
+  ------------------------------------------------------------
+  -- Vector: 1 to Size
+  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, Size, ParentAlertLogID) ; 
+  end function NewID ;
+  
+  ------------------------------------------------------------
+  -- Vector: X(X'Left) to X(X'Right)
+  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, X, ParentAlertLogID) ; 
+  end function NewID ;
+  
+  ------------------------------------------------------------
+  -- Matrix: 1 to X, 1 to Y
+  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID) ; 
+  end function NewID ;        
+   
+  ------------------------------------------------------------
+  -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID) ; 
+  end function NewID ; 
+
+  ------------------------------------------------------------
+  -- Push items into the scoreboard/FIFO
+
+  ------------------------------------------------------------
+  -- Simple Scoreboard, no tag
+  procedure Push (
+  ------------------------------------------------------------
+    constant ID     : in  ScoreboardIDType ;
+    constant Item   : in  ExpectedType
+  ) is
+  begin
+    ScoreboardStore.Push(ID.ID, Item) ; 
+  end procedure Push ; 
+  
+  -- Simple Tagged Scoreboard
+  procedure Push (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    constant Item   : in  ExpectedType
+  ) is
+  begin
+    ScoreboardStore.Push(ID.ID, Tag, Item) ; 
+  end procedure Push ; 
+  
+  ------------------------------------------------------------
+  -- Check received item with item in the scoreboard/FIFO
+  
+  -- Simple Scoreboard, no tag
+  procedure Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant ActualData   : in ActualType
+  ) is
+  begin
+    ScoreboardStore.Check(ID.ID, ActualData) ; 
+  end procedure Check ; 
+  
+  -- Simple Tagged Scoreboard
+  procedure Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ActualData   : in  ActualType
+  ) is
+  begin
+    ScoreboardStore.Check(ID.ID, Tag, ActualData) ; 
+  end procedure Check ;
+  
+  -- Simple Scoreboard, no tag
+  impure function Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant ActualData   : in ActualType
+  ) return boolean is
+  begin
+    return ScoreboardStore.Check(ID.ID, ActualData) ; 
+  end function Check ; 
+  
+  -- Simple Tagged Scoreboard
+  impure function Check (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ActualData   : in  ActualType
+  ) return boolean is
+  begin
+    return ScoreboardStore.Check(ID.ID, Tag, ActualData) ; 
+  end function Check ;
+
+
+  ------------------------------------------------------------
+  -- Pop the top item (FIFO) from the scoreboard/FIFO
+  
+  -- Simple Scoreboard, no tag
+  procedure Pop (
+    constant ID     : in  ScoreboardIDType ;
+    variable Item   : out  ExpectedType
+  ) is
+  begin
+    ScoreboardStore.Pop(ID.ID, Item) ; 
+  end procedure Pop ;
+  
+  -- Simple Tagged Scoreboard
+  procedure Pop (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    variable Item   : out  ExpectedType
+  ) is
+  begin
+    ScoreboardStore.Pop(ID.ID, Tag, Item) ; 
+  end procedure Pop ;
+
+
+  ------------------------------------------------------------
+  -- Pop the top item (FIFO) from the scoreboard/FIFO
+  -- Caution:  this did not work in older simulators (@2013)
+
+  -- Simple Scoreboard, no tag
+  impure function Pop (
+    constant ID     : in  ScoreboardIDType 
+  ) return ExpectedType is
+  begin
+    return ScoreboardStore.Pop(ID.ID) ; 
+  end function Pop ;
+  
+  -- Simple Tagged Scoreboard
+  impure function Pop (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return ExpectedType is
+  begin
+    return ScoreboardStore.Pop(ID.ID, Tag) ; 
+  end function Pop ;
+
+
+  ------------------------------------------------------------
+  -- Peek at the top item (FIFO) from the scoreboard/FIFO
+  
+  -- Simple Tagged Scoreboard
+  procedure Peek (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    variable Item   : out ExpectedType
+  ) is
+  begin
+    ScoreboardStore.Peek(ID.ID, Tag, Item) ; 
+  end procedure Peek ;
+
+  -- Simple Scoreboard, no tag
+  procedure Peek (
+    constant ID     : in  ScoreboardIDType ;
+    variable Item   : out  ExpectedType
+  ) is
+  begin
+    ScoreboardStore.Peek(ID.ID, Item) ; 
+  end procedure Peek ;
+  
+  ------------------------------------------------------------
+  -- Peek at the top item (FIFO) from the scoreboard/FIFO
+  -- Caution:  this did not work in older simulators (@2013)
+  
+  -- Tagged Scoreboards
+  impure function Peek (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return ExpectedType is
+  begin
+--      return ScoreboardStore.Peek(Tag) ;
+    log("Issues compiling return later");
+    return ScoreboardStore.Peek(ID.ID) ; 
+  end function Peek ;
+
+  -- Simple Scoreboard
+  impure function Peek (
+    constant ID     : in  ScoreboardIDType 
+  ) return ExpectedType is
+  begin
+    return ScoreboardStore.Peek(ID.ID) ; 
+  end function Peek ;
+  
+  ------------------------------------------------------------
+  -- ScoreboardEmpty - check to see if scoreboard is empty
+  -- Simple 
+  impure function ScoreboardEmpty (
+    constant ID     : in  ScoreboardIDType 
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID) ; 
+  end function ScoreboardEmpty ;
+  
+  -- Tagged 
+  impure function ScoreboardEmpty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID, Tag) ; 
+  end function ScoreboardEmpty ;
+  
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType 
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID) ; 
+  end function Empty ;
+  
+  -- Tagged 
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string       
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID, Tag) ; 
+  end function Empty ;
+  
+  ------------------------------------------------------------
+  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+  procedure SetAlertLogID(
+    constant ID              : in  ScoreboardIDType ;
+    constant Name            : in  string ; 
+    constant ParentID        : in  AlertLogIDType := ALERTLOG_BASE_ID ; 
+    constant CreateHierarchy : in  Boolean := TRUE
+  ) is
+  begin
+    ScoreboardStore.SetAlertLogID(ID.ID, Name, ParentID, CreateHierarchy) ; 
+  end procedure SetAlertLogID ;
+
+  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
+  procedure SetAlertLogID (
+    constant ID     : in  ScoreboardIDType ;
+    constant A      : AlertLogIDType
+  ) is
+  begin
+    ScoreboardStore.SetAlertLogID(ID.ID, A) ; 
+  end procedure SetAlertLogID ; 
+    
+  impure function GetAlertLogID (
+    constant ID     : in  ScoreboardIDType 
+  ) return AlertLogIDType is
+  begin
+    return ScoreboardStore.GetAlertLogID(ID.ID) ; 
+  end function GetAlertLogID ;
+  
+
+  ------------------------------------------------------------
+  -- Scoreboard Introspection  
+  
+  -- Number of items put into scoreboard
+  impure function GetItemCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return ScoreboardStore.GetItemCount(ID.ID) ; 
+  end function GetItemCount ;
+
+  impure function GetPushCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return ScoreboardStore.GetPushCount(ID.ID) ; 
+  end function GetPushCount ;
+  
+  -- Number of items removed from scoreboard by pop or check
+  impure function GetPopCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return ScoreboardStore.GetPopCount(ID.ID) ; 
+  end function GetPopCount ;
+
+  -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
+  impure function GetFifoCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return ScoreboardStore.GetFifoCount(ID.ID) ; 
+  end function GetFifoCount ;
+
+  -- Number of items checked by scoreboard
+  impure function GetCheckCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return ScoreboardStore.GetCheckCount(ID.ID) ; 
+  end function GetCheckCount ;
+  
+  -- Number of items dropped by scoreboard.  See Find/Flush
+  impure function GetDropCount (
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return ScoreboardStore.GetDropCount(ID.ID) ; 
+  end function GetDropCount ;
+
+  ------------------------------------------------------------
+  -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard. 
+  -- Find returns integer'left if no match found
+  -- Also See Flush.  Flush will drop items up through the ItemNumber
+  
+  -- Simple Scoreboard
+  impure function Find (
+    constant ID          : in  ScoreboardIDType ;
+    constant ActualData  : in  ActualType 
+  ) return integer is
+  begin
+    return ScoreboardStore.Find(ID.ID, ActualData) ; 
+  end function Find ; 
+
+  -- Tagged Scoreboard
+  impure function Find (
+    constant ID          : in  ScoreboardIDType ;
+    constant Tag         : in  string; 
+    constant ActualData  : in  ActualType 
+  ) return integer is
+  begin
+    return ScoreboardStore.Find(ID.ID, Tag, ActualData) ; 
+  end function Find ; 
+  
+  ------------------------------------------------------------
+  -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
+  -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
+  
+  -- Simple Scoreboards
+  procedure Flush (
+    constant ID          : in  ScoreboardIDType ;
+    constant ItemNumber  :  in  integer 
+  ) is
+  begin
+    ScoreboardStore.Flush(ID.ID, ItemNumber) ; 
+  end procedure Flush ;
+  
+
+  -- Tagged Scoreboards - only removes items that also match the tag
+  procedure Flush (
+    constant ID          : in  ScoreboardIDType ;
+    constant Tag         :  in  string ; 
+    constant ItemNumber  :  in  integer 
+  ) is
+  begin
+    ScoreboardStore.Flush(ID.ID, Tag, ItemNumber) ; 
+  end procedure Flush ; 
+  
+  ------------------------------------------------------------
+  -- Generally these are not required.  When a simulation ends and 
+  -- another simulation is started, a simulator will release all allocated items.  
+  procedure Deallocate (
+    constant ID     : in  ScoreboardIDType 
+  ) is
+  begin
+    ScoreboardStore.Deallocate ; 
+  end procedure Deallocate ; 
+  
+  procedure Initialize (
+    constant ID     : in  ScoreboardIDType 
+  ) is
+  begin
+    ScoreboardStore.Initialize ; 
+  end procedure Initialize ; 
+      
+  ------------------------------------------------------------
+  -- Get error count
+  -- Deprecated, replaced by usage of Alerts
+  -- AlertFLow:      Instead use AlertLogPkg.ReportAlerts or AlertLogPkg.GetAlertCount
+  -- Not AlertFlow:  use GetErrorCount to get total error count 
+  
+  -- Scoreboards, with or without tag
+  impure function GetErrorCount(
+    constant ID     : in  ScoreboardIDType 
+  ) return integer is
+  begin
+    return GetAlertCount(ScoreboardStore.GetAlertLogID(ID.ID)) ; 
+  end function GetErrorCount ; 
+
+
+  ------------------------------------------------------------
+  procedure CheckFinish (
+  ------------------------------------------------------------
+    ID                 : ScoreboardIDType ; 
+    FinishCheckCount   : integer ;
+    FinishEmpty        : boolean 
+  ) is 
+  begin
+    ScoreboardStore.CheckFinish(ID.ID, FinishCheckCount, FinishEmpty) ; 
+  end procedure CheckFinish ; 
+
+
+  
+  ------------------------------------------------------------
+  -- SetReportMode  
+  -- Not AlertFlow
+  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
+  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
+  --     REPORT_NONE:    Deprecated, do not use.
+  -- AlertFlow:      
+  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, TRUE)
+  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, FALSE)
+  --     REPORT_NONE:    Replaced by AlertLogPkg.SetAlertEnable(AlertLogID, ERROR, FALSE)
+  procedure SetReportMode (
+    constant ID           : in  ScoreboardIDType ;
+    constant ReportModeIn : in  ScoreboardReportType
+  ) is
+  begin
+--    ScoreboardStore.SetReportMode(ID.ID, ReportModeIn) ; 
+	ScoreboardStore.SetReportMode(ReportModeIn) ; 
+  end procedure SetReportMode ; 
+  
+  impure function GetReportMode (
+    constant ID           : in  ScoreboardIDType
+  ) return ScoreboardReportType is
+  begin
+--    return ScoreboardStore.GetReportMode(ID.ID) ; 
+	return ScoreboardStore.GetReportMode ; 
+  end function GetReportMode ; 
+  
 end ScoreboardGenericPkg ;
