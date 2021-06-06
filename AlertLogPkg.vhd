@@ -26,31 +26,11 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2015   2015.01    Initial revision
---    03/2015   2015.03    Added:  AlertIfEqual, AlertIfNotEqual, AlertIfDiff, PathTail,
---                         ReportNonZeroAlerts, ReadLogEnables
---    05/2015   2015.06    Added IncAlertCount, AffirmIf
---    07/2015   2016.01    Fixed AlertLogID issue with > 32 IDs
---    02/2016   2016.02    Fixed IsLogEnableType (for PASSED), AffirmIf (to pass AlertLevel)
---                         Created LocalInitialize
---    05/2017   2017.05    AffirmIfEqual, AffirmIfDiff,
---                         GetAffirmCount (deprecates GetAffirmCheckCount), IncAffirmCount (deprecates IncAffirmCheckCount),
---                         IsAlertEnabled (alias), IsLogEnabled (alias)
---    04/2018   2018.04    Fix to PathTail.  Prep to change AlertLogIDType to a type.
---    10/2018   2018.10    Added pragmas to allow alerts, logs, and affirmations in RTL code
---                         Added local variable to mirror top level ErrorCount and display in simulator
---                         Added prefix and suffix
---                         Debug printing with number of errors as prefix
---    01/2020   2020.01    Updated Licenses to Apache
---    05/2020   2020.05    Added internal variables AlertCount (W, E, F) and ErrorCount (integer)
---                         that hold the error state.   These can be displayed in wave windows
---                         in simulation to track number of errors.
---                         Calls to std.env.stop now return ErrorCount
---                         Updated calls to check for valid AlertLogIDs
---                         Added affirmation count for each level.
---                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
---                         Disabled Alerts now handled in separate bins and reported separately.
---                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
+--    06/2021   2021.06    FindAlertLogID updated to allow an ID name to match the name set by SetAlertLogName (ALERTLOG_BASE_ID) 
+--    12/2020   2020.12    Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual for std_logic family to use MetaMatch
+--                         Added AffirmIfEqual for boolean
+--    10/2020   2020.10    Added MetaMatch.
+--                         Updated AlertIfEqual and AlertIfNotEqual for std_logic family to use MetaMatch
 --    08/2020   2020.08    Alpha Test Release of Specification Tracking - Changes are provisional and subject to change
 --                         Added Passed Goals - reported with ReportAlerts and ReportRequirements.
 --                         Added WriteAlerts - CSV format of the information in ReportAlerts
@@ -62,14 +42,35 @@
 --                         Added AffirmIf("Req ID 1", ...) -- will work even if ID not set by GetReqID or ReadSpecification
 --                         Added ReportRequirements, WriteRequirements, and ReadRequirements (to merge results of multiple tests) 
 --                         Added WriteTestSummary, ReadTestSummaries, ReportTestSummaries, and WriteTestSummaries.
---    10/2020   2020.10    Added MetaMatch.
---                         Updated AlertIfEqual and AlertIfNotEqual for std_logic family to use MetaMatch
---    12/2020   2020.12    Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual for std_logic family to use MetaMatch
---                         Added AffirmIfEqual for boolean
+--    05/2020   2020.05    Added internal variables AlertCount (W, E, F) and ErrorCount (integer)
+--                         that hold the error state.   These can be displayed in wave windows
+--                         in simulation to track number of errors.
+--                         Calls to std.env.stop now return ErrorCount
+--                         Updated calls to check for valid AlertLogIDs
+--                         Added affirmation count for each level.
+--                           Turn off reporting with SetAlertLogOptions (PrintAffirmations => TRUE) ;
+--                         Disabled Alerts now handled in separate bins and reported separately.
+--                         Turn off reporting with SetAlertLogOptions (PrintDisabledAlerts => TRUE) ;
+--    01/2020   2020.01    Updated Licenses to Apache
+--    10/2018   2018.10    Added pragmas to allow alerts, logs, and affirmations in RTL code
+--                         Added local variable to mirror top level ErrorCount and display in simulator
+--                         Added prefix and suffix
+--                         Debug printing with number of errors as prefix
+--    04/2018   2018.04    Fix to PathTail.  Prep to change AlertLogIDType to a type.
+--    05/2017   2017.05    AffirmIfEqual, AffirmIfDiff,
+--                         GetAffirmCount (deprecates GetAffirmCheckCount), IncAffirmCount (deprecates IncAffirmCheckCount),
+--                         IsAlertEnabled (alias), IsLogEnabled (alias)
+--    02/2016   2016.02    Fixed IsLogEnableType (for PASSED), AffirmIf (to pass AlertLevel)
+--                         Created LocalInitialize
+--    07/2015   2016.01    Fixed AlertLogID issue with > 32 IDs
+--    05/2015   2015.06    Added IncAlertCount, AffirmIf
+--    03/2015   2015.03    Added:  AlertIfEqual, AlertIfNotEqual, AlertIfDiff, PathTail,
+--                         ReportNonZeroAlerts, ReadLogEnables
+--    01/2015   2015.01    Initial revision
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2015 - 2020 by SynthWorks Design Inc.
+--  Copyright (c) 2015 - 2021 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -2344,7 +2345,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       constant NameLower : string := to_lower(Name) ;
     begin
-      for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
+      for i in ALERTLOG_BASE_ID+1 to NumAlertLogIDsVar loop
         if NameLower = AlertLogPtr(i).NameLower.all then
           return i ;
         end if ;
@@ -2361,7 +2362,7 @@ package body AlertLogPkg is
       if ParentID = ALERTLOG_ID_NOT_ASSIGNED then
         return FindAlertLogID(Name) ;
       else
-        for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
+        for i in ALERTLOG_BASE_ID+1 to NumAlertLogIDsVar loop
           if NameLower = AlertLogPtr(i).NameLower.all and
             (AlertLogPtr(i).ParentID = ParentID or AlertLogPtr(i).ParentIDSet = FALSE)
           then
