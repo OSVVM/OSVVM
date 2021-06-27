@@ -101,6 +101,8 @@ package RandomPkg is
   --    function  GenRandSeed(S : string) return RandomSeedType ;
   --  ) ;
 
+  constant OSVVM_RANDOM_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+
   -- make things from SortListPkg_int visible
   alias sort is work.SortListPkg_int.sort[integer_vector return integer_vector] ;
   alias revsort is work.SortListPkg_int.revsort[integer_vector return integer_vector] ;
@@ -134,36 +136,51 @@ package RandomPkg is
   -- RandomParm IO
   function to_string(A : RandomDistType) return string ;
   procedure write(variable L : inout line ; A : RandomDistType ) ;
-  procedure read(variable L : inout line ; A : out RandomDistType ; good : out boolean ) ;
-  procedure read(variable L : inout line ; A : out RandomDistType ) ;
+  procedure read (variable L : inout line ; A : out RandomDistType ; good : out boolean ) ;
+  procedure read (variable L : inout line ; A : out RandomDistType ) ;
   function to_string(A : RandomParmType) return string ;
   procedure write(variable L : inout line ; A : RandomParmType ) ;
-  procedure read(variable L : inout line ; A : out RandomParmType ; good : out boolean ) ;
-  procedure read(variable L : inout line ; A : out RandomParmType ) ;
+  procedure read (variable L : inout line ; A : out RandomParmType ; good : out boolean ) ;
+  procedure read (variable L : inout line ; A : out RandomParmType ) ;
 
 
+  --- ///////////////////////////////////////////////////////////////////////////
+  --- ///////////////////////////////////////////////////////////////////////////
+  ---   
+  ---  RandomPType
+  ---   
+  --- ///////////////////////////////////////////////////////////////////////////
+  --- ///////////////////////////////////////////////////////////////////////////
   type RandomPType is protected
-    -- Seed Manipulation
+  
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Parameter Settings
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    --  Seed Manipulation
+    ------------------------------------------------------------
     -- Known ambiguity between InitSeed with string and integer_vector
     -- Recommendation, use :  RV.InitSeed(RV'instance_path) ;
     -- For integer_vector use either : RV.InitSeed(IV => (1,5)) ;
     --   or : RV.InitSeed(integer_vector'(1,5)) ;
-    procedure InitSeed (S  : string ) ;
-    procedure InitSeed (I  : integer ) ;
-    procedure InitSeed (IV : integer_vector ) ;
-
-    -- SetSeed & GetSeed :  Used to save and restore seed values
-    procedure SetSeed (RandomSeedIn : RandomSeedType ) ;
-    impure function GetSeed return RandomSeedType ;
-    -- SeedRandom = SetSeed & GetSeed for SV compatibility
-    -- replace with aliases when they work in popular simulators
-    procedure SeedRandom (RandomSeedIn : RandomSeedType ) ;
+    -- Initialize Seeds
+    procedure InitSeed         ( S : string ;  UseNewSeedMethods : boolean := FALSE ) ;
+    procedure InitSeed         ( I : integer ; UseNewSeedMethods : boolean := FALSE ) ;
+    procedure InitSeed         ( T : time ;    UseNewSeedMethods : boolean := TRUE ) ;
+    procedure InitSeed         ( IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) ;
+    -- Save and restore seed values
+    procedure       SetSeed    (RandomSeedIn : RandomSeedType ) ;
+    impure function GetSeed    return RandomSeedType ;
+    procedure       SeedRandom (RandomSeedIn : RandomSeedType ) ;
     impure function SeedRandom return RandomSeedType ;
     -- alias SeedRandom is SetSeed [RandomSeedType] ;
     -- alias SeedRandom is GetSeed [return RandomSeedType] ;
 
-    -- Setting Randomization Parameters
-    -- Allows RandInt to have distributions other than uniform
+    ------------------------------------------------------------
+    --  Setting Randomization Parameters
+    ------------------------------------------------------------
     procedure SetRandomParm (RandomParmIn : RandomParmType) ;
     procedure SetRandomParm (
       Distribution : RandomDistType ;
@@ -172,34 +189,55 @@ package RandomPkg is
     ) ;
     impure function GetRandomParm return RandomParmType ;
     impure function GetRandomParm return RandomDistType ;
-
     -- For compatibility with previous version - replace with alias
     procedure SetRandomMode (RandomDistIn : RandomDistType) ;
     -- alias SetRandomMode is SetRandomParm [RandomDistType, Real, Real] ;
 
-    --  Base Randomization Distributions
-    -- Uniform :   Generate a random number with a Uniform distribution
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Base Randomization Distributions
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    --
+    -- Uniform
+    -- Generate a random number with a Uniform distribution
+    --
+    ------------------------------------------------------------
     impure function Uniform (Min, Max : in real) return real ;
     impure function Uniform (Min, Max : integer) return integer ;
     impure function Uniform (Min, Max : integer ; Exclude : integer_vector) return integer ;
 
+    ------------------------------------------------------------
+    --
     -- FavorSmall
     --   Generate random numbers with a greater number of small
     --   values than large values
+    --
+    ------------------------------------------------------------
     impure function FavorSmall (Min, Max : real) return real ;
     impure function FavorSmall (Min, Max : integer) return integer ;
     impure function FavorSmall (Min, Max : integer ; Exclude : integer_vector) return integer ;
 
+    ------------------------------------------------------------
+    --
     -- FavorBig
     --   Generate random numbers with a greater number of large
     --   values than small values
+    --
+    ------------------------------------------------------------
     impure function FavorBig (Min, Max : real) return real ;
     impure function FavorBig (Min, Max : integer) return integer ;
     impure function FavorBig (Min, Max : integer ; Exclude : integer_vector) return integer ;
 
-    -- Normal :   Generate a random number with a normal distribution
+    -----------------------------------------------------------------
+    --
+    -- Normal
+    --   Generate a random number with a normal distribution
+    --   Uses Box Muller, per Wikipedia
+    --
+    ------------------------------------------------------------
     impure function Normal (Mean, StdDeviation : real) return real ;
-    -- Normal + RandomVal >= Min and RandomVal < Max
     impure function Normal (Mean, StdDeviation, Min, Max : real) return real ;
     impure function Normal (
       Mean          : real ;
@@ -209,10 +247,14 @@ package RandomPkg is
       Exclude       : integer_vector := NULL_INTV
     ) return integer ;
 
-    -- Poisson :  Generate a random number with a poisson distribution
+    -----------------------------------------------------------------
+    -- Poisson
+    --   Generate a random number with a poisson distribution
     --   Discrete distribution = only generates integral values
+    --   Uses knuth method, per Wikipedia
+    --
+    ------------------------------------------------------------
     impure function Poisson (Mean : real) return real ;
-    -- Poisson + RandomVal >= Min and RandomVal < Max
     impure function Poisson (Mean, Min, Max : real) return real ;
     impure function Poisson (
       Mean          : real ;
@@ -221,107 +263,171 @@ package RandomPkg is
       Exclude       : integer_vector := NULL_INTV
     ) return integer ;
 
-    -- randomization with a range
-    impure function RandInt (Min, Max : integer) return integer ;
-    impure function RandReal(Min, Max : Real) return real ;
-    impure function RandTime (Min, Max : time ; Unit : time := ns) return time ;
-    impure function RandSlv (Min, Max, Size : natural) return std_logic_vector ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomization with range.
+    --    Uses internal settings of RandomParm to deterimine distribution.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandInt      (Min, Max : integer) return integer ;
+    impure function RandReal     (Min, Max : Real) return real ;
+    impure function RandTime     (Min, Max : time ; Unit : time := ns) return time ;
+    impure function RandSlv      (Min, Max, Size : natural) return std_logic_vector ;
     impure function RandUnsigned (Min, Max, Size : natural) return Unsigned ;
-    impure function RandSigned (Min, Max : integer ; Size : natural ) return Signed ;
-    impure function RandIntV (Min, Max : integer ; Size : natural) return integer_vector ;
-    impure function RandIntV (Min, Max : integer ; Unique : natural ; Size : natural) return integer_vector ;
-    impure function RandRealV (Min, Max : real ; Size : natural) return real_vector ;
-    impure function RandTimeV (Min, Max : time ; Size : natural ; Unit : time := ns) return time_vector ;
-    impure function RandTimeV (Min, Max : time ; Unique : natural ; Size : natural ; Unit : time := ns) return time_vector ;
+    impure function RandSigned   (Min, Max : integer ; Size   : natural) return Signed ;
+    impure function RandIntV     (Min, Max : integer ; Size   : natural) return integer_vector ;
+    impure function RandIntV     (Min, Max : integer ; Unique : natural ; Size : natural) return integer_vector ;
+    impure function RandRealV    (Min, Max : real ;    Size   : natural) return real_vector ;
+    impure function RandTimeV    (Min, Max : time ;    Size   : natural ; Unit : time := ns) return time_vector ;
+    impure function RandTimeV    (Min, Max : time ;    Unique : natural ; Size : natural ; Unit : time := ns) return time_vector ;
 
-    --  randomization with a range and exclude vector
-    impure function RandInt (Min, Max : integer ; Exclude : integer_vector ) return integer ;
-    impure function RandTime (Min, Max : time ; Exclude : time_vector ; Unit : time := ns) return time ;
-    impure function RandSlv (Min, Max : natural ; Exclude : integer_vector ; Size : natural ) return std_logic_vector ;
-    impure function RandUnsigned (Min, Max : natural ; Exclude : integer_vector ; Size : natural ) return Unsigned ;
-    impure function RandSigned (Min, Max : integer ; Exclude : integer_vector ; Size : natural ) return Signed ;
-    impure function RandIntV (Min, Max : integer ; Exclude : integer_vector ; Size : natural) return integer_vector ;
-    impure function RandIntV (Min, Max : integer ; Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
-    impure function RandTimeV (Min, Max : time ; Exclude : time_vector ; Size : natural ; Unit : in time := ns) return time_vector ;
-    impure function RandTimeV (Min, Max : time ; Exclude : time_vector ; Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector ;
 
-    -- Randomly select a value within a set of values
-    impure function RandInt ( A : integer_vector ) return integer ;
-    impure function RandReal ( A : real_vector ) return real ;
-    impure function RandTime (A : time_vector) return time ;
-    impure function RandSlv (A : integer_vector ; Size : natural) return std_logic_vector  ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomization with range and exclude vector.
+    --    Uses internal settings of RandomParm to deterimine distribution.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandInt      (Min, Max : integer ; Exclude : integer_vector ) return integer ;
+    impure function RandTime     (Min, Max : time ;    Exclude : time_vector ;    Unit   : time := ns) return time ;
+    impure function RandSlv      (Min, Max : natural ; Exclude : integer_vector ; Size   : natural) return std_logic_vector ;
+    impure function RandUnsigned (Min, Max : natural ; Exclude : integer_vector ; Size   : natural) return Unsigned ;
+    impure function RandSigned   (Min, Max : integer ; Exclude : integer_vector ; Size   : natural) return Signed ;
+    impure function RandIntV     (Min, Max : integer ; Exclude : integer_vector ; Size   : natural) return integer_vector ;
+    impure function RandIntV     (Min, Max : integer ; Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
+    impure function RandTimeV    (Min, Max : time ;    Exclude : time_vector ;    Size   : natural ; Unit : in time := ns) return time_vector ;
+    impure function RandTimeV    (Min, Max : time ;    Exclude : time_vector ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector ;
+
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomly select a value within a set of values
+    --    Uses internal settings of RandomParm to deterimine distribution.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandInt      (A : integer_vector ) return integer ;
+    impure function RandReal     (A : real_vector    ) return real ;
+    impure function RandTime     (A : time_vector    ) return time ;
+    impure function RandSlv      (A : integer_vector ; Size : natural) return std_logic_vector  ;
     impure function RandUnsigned (A : integer_vector ; Size : natural) return Unsigned ;
-    impure function RandSigned (A : integer_vector ; Size : natural ) return Signed ;
-    impure function RandIntV (A : integer_vector ; Size : natural) return integer_vector ;
-    impure function RandIntV (A : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
-    impure function RandRealV (A : real_vector ; Size : natural) return real_vector ;
-    impure function RandRealV (A : real_vector ; Unique : natural ; Size : natural) return real_vector ;
-    impure function RandTimeV (A : time_vector ; Size : natural) return time_vector ;
-    impure function RandTimeV (A : time_vector ; Unique : natural ; Size : natural) return time_vector ;
+    impure function RandSigned   (A : integer_vector ; Size : natural) return Signed ;
+    impure function RandIntV     (A : integer_vector ; Size : natural) return integer_vector ;
+    impure function RandIntV     (A : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
+    impure function RandRealV    (A : real_vector ;    Size   : natural) return real_vector ;
+    impure function RandRealV    (A : real_vector ;    Unique : natural ; Size : natural) return real_vector ;
+    impure function RandTimeV    (A : time_vector ;    Size   : natural) return time_vector ;
+    impure function RandTimeV    (A : time_vector ;    Unique : natural ; Size : natural) return time_vector ;
 
-    -- Randomly select a value within a set of values with exclude values (so can skip last or last n)
-    impure function RandInt ( A, Exclude : integer_vector  ) return integer ;
-    impure function RandReal ( A, Exclude : real_vector ) return real ;
-    impure function RandTime (A, Exclude : time_vector) return time ;
-    impure function RandSlv (A, Exclude : integer_vector ; Size : natural) return std_logic_vector  ;
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
+    --    Uses internal settings of RandomParm to deterimine distribution.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandInt      (A, Exclude : integer_vector  ) return integer ;
+    impure function RandReal     (A, Exclude : real_vector ) return real ;
+    impure function RandTime     (A, Exclude : time_vector) return time ;
+    impure function RandSlv      (A, Exclude : integer_vector ; Size : natural) return std_logic_vector  ;
     impure function RandUnsigned (A, Exclude : integer_vector ; Size : natural) return Unsigned ;
-    impure function RandSigned (A, Exclude : integer_vector ; Size : natural ) return Signed ;
-    impure function RandIntV (A, Exclude : integer_vector ; Size : natural) return integer_vector ;
-    impure function RandIntV (A, Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
-    impure function RandRealV (A, Exclude : real_vector ; Size : natural) return real_vector ;
-    impure function RandRealV (A, Exclude : real_vector ; Unique : natural ; Size : natural) return real_vector ;
-    impure function RandTimeV (A, Exclude : time_vector ; Size : natural) return time_vector ;
-    impure function RandTimeV (A, Exclude : time_vector ; Unique : natural ; Size : natural) return time_vector ;
+    impure function RandSigned   (A, Exclude : integer_vector ; Size : natural ) return Signed ;
+    impure function RandIntV     (A, Exclude : integer_vector ; Size : natural) return integer_vector ;
+    impure function RandIntV     (A, Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
+    impure function RandRealV    (A, Exclude : real_vector ; Size : natural) return real_vector ;
+    impure function RandRealV    (A, Exclude : real_vector ; Unique : natural ; Size : natural) return real_vector ;
+    impure function RandTimeV    (A, Exclude : time_vector ; Size : natural) return time_vector ;
+    impure function RandTimeV    (A, Exclude : time_vector ; Unique : natural ; Size : natural) return time_vector ;
 
-    -- Randomly select between 0 and N-1 based on the specified weight.
-    -- where N = number values in weight array
-    impure function DistInt ( Weight : integer_vector ) return integer ;
-    impure function DistSlv ( Weight : integer_vector ; Size  : natural ) return std_logic_vector ;
-    impure function DistUnsigned ( Weight : integer_vector ; Size  : natural ) return unsigned ;
-    impure function DistSigned ( Weight : integer_vector ; Size  : natural ) return signed ;
-    impure function DistBool ( Weight : NaturalVBoolType ) return boolean ;
-    impure function DistSl ( Weight : NaturalVSlType ) return std_logic ;
-    impure function DistBit ( Weight : NaturalVBitType ) return bit ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Basic Discrete Distributions
+    --    Randomly select between 0 and N-1 based on the specified weight.
+    --    where N = number values in weight array
+    --    Always uses Uniform
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function DistInt      (Weight : integer_vector   ) return integer ;
+    impure function DistSlv      (Weight : integer_vector ; Size  : natural ) return std_logic_vector ;
+    impure function DistUnsigned (Weight : integer_vector ; Size  : natural ) return unsigned ;
+    impure function DistSigned   (Weight : integer_vector ; Size  : natural ) return signed ;
+    impure function DistBool     (Weight : NaturalVBoolType ) return boolean ;
+    impure function DistSl       (Weight : NaturalVSlType   ) return std_logic ;
+    impure function DistBit      (Weight : NaturalVBitType  ) return bit ;
 
-    -- Distribution with just weights and with exclude values
-    impure function DistInt ( Weight : integer_vector ; Exclude : integer_vector ) return integer ;
-    impure function DistSlv ( Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return std_logic_vector ;
-    impure function DistUnsigned ( Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return unsigned ;
-    impure function DistSigned ( Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return signed ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Basic Distributions with exclude values (so can skip last or last n)
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function DistInt      (Weight : integer_vector ; Exclude : integer_vector ) return integer ;
+    impure function DistSlv      (Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return std_logic_vector ;
+    impure function DistUnsigned (Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return unsigned ;
+    impure function DistSigned   (Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return signed ;
 
-    -- Distribution with weight and value
-    impure function DistValInt ( A : DistType ) return integer ;
-    impure function DistValSlv ( A : DistType ; Size  : natural) return std_logic_vector ;
-    impure function DistValUnsigned ( A : DistType ; Size  : natural) return unsigned ;
-    impure function DistValSigned ( A : DistType ; Size  : natural) return signed ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Distribution for sparse values
+    --    Specify weight and value
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function DistValInt      (A : DistType ) return integer ;
+    impure function DistValSlv      (A : DistType ; Size  : natural) return std_logic_vector ;
+    impure function DistValUnsigned (A : DistType ; Size  : natural) return unsigned ;
+    impure function DistValSigned   (A : DistType ; Size  : natural) return signed ;
 
-    -- Distribution with weight and value and with exclude values
-    impure function DistValInt ( A : DistType ; Exclude : integer_vector ) return integer ;
-    impure function DistValSlv ( A : DistType ; Exclude : integer_vector ; Size  : natural) return std_logic_vector ;
-    impure function DistValUnsigned ( A : DistType ; Exclude : integer_vector ; Size  : natural) return unsigned ;
-    impure function DistValSigned ( A : DistType ; Exclude : integer_vector ; Size  : natural) return signed ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Distribution for sparse values with exclude values (so can skip last or last n)
+    --    Specify weight and value
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function DistValInt      (A : DistType ; Exclude : integer_vector ) return integer ;
+    impure function DistValSlv      (A : DistType ; Exclude : integer_vector ; Size  : natural) return std_logic_vector ;
+    impure function DistValUnsigned (A : DistType ; Exclude : integer_vector ; Size  : natural) return unsigned ;
+    impure function DistValSigned   (A : DistType ; Exclude : integer_vector ; Size  : natural) return signed ;
 
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
     -- Large vector handling.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandUnsigned (Size : natural) return unsigned ;
-    impure function RandSlv (Size : natural) return std_logic_vector ;
-    impure function RandSigned (Size : natural) return signed ;
+    impure function RandSlv      (Size : natural) return std_logic_vector ;
+    impure function RandSigned   (Size : natural) return signed ;
     impure function RandUnsigned (Max : Unsigned) return unsigned ;
-    impure function RandSlv (Max : std_logic_vector) return std_logic_vector ;
-    impure function RandSigned (Max : signed) return signed ;
+    impure function RandSlv      (Max : std_logic_vector) return std_logic_vector ;
+    impure function RandSigned   (Max : signed) return signed ;
     impure function RandUnsigned (Min, Max : unsigned) return unsigned ;
-    impure function RandSlv (Min, Max : std_logic_vector) return std_logic_vector ;
-    impure function RandSigned (Min, Max : signed) return signed ;
+    impure function RandSlv      (Min, Max : std_logic_vector) return std_logic_vector ;
+    impure function RandSigned   (Min, Max : signed) return signed ;
 
-    -- Convenience Functions
-    impure function RandReal return real ; -- 0.0 to 1.0
-    impure function RandReal(Max : Real) return real ; -- 0.0 to Max
-    impure function RandInt (Max : integer) return integer ;
-    impure function RandSlv (Max, Size : natural) return std_logic_vector ;
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Convenience Functions.  Resolve into calls into the other functions
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandReal     return real ; -- 0.0 to 1.0
+    impure function RandReal     (Max : Real) return real ; -- 0.0 to Max
+    impure function RandInt      (Max : integer) return integer ;
+    impure function RandSlv      (Max, Size : natural) return std_logic_vector ;
     impure function RandUnsigned (Max, Size : natural) return Unsigned ;
-    impure function RandSigned (Max : integer ; Size : natural ) return Signed ;
-    impure function RandBool return boolean;
-    impure function RandSl return std_logic;
-    impure function RandBit return bit;
+    impure function RandSigned   (Max : integer ; Size : natural ) return Signed ;
+    impure function RandBool     return boolean;
+    impure function RandSl       return std_logic;
+    impure function RandBit      return bit;
 
   end protected RandomPType ;
 
@@ -549,27 +655,60 @@ package body RandomPkg is
 
 
 
-  -----------------------------------------------------------------
-  -----------------------------------------------------------------
+  --- ///////////////////////////////////////////////////////////////////////////
+  --- RandomPType Body
+  --- ///////////////////////////////////////////////////////////////////////////
   type RandomPType is protected body
-    --
-    -- RandomSeed manipulation
-    --
+  
     variable RandomSeed : RandomSeedType := GenRandSeed(integer_vector'(1,7)) ;
 
-    procedure InitSeed (S : string ) is
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Seed Manipulation
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    procedure InitSeed (S : string ; UseNewSeedMethods : boolean := FALSE ) is
+      variable ChurnSeed : real ;
     begin
-      RandomSeed := GenRandSeed(S) ;
+      if UseNewSeedMethods then
+        RandomSeed := GenRandSeed(S) ;
+        Uniform(ChurnSeed, RandomSeed) ;
+      else
+        RandomSeed := OldGenRandSeed(S) ;
+      end if ;
     end procedure InitSeed ;
 
-    procedure InitSeed (I : integer ) is
+    procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := FALSE ) is
+      variable ChurnSeed : real ;
     begin
-      RandomSeed := GenRandSeed(I) ;
+      if UseNewSeedMethods then
+        RandomSeed := GenRandSeed(I) ;
+        Uniform(ChurnSeed, RandomSeed) ;
+      else
+        RandomSeed := OldGenRandSeed(I) ;
+      end if ;
+    end procedure InitSeed ;
+    
+    procedure InitSeed (T : time ; UseNewSeedMethods : boolean := TRUE ) is
+      variable ChurnSeed : real ;
+    begin
+      -- Allow use of UseNewSeedMethods but ignore it
+      -- as this is a new method
+      -- Convert T to an integer that is no more than 2**30 bits
+      RandomSeed := GenRandSeed((T mod (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
+      Uniform(ChurnSeed, RandomSeed) ;
     end procedure InitSeed ;
 
-    procedure InitSeed (IV : integer_vector ) is
+    procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) is
+      variable ChurnSeed : real ;
     begin
-      RandomSeed := GenRandSeed(IV) ;
+      if UseNewSeedMethods then
+        RandomSeed := GenRandSeed(IV) ;
+        Uniform(ChurnSeed, RandomSeed) ;
+      else
+        RandomSeed := OldGenRandSeed(IV) ;
+      end if ;
     end procedure InitSeed ;
 
     procedure SetSeed (RandomSeedIn : RandomSeedType ) is
@@ -593,9 +732,12 @@ package body RandomPkg is
     end function SeedRandom ;
 
 
-    --
-    --  randomization mode
-    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    ---   Setting Randomization Parameters
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     variable RandomParm : RandomParmType ; -- left most values ok for init
 
     procedure SetRandomParm (RandomParmIn : RandomParmType) is
@@ -625,20 +767,26 @@ package body RandomPkg is
     end function GetRandomParm ;
 
 
-    -- For compatibility with previous version
+    -- Deprecated.  For compatibility with previous version
     procedure SetRandomMode (RandomDistIn : RandomDistType) is
     begin
       SetRandomParm(RandomDistIn) ;
     end procedure SetRandomMode ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Base Randomization Distributions
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     --
-    --  Base Randomization Distributions
+    -- Uniform
+    -- Generate a random number with a Uniform distribution
     --
-    --
-    -- Uniform :   Generate a random number with a Uniform distribution
-    --
+    ------------------------------------------------------------
     impure function Uniform (Min, Max : in real) return real is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.Uniform: Max < Min", FAILURE) ;
@@ -646,7 +794,9 @@ package body RandomPkg is
       return scale(rRandomVal, Min, Max) ;
     end function Uniform ;
 
+    ------------------------------------------------------------
     impure function Uniform (Min, Max : integer) return integer is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.Uniform: Max < Min", FAILURE) ;
@@ -654,7 +804,9 @@ package body RandomPkg is
       return scale(rRandomVal, Min, Max) ;
     end function Uniform ;
 
+    ------------------------------------------------------------
     impure function Uniform (Min, Max : integer ; Exclude : integer_vector) return integer is
+    ------------------------------------------------------------
       variable iRandomVal : integer ;
       variable ExcludeList : SortListPType ;
       variable count : integer ;
@@ -672,12 +824,15 @@ package body RandomPkg is
     end function Uniform ;
 
 
+    ------------------------------------------------------------
     --
     -- FavorSmall
     --   Generate random numbers with a greater number of small
     --   values than large values
     --
+    ------------------------------------------------------------
     impure function FavorSmall (Min, Max : real) return real is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
@@ -685,7 +840,9 @@ package body RandomPkg is
       return scale(FavorSmall(rRandomVal), Min, Max) ; -- real
     end function FavorSmall ;
 
+    ------------------------------------------------------------
     impure function FavorSmall (Min, Max : integer) return integer is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
@@ -693,7 +850,9 @@ package body RandomPkg is
       return scale(FavorSmall(rRandomVal), Min, Max) ; -- integer
     end function FavorSmall ;
 
+    ------------------------------------------------------------
     impure function FavorSmall (Min, Max : integer ; Exclude : integer_vector) return integer is
+    ------------------------------------------------------------
       variable iRandomVal : integer ;
       variable ExcludeList : SortListPType ;
       variable count : integer ;
@@ -711,12 +870,15 @@ package body RandomPkg is
     end function FavorSmall ;
 
 
+    ------------------------------------------------------------
     --
     -- FavorBig
     --   Generate random numbers with a greater number of large
     --   values than small values
     --
+    ------------------------------------------------------------
     impure function FavorBig (Min, Max : real) return real is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
@@ -724,7 +886,9 @@ package body RandomPkg is
       return scale(FavorBig(rRandomVal), Min, Max) ; -- real
     end function FavorBig ;
 
+    ------------------------------------------------------------
     impure function FavorBig (Min, Max : integer) return integer is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
@@ -732,7 +896,9 @@ package body RandomPkg is
       return scale(FavorBig(rRandomVal), Min, Max) ; -- integer
     end function FavorBig ;
 
+    ------------------------------------------------------------
     impure function FavorBig (Min, Max : integer ; Exclude : integer_vector) return integer is
+    ------------------------------------------------------------
       variable iRandomVal : integer ;
       variable ExcludeList : SortListPType ;
       variable count : integer ;
@@ -751,16 +917,16 @@ package body RandomPkg is
 
 
     -----------------------------------------------------------------
-    -- Normal
-    --   Generate a random number with a normal distribution
     --
-    -- Use Box Muller, per Wikipedia :
-    --    http ://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+    --  Normal
+    --    Generate a random number with a normal distribution
     --
-    -- Use polar method, per Wikipedia :
-    --   http ://en.wikipedia.org/wiki/Marsaglia_polar_method
+    --  Use Box Muller, per Wikipedia :
+    --     http ://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
     --
+    ------------------------------------------------------------
     impure function Normal (Mean, StdDeviation : real) return real is
+    ------------------------------------------------------------
       variable x01, y01 : real ;
       variable StdNormalDist : real ; -- mean 0, variance 1
     begin
@@ -812,8 +978,10 @@ package body RandomPkg is
       return rRandomVal ;
     end function Normal ;
 
+    ------------------------------------------------------------
     -- Normal + RandomVal >= Min and RandomVal <= Max
     impure function Normal (
+    ------------------------------------------------------------
       Mean          : real ;
       StdDeviation  : real ;
       Min           : integer ;
@@ -844,7 +1012,9 @@ package body RandomPkg is
     -- Use knuth method, per Wikipedia :
     --   http ://en.wikipedia.org/wiki/Poisson_distribution
     --
+    ------------------------------------------------------------
     impure function Poisson (Mean : real) return real is
+    ------------------------------------------------------------
       variable Product      : Real := 1.0 ;
       variable Bound        : Real := 0.0 ;
       variable UniformRand  : Real := 0.0 ;
@@ -867,8 +1037,10 @@ package body RandomPkg is
       return PoissonRand ;
     end function  Poisson ; -- no range
 
+    ------------------------------------------------------------
     -- Poisson + RandomVal >= Min and RandomVal < Max
     impure function Poisson (Mean, Min, Max : real) return real is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       if Max < Min then
@@ -883,7 +1055,9 @@ package body RandomPkg is
       return rRandomVal ;
     end function  Poisson ;
 
+    ------------------------------------------------------------
     impure function Poisson (
+    ------------------------------------------------------------
       Mean          : real ;
       Min           : integer ;
       Max           : integer ;
@@ -905,11 +1079,15 @@ package body RandomPkg is
     end function  Poisson ;
     
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
-    --  integer randomization with a range
-    --    Distribution determined by RandomParm
+    --  Randomization with range.
+    --    Uses internal settings of RandomParm to deterimine distribution.
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandInt (Min, Max : integer) return integer is
+    ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
         when NONE | UNIFORM =>  return Uniform(Min, Max) ;
@@ -923,11 +1101,9 @@ package body RandomPkg is
       end case ;
     end function RandInt ;
 
-    --
-    --  real randomization with a range
-    --    Distribution determined by RandomParm
-    --
+    ------------------------------------------------------------
     impure function RandReal(Min, Max : Real) return real is
+    ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
         when NONE | UNIFORM =>  return Uniform(Min, Max) ;
@@ -941,7 +1117,9 @@ package body RandomPkg is
       end case ;
     end function RandReal ;
 
+    ------------------------------------------------------------
     impure function RandTime (Min, Max : time ; Unit :time := ns) return time is
+    ------------------------------------------------------------
       variable IntVal : integer ;
     begin
       --  if Max - Min > 2**31 result will be out of range
@@ -949,22 +1127,30 @@ package body RandomPkg is
       Return Min + Unit*IntVal ;
     end function RandTime ;
 
+    ------------------------------------------------------------
     impure function RandSlv (Min, Max, Size : natural) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(RandInt(Min, Max), Size)) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandUnsigned (Min, Max, Size : natural) return Unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(RandInt(Min, Max), Size) ;
     end function RandUnsigned ;
 
+    ------------------------------------------------------------
     impure function RandSigned (Min, Max : integer ; Size : natural ) return Signed is
+    ------------------------------------------------------------
     begin
       return to_signed(RandInt(Min, Max), Size) ;
     end function RandSigned ;
 
+    ------------------------------------------------------------
     impure function RandIntV (Min, Max : integer ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -973,7 +1159,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandIntV (Min, Max : integer ; Unique : natural ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
       variable iUnique : natural ; 
     begin
@@ -989,7 +1177,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandRealV (Min, Max : real ; Size : natural) return real_vector is
+    ------------------------------------------------------------
       variable result : real_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -998,7 +1188,9 @@ package body RandomPkg is
       return result ;
     end function RandRealV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Size : natural ; Unit : time := ns) return time_vector is
+    ------------------------------------------------------------
       variable result : time_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -1007,18 +1199,24 @@ package body RandomPkg is
       return result ;
     end function RandTimeV ;
     
+    ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Unique : natural ; Size : natural ; Unit : time := ns) return time_vector is
+    ------------------------------------------------------------
     begin
       -- if Unique = 0, it is more efficient to call RandTimeV(Min, Max, Size)
       return to_time_vector(RandIntV(Min/Unit, Max/Unit, Unique, Size), Unit) ; 
     end function RandTimeV ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
-    --  integer randomization with a range and exclude vector
-    --    Distribution determined by RandomParm
+    --  Randomization with range and exclude vector.
+    --    Uses internal settings of RandomParm to deterimine distribution.
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandInt (Min, Max : integer ; Exclude : integer_vector ) return integer is
+    ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
         when NONE | UNIFORM =>  return  Uniform(Min, Max, Exclude) ;
@@ -1032,29 +1230,39 @@ package body RandomPkg is
       end case ;
     end function RandInt ;
 
+    ------------------------------------------------------------
     impure function RandTime (Min, Max : time ; Exclude : time_vector ; Unit : time := ns) return time is
+    ------------------------------------------------------------
       variable IntVal : integer ;
     begin
       --  if Min or Max > 2**31 value will be out of range
       return RandInt(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit)) * Unit ;
     end function RandTime ;
 
+    ------------------------------------------------------------
     impure function RandSlv (Min, Max : natural ; Exclude : integer_vector ; Size  : natural ) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(RandInt(Min, Max, Exclude), Size)) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandUnsigned (Min, Max : natural ; Exclude : integer_vector ; Size  : natural ) return Unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(RandInt(Min, Max, Exclude), Size) ;
     end function RandUnsigned ;
 
+    ------------------------------------------------------------
     impure function RandSigned (Min, Max : integer ; Exclude : integer_vector ; Size  : natural ) return Signed is
+    ------------------------------------------------------------
     begin
       return to_signed(RandInt(Min, Max, Exclude), Size) ;
     end function RandSigned ;
 
+    ------------------------------------------------------------
     impure function RandIntV (Min, Max : integer ; Exclude : integer_vector ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -1063,7 +1271,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandIntV (Min, Max : integer ; Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable ResultPlus : integer_vector(1 to Size + Exclude'length) ;
     begin
       -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
@@ -1074,57 +1284,76 @@ package body RandomPkg is
       return ResultPlus(1 to Size) ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Exclude : time_vector ; Size : natural ; Unit : in time := ns) return time_vector is
+    ------------------------------------------------------------
     begin
       return to_time_vector( RandIntV(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit), Size), Unit ) ; 
-   end function RandTimeV ;
+    end function RandTimeV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Exclude : time_vector ; Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector is
+    ------------------------------------------------------------
     begin
       -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
       return to_time_vector( RandIntV(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit), Unique, Size), Unit ) ; 
     end function RandTimeV ;
 
 
-
+    --- ///////////////////////////////////////////////////////////////////////////
     --
-    -- Randomly select a value within a set of values
-    --    Distribution determined by RandomParm
+    --  Randomly select a value within a set of values
+    --    Uses internal settings of RandomParm to deterimine distribution.
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandInt ( A : integer_vector ) return integer is
-      alias A_norm : integer_vector(1 to A'length) is A ;
+     ------------------------------------------------------------
+     alias A_norm : integer_vector(1 to A'length) is A ;
     begin
       return A_norm( RandInt(1, A'length) ) ;
     end function RandInt ;
 
+    ------------------------------------------------------------
     impure function RandReal ( A : real_vector ) return real is
+    ------------------------------------------------------------
       alias A_norm : real_vector(1 to A'length) is A ;
     begin
       return A_norm( RandInt(1, A'length) ) ;
     end function RandReal ;
 
+    ------------------------------------------------------------
     impure function RandTime ( A : time_vector ) return time is
+    ------------------------------------------------------------
       alias A_norm : time_vector(1 to A'length) is A ;
     begin
       return A_norm( RandInt(1, A'length) ) ;
     end function RandTime ;
 
+    ------------------------------------------------------------
     impure function RandSlv (A : integer_vector ; Size : natural) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(RandInt(A), Size)) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandUnsigned (A : integer_vector ; Size : natural) return Unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(RandInt(A), Size) ;
     end function RandUnsigned ;
 
+    ------------------------------------------------------------
     impure function RandSigned (A : integer_vector ; Size : natural ) return Signed is
+    ------------------------------------------------------------
     begin
       return to_signed(RandInt(A), Size) ;
     end function RandSigned ;
 
+    ------------------------------------------------------------
     impure function RandIntV (A : integer_vector ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -1133,7 +1362,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandIntV (A : integer_vector ; Unique : natural ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
       variable iUnique : natural ; 
     begin
@@ -1150,7 +1381,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandRealV (A : real_vector ; Size : natural) return real_vector is
+    ------------------------------------------------------------
       variable result : real_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -1159,7 +1392,9 @@ package body RandomPkg is
       return result ;
     end function RandRealV ;
 
+    ------------------------------------------------------------
     impure function RandRealV (A : real_vector ; Unique : natural ; Size : natural) return real_vector is
+    ------------------------------------------------------------
       alias A_norm : real_vector(1 to A'length) is A ;
       variable result : real_vector(1 to Size) ;
       variable IntResult : integer_vector(result'range) ;
@@ -1173,7 +1408,9 @@ package body RandomPkg is
       return result ;
     end function RandRealV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (A : time_vector ; Size : natural) return time_vector is
+    ------------------------------------------------------------
       variable result : time_vector(1 to Size) ;
     begin
       for i in result'range loop
@@ -1182,7 +1419,9 @@ package body RandomPkg is
       return result ;
     end function RandTimeV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (A : time_vector ; Unique : natural ; Size : natural) return time_vector is
+    ------------------------------------------------------------
       alias A_norm : time_vector(1 to A'length) is A ;
       variable result : time_vector(1 to Size) ;
       variable IntResult : integer_vector(result'range) ;
@@ -1197,12 +1436,15 @@ package body RandomPkg is
     end function RandTimeV ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
-    --    Distribution determined by RandomParm
+    --    Uses internal settings of RandomParm to deterimine distribution.
     --
-
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandInt ( A, Exclude : integer_vector ) return integer is
+    ------------------------------------------------------------
       variable NewA : integer_vector(1 to A'length) ;
       variable NewALength : natural ;
     begin
@@ -1212,7 +1454,9 @@ package body RandomPkg is
       return NewA(RandInt(1, NewALength)) ;
     end function RandInt ;
 
+    ------------------------------------------------------------
     impure function RandReal ( A, Exclude : real_vector ) return real is
+    ------------------------------------------------------------
       variable NewA : real_vector(1 to A'length) ;
       variable NewALength : natural ;
     begin
@@ -1222,7 +1466,9 @@ package body RandomPkg is
       return NewA(RandInt(1, NewALength)) ;
     end function RandReal ;
 
+    ------------------------------------------------------------
     impure function RandTime ( A, Exclude : time_vector ) return time is
+    ------------------------------------------------------------
       variable NewA : time_vector(1 to A'length) ;
       variable NewALength : natural ;
     begin
@@ -1232,22 +1478,30 @@ package body RandomPkg is
       return NewA(RandInt(1, NewALength)) ;
     end function RandTime ;
 
+    ------------------------------------------------------------
     impure function RandSlv (A, Exclude : integer_vector ; Size : natural) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(RandInt(A, Exclude), Size)) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandUnsigned (A, Exclude : integer_vector ; Size : natural) return Unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(RandInt(A, Exclude), Size) ;
     end function RandUnsigned ;
 
+    ------------------------------------------------------------
     impure function RandSigned (A, Exclude : integer_vector ; Size : natural ) return Signed is
+    ------------------------------------------------------------
     begin
       return to_signed(RandInt(A, Exclude), Size) ;
     end function RandSigned ;
 
+    ------------------------------------------------------------
     impure function RandIntV (A, Exclude : integer_vector ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
       variable NewA  : integer_vector(1 to A'length) ;
       variable NewALength : natural ;
@@ -1261,7 +1515,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandIntV (A, Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector is
+    ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
       variable NewA  : integer_vector(1 to A'length) ;
       variable NewALength, iUnique : natural ;
@@ -1282,7 +1538,9 @@ package body RandomPkg is
       return result ;
     end function RandIntV ;
 
+    ------------------------------------------------------------
     impure function RandRealV (A, Exclude : real_vector ; Size : natural) return real_vector is
+    ------------------------------------------------------------
       variable result : real_vector(1 to Size) ;
       variable NewA  : real_vector(1 to A'length) ;
       variable NewALength : natural ;
@@ -1296,7 +1554,9 @@ package body RandomPkg is
       return result ;
     end function RandRealV ;
 
+    ------------------------------------------------------------
     impure function RandRealV (A, Exclude : real_vector ; Unique : natural ; Size : natural) return real_vector is
+    ------------------------------------------------------------
       variable result : real_vector(1 to Size) ;
       variable NewA  : real_vector(1 to A'length) ;
       variable NewALength, iUnique : natural ;
@@ -1317,7 +1577,9 @@ package body RandomPkg is
       return result ;
     end function RandRealV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (A, Exclude : time_vector ; Size : natural) return time_vector is
+    ------------------------------------------------------------
       variable result : time_vector(1 to Size) ;
       variable NewA  : time_vector(1 to A'length) ;
       variable NewALength : natural ;
@@ -1331,7 +1593,9 @@ package body RandomPkg is
       return result ;
     end function RandTimeV ;
 
+    ------------------------------------------------------------
     impure function RandTimeV (A, Exclude : time_vector ; Unique : natural ; Size : natural) return time_vector is
+    ------------------------------------------------------------
       variable result : time_vector(1 to Size) ;
       variable NewA  : time_vector(1 to A'length) ;
       variable NewALength, iUnique : natural ;
@@ -1353,11 +1617,15 @@ package body RandomPkg is
     end function RandTimeV ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Basic Discrete Distributions
     --    Always uses Uniform
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function DistInt ( Weight : integer_vector ) return integer is
+    ------------------------------------------------------------
       variable DistArray : integer_vector(weight'range) ;
       variable sum : integer ;
       variable iRandomVal : integer ;
@@ -1386,62 +1654,70 @@ package body RandomPkg is
       return DistArray'low ; -- allows debugging vs integer'left, out of range
     end function DistInt ;
 
+    ------------------------------------------------------------
     impure function DistSlv ( Weight : integer_vector ; Size  : natural ) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(DistInt(Weight), Size)) ;
     end function DistSlv ;
 
+    ------------------------------------------------------------
     impure function DistUnsigned ( Weight : integer_vector ; Size  : natural ) return unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(DistInt(Weight), Size) ;
     end function DistUnsigned ;
 
+    ------------------------------------------------------------
     impure function DistSigned ( Weight : integer_vector ; Size  : natural ) return signed is
+    ------------------------------------------------------------
     begin
       return to_signed(DistInt(Weight), Size) ;
     end function DistSigned ;
 
+    ------------------------------------------------------------
     impure function DistBool ( Weight : NaturalVBoolType ) return boolean is
---      variable FullWeight : NaturalVBoolType(false to true) := (0, 0);
-      variable FullWeight : integer_vector(0 to 1) := (0, 0);
+    ------------------------------------------------------------
+      variable FullWeight : integer_vector(0 to 1) := (others => 0);
     begin
       for i in Weight'range loop
         FullWeight(boolean'pos(i)) := Weight(i) ;
       end loop ; 
       return boolean'val(DistInt(FullWeight)) ;
---      FullWeight(Weight'range) := Weight;
---      return DistInt(integer_vector(FullWeight)) = 1 ;
     end function DistBool ;
 
+    ------------------------------------------------------------
     impure function DistSl ( Weight : NaturalVSlType ) return std_logic is
---      variable FullWeight : NaturalVSlType('U' to '-') := (others => 0);
+    ------------------------------------------------------------
       variable FullWeight : integer_vector(0 to 8) := (others => 0);
     begin
       for i in Weight'range loop
         FullWeight(std_logic'pos(i)) := Weight(i) ;
       end loop ; 
       return std_logic'val(DistInt(FullWeight)) ;
---      FullWeight(Weight'range) := Weight;
---      return std_logic'val(DistInt(integer_vector(FullWeight))) ;
     end function DistSl ;
 
+    ------------------------------------------------------------
     impure function DistBit ( Weight : NaturalVBitType ) return bit is
---      variable FullWeight : NaturalVBitType('0' to '1') := (0, 0);
+    ------------------------------------------------------------
       variable FullWeight : integer_vector(0 to 1) := (others => 0);
     begin
       for i in Weight'range loop
         FullWeight(bit'pos(i)) := Weight(i) ;
       end loop ; 
       return bit'val(DistInt(FullWeight)) ;
---      FullWeight(Weight'range) := Weight;
---      return bit'val(DistInt(integer_vector(FullWeight))) ;
     end function DistBit ;
 
+
+    --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Basic Distributions with exclude values (so can skip last or last n)
     --    Always uses Uniform via DistInt
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function DistInt ( Weight : integer_vector ; Exclude : integer_vector ) return integer is
+    ------------------------------------------------------------
       variable DistArray : integer_vector(weight'range) ;
       variable ExcludeTemp : integer ;
     begin
@@ -1455,27 +1731,37 @@ package body RandomPkg is
       return DistInt(DistArray) ;
     end function DistInt ;
 
+    ------------------------------------------------------------
     impure function DistSlv ( Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(DistInt(Weight, Exclude), Size)) ;
     end function DistSlv ;
 
+    ------------------------------------------------------------
     impure function DistUnsigned ( Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(DistInt(Weight, Exclude), Size) ;
     end function DistUnsigned ;
 
+    ------------------------------------------------------------
     impure function DistSigned ( Weight : integer_vector ; Exclude : integer_vector ; Size  : natural ) return signed is
+    ------------------------------------------------------------
     begin
       return to_signed(DistInt(Weight, Exclude), Size) ;
     end function DistSigned ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Distribution for sparse values
     --    Always uses Uniform via DistInt
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function DistValInt ( A : DistType ) return integer is
+    ------------------------------------------------------------
       variable DistArray : integer_vector(0 to A'length -1) ;
       alias DistRecArray : DistType(DistArray'range) is A ;
     begin
@@ -1485,27 +1771,37 @@ package body RandomPkg is
       return DistRecArray(DistInt(DistArray)).Value ;
     end function DistValInt ;
 
+    ------------------------------------------------------------
     impure function DistValSlv ( A : DistType ; Size  : natural ) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(DistValInt(A), Size)) ;
     end function DistValSlv ;
 
+    ------------------------------------------------------------
     impure function DistValUnsigned ( A : DistType ; Size  : natural ) return unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(DistValInt(A), Size) ;
     end function DistValUnsigned ;
 
+    ------------------------------------------------------------
     impure function DistValSigned ( A : DistType ; Size  : natural ) return signed is
+    ------------------------------------------------------------
     begin
       return to_signed(DistValInt(A), Size) ;
     end function DistValSigned ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Distribution for sparse values with exclude values (so can skip last or last n)
     --    Always uses Uniform via DistInt
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function DistValInt ( A : DistType ; Exclude : integer_vector ) return integer is
+    ------------------------------------------------------------
       variable DistArray : integer_vector(0 to A'length -1) ;
       alias DistRecArray : DistType(DistArray'range) is A ;
     begin
@@ -1519,26 +1815,36 @@ package body RandomPkg is
       return DistRecArray(DistInt(DistArray)).Value ;
     end function DistValInt ;
 
+    ------------------------------------------------------------
     impure function DistValSlv ( A : DistType ; Exclude : integer_vector ; Size  : natural ) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(DistValInt(A, Exclude), Size)) ;
     end function DistValSlv ;
 
+    ------------------------------------------------------------
     impure function DistValUnsigned ( A : DistType ; Exclude : integer_vector ; Size  : natural ) return unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(DistValInt(A, Exclude), Size) ;
     end function DistValUnsigned ;
 
+    ------------------------------------------------------------
     impure function DistValSigned ( A : DistType ; Exclude : integer_vector ; Size  : natural ) return signed is
+    ------------------------------------------------------------
     begin
       return to_signed(DistValInt(A, Exclude), Size) ;
     end function DistValSigned ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
     -- Large vector handling.
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandUnsigned (Size : natural) return unsigned is
+    ------------------------------------------------------------
       constant NumLoops : integer := integer(ceil(real(Size)/30.0)) ;
       constant Remain : integer := (Size - 1) mod 30 + 1 ; -- range 1 to 30
       variable RandVal : unsigned(1 to Size) ;
@@ -1553,18 +1859,23 @@ package body RandomPkg is
       return RandVal ;
     end function RandUnsigned ;
 
+    ------------------------------------------------------------
     impure function RandSlv (Size : natural) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(RandUnsigned(Size)) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandSigned (Size : natural) return signed is
+    ------------------------------------------------------------
     begin
       return signed(RandUnsigned(Size)) ;
     end function RandSigned ;
 
-
+    ------------------------------------------------------------
     impure function RandUnsigned (Max : unsigned) return unsigned is
+    ------------------------------------------------------------
       alias normMax : unsigned (Max'length downto 1) is Max ;
       variable Result : unsigned(Max'range) := (others => '0') ;
       alias normResult : unsigned(normMax'range) is Result ;
@@ -1596,12 +1907,16 @@ package body RandomPkg is
     --   end if ;
     -- end function RandUnsigned ;
 
+    ------------------------------------------------------------
     impure function RandSlv (Max : std_logic_vector) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(RandUnsigned( unsigned(Max))) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandSigned (Max : signed) return signed is
+    ------------------------------------------------------------
     begin
       if max'length > 0 then
         AlertIf (OSVVM_ALERTLOG_ID, Max < 0, "RandomPkg.RandSigned: Max < 0", FAILURE) ;
@@ -1611,8 +1926,9 @@ package body RandomPkg is
       end if ;
     end function RandSigned ;
 
-
+    ------------------------------------------------------------
     impure function RandUnsigned (Min, Max : unsigned) return unsigned is
+    ------------------------------------------------------------
       constant LEN : integer := maximum(Max'length, Min'length) ;
     begin
       if LEN > 0 and Min <= Max then
@@ -1625,8 +1941,9 @@ package body RandomPkg is
       end if ;
     end function RandUnsigned ;
 
-
+    ------------------------------------------------------------
     impure function RandSlv (Min, Max : std_logic_vector) return std_logic_vector is
+    ------------------------------------------------------------
       constant LEN : integer := maximum(Max'length, Min'length) ;
     begin
       if LEN > 0 and Min <= Max then
@@ -1639,8 +1956,9 @@ package body RandomPkg is
       end if ;
     end function RandSlv ;
 
-
+    ------------------------------------------------------------
     impure function RandSigned (Min, Max : signed) return signed is
+    ------------------------------------------------------------
       constant LEN : integer := maximum(Max'length, Min'length) ;
     begin
       if LEN > 0 and Min <= Max then
@@ -1654,52 +1972,71 @@ package body RandomPkg is
     end function RandSigned ;
 
 
+    --- ///////////////////////////////////////////////////////////////////////////
     --
-    -- Convenience Functions.  Resolve into calls into the other functions
+    --  Convenience Functions.  Resolve into calls into the other functions
     --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
     impure function RandReal return real is
+    ------------------------------------------------------------
     begin
       return RandReal(0.0, 1.0) ;
     end function RandReal ;
 
+    ------------------------------------------------------------
     impure function RandReal(Max : Real) return real is  -- 0.0 to Max
+    ------------------------------------------------------------
     begin
       return RandReal(0.0, Max) ;
     end function RandReal ;
 
+    ------------------------------------------------------------
     impure function RandInt (Max : integer) return integer is
+    ------------------------------------------------------------
     begin
       return RandInt(0, Max) ;
     end function RandInt ;
 
+    ------------------------------------------------------------
     impure function RandSlv (Max, Size : natural) return std_logic_vector is
+    ------------------------------------------------------------
     begin
       return std_logic_vector(to_unsigned(RandInt(0, Max), Size)) ;
     end function RandSlv ;
 
+    ------------------------------------------------------------
     impure function RandUnsigned (Max, Size : natural) return Unsigned is
+    ------------------------------------------------------------
     begin
       return to_unsigned(RandInt(0, Max), Size) ;
     end function RandUnsigned ;
 
-
+    ------------------------------------------------------------
     impure function RandSigned (Max : integer ; Size : natural ) return Signed is
+    ------------------------------------------------------------
     begin
       -- chose 0 to Max rather than -Max to +Max to be same as RandUnsigned, either seems logical
       return to_signed(RandInt(0, Max), Size) ;
     end function RandSigned ;
 
+    ------------------------------------------------------------
     impure function RandBool return boolean is
+    ------------------------------------------------------------
     begin
       return RandInt(1) = 1;
     end function RandBool ;
 
+    ------------------------------------------------------------
     impure function RandSl return std_logic is
+    ------------------------------------------------------------
     begin
       return std_logic'val(RandInt(8));
     end function RandSl ;
   
+    ------------------------------------------------------------
     impure function RandBit return bit is
+    ------------------------------------------------------------
     begin
       return bit'val(RandInt(1));
     end function RandBit ;

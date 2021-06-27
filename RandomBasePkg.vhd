@@ -29,18 +29,19 @@
 --
 --  Revision History:
 --    Date       Version    Description
---    01/2008:   0.1        Initial revision
---                          Numerous revisions for VHDL Testbenches and Verification
---    02/2009:   1.0        First Public Released Version
---    02/25/2009 1.1        Replaced reference to std_2008 with a reference 
---                          to ieee_proposed.standard_additions.all ;
+--    06/2021    2021.06    Updated GenRandSeed hash to DJBX33A 
+--    01/2020    2020.01    Updated Licenses to Apache
+--    6/2015     2015.06    Changed GenRandSeed to impure
+--    1/2015     2015.01    Changed Assert/Report to Alert
+--    5/2013     2013.05    No Changes
+--    4/2013     2013.04    No Changes
 --    03/01/2011 2.0        STANDARD VERSION
 --                          Fixed abstraction by moving RandomParmType to RandomPkg.vhd 
---    4/2013     2013.04    No Changes
---    5/2013     2013.05    No Changes
---    1/2015     2015.01    Changed Assert/Report to Alert
---    6/2015     2015.06    Changed GenRandSeed to impure
---    01/2020    2020.01    Updated Licenses to Apache
+--    02/25/2009 1.1        Replaced reference to std_2008 with a reference 
+--                          to ieee_proposed.standard_additions.all ;
+--    02/2009:   1.0        First Public Released Version
+--    01/2008:   0.1        Initial revision
+--                          Numerous revisions for VHDL Testbenches and Verification
 --
 --
 --  This file is part of OSVVM.
@@ -84,8 +85,11 @@ package RandomBasePkg is
   -- Required by RandomPkg.InitSeed
   -- GenRandSeed makes sure all values are in a valid range
   impure function  GenRandSeed(IV : integer_vector) return RandomSeedType ;
+  impure function  OldGenRandSeed(IV : integer_vector) return RandomSeedType ;
   impure function  GenRandSeed(I : integer) return RandomSeedType ;
+  impure function  OldGenRandSeed(I : integer) return RandomSeedType ;
   impure function  GenRandSeed(S : string) return RandomSeedType ;
+  impure function  OldGenRandSeed(S : string) return RandomSeedType ;
   
   -- IO for RandomSeedType.  If use subtype, then create aliases here
   -- in a similar fashion VHDL-2008 std_logic_textio.
@@ -148,8 +152,8 @@ package body RandomBasePkg is
       return GenRandSeed(iIV(1)) ;  -- generate a seed
 
     else  -- only use the left two values
-      -- 1 <= SEED1 <= 2147483562
       -- mod returns 0 to MAX-1, the -1 adjusts legal values, +1 adjusts them back
+      -- 1 <= SEED1 <= 2147483562
       Seed1 := ((iIV(1)-1) mod SEED1_MAX) + 1 ;
      -- 1 <= SEED2 <= 2147483398
       Seed2 := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
@@ -157,26 +161,75 @@ package body RandomBasePkg is
     end if ;
   end function GenRandSeed ;
 
+  impure function OldGenRandSeed(IV : integer_vector) return RandomSeedType is
+    alias iIV : integer_vector(1 to IV'length) is IV ;
+    variable Seed1 : integer ;
+    variable Seed2 : integer ;
+    constant SEED1_MAX : integer := 2147483562 ;
+    constant SEED2_MAX : integer := 2147483398 ;
+  begin
+    if iIV'Length <= 0 then  -- no seed
+      Alert(OSVVM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ; 
+      return (3, 17) ;  -- if continue seed = (3, 17)
+
+    elsif iIV'Length = 1 then  -- one seed value
+      -- inefficient handling, but condition is unlikely
+      return OldGenRandSeed(iIV(1)) ;  -- generate a seed
+
+    else  -- only use the left two values
+      -- mod returns 0 to MAX-1, the -1 adjusts legal values, +1 adjusts them back
+      -- 1 <= SEED1 <= 2147483562
+      Seed1 := ((iIV(1)-1) mod SEED1_MAX) + 1 ;
+     -- 1 <= SEED2 <= 2147483398
+      Seed2 := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
+      return (Seed1, Seed2) ;
+    end if ;
+  end function OldGenRandSeed ;
+
 
   -----------------------------------------------------------------
-  --  GenRandSeed
-  --    transform a single integer into the internal seed
+  --  GenRandSeed - Integer
   --
   impure function GenRandSeed(I : integer) return RandomSeedType is
     variable result : integer_vector(1 to 2) ;
   begin
-    result(1) := I ;
-    result(2) := I/3 + 1 ;
+    result(1) := I * 5381 + 313 ;
+    result(2) := I * 313  + 5381 ;
     return GenRandSeed(result) ; -- make value ranges legal
   end function GenRandSeed ;
 
+  impure function OldGenRandSeed(I : integer) return RandomSeedType is
+    variable result : integer_vector(1 to 2) ;
+  begin
+    result(1) := I ;
+    result(2) := I/3 + 1 ;
+    return OldGenRandSeed(result) ; -- make value ranges legal
+  end function OldGenRandSeed ;
+
 
   -----------------------------------------------------------------
-  --  GenRandSeed
-  --    transform a string value into the internal seed
+  --  GenRandSeed - String
   --    usage:  RV.GenRandSeed(RV'instance_path));
-  --
-  impure function GenRandSeed(S : string) return RandomSeedType is
+  --    hash based on DJBX33A
+  impure function  GenRandSeed(S : string) return RandomSeedType is
+    constant LEN : integer := S'length ;
+    constant HALF_LEN : integer := LEN/2 ;
+    alias revS : string(LEN downto 1) is S ;
+    variable result : RandomSeedType ;
+    variable temp : integer := 5381 ;
+  begin
+    for i in 1 to HALF_LEN loop
+      temp := (temp*33 + character'pos(revS(i))) mod (2**30) ;
+    end loop ;
+    result(1) := temp ;
+    for i in HALF_LEN + 1 to LEN loop
+      temp := (temp*33 + character'pos(revS(i))) mod (2**30) ;
+    end loop ;
+    result(2) := temp ;
+    return result ;  
+  end function GenRandSeed ;
+  
+  impure function OldGenRandSeed(S : string) return RandomSeedType is
     constant LEN : integer := S'length ;
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
@@ -191,8 +244,8 @@ package body RandomBasePkg is
       temp := (temp + character'pos(revS(i))) mod (integer'right - 2**8) ;
     end loop ;
     result(2) := temp ;
-    return GenRandSeed(result) ;  -- make value ranges legal
-  end function GenRandSeed ;
+    return OldGenRandSeed(result) ;  -- make value ranges legal
+  end function OldGenRandSeed ;
 
 
   -----------------------------------------------------------------
