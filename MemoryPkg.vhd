@@ -345,6 +345,8 @@ package body MemoryPkg is
     type MemArrayType    is array (integer range <>) of MemBlockPtrType ;
     type MemArrayPtrType is access MemArrayType ; 
     
+    type FileFormatType is (BINARY, HEX) ; 
+    
 -- Replaced     variable ArrayPtrVar     : MemArrayPtrType := NULL ; 
 -- Replaced     variable AddrWidthVar    : integer := -1 ;  -- set by MemInit  -- Replaced by MemStructPtr(ID).AddrWidth
 -- Replaced     variable DataWidthVar    : natural := 1 ;   -- set by MemInit  -- Replaced by MemStructPtr(ID).DataWidth
@@ -360,8 +362,6 @@ package body MemoryPkg is
       AlertLogID  : AlertLogIDType ; 
       Name        : Line ;  -- Implement internally vs NameStorePType
     end record MemStructType ; 
-    
-    type FileFormatType is (BINARY, HEX) ; 
     
     -- New Structure
     type     ItemArrayType    is array (integer range <>) of MemStructType ; 
@@ -1101,7 +1101,7 @@ package body MemoryPkg is
 -- /////////////////////////////////////////
 -- /////////////////////////////////////////
    ------------------------------------------------------------
-    procedure MemInit (AddrWidth, DataWidth  : integer ) is
+    procedure MemInit ( AddrWidth, DataWidth  : in  integer ) is
     ------------------------------------------------------------
     begin
       MemInit(MEM_STRUCT_PTR_LEFT, AddrWidth, DataWidth) ;
