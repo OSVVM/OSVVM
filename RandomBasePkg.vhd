@@ -67,6 +67,7 @@ use std.textio.all ;
 
 use work.OsvvmGlobalPkg.all ; 
 use work.AlertLogPkg.all ; 
+use work.SortListPkg_int.all ;
 
 -- comment out following 2 lines with VHDL-2008.  Leave in for VHDL-2002 
 -- library ieee_proposed ;						          -- remove with VHDL-2008
@@ -75,30 +76,81 @@ use work.AlertLogPkg.all ;
 
 package RandomBasePkg is
 
-  -- RandomSeedType and Uniform can be replaced by any procedure that
-  -- produces a uniform distribution with 0 <= Value < 1  or  0 < Value < 1
-  -- and maintains the same call interface
+  -----------------------------------------------------------------
+  -- RandomSeedType - Abstract the type for randomization
   type RandomSeedType is array (1 to 2) of integer ;
+  
+  -----------------------------------------------------------------
+  -- Uniform
+  --   Generate a random number with a Uniform distribution
+  --   Required by RandomPkg.  All randomization is derived from here.
+  --   Value produced must be either: 
+  --     0 <= Value < 1  or  0 < Value < 1
+  --
+  --   Current version uses ieee.math_real.Uniform
+  --   This abstraction allows higher precision version 
+  --   of a uniform distribution to be used provided
+  --
   procedure Uniform (Result : out real ;  Seed : inout RandomSeedType) ;
 
-  -- Translate from integer_vector, integer, or string to RandomSeedType
-  -- Required by RandomPkg.InitSeed
-  -- GenRandSeed makes sure all values are in a valid range
-  impure function  GenRandSeed(IV : integer_vector) return RandomSeedType ;
+  -----------------------------------------------------------------
+  --  GenRandSeed
+  --    Generate / hash a seed from a value that is integer_vector, String, Time, or Integer to RandomSeedType
+  --    Used by RandomPkg.InitSeed
+  --    GenRandSeed makes sure all values are in a valid range
+  impure function  GenRandSeed   (IV : integer_vector) return RandomSeedType ;
   impure function  OldGenRandSeed(IV : integer_vector) return RandomSeedType ;
-  impure function  GenRandSeed(I : integer) return RandomSeedType ;
-  impure function  OldGenRandSeed(I : integer) return RandomSeedType ;
-  impure function  GenRandSeed(S : string) return RandomSeedType ;
-  impure function  OldGenRandSeed(S : string) return RandomSeedType ;
+  impure function  GenRandSeed   (I  : integer) return RandomSeedType ;
+  impure function  OldGenRandSeed(I  : integer) return RandomSeedType ;
+  impure function  GenRandSeed   (S  : string)  return RandomSeedType ;
+  impure function  OldGenRandSeed(S  : string)  return RandomSeedType ;
   
-  -- IO for RandomSeedType.  If use subtype, then create aliases here
-  -- in a similar fashion VHDL-2008 std_logic_textio.
-  -- Not required by RandomPkg
+  -----------------------------------------------------------------
+  --- RandomSeedType IO
   function  to_string(A : RandomSeedType) return string ;
   procedure write(variable L: inout line ; A : RandomSeedType ) ;
   procedure read (variable L: inout line ; A : out RandomSeedType ; good : out boolean ) ;
   procedure read (variable L: inout line ; A : out RandomSeedType ) ;
 
+  -----------------------------------------------------------------
+  --- Distribution Types and read/write procedures
+  type RandomDistType is (NONE, UNIFORM, FAVOR_SMALL, FAVOR_BIG, NORMAL, POISSON) ;
+
+  type RandomParmType is record
+    Distribution : RandomDistType ;
+    Mean         : Real ; -- also used as probability of success
+    StdDeviation : Real ; -- also used as number of trials for binomial
+  end record ;
+
+  -----------------------------------------------------------------
+  -- RandomParm IO
+  function to_string(A : RandomDistType) return string ;
+  procedure write(variable L : inout line ; A : RandomDistType ) ;
+  procedure read (variable L : inout line ; A : out RandomDistType ; good : out boolean ) ;
+  procedure read (variable L : inout line ; A : out RandomDistType ) ;
+  function to_string(A : RandomParmType) return string ;
+  procedure write(variable L : inout line ; A : RandomParmType ) ;
+  procedure read (variable L : inout line ; A : out RandomParmType ; good : out boolean ) ;
+  procedure read (variable L : inout line ; A : out RandomParmType ) ;
+
+  -----------------------------------------------------------------
+  ---  Randomization Support
+  ---    Scale                - Scale a value to be within a given range
+  ---    FavorSmall, FavorBig - Distribution Support
+  ---    RemoveExclude 
+  function Scale (A, Min, Max : real) return real ;
+  function Scale (A : real ; Min, Max : integer) return integer ;
+
+  function FavorSmall (A : real) return real ;
+  function FavorBig   (A : real) return real ;
+  
+  function to_time_vector    (A : integer_vector ; Unit : time) return time_vector ;
+  function to_integer_vector (A : time_vector ; Unit : time) return integer_vector ;
+  procedure RemoveExclude    (A, Exclude : integer_vector ; variable NewA : out integer_vector ; variable NewALength : inout natural ) ;
+  function inside            (A : real ; Exclude : real_vector) return boolean ;
+  procedure RemoveExclude    (A, Exclude : real_vector ; variable NewA : out real_vector ; variable NewALength : inout natural ) ;
+  function inside            (A : time ; Exclude : time_vector) return boolean ;
+  procedure RemoveExclude    (A, Exclude : time_vector ; variable NewA : out time_vector ; variable NewALength : inout natural ) ;
 end RandomBasePkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -118,7 +170,9 @@ package body RandomBasePkg is
   --   This abstraction allows higher precision version 
   --   of a uniform distribution to be used provided
   --
+  -----------------------------------------------------------------
   procedure Uniform (
+  -----------------------------------------------------------------
     Result : out   real ;
     Seed   : inout RandomSeedType 
   ) is
@@ -135,8 +189,9 @@ package body RandomBasePkg is
   --
   --    if 2 seed values are passed to GenRandSeed and they are 
   --    in the above range, then they must remain unmodified.
-  --
+  ------------------------------------------------------------
   impure function GenRandSeed(IV : integer_vector) return RandomSeedType is
+  ------------------------------------------------------------
     alias iIV : integer_vector(1 to IV'length) is IV ;
     variable Seed1 : integer ;
     variable Seed2 : integer ;
@@ -161,7 +216,9 @@ package body RandomBasePkg is
     end if ;
   end function GenRandSeed ;
 
+  ------------------------------------------------------------
   impure function OldGenRandSeed(IV : integer_vector) return RandomSeedType is
+  ------------------------------------------------------------
     alias iIV : integer_vector(1 to IV'length) is IV ;
     variable Seed1 : integer ;
     variable Seed2 : integer ;
@@ -189,8 +246,8 @@ package body RandomBasePkg is
 
   -----------------------------------------------------------------
   --  GenRandSeed - Integer
-  --
   impure function GenRandSeed(I : integer) return RandomSeedType is
+  -----------------------------------------------------------------
     variable result : integer_vector(1 to 2) ;
   begin
     result(1) := I * 5381 + 313 ;
@@ -212,6 +269,7 @@ package body RandomBasePkg is
   --    usage:  RV.GenRandSeed(RV'instance_path));
   --    hash based on DJBX33A
   impure function  GenRandSeed(S : string) return RandomSeedType is
+  -----------------------------------------------------------------
     constant LEN : integer := S'length ;
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
@@ -229,7 +287,9 @@ package body RandomBasePkg is
     return result ;  
   end function GenRandSeed ;
   
+  -----------------------------------------------------------------
   impure function OldGenRandSeed(S : string) return RandomSeedType is
+  -----------------------------------------------------------------
     constant LEN : integer := S'length ;
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
@@ -249,21 +309,25 @@ package body RandomBasePkg is
 
 
   -----------------------------------------------------------------
+  --  RandomSeedType IO
+  -- 
+  -----------------------------------------------------------------
   function to_string(A : RandomSeedType) return string is
+  -----------------------------------------------------------------
   begin
     return to_string(A(A'left)) & " " & to_string(A(A'right)) ;
   end function to_string ;
 
-
   -----------------------------------------------------------------
   procedure write(variable L: inout line ; A : RandomSeedType ) is
+  -----------------------------------------------------------------
   begin
     write(L, to_string(A)) ;
   end procedure ;
 
-
   -----------------------------------------------------------------
   procedure read(variable L: inout line ; A : out RandomSeedType ; good : out boolean ) is
+  -----------------------------------------------------------------
     variable iReadValid : boolean ;
   begin
     for i in A'range loop
@@ -273,13 +337,257 @@ package body RandomBasePkg is
     good := iReadValid ;
   end procedure read ;
 
-
   -----------------------------------------------------------------
   procedure read(variable L: inout line ; A : out RandomSeedType ) is
+  -----------------------------------------------------------------
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
       AlertIfNot(ReadValid, OSVVM_ALERTLOG_ID, "RandomBasePkg.read[line, RandomSeedType] failed", FAILURE) ;  
   end procedure read ;
   
+  -----------------------------------------------------------------
+  --  RandomParmType IO
+  -- 
+  -----------------------------------------------------------------
+  function to_string(A : RandomDistType) return string is
+  -----------------------------------------------------------------
+  begin
+    return RandomDistType'image(A) ;
+  end function to_string ;
+
+  -----------------------------------------------------------------
+  procedure write(variable L : inout line ; A : RandomDistType ) is
+  -----------------------------------------------------------------
+  begin
+    write(L, to_string(A)) ;
+  end procedure write ;
+
+  -----------------------------------------------------------------
+  procedure read(variable L : inout line ; A : out RandomDistType ; good : out boolean ) is
+  -----------------------------------------------------------------
+    variable strval : string(1 to 40) ;
+    variable len    : natural ;
+  begin
+    -- procedure SREAD (L : inout LINE ; VALUE : out STRING ; STRLEN : out NATURAL) ;
+    sread(L, strval, len) ;
+    A := RandomDistType'value(strval(1 to len)) ;
+    good := len > 0 ;
+  end procedure read ;
+
+  -----------------------------------------------------------------
+  procedure read(variable L : inout line ; A : out RandomDistType ) is
+  -----------------------------------------------------------------
+    variable ReadValid : boolean ;
+  begin
+      read(L, A, ReadValid) ;
+      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomDistType] failed", FAILURE) ;
+  end procedure read ;
+
+  -----------------------------------------------------------------
+  function to_string(A : RandomParmType) return string is
+  -----------------------------------------------------------------
+  begin
+    return RandomDistType'image(A.Distribution) & " " &
+           to_string(A.Mean, 2) & " " & to_string(A.StdDeviation, 2) ;
+  end function to_string ;
+
+  -----------------------------------------------------------------
+  procedure write(variable L : inout line ; A : RandomParmType ) is
+  -----------------------------------------------------------------
+  begin
+    write(L, to_string(A)) ;
+  end procedure write ;
+
+  -----------------------------------------------------------------
+  procedure read(variable L : inout line ; A : out RandomParmType ; good : out boolean ) is
+  -----------------------------------------------------------------
+    variable strval : string(1 to 40) ;
+    variable len    : natural ;
+    variable igood  : boolean ;
+  begin
+    loop
+      -- procedure SREAD (L : inout LINE ; VALUE : out STRING ; STRLEN : out NATURAL) ;
+      sread(L, strval, len) ;
+      A.Distribution := RandomDistType'value(strval(1 to len)) ;
+      igood := len > 0 ;
+      exit when not igood ;
+
+      read(L, A.Mean, igood) ;
+      exit when not igood ;
+
+      read(L, A.StdDeviation, igood) ;
+      exit ;
+    end loop ;
+    good := igood ;
+  end procedure read ;
+
+  -----------------------------------------------------------------
+  procedure read(variable L : inout line ; A : out RandomParmType ) is
+  -----------------------------------------------------------------
+    variable ReadValid : boolean ;
+  begin
+      read(L, A, ReadValid) ;
+      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomParmType] failed", FAILURE) ; 
+  end procedure read ;
+
+
+  -----------------------------------------------------------------
+  --  Randomization Support
+  --    Scale                - Scale a value to be within a given range
+  --    FavorSmall, FavorBig - Distribution Support
+  --    RemoveExclude 
+  --   
+  -----------------------------------------------------------------
+  --  Scale - Scale a value to be within a given range
+  function Scale (A, Min, Max : real) return real is
+  -----------------------------------------------------------------
+    variable ValRange : Real ;
+  begin
+    ValRange := Max - Min ;
+    return A * ValRange + Min ;
+--!!    -- Already done checked and failed if error.
+--!!    -- If continuing this calculation is no worse than returning real'left
+--!!    if Max >= Min then
+--!!      ValRange := Max - Min ;
+--!!      return A * ValRange + Min ;
+--!!    else
+--!!      return real'left ;
+--!!    end if ;
+  end function Scale ;
+
+  -----------------------------------------------------------------
+  function Scale (A : real ; Min, Max : integer) return integer is
+  -----------------------------------------------------------------
+    variable ValRange : real ;
+    variable rMin, rMax : real ;
+  begin
+    rMin := real(Min) - 0.5 ;
+    rMax := real(Max) + 0.5 ;
+    ValRange := rMax - rMin ;
+    return integer(round(A * ValRange + rMin)) ;
+--!!    -- Already done checked and failed if error.
+--!!    -- If continuing this calculation is no worse than returning real'left
+--!!    if Max >= Min then
+--!!      rMin := real(Min) - 0.5 ;
+--!!      rMax := real(Max) + 0.5 ;
+--!!      ValRange := rMax - rMin ;
+--!!      return integer(round(A * ValRange + rMin)) ;
+--!!    else
+--!!      return integer'left ;
+--!!    end if ;
+  end function Scale ;
+
+  -----------------------------------------------------------------
+  -- FavorSmall - create more smaller values
+  function FavorSmall (A : real) return real is
+  -----------------------------------------------------------------
+  begin
+    return 1.0 - sqrt(A) ;
+  end FavorSmall ;
+
+  -----------------------------------------------------------------
+  -- FavorBig - create more larger values
+  -- alias FavorBig is sqrt[real return real] ;
+  function FavorBig   (A : real) return real is
+  -----------------------------------------------------------------
+  begin
+    return sqrt(A) ;
+  end FavorBig ;
+
+  -----------------------------------------------------------------
+  -- local.
+  function to_time_vector (A : integer_vector ; Unit : time) return time_vector is
+  -----------------------------------------------------------------
+    variable result : time_vector(A'range) ;
+  begin
+    for i in A'range loop
+      result(i) := A(i) * Unit ;
+    end loop ;
+    return result ;
+  end function to_time_vector ;
+
+  -----------------------------------------------------------------
+  -- local
+  function to_integer_vector (A : time_vector ; Unit : time) return integer_vector is
+  -----------------------------------------------------------------
+    variable result : integer_vector(A'range) ;
+  begin
+    for i in A'range loop
+      result(i) := A(i) / Unit ;
+    end loop ;
+    return result ;
+  end function to_integer_vector ;
+
+  -----------------------------------------------------------------
+  -- Remove the exclude list from the list - integer_vector
+  procedure RemoveExclude(A, Exclude : integer_vector ; variable NewA : out integer_vector ; variable NewALength : inout natural ) is
+  -----------------------------------------------------------------
+    alias norm_NewA : integer_vector(1 to NewA'length) is NewA ;
+  begin
+    NewALength := 0 ;
+    for i in A'range loop
+      if not inside(A(i), Exclude) then
+        NewALength := NewALength + 1 ;
+        norm_NewA(NewALength) := A(i) ;
+      end if ;
+    end loop ;
+  end procedure RemoveExclude ;
+
+  -----------------------------------------------------------------
+  -- Inside - real_vector
+  function inside(A : real ; Exclude : real_vector) return boolean is
+  -----------------------------------------------------------------
+  begin
+    for i in Exclude'range loop
+      if A = Exclude(i) then
+        return TRUE ;
+      end if ;
+    end loop ;
+    return FALSE ;
+  end function inside ;
+
+  -----------------------------------------------------------------
+  -- Remove the exclude list from the list - real_vector
+  procedure RemoveExclude(A, Exclude : real_vector ; variable NewA : out real_vector ; variable NewALength : inout natural ) is
+  -----------------------------------------------------------------
+    alias norm_NewA : real_vector(1 to NewA'length) is NewA ;
+  begin
+    NewALength := 0 ;
+    for i in A'range loop
+      if not inside(A(i), Exclude) then
+        NewALength := NewALength + 1 ;
+        norm_NewA(NewALength) := A(i) ;
+      end if ;
+    end loop ;
+  end procedure RemoveExclude ;
+
+  -----------------------------------------------------------------
+  -- Inside - time_vector
+  function inside(A : time ; Exclude : time_vector) return boolean is
+  -----------------------------------------------------------------
+  begin
+    for i in Exclude'range loop
+      if A = Exclude(i) then
+        return TRUE ;
+      end if ;
+    end loop ;
+    return FALSE ;
+  end function inside ;
+
+  -----------------------------------------------------------------
+  -- Remove the exclude list from the list - time_vector
+  procedure RemoveExclude(A, Exclude : time_vector ; variable NewA : out time_vector ; variable NewALength : inout natural ) is
+  -----------------------------------------------------------------
+    alias norm_NewA : time_vector(1 to NewA'length) is NewA ;
+  begin
+    NewALength := 0 ;
+    for i in A'range loop
+      if not inside(A(i), Exclude) then
+        NewALength := NewALength + 1 ;
+        norm_NewA(NewALength) := A(i) ;
+      end if ;
+    end loop ;
+  end procedure RemoveExclude ;
+
 end RandomBasePkg ;
