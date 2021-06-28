@@ -432,7 +432,21 @@ package body RandomPkg is
   --- ///////////////////////////////////////////////////////////////////////////
   type RandomPType is protected body
   
-    variable RandomSeed : RandomSeedType := GenRandSeed(integer_vector'(1,7)) ;
+    variable RandomSeed : RandomSeedType := OldGenRandSeed(integer_vector'(1,7)) ;
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Base Call to Uniform.   Use this one rather than RandomBasePkg
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    -----------------------------------------------------------------
+    impure function Uniform return real is 
+    -----------------------------------------------------------------
+      variable rRandom : real ; 
+    begin
+      ieee.math_real.Uniform (RandomSeed(RandomSeed'left), RandomSeed(RandomSeed'right), rRandom) ;
+      return rRandom ; 
+    end function Uniform ;
 
     --- ///////////////////////////////////////////////////////////////////////////
     ---
@@ -441,6 +455,7 @@ package body RandomPkg is
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
     procedure InitSeed (S : string ; UseNewSeedMethods : boolean := FALSE ) is
+    ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
       if UseNewSeedMethods then
@@ -451,7 +466,9 @@ package body RandomPkg is
       end if ;
     end procedure InitSeed ;
 
+    ------------------------------------------------------------
     procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := FALSE ) is
+    ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
       if UseNewSeedMethods then
@@ -462,7 +479,9 @@ package body RandomPkg is
       end if ;
     end procedure InitSeed ;
     
+    ------------------------------------------------------------
     procedure InitSeed (T : time ; UseNewSeedMethods : boolean := TRUE ) is
+    ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
       -- Allow use of UseNewSeedMethods but ignore it
@@ -472,7 +491,9 @@ package body RandomPkg is
       Uniform(ChurnSeed, RandomSeed) ;
     end procedure InitSeed ;
 
+    ------------------------------------------------------------
     procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) is
+    ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
       if UseNewSeedMethods then
@@ -483,22 +504,30 @@ package body RandomPkg is
       end if ;
     end procedure InitSeed ;
 
+    ------------------------------------------------------------
     procedure SetSeed (RandomSeedIn : RandomSeedType ) is
+    ------------------------------------------------------------
     begin
       RandomSeed := RandomSeedIn ;
     end procedure SetSeed ;
 
+    ------------------------------------------------------------
     procedure SeedRandom (RandomSeedIn : RandomSeedType ) is
+    ------------------------------------------------------------
     begin
       RandomSeed := RandomSeedIn ;
     end procedure SeedRandom ;
 
+    ------------------------------------------------------------
     impure function GetSeed return RandomSeedType is
+    ------------------------------------------------------------
     begin
       return RandomSeed ;
     end function GetSeed ;
 
+    ------------------------------------------------------------
     impure function SeedRandom return RandomSeedType is
+    ------------------------------------------------------------
     begin
       return RandomSeed ;
     end function SeedRandom ;
@@ -512,12 +541,16 @@ package body RandomPkg is
     ------------------------------------------------------------
     variable RandomParm : RandomParmType ; -- left most values ok for init
 
+    ------------------------------------------------------------
     procedure SetRandomParm (RandomParmIn : RandomParmType) is
+    ------------------------------------------------------------
     begin
       RandomParm := RandomParmIn ;
     end procedure SetRandomParm ;
 
+    ------------------------------------------------------------
     procedure SetRandomParm (
+    ------------------------------------------------------------
       Distribution : RandomDistType ;
       Mean         : Real := 0.0 ;
       Deviation    : Real := 0.0
@@ -527,25 +560,98 @@ package body RandomPkg is
     end procedure SetRandomParm ;
 
 
+    ------------------------------------------------------------
     impure function GetRandomParm return RandomParmType is
+    ------------------------------------------------------------
     begin
       return RandomParm ;
     end function GetRandomParm ;
 
 
+    ------------------------------------------------------------
     impure function GetRandomParm return RandomDistType is
+    ------------------------------------------------------------
     begin
       return RandomParm.Distribution ;
     end function GetRandomParm ;
 
 
+    ------------------------------------------------------------
     -- Deprecated.  For compatibility with previous version
     procedure SetRandomMode (RandomDistIn : RandomDistType) is
+    ------------------------------------------------------------
     begin
       SetRandomParm(RandomDistIn) ;
     end procedure SetRandomMode ;
 
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    ---  Check ranges for Randomization and Generate FAILURE
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    -- PT Local
+    impure function CheckMinMax(
+    ------------------------------------------------------------
+      constant Name  : in string ;
+      constant Min   : in real ;
+      constant Max   : in real
+    ) return real is
+    begin
+      if Min > Max then
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg." & Name &
+               ": Min: " & to_string(Min, 2) &
+               " >  Max: " & to_string(Max, 2),
+          FAILURE ) ;
+        return Min ;
+      else
+        return Max ;
+      end if;
+    end function CheckMinMax ;
 
+    ------------------------------------------------------------
+    -- PT Local
+    impure function CheckMinMax(
+    ------------------------------------------------------------
+      constant Name  : in string ;
+      constant Min   : in integer ;
+      constant Max   : in integer
+    ) return integer is
+    begin
+      if Min > Max then
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg." & Name &
+               ": Min: " & to_string(Min) &
+               " >  Max: " & to_string(Max),
+          FAILURE ) ;
+        return Min ;
+      else
+        return Max ;
+      end if;
+    end function CheckMinMax ;
+
+    ------------------------------------------------------------
+    -- PT Local
+    impure function CheckMinMax(
+    ------------------------------------------------------------
+      constant Name  : in string ;
+      constant Min   : in time ;
+      constant Max   : in time
+    ) return time is
+    begin
+      if Min > Max then
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg." & Name &
+               ": Min: " & to_string(Min, ns) &
+               " >  Max: " & to_string(Max, ns),
+          FAILURE ) ;
+        return Min ;
+      else
+        return Max ;
+      end if;
+    end function CheckMinMax ;
+    
     --- ///////////////////////////////////////////////////////////////////////////
     ---
     --- Base Randomization Distributions
@@ -557,31 +663,41 @@ package body RandomPkg is
     -- Generate a random number with a Uniform distribution
     --
     ------------------------------------------------------------
+    impure function LocalUniform (Min, Max : in real) return real is
+    ------------------------------------------------------------
+    begin
+      return scale(Uniform, Min, Max) ;
+    end function LocalUniform ;
+
+    ------------------------------------------------------------
     impure function Uniform (Min, Max : in real) return real is
     ------------------------------------------------------------
-      variable rRandomVal : real ;
+      constant CkMax      : real := CheckMinMax("Uniform", Min, Max) ;
     begin
-      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.Uniform: Max < Min", FAILURE) ;
-      Uniform(rRandomVal, RandomSeed) ;
-      return scale(rRandomVal, Min, Max) ;
+      return LocalUniform(Min, CkMax) ;
     end function Uniform ;
+
+    ------------------------------------------------------------
+    impure function LocalUniform (Min, Max : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return scale(Uniform, Min, Max) ;
+    end function LocalUniform ;
 
     ------------------------------------------------------------
     impure function Uniform (Min, Max : integer) return integer is
     ------------------------------------------------------------
-      variable rRandomVal : real ;
+      constant CkMax      : integer := CheckMinMax("Uniform", Min, Max) ;
     begin
-      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.Uniform: Max < Min", FAILURE) ;
-      Uniform(rRandomVal, RandomSeed) ;
-      return scale(rRandomVal, Min, Max) ;
+      return LocalUniform(Min, CkMax) ;
     end function Uniform ;
 
     ------------------------------------------------------------
-    impure function Uniform (Min, Max : integer ; Exclude : integer_vector) return integer is
+    impure function LocalUniform (Min, Max : integer ; Exclude : integer_vector) return integer is
     ------------------------------------------------------------
-      variable iRandomVal : integer ;
+      variable iRandomVal  : integer ;
       variable ExcludeList : SortListPType ;
-      variable count : integer ;
+      variable count       : integer ;
     begin
       ExcludeList.add(Exclude, Min, Max) ;
       count := ExcludeList.count ;
@@ -593,6 +709,14 @@ package body RandomPkg is
       end loop ;
       ExcludeList.erase ;
       return iRandomVal ;
+    end function LocalUniform ;
+
+    ------------------------------------------------------------
+    impure function Uniform (Min, Max : integer ; Exclude : integer_vector) return integer is
+    ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("Uniform", Min, Max) ;
+    begin
+      return LocalUniform (Min, Max, Exclude) ; 
     end function Uniform ;
 
 
@@ -605,33 +729,30 @@ package body RandomPkg is
     ------------------------------------------------------------
     impure function FavorSmall (Min, Max : real) return real is
     ------------------------------------------------------------
-      variable rRandomVal : real ;
+      constant CkMax      : real := CheckMinMax("FavorSmall", Min, Max) ;
     begin
-      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
-      Uniform(rRandomVal, RandomSeed) ;
-      return scale(FavorSmall(rRandomVal), Min, Max) ; -- real
+      return scale(FavorSmall(Uniform), Min, CkMax) ; -- real
     end function FavorSmall ;
 
     ------------------------------------------------------------
     impure function FavorSmall (Min, Max : integer) return integer is
     ------------------------------------------------------------
-      variable rRandomVal : real ;
+      constant CkMax      : integer := CheckMinMax("FavorSmall", Min, Max) ;
     begin
-      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorSmall: Max < Min", FAILURE) ;
-      Uniform(rRandomVal, RandomSeed) ;
-      return scale(FavorSmall(rRandomVal), Min, Max) ; -- integer
+      return scale(FavorSmall(Uniform), Min, CkMax) ; -- integer
     end function FavorSmall ;
 
     ------------------------------------------------------------
     impure function FavorSmall (Min, Max : integer ; Exclude : integer_vector) return integer is
     ------------------------------------------------------------
-      variable iRandomVal : integer ;
+      variable iRandomVal  : integer ;
       variable ExcludeList : SortListPType ;
-      variable count : integer ;
+      variable count       : integer ;
+      constant CkMax       : integer := CheckMinMax("FavorSmall", Min, Max) ;
     begin
-      ExcludeList.add(Exclude, Min, Max) ;
+      ExcludeList.add(Exclude, Min, CkMax) ;
       count := ExcludeList.count ;
-      iRandomVal := FavorSmall(Min, Max - count) ;
+      iRandomVal := FavorSmall(Min, CkMax - count) ;
       -- adjust count, note iRandomVal changes while checking.
       for i in 1 to count loop
         exit when iRandomVal < ExcludeList.Get(i) ;
@@ -651,33 +772,30 @@ package body RandomPkg is
     ------------------------------------------------------------
     impure function FavorBig (Min, Max : real) return real is
     ------------------------------------------------------------
-      variable rRandomVal : real ;
+      constant CkMax      : real := CheckMinMax("FavorBig", Min, Max) ;
     begin
-      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
-      Uniform(rRandomVal, RandomSeed) ;
-      return scale(FavorBig(rRandomVal), Min, Max) ; -- real
+      return scale(FavorBig(Uniform), Min, CkMax) ; -- real
     end function FavorBig ;
 
     ------------------------------------------------------------
     impure function FavorBig (Min, Max : integer) return integer is
     ------------------------------------------------------------
-      variable rRandomVal : real ;
+      constant CkMax      : integer := CheckMinMax("FavorBig", Min, Max) ;
     begin
-      AlertIf (OSVVM_ALERTLOG_ID, Max < Min, "RandomPkg.FavorBig: Max < Min", FAILURE) ;
-      Uniform(rRandomVal, RandomSeed) ;
-      return scale(FavorBig(rRandomVal), Min, Max) ; -- integer
+      return scale(FavorBig(Uniform), Min, CkMax) ; -- integer
     end function FavorBig ;
 
     ------------------------------------------------------------
     impure function FavorBig (Min, Max : integer ; Exclude : integer_vector) return integer is
     ------------------------------------------------------------
-      variable iRandomVal : integer ;
+      variable iRandomVal  : integer ;
       variable ExcludeList : SortListPType ;
-      variable count : integer ;
+      variable count       : integer ;
+      constant CkMax       : integer := CheckMinMax("FavorBig", Min, Max) ;
     begin
-      ExcludeList.add(Exclude, Min, Max) ;
+      ExcludeList.add(Exclude, Min, CkMax) ;
       count := ExcludeList.count ;
-      iRandomVal := FavorBig(Min, Max - count) ;
+      iRandomVal := FavorBig(Min, CkMax - count) ;
       -- adjust count, note iRandomVal changes while checking.
       for i in 1 to count loop
         exit when iRandomVal < ExcludeList.Get(i) ;
@@ -704,13 +822,15 @@ package body RandomPkg is
     begin
       -- add this check to set parameters?
       if StdDeviation < 0.0 then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Normal: Standard deviation must be >= 0.0", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.Normal: Standard deviation must be >= 0.0", FAILURE) ;
         return -1.0 ;
       end if ;
 
       -- Box Muller
-      Uniform (x01, RandomSeed) ;
-      Uniform (y01, RandomSeed) ;
+--      Uniform (x01, RandomSeed) ;
+--      Uniform (y01, RandomSeed) ;
+      x01 := Uniform ;
+      y01 := Uniform ;
       StdNormalDist := sqrt(-2.0 * log(x01)) * cos(math_2_pi*y01) ;
 
       -- Polar form rejected due to mean 50.0, std deviation = 5 resulted
@@ -733,13 +853,17 @@ package body RandomPkg is
       return StdDeviation * StdNormalDist + Mean ;
     end function Normal ;
 
-
+    ------------------------------------------------------------
     -- Normal + RandomVal >= Min and RandomVal <= Max
     impure function Normal (Mean, StdDeviation, Min, Max : real) return real is
+    ------------------------------------------------------------
       variable rRandomVal : real ;
     begin
       if Max < Min then
-         Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Normal: Max < Min", FAILURE) ;
+         Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+           "RandomPkg.Normal: Min: " & to_string(Min, 2) &
+               " >  Max: " & to_string(Max, 2),  
+           FAILURE) ;
          return Mean ; 
       else
         loop
@@ -763,7 +887,10 @@ package body RandomPkg is
       variable iRandomVal : integer ;
     begin
       if Max < Min then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Normal: Max < Min", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+          "RandomPkg.Normal: Min: " & to_string(Min) &
+             " >  Max: " & to_string(Max),  
+          FAILURE) ;
         return integer(round(Mean)) ;
       else
         loop
@@ -797,13 +924,13 @@ package body RandomPkg is
 
       -- add this check to set parameters?
       if Mean <= 0.0 or Bound <= 0.0 then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Poisson: Mean < 0 or too large.  Mean = " & real'image(Mean), FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.Poisson: Mean < 0 or too large.  Mean = " & real'image(Mean), FAILURE) ;
         return Mean ;
       end if ;
 
       while (Product >= Bound) loop
         PoissonRand := PoissonRand + 1.0 ;
-        Uniform(UniformRand, RandomSeed) ;
+        UniformRand := Uniform ;
         Product := Product * UniformRand ;
       end loop ;
       return PoissonRand ;
@@ -816,7 +943,10 @@ package body RandomPkg is
       variable rRandomVal : real ;
     begin
       if Max < Min then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Poisson: Max < Min", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+           "RandomPkg.Poisson: Min: " & to_string(Min, 2) &
+               " >  Max: " & to_string(Max, 2),  
+           FAILURE) ;        
         return Mean ; 
       else
         loop
@@ -838,7 +968,10 @@ package body RandomPkg is
       variable iRandomVal : integer ;
     begin
       if Max < Min then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.Poisson: Max < Min", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+           "RandomPkg.Poisson: Min: " & to_string(Min) &
+               " >  Max: " & to_string(Max),  
+           FAILURE) ;        
         return integer(round(Mean)) ; 
       else
         loop
@@ -858,75 +991,61 @@ package body RandomPkg is
     --
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    impure function RandInt (Min, Max : integer) return integer is
+    impure function LocalRandInt (Min, Max : integer) return integer is
     ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
-        when NONE | UNIFORM =>  return Uniform(Min, Max) ;
+        when NONE | UNIFORM =>  return LocalUniform(Min, Max) ;
         when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
         when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
         when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
         when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
         when others =>
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandInt: RandomParm.Distribution not implemented", FAILURE) ;
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandInt: RandomParm.Distribution not implemented", FAILURE) ;
           return integer'low ;
       end case ;
+    end function LocalRandInt ;
+    
+    ------------------------------------------------------------
+    impure function RandInt (Min, Max : integer) return integer is
+    ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandInt", Min, Max) ;
+    begin
+      return LocalRandInt(Min, CkMax) ;
     end function RandInt ;
-
-    ------------------------------------------------------------
-    impure function RandReal(Min, Max : Real) return real is
-    ------------------------------------------------------------
-    begin
-      case RandomParm.Distribution is
-        when NONE | UNIFORM =>  return Uniform(Min, Max) ;
-        when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
-        when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
-        when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
-        when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
-        when others =>
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandReal: Specified RandomParm.Distribution not implemented", FAILURE) ;
-          return real(integer'low) ;
-      end case ;
-    end function RandReal ;
-
-    ------------------------------------------------------------
-    impure function RandTime (Min, Max : time ; Unit :time := ns) return time is
-    ------------------------------------------------------------
-      variable IntVal : integer ;
-    begin
-      --  if Max - Min > 2**31 result will be out of range
-      IntVal := RandInt(0, (Max - Min)/Unit) ;
-      Return Min + Unit*IntVal ;
-    end function RandTime ;
 
     ------------------------------------------------------------
     impure function RandSlv (Min, Max, Size : natural) return std_logic_vector is
     ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandSlv", Min, Max) ;
     begin
-      return std_logic_vector(to_unsigned(RandInt(Min, Max), Size)) ;
+      return std_logic_vector(to_unsigned(LocalRandInt(Min, CkMax), Size)) ;
     end function RandSlv ;
 
     ------------------------------------------------------------
     impure function RandUnsigned (Min, Max, Size : natural) return Unsigned is
     ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandUnsigned", Min, Max) ;
     begin
-      return to_unsigned(RandInt(Min, Max), Size) ;
+      return to_unsigned(LocalRandInt(Min, CkMax), Size) ;
     end function RandUnsigned ;
 
     ------------------------------------------------------------
     impure function RandSigned (Min, Max : integer ; Size : natural ) return Signed is
     ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandSigned", Min, Max) ;
     begin
-      return to_signed(RandInt(Min, Max), Size) ;
+      return to_signed(LocalRandInt(Min, CkMax), Size) ;
     end function RandSigned ;
 
     ------------------------------------------------------------
     impure function RandIntV (Min, Max : integer ; Size : natural) return integer_vector is
     ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
+      constant CkMax  : integer := CheckMinMax("RandIntV", Min, Max) ;
     begin
       for i in result'range loop
-        result(i) := RandInt(Min, Max) ;
+        result(i) := LocalRandInt(Min, CkMax) ;
       end loop ;
       return result ;
     end function RandIntV ;
@@ -940,7 +1059,7 @@ package body RandomPkg is
       -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
       iUnique := Unique ; 
       if Max-Min+1 < Unique then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.(RandIntV | RandRealV | RandTimeV): Unique > number of values available", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.(RandIntV | RandRealV | RandTimeV): Unique > number of values available", FAILURE) ;
         iUnique := Max-Min+1 ; 
       end if ; 
       for i in result'range loop
@@ -950,23 +1069,67 @@ package body RandomPkg is
     end function RandIntV ;
 
     ------------------------------------------------------------
+    impure function LocalRandReal(Min, Max : Real) return real is
+    ------------------------------------------------------------
+    begin
+      case RandomParm.Distribution is
+        when NONE | UNIFORM =>  return LocalUniform(Min, Max) ;
+        when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
+        when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
+        when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
+        when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
+        when others =>
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandReal: Specified RandomParm.Distribution not implemented", FAILURE) ;
+          return real(integer'low) ;
+      end case ;
+    end function LocalRandReal ;
+
+    ------------------------------------------------------------
+    impure function RandReal(Min, Max : Real) return real is
+    ------------------------------------------------------------
+      constant CkMax : real := CheckMinMax("RandReal", Min, Max) ;
+    begin
+      return LocalRandReal(Min, CkMax) ; 
+    end function RandReal ;
+
+    ------------------------------------------------------------
     impure function RandRealV (Min, Max : real ; Size : natural) return real_vector is
     ------------------------------------------------------------
       variable result : real_vector(1 to Size) ;
+      constant CkMax  : real := CheckMinMax("RandRealV", Min, Max) ;
     begin
       for i in result'range loop
-        result(i) := RandReal(Min, Max) ;
+        result(i) := LocalRandReal(Min, CkMax) ;
       end loop ;
       return result ;
     end function RandRealV ;
 
     ------------------------------------------------------------
+    impure function LocalRandTime (Min, Max : time ; Unit :time := ns) return time is
+    ------------------------------------------------------------
+      variable IntVal : integer ;
+    begin
+      --  if Max - Min > 2**31 result will be out of range
+      IntVal := LocalRandInt(0, (Max - Min)/Unit) ;
+      return Min + Unit*IntVal ;
+    end function LocalRandTime ;
+
+    ------------------------------------------------------------
+    impure function RandTime (Min, Max : time ; Unit :time := ns) return time is
+    ------------------------------------------------------------
+      constant CkMax  : time := CheckMinMax("RandTime", Min, Max) ;
+    begin
+      return LocalRandTime (Min, CkMax, Unit) ;
+    end function RandTime ;
+
+    ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Size : natural ; Unit : time := ns) return time_vector is
     ------------------------------------------------------------
       variable result : time_vector(1 to Size) ;
+      constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
     begin
       for i in result'range loop
-        result(i) := RandTime(Min, Max, Unit) ;
+        result(i) := LocalRandTime(Min, CkMax, Unit) ;
       end loop ;
       return result ;
     end function RandTimeV ;
@@ -974,9 +1137,10 @@ package body RandomPkg is
     ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Unique : natural ; Size : natural ; Unit : time := ns) return time_vector is
     ------------------------------------------------------------
+      constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
     begin
       -- if Unique = 0, it is more efficient to call RandTimeV(Min, Max, Size)
-      return to_time_vector(RandIntV(Min/Unit, Max/Unit, Unique, Size), Unit) ; 
+      return to_time_vector(RandIntV(Min/Unit, CkMax/Unit, Unique, Size), Unit) ; 
     end function RandTimeV ;
 
 
@@ -987,58 +1151,61 @@ package body RandomPkg is
     --
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    impure function RandInt (Min, Max : integer ; Exclude : integer_vector ) return integer is
+    impure function LocalRandInt (Min, Max : integer ; Exclude : integer_vector ) return integer is
     ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
-        when NONE | UNIFORM =>  return  Uniform(Min, Max, Exclude) ;
+        when NONE | UNIFORM =>  return  LocalUniform(Min, Max, Exclude) ;
         when FAVOR_SMALL  =>    return  FavorSmall(Min, Max, Exclude) ;
         when FAVOR_BIG    =>    return  FavorBig (Min, Max, Exclude) ;
         when NORMAL =>          return  Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max, Exclude) ;
         when POISSON =>         return  Poisson(RandomParm.Mean, Min, Max, Exclude) ;
         when others =>
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandInt: Specified RandomParm.Distribution not implemented", FAILURE) ;
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandInt: Specified RandomParm.Distribution not implemented", FAILURE) ;
           return integer'low ;
       end case ;
-    end function RandInt ;
+    end function LocalRandInt ;
 
     ------------------------------------------------------------
-    impure function RandTime (Min, Max : time ; Exclude : time_vector ; Unit : time := ns) return time is
+    impure function RandInt (Min, Max : integer ; Exclude : integer_vector ) return integer is
     ------------------------------------------------------------
-      variable IntVal : integer ;
+      constant CkMax : integer := CheckMinMax("RandInt", Min, Max) ;
     begin
-      --  if Min or Max > 2**31 value will be out of range
-      return RandInt(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit)) * Unit ;
-    end function RandTime ;
+      return  LocalRandInt(Min, CkMax, Exclude) ;
+    end function RandInt ;
 
     ------------------------------------------------------------
     impure function RandSlv (Min, Max : natural ; Exclude : integer_vector ; Size  : natural ) return std_logic_vector is
     ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandSlv", Min, Max) ;
     begin
-      return std_logic_vector(to_unsigned(RandInt(Min, Max, Exclude), Size)) ;
+      return std_logic_vector(to_unsigned(RandInt(Min, CkMax, Exclude), Size)) ;
     end function RandSlv ;
 
     ------------------------------------------------------------
     impure function RandUnsigned (Min, Max : natural ; Exclude : integer_vector ; Size  : natural ) return Unsigned is
     ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandUnsigned", Min, Max) ;
     begin
-      return to_unsigned(RandInt(Min, Max, Exclude), Size) ;
+      return to_unsigned(RandInt(Min, CkMax, Exclude), Size) ;
     end function RandUnsigned ;
 
     ------------------------------------------------------------
     impure function RandSigned (Min, Max : integer ; Exclude : integer_vector ; Size  : natural ) return Signed is
     ------------------------------------------------------------
+      constant CkMax : integer := CheckMinMax("RandSigned", Min, Max) ;
     begin
-      return to_signed(RandInt(Min, Max, Exclude), Size) ;
+      return to_signed(RandInt(Min, CkMax, Exclude), Size) ;
     end function RandSigned ;
 
     ------------------------------------------------------------
     impure function RandIntV (Min, Max : integer ; Exclude : integer_vector ; Size : natural) return integer_vector is
     ------------------------------------------------------------
       variable result : integer_vector(1 to Size) ;
+      constant CkMax  : integer := CheckMinMax("RandIntV", Min, Max) ;
     begin
       for i in result'range loop
-        result(i) := RandInt(Min, Max, Exclude) ;
+        result(i) := RandInt(Min, CkMax, Exclude) ;
       end loop ;
       return result ;
     end function RandIntV ;
@@ -1047,28 +1214,41 @@ package body RandomPkg is
     impure function RandIntV (Min, Max : integer ; Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector is
     ------------------------------------------------------------
       variable ResultPlus : integer_vector(1 to Size + Exclude'length) ;
+      constant CkMax  : integer := CheckMinMax("RandIntV", Min, Max) ;
     begin
       -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
       ResultPlus(Size+1 to ResultPlus'right) := Exclude ;
       for i in 1 to Size loop
-        ResultPlus(i) := RandInt(Min, Max, ResultPlus(maximum(1, 1 + i - Unique) to ResultPlus'right)) ;
+        ResultPlus(i) := RandInt(Min, CkMax, ResultPlus(maximum(1, 1 + i - Unique) to ResultPlus'right)) ;
       end loop ;
       return ResultPlus(1 to Size) ;
     end function RandIntV ;
 
     ------------------------------------------------------------
+    impure function RandTime (Min, Max : time ; Exclude : time_vector ; Unit : time := ns) return time is
+    ------------------------------------------------------------
+      variable IntVal : integer ;
+      constant CkMax  : time := CheckMinMax("RandTime", Min, Max) ;
+    begin
+      --  if Min or Max > 2**31 value will be out of range
+      return RandInt(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit)) * Unit ;
+    end function RandTime ;
+
+    ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Exclude : time_vector ; Size : natural ; Unit : in time := ns) return time_vector is
     ------------------------------------------------------------
+      constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
     begin
-      return to_time_vector( RandIntV(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit), Size), Unit ) ; 
+      return to_time_vector( RandIntV(Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit), Size), Unit ) ; 
     end function RandTimeV ;
 
     ------------------------------------------------------------
     impure function RandTimeV (Min, Max : time ; Exclude : time_vector ; Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector is
     ------------------------------------------------------------
+      constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
     begin
       -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
-      return to_time_vector( RandIntV(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit), Unique, Size), Unit ) ; 
+      return to_time_vector( RandIntV(Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit), Unique, Size), Unit ) ; 
     end function RandTimeV ;
 
 
@@ -1144,7 +1324,7 @@ package body RandomPkg is
       -- require A'length >= Unique
       iUnique := Unique ; 
       if A'length < Unique then
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandIntV: Unique > length of set of values", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandIntV: Unique > length of set of values", FAILURE) ;
         iUnique := A'length ; 
       end if ; 
       for i in result'range loop
@@ -1300,7 +1480,7 @@ package body RandomPkg is
       -- Require NewALength >= Unique
       iUnique := Unique ; 
       if NewALength < Unique then 
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandIntV: Unique > Length of Set A - Exclude", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandIntV: Unique > Length of Set A - Exclude", FAILURE) ;
         iUnique := NewALength ; 
       end if ; 
       -- Randomize using exclude list of Unique # of newly generated values
@@ -1339,7 +1519,7 @@ package body RandomPkg is
       -- Require NewALength >= Unique
       iUnique := Unique ; 
       if NewALength < Unique then 
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandRealV: Unique > Length of Set A - Exclude", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandRealV: Unique > Length of Set A - Exclude", FAILURE) ;
         iUnique := NewALength ; 
       end if ; 
       -- Randomize using exclude list of Unique # of newly generated values
@@ -1378,7 +1558,7 @@ package body RandomPkg is
       -- Require NewALength >= Unique
       iUnique := Unique ; 
       if NewALength < Unique then 
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandTimeV: Unique > Length of Set A - Exclude", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandTimeV: Unique > Length of Set A - Exclude", FAILURE) ;
         iUnique := NewALength ; 
       end if ; 
       -- Randomize using exclude list of Unique # of newly generated values
@@ -1407,7 +1587,7 @@ package body RandomPkg is
       for i in DistArray'range loop
         DistArray(i) := DistArray(i) + sum ;
         if DistArray(i) < sum then
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.DistInt: negative weight or sum > 31 bits", FAILURE) ;
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.DistInt: negative weight or sum > 31 bits", FAILURE) ;
           return DistArray'low ; -- allows debugging vs integer'left, out of range
         end if ;
         sum := DistArray(i) ;
@@ -1419,9 +1599,9 @@ package body RandomPkg is
             return i ;
           end if ;
         end loop ;
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.DistInt: randomization failed", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.DistInt: randomization failed", FAILURE) ;
       else
-        Alert(OSVVM_ALERTLOG_ID, "RandomPkg.DistInt: No randomization weights", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.DistInt: No randomization weights", FAILURE) ;
       end if ;
       return DistArray'low ; -- allows debugging vs integer'left, out of range
     end function DistInt ;
@@ -1691,7 +1871,7 @@ package body RandomPkg is
     ------------------------------------------------------------
     begin
       if max'length > 0 then
-        AlertIf (OSVVM_ALERTLOG_ID, Max < 0, "RandomPkg.RandSigned: Max < 0", FAILURE) ;
+        AlertIf (OSVVM_RANDOM_ALERTLOG_ID, Max < 0, "RandomPkg.RandSigned: Max < 0", FAILURE) ;
         return signed(RandUnsigned( unsigned(Max))) ;
       else
         return NULL_SV ; -- Null Array
@@ -1707,7 +1887,7 @@ package body RandomPkg is
         return RandUnsigned(Max-Min) + Min ;
       else
         if Len > 0 then
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandUnsigned: Max < Min", FAILURE) ;
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandUnsigned: Max < Min", FAILURE) ;
         end if ;
         return NULL_UV ;
       end if ;
@@ -1722,7 +1902,7 @@ package body RandomPkg is
         return RandSlv(Max-Min) + Min ;
       else
         if Len > 0 then
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandSlv: Max < Min", FAILURE) ;
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandSlv: Max < Min", FAILURE) ;
         end if ;
           return NULL_SlV ;
       end if ;
@@ -1737,7 +1917,7 @@ package body RandomPkg is
         return resize(RandSigned(resize(Max,LEN+1) - resize(Min,LEN+1)) + Min, LEN) ;
       else
         if Len > 0 then
-          Alert(OSVVM_ALERTLOG_ID, "RandomPkg.RandSigned: Max < Min", FAILURE) ;
+          Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandSigned: Max < Min", FAILURE) ;
         end if ;
         return NULL_SV ;
       end if ;
