@@ -28,34 +28,34 @@
 --
 --  Revision History :
 --    Date       Version    Description
---    12/2006 :  0.1        Initial revision
---                          Numerous revisions for SynthWorks' Advanced VHDL Testbenches and Verification
+--    06/2021    2021.06    Updated InitSeed, moved shared stuff to RandomBasePkg
+--    08/2020    2020.08    RandBool, RandSl, RandBit, DistBool, DistSl, DistBit (from Lars)
+--    01/2020    2020.01    Updated Licenses to Apache
+--    11/2016    2016.11    No changes.  Updated release numbers to make documentation and
+--                          package have consistent release identifiers.
+--    5/2015     2015.06    Revised Alerts to Alert(OSVVM_ALERTLOG_ID, ...) ;
+--    1/2015     2015.01    Changed Assert/Report to Alert
+--    1/2014     2014.01    Added RandTime, RandReal(set), RandIntV, RandRealV, RandTimeV
+--                          Made sort, revsort from SortListPkg_int visible via aliases
+--    5/2013     2013.05    Big vector randomization added overloading RandUnsigned, RandSlv, and RandSigned
+--                          Added NULL_RANGE_TYPE to minimize null range warnings
+--    5/2013     -          Removed extra variable declaration in functions RandInt and RandReal
+--    04/2013    2013.04    Changed DistInt.  Return array indices now match input
+--                          Better Min, Max error handling in Uniform, FavorBig, FavorSmall, Normal, Poisson
+--    06/2012    2.2        Removed '_' in the name of subprograms FavorBig and FavorSmall
+--    07/2011    2.1        Bug fix to convenience functions for slv, unsigned, and signed.
+--    03/2011    2.0        Major clean-up. Moved RandomParmType and control to here
+--    06/2010    1.2        Added Normal and Poisson distributions
 --    02/2009 :  1.0        First Public Released Version
 --    02/25/2009 1.1        Replaced reference to std_2008 with a reference to
 --                          ieee_proposed.standard_additions.all ;
---    06/2010    1.2        Added Normal and Poisson distributions
---    03/2011    2.0        Major clean-up. Moved RandomParmType and control to here
---    07/2011    2.1        Bug fix to convenience functions for slv, unsigned, and signed.
---    06/2012    2.2        Removed '_' in the name of subprograms FavorBig and FavorSmall
---    04/2013    2013.04    Changed DistInt.  Return array indices now match input
---                          Better Min, Max error handling in Uniform, FavorBig, FavorSmall, Normal, Poisson
---    5/2013     -          Removed extra variable declaration in functions RandInt and RandReal
---    5/2013     2013.05    Big vector randomization added overloading RandUnsigned, RandSlv, and RandSigned
---                          Added NULL_RANGE_TYPE to minimize null range warnings
---    1/2014     2014.01    Added RandTime, RandReal(set), RandIntV, RandRealV, RandTimeV
---                          Made sort, revsort from SortListPkg_int visible via aliases
---    1/2015     2015.01    Changed Assert/Report to Alert
---    5/2015     2015.06    Revised Alerts to Alert(OSVVM_ALERTLOG_ID, ...) ;
---    11/2016    2016.11    No changes.  Updated release numbers to make documentation and
---                          package have consistent release identifiers.
---    01/2020    2020.01    Updated Licenses to Apache
---    08/2020    2020.08    RandBool, RandSl, RandBit, DistBool, DistSl, DistBit (from Lars)
---
+--                          Numerous revisions for SynthWorks' Advanced VHDL Testbenches and Verification
+--    12/2006 :  0.1        Initial revision
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
---  Copyright (C) 2020 by OSVVM Authors   
+--  Copyright (c) 2006 - 2021 by SynthWorks Design Inc.  
+--  Copyright (C) 2021 by OSVVM Authors   
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
