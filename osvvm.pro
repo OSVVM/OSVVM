@@ -58,6 +58,8 @@ analyze MessagePkg.vhd
 analyze SortListPkg_int.vhd
 analyze RandomBasePkg.vhd
 analyze RandomPkg.vhd
+# RandomProcedurePkg is a temporary and is used by CoveragePkg
+analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 analyze MemoryPkg.vhd
 
