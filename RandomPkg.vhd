@@ -90,26 +90,10 @@ use ieee.math_real.all ;
 
 
 package RandomPkg is
---  Uncomment the following with VHDL-2008 package generics.
---  For now they are defined in the package RandomBasePkg.vhd
---  package RandomGenericPkg is
-  --  generic (
-  --    type RandomSeedType ;    -- base type for randomization
-  --    procedure Uniform (Result : out real ; Seed : inout RandomSeedType) ;
-  --    function  GenRandSeed(IV : integer_vector) return RandomSeedType ;
-  --    function  GenRandSeed(I : integer) return RandomSeedType ;
-  --    function  GenRandSeed(S : string) return RandomSeedType ;
-  --  ) ;
-
-  constant OSVVM_RANDOM_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- make things from SortListPkg_int visible
-  alias sort is work.SortListPkg_int.sort[integer_vector return integer_vector] ;
+  alias sort    is work.SortListPkg_int.sort   [integer_vector return integer_vector] ;
   alias revsort is work.SortListPkg_int.revsort[integer_vector return integer_vector] ;
-
-  -- note NULL_RANGE_TYPE should probably be in std.standard
-  subtype NULL_RANGE_TYPE is integer range 0 downto 1 ;
-  constant NULL_INTV : integer_vector (NULL_RANGE_TYPE) := (others => 0) ;
 
   -- Supports DistValInt functionality
   type DistRecType is record

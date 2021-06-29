@@ -76,6 +76,13 @@ use work.SortListPkg_int.all ;
 
 package RandomBasePkg is
 
+  constant OSVVM_RANDOM_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+
+  -----------------------------------------------------------------
+  -- note NULL_RANGE_TYPE should probably be in std.standard
+  subtype NULL_RANGE_TYPE is integer range 0 downto 1 ;
+  constant NULL_INTV : integer_vector (NULL_RANGE_TYPE) := (others => 0) ;
+
   -----------------------------------------------------------------
   -- RandomSeedType - Abstract the type for randomization
   type RandomSeedType is array (1 to 2) of integer ;
