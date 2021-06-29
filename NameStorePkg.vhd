@@ -19,7 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    05/2021   2021.05    Initial revision.  Derrived from NamePkg.vhd
+--    06/2021   2021.06    Initial revision.  Derrived from NamePkg.vhd
 --
 --
 --  This file is part of OSVVM.

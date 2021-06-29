@@ -16,15 +16,16 @@
 --
 --  Revision History:      
 --    Date      Version    Description
---    01/2015   2015.01    Initial Revision
---    06/2015   2015.06    Added MemoryPkg
---    11/2016   2016.11    Added TbUtilPkg and ResolutionPkg
+--    06/2021   2021.06    Updated for release
 --    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Added TbUtilPkg and ResolutionPkg
+--    06/2015   2015.06    Added MemoryPkg
+--    01/2015   2015.01    Initial Revision
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2015 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2015 - 2021 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -40,22 +41,22 @@
 --  
 
 context OsvvmContext is
-    library OSVVM ;  
+  library OSVVM ;  
 
-    use OSVVM.NamePkg.all ;
-    use OSVVM.NameStorePkg.all ;
-    use OSVVM.TranscriptPkg.all ; 
-    use OSVVM.TextUtilPkg.all ; 
-    use OSVVM.OsvvmGlobalPkg.all ;
-    use OSVVM.AlertLogPkg.all ; 
-    use OSVVM.SortListPkg_int.all ;
-    use OSVVM.RandomBasePkg.all ;
-    use OSVVM.RandomPkg.all ;
-    use OSVVM.CoveragePkg.all ;
-    use OSVVM.MemoryPkg.all ;
-    use OSVVM.ResolutionPkg.all ;
-    use OSVVM.ResizePkg.all ;
-    use OSVVM.TbUtilPkg.all ;
+  use OSVVM.NamePkg.all ;
+  use OSVVM.NameStorePkg.all ;
+  use OSVVM.TranscriptPkg.all ; 
+  use OSVVM.TextUtilPkg.all ; 
+  use OSVVM.OsvvmGlobalPkg.all ;
+  use OSVVM.AlertLogPkg.all ; 
+  use OSVVM.SortListPkg_int.all ;
+  use OSVVM.RandomBasePkg.all ;
+  use OSVVM.RandomPkg.all ;
+  use OSVVM.CoveragePkg.all ;
+  use OSVVM.MemoryPkg.all ;
+  use OSVVM.ResolutionPkg.all ;
+  use OSVVM.ResizePkg.all ;
+  use OSVVM.TbUtilPkg.all ;
 
 end context OsvvmContext ; 
 
