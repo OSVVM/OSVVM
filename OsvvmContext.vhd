@@ -48,6 +48,8 @@ context OsvvmContext is
     use OSVVM.TextUtilPkg.all ; 
     use OSVVM.OsvvmGlobalPkg.all ;
     use OSVVM.AlertLogPkg.all ; 
+    use OSVVM.SortListPkg_int.all ;
+    use OSVVM.RandomBasePkg.all ;
     use OSVVM.RandomPkg.all ;
     use OSVVM.CoveragePkg.all ;
     use OSVVM.MemoryPkg.all ;
