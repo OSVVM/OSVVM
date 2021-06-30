@@ -262,7 +262,9 @@ package body RandomBasePkg is
     return GenRandSeed(result) ; -- make value ranges legal
   end function GenRandSeed ;
 
+  -----------------------------------------------------------------
   impure function OldGenRandSeed(I : integer) return RandomSeedType is
+  -----------------------------------------------------------------
     variable result : integer_vector(1 to 2) ;
   begin
     result(1) := I ;

@@ -468,14 +468,14 @@ package body RandomPkg is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
-      -- Allow use of UseNewSeedMethods but ignore it
-      -- as this is a new method
-      -- Convert T to an integer that is no more than 2**30 bits
---!! GHDL  Apparently does not implement mod for physical types
---!! GHDL      RandomSeed := GenRandSeed((T mod (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
---!! GHDL      RandomSeed := GenRandSeed((T REM (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
---      -- Calculating REM
---      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
+      -- Allow specification of UseNewSeedMethods 
+      -- but ignore it as this is a new method and will churn the seed.
+      -- Let integer values roll over - is well supported, infact, 
+      -- math_real.uniform depends on it being supported.
+      -- Also considered:
+      --      RandomSeed := GenRandSeed((T REM (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
+      --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
+      -- However, GHDL does not support REM and the calculation is not warrented.
       RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
       Uniform(ChurnSeed, RandomSeed) ;
     end procedure InitSeed ;
