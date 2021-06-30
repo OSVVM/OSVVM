@@ -471,7 +471,12 @@ package body RandomPkg is
       -- Allow use of UseNewSeedMethods but ignore it
       -- as this is a new method
       -- Convert T to an integer that is no more than 2**30 bits
-      RandomSeed := GenRandSeed((T mod (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
+--!! GHDL  Apparently does not implement mod for physical types
+--!! GHDL      RandomSeed := GenRandSeed((T mod (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
+--!! GHDL      RandomSeed := GenRandSeed((T REM (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
+--      -- Calculating REM
+--      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
+      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
       Uniform(ChurnSeed, RandomSeed) ;
     end procedure InitSeed ;
 
