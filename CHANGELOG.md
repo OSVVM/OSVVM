@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2021.06  | June 2021       |  Updated Data Structures
 | 2020.12  | December 2020   |  Minor Updates
 | 2020.10  | October 2020    |  Minor Updates
 | 2020.08  | August 2020     |  Specification Tracking
@@ -28,8 +29,8 @@
 
 
 ## Copyright and License
-Copyright (C) 1999-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)   
-Copyright (C) 2020 by [OSVVM contributors](CONTRIBUTOR.md)   
+Copyright (C) 1999-2021 by [SynthWorks Design Inc.](http://www.synthworks.com/)   
+Copyright (C) 2021 by [OSVVM contributors](CONTRIBUTOR.md)   
 
 This file is part of OSVVM.
 
@@ -46,7 +47,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2020.12 December 2020
+## Revision 2021.06 June 2021
 
 ### Current Revision and Compile Order
 
@@ -58,27 +59,61 @@ scripts directory) or osvvm.tcl script.
 
   | File Name                                          | Revision Date  |  
   -----------------------------------------------------|----------
+  | ResolutionPkg.vhd                                  | **2021.06**  |
   | NamePkg.vhd                                        | 2020.01  |  
+  | NameStorePkg.vhd                                   | **2021.06 **  |  
   | OsvvmGlobalPkg.vhd                                 | 2020.01  |  
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
-  | TranscriptPkg.vhd                                  | **2020.12**  |  
+  | TranscriptPkg.vhd                                  | 2020.12  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | **2020.12**  | 
+  | AlertLogPkg.vhd                                    | **2021.06**  | 
   | MessagePkg.vhd                                     | 2020.01  | 
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | 2020.01  |
-  | RandomPkg.vhd                                      | 2020.08  |
+  | RandomBasePkg.vhd                                  | **2021.06**  |
+  | RandomPkg.vhd                                      | **2021.06**  |
+  | RandomProcedurePkg.vhd                             | **2021.06**  |
   | CoveragePkg.vhd                                    | 2020.05  |
-  | MemoryPkg.vhd                                      | 2020.01  |
-  | MemoryPkg_2019.vhd                                 | **2020.12**  |
-  | ScoreboardGenericPkg.vhd                           | 2020.10  |
+  | MemoryPkg.vhd                                      | **2021.06**  |
+  | ScoreboardGenericPkg.vhd                           | **2021.06**  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ResolutionPkg.vhd                                  | **2020.12**  |
+  | ResizePkg.vhd                                      | **2021.06**  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
 
+
+### ResolutionPkg.vhd and ResizePkg.vhd  2021.06 
+Refactored conversions of transaction records from ResolutionPkg.vhd into ResizePkg.vhd. 
+Part of plan to transaction to VHDL-2019 interfaces.   
+
+### NameStorePkg.vhd   2021.06 
+NamePkg with updated data structure to better support new data structures
+
+### AlertLogPkg.vhd 2021.06 
+Minor updates to FindAlertLogID
+
+### RandomPkg.vhd and RandomBasePkg.vhd  2021.06 
+Updated InitSeed for better seeds.  Defaults to old method.
+Moved some items from RandomPkg to RandomBasePkg to support future revisions
+
+### RandomProcedurePkg.vhd   2021.06 
+Added to support new data structures in CoveragePkg.
+Capability limited to what is needed by CoveragePkg.
+When you can use a protected type, use RandomPkg.vhd.
+When we have VHDL-2019 support will no longer need this.
+
+### MemoryPkg.vhd    2021.06    
+New data structure.  Supports old code.  Adds new use models.
+
+### MemoryPkg_2019.vhd is deleted  2021.06   
+New MemoryPkg.vhd replaces MemoryPkg_2019 with data structure + NewID
+
+### ScoreboardGenericPkg.vhd    2021.06    
+New data structure.  Supports old code.  Adds new use models.
+
+
+## Revision 2020.12 December 2020
 
 ### Resolution.vhd 2020.12    
 Updated ToTransaction and FromTransaction with length parameter.
@@ -106,7 +141,7 @@ Added function MetaMatch.   It is similar to STD_MATCH and ?=,
 except that U=U, X=X, Z=Z, and W=W.  All else is the same as STD_MATCH.
 AlertIfEqual and AlertIfNotEqual for std_logic family use MetaMatch rather than ?=.
 
-### ScoreboardPkg_int.vhd 2020.10
+### ScoreboardPkg_slv.vhd 2020.10
 Uses MetaMatch for the Match function instead of STD_MATCH.
 
 ## Revision 2020.08 August 2020

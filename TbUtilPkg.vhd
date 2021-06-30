@@ -908,9 +908,9 @@ package body TbUtilPkg is
     else
       -- Schedule s.t. all assignments after the first occur on delta cycle 0   
       Clk <= '0', '1' after LOW_TIME ; 
-      wait for period - 1 ns ; -- allows after on future Clk <= '0'
+      wait for period - t_sim_resolution ; -- allows after on future Clk <= '0'
       loop 
-        Clk <= '0' after 1 ns, '1' after LOW_TIME + 1 ns ; 
+        Clk <= '0' after t_sim_resolution, '1' after LOW_TIME + t_sim_resolution ; 
         wait for period ; 
       end loop ; 
     end if ; 

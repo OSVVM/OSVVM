@@ -17,13 +17,14 @@
 #
 #  Revision History:
 #    Date      Version    Description
-#    11/2016   2016.11    Compile Script for OSVVM
+#     6/2021   2021.06    Updated for release
 #     1/2020   2020.01    Updated Licenses to Apache
+#    11/2016   2016.11    Compile Script for OSVVM
 #
 #
 #  This file is part of OSVVM.
 #  
-#  Copyright (c) 2016 - 2020 by SynthWorks Design Inc.  
+#  Copyright (c) 2016 - 2021 by SynthWorks Design Inc.  
 #  
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -38,7 +39,9 @@
 #  limitations under the License.
 #  
 library osvvm
+analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
+analyze NameStorePkg.vhd
 analyze OsvvmGlobalPkg.vhd
 
 # Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
@@ -56,6 +59,8 @@ analyze MessagePkg.vhd
 analyze SortListPkg_int.vhd
 analyze RandomBasePkg.vhd
 analyze RandomPkg.vhd
+# RandomProcedurePkg is a temporary and is used by CoveragePkg
+analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 analyze MemoryPkg.vhd
 
@@ -63,7 +68,7 @@ analyze ScoreboardGenericPkg.vhd
 analyze ScoreboardPkg_slv.vhd
 analyze ScoreboardPkg_int.vhd
 
-analyze ResolutionPkg.vhd
+analyze ResizePkg.vhd
 analyze TbUtilPkg.vhd
 
 analyze OsvvmContext.vhd 

@@ -62,7 +62,6 @@
 --                         Added GetNext{Index, BinVal, Point}[(Mode => {RANDOM|INCREMENT|MODE_MINIMUM})]
 --                         Added NextPointModeType = (RANDOM, INCREMENT, MODE_MINIMUM)
 --                         Added SetNextPointMode[(Mode => {RANDOM|INCREMENT|MODE_MINIMUM})
-
 --
 --
 --  Development Notes:
@@ -138,7 +137,7 @@ package CoveragePkg is
   constant COV_OPT_INIT_PARM_DETECT : CovOptionsType := work.OsvvmGlobalPkg.OPT_INIT_PARM_DETECT ;
   -- For backward compatibility.  Don't add to other packages.  
   alias DISABLED is work.OsvvmGlobalPkg.DISABLED [return work.OsvvmGlobalPkg.OsvvmOptionsType ];  
-  alias ENABLED is work.OsvvmGlobalPkg.ENABLED [return work.OsvvmGlobalPkg.OsvvmOptionsType ];  
+  alias ENABLED  is work.OsvvmGlobalPkg.ENABLED  [return work.OsvvmGlobalPkg.OsvvmOptionsType ];  
 
 -- Deprecated
   -- Used for easy manual entry.  Order: min, max, action
@@ -162,7 +161,7 @@ package CoveragePkg is
   constant ALL_IGNORE  : CovBinType := (0 => ( BinVal => ALL_RANGE,  Action => COV_IGNORE,  Count => 0, AtLeast => 0, Weight => 0 )) ;
   constant ZERO_BIN    : CovBinType := (0 => ( BinVal => (1=>(0,0)), Action => COV_COUNT,   Count => 0, AtLeast => 1, Weight => 1 )) ;
   constant ONE_BIN     : CovBinType := (0 => ( BinVal => (1=>(1,1)), Action => COV_COUNT,   Count => 0, AtLeast => 1, Weight => 1 )) ;
-  constant NULL_BIN    : CovBinType(work.RandomPkg.NULL_RANGE_TYPE) := (others => ( BinVal => ALL_RANGE,  Action => integer'high, Count => 0, AtLeast => integer'high, Weight => integer'high )) ;
+  constant NULL_BIN    : CovBinType(work.RandomBasePkg.NULL_RANGE_TYPE) := (others => ( BinVal => ALL_RANGE,  Action => integer'high, Count => 0, AtLeast => integer'high, Weight => integer'high )) ;
 
   type NextPointModeType is (RANDOM, INCREMENT, MODE_MINIMUM) ; 
 
@@ -650,7 +649,7 @@ package CoveragePkg is
   function GenBin(Min, Max : integer) return CovBinType ;
   function GenBin(A : integer) return CovBinType ;
 
-    ------------------------------------------------------------
+  ------------------------------------------------------------
   function GenBin(
   ------------------------------------------------------------
     AtLeast       : integer ;
