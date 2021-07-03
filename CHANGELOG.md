@@ -61,7 +61,7 @@ scripts directory) or osvvm.tcl script.
   -----------------------------------------------------|----------
   | ResolutionPkg.vhd                                  | **2021.06**  |
   | NamePkg.vhd                                        | 2020.01  |  
-  | NameStorePkg.vhd                                   | **2021.06 **  |  
+  | NameStorePkg.vhd                                   | **2021.06**  |  
   | OsvvmGlobalPkg.vhd                                 | 2020.01  |  
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
