@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2021.07  | July 2021       |  Updated Data of CoveragePkg
 | 2021.06  | June 2021       |  Updated Data Structures
 | 2020.12  | December 2020   |  Minor Updates
 | 2020.10  | October 2020    |  Minor Updates
@@ -54,34 +55,49 @@ This file is part of OSVVM.
 The following table lists the files and revision, starting with the
 files that need to be compiled first. Be sure to turn on the VHDL-2008
 compile switch. If you are using Aldec or Mentor simulators, you may
-also use the OSVVM scripts (osvvm.pro -- details how to run in the
-scripts directory) or osvvm.tcl script.
+also use the OSVVM script - osvvm.pro -- details how to run it are 
+in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |  
   -----------------------------------------------------|----------
-  | ResolutionPkg.vhd                                  | **2021.06**  |
+  | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2020.01  |  
-  | NameStorePkg.vhd                                   | **2021.06**  |  
+  | NameStorePkg.vhd                                   | 2021.06  |  
   | OsvvmGlobalPkg.vhd                                 | 2020.01  |  
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | **2021.06**  | 
-  | MessagePkg.vhd                                     | 2020.01  | 
+  | AlertLogPkg.vhd                                    | 2021.06  | 
+  | MessageListPkg.vhd                                 | **2021.07**  | 
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | **2021.06**  |
-  | RandomPkg.vhd                                      | **2021.06**  |
-  | RandomProcedurePkg.vhd                             | **2021.06**  |
-  | CoveragePkg.vhd                                    | 2020.05  |
-  | MemoryPkg.vhd                                      | **2021.06**  |
-  | ScoreboardGenericPkg.vhd                           | **2021.06**  |
+  | RandomBasePkg.vhd                                  | 2021.06  |
+  | RandomPkg.vhd                                      | 2021.06  |
+  | RandomProcedurePkg.vhd                             | 2021.06  |
+  | CoveragePkg.vhd                                    | **2021.07**  |
+  | MemoryPkg.vhd                                      | 2021.06  |
+  | ScoreboardGenericPkg.vhd                           | 2021.06  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ResizePkg.vhd                                      | **2021.06**  |
+  | ResizePkg.vhd                                      | 2021.06  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
 
+
+### MessageListPkg.vhd and deprecated MessagePkg.vhd  2021.07 
+Created linked list version for multi-line message handling.
+Deprecated protected type version (MessagePkg) as it cannot be
+used directly in the new data structures.
+
+### CoveragePkg.vhd  2021.07 
+Added new data structure to CoveragePkg to facilitate creating
+functional coverage using ordinary procedure and function calls.
+
+### Deprecated osvvm.tcl  2021.07
+The compile script, osvvm.tcl, is no longer supported.   
+Correct order is specified above as well as by osvvm.pro.  
+
+## Revision 2021.06 June 2021
 
 ### ResolutionPkg.vhd and ResizePkg.vhd  2021.06 
 Refactored conversions of transaction records from ResolutionPkg.vhd into ResizePkg.vhd. 
