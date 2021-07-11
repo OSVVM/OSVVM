@@ -124,7 +124,8 @@ package body NameStorePkg is
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr.all(1 to CurNumItems) := oldItemArrayPtr.all(1 to CurNumItems) ;
+--        ItemArrayPtr.all(1 to CurNumItems) := oldItemArrayPtr.all(1 to CurNumItems) ;
+        ItemArrayPtr(1 to CurNumItems) := oldItemArrayPtr(1 to CurNumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
     end procedure GrowNumberItems ;
