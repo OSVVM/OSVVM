@@ -55,11 +55,14 @@ analyze TranscriptPkg.vhd
 analyze TextUtilPkg.vhd
 analyze AlertLogPkg.vhd
 
-analyze MessagePkg.vhd
+analyze MessageListPkg.vhd
+# PT based MessagePkg replaced by List based MessageListPkg
+# analyze MessagePkg.vhd      
 analyze SortListPkg_int.vhd
 analyze RandomBasePkg.vhd
 analyze RandomPkg.vhd
 # RandomProcedurePkg is a temporary and is used by CoveragePkg
+# Likely will be replaced when VHDL-2019 support is good.
 analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 analyze MemoryPkg.vhd
