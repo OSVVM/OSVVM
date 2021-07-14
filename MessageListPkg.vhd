@@ -52,6 +52,7 @@ package MessageListPkg is
   end record MessageStructType ; 
   
   procedure SetMessage        (variable Message : inout MessageStructPtrType; Name : String) ;
+  procedure WriteMessage      (variable buf : inout line; variable Message : inout MessageStructPtrType; prefix : string := "") ; 
   procedure WriteMessage      (file f : text; variable Message : inout MessageStructPtrType; prefix : string := "") ; 
   procedure GetMessageCount   (variable Message : inout MessageStructPtrType; variable Count : out integer) ;
   procedure DeallocateMessage (variable Message : inout MessageStructPtrType) ; 
@@ -84,6 +85,18 @@ package body MessageListPkg is
       M.NextPtr := NULL ;
     end if ; 
   end procedure SetMessage ; 
+
+  ------------------------------------------------------------
+  procedure WriteMessage (variable buf : inout line;  variable Message : inout MessageStructPtrType; prefix : string := "") is 
+  ------------------------------------------------------------
+    variable M : MessageStructPtrType ; 
+  begin
+    M := Message ; 
+    while M /= NULL loop
+      write(buf, prefix & M.Name.all & LF) ;      
+      M := M.NextPtr ; 
+    end loop ;
+  end procedure WriteMessage ;
 
   ------------------------------------------------------------
   procedure WriteMessage (file f : text; variable Message : inout MessageStructPtrType; prefix : string := "") is 

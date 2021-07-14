@@ -65,6 +65,7 @@ analyze RandomPkg.vhd
 # Likely will be replaced when VHDL-2019 support is good.
 analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
+# analyze CoveragePkg_new.vhd
 analyze MemoryPkg.vhd
 
 analyze ScoreboardGenericPkg.vhd
