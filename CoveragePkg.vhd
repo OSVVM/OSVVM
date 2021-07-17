@@ -121,6 +121,8 @@ package CoveragePkg is
   end record CoverageIDType ;
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
+  
+  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- CovPType allocates bins that are multiples of MIN_NUM_BINS
   constant MIN_NUM_BINS : integer := 2**7 ;  -- power of 2
@@ -293,6 +295,8 @@ package CoveragePkg is
   ------------------------------------------------------------
   procedure FileOpenWriteBin (FileName : string; OpenKind : File_Open_Kind ) ;
   procedure FileCloseWriteBin  ;
+--  procedure WriteToCovFile (variable buf : inout line) ;
+  procedure PrintToCovFile(S : string) ;
 
   ------------------------------------------------------------
   procedure SetReportOptions (
@@ -642,6 +646,8 @@ package CoveragePkg is
     ------------------------------------------------------------
     procedure FileOpenWriteBin (FileName : string; OpenKind : File_Open_Kind ) ;
     procedure FileCloseWriteBin  ;
+--    procedure WriteToCovFile (variable buf : inout line) ;
+    procedure PrintToCovFile(S : string) ;
 
     ------------------------------------------------------------
     procedure SetReportOptions (
@@ -1336,6 +1342,24 @@ package CoveragePkg is
   ------------------------------------------------------------
     variable Bin1       : inout CovPType ;
     variable Bin2       : inout CovPType
+  ) ;
+  
+  
+  ------------------------------------------------------------
+  -- Experimental.  Intended primarily for development.
+  procedure CompareBins (
+  ------------------------------------------------------------
+    constant Bin1       : in    CoverageIDType ;
+    constant Bin2       : in    CoverageIDType ;
+    variable Valid      : out   Boolean
+  ) ;
+
+  ------------------------------------------------------------
+  -- Experimental.  Intended primarily for development.
+  procedure CompareBins (
+  ------------------------------------------------------------
+    constant Bin1       : in    CoverageIDType ;
+    constant Bin2       : in    CoverageIDType 
   ) ;
 
   --
@@ -2035,7 +2059,7 @@ package body CoveragePkg is
         RV                 =>  (1, 7),
         RvSeedInit         =>  FALSE,
 
-        AlertLogID         =>  OSVVM_ALERTLOG_ID
+        AlertLogID         =>  OSVVM_COVERAGE_ALERTLOG_ID
       ) ;
 
     ------------------------------------------------------------
@@ -2098,8 +2122,11 @@ package body CoveragePkg is
       NewNumItems   := NumItems + 1 ;
       GrowNumberItems(CovStructPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
       NumItems      := NewNumItems ;
+      CovStructPtr(NumItems) := COV_STRUCT_INIT ;
       NewCoverageID := (ID => NumItems) ;
---!!      SetName( NewCoverageID, NameIn) ;
+      SetName( NewCoverageID, NameIn) ;
+      SetAlertLogID(NewCoverageID, NameIn, OSVVM_COVERAGE_ALERTLOG_ID, FALSE) ; 
+--      CovStructPtr(NumItems).AlertLogID := OSVVM_COVERAGE_ALERTLOG_ID ;
 --!!
 --!!  Set name for each Coverage Point.
 --!!
@@ -2125,6 +2152,39 @@ package body CoveragePkg is
       WriteBinFileInit := FALSE ;
       file_close( WriteBinFile) ;
     end procedure FileCloseWriteBin ;
+
+    ------------------------------------------------------------
+    -- PT Local for now as it uses an access type
+    procedure WriteToCovFile (variable buf : inout line) is
+    ------------------------------------------------------------
+    begin
+      if buf /= NULL then
+        if WriteBinFileInit then
+          -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
+          writeline(WriteBinFile, buf) ;
+        elsif IsTranscriptEnabled then
+          if IsTranscriptMirrored then
+            -- Write to TranscriptFile and OUTPUT
+            tee(TranscriptFile, buf) ;
+          else
+            -- Write to TranscriptFile
+            writeline(TranscriptFile, buf) ;
+          end if ;
+        else
+          -- Default Write to OUTPUT
+          writeline(OUTPUT, buf) ;
+        end if ;
+      end if ;
+    end procedure WriteToCovFile ;
+
+    ------------------------------------------------------------
+    procedure PrintToCovFile(S : string) is
+    ------------------------------------------------------------
+      variable buf : line ; 
+    begin
+      write(buf, S) ; 
+      WriteToCovFile(buf) ; 
+    end procedure PrintToCovFile ;
 
 --      ------------------------------------------------------------
 --      procedure FileOpen (FileName : string; OpenKind : File_Open_Kind ) is
@@ -2302,7 +2362,7 @@ package body CoveragePkg is
       if CovStructPtr(ID.ID).CovName /= NULL then
         -- return Name if set
         return CovStructPtr(ID.ID).CovName.all ;
-      elsif CovStructPtr(ID.ID).AlertLogID /= OSVVM_ALERTLOG_ID then
+      elsif CovStructPtr(ID.ID).AlertLogID /= OSVVM_COVERAGE_ALERTLOG_ID then
         -- otherwise return AlertLogName if it is set
         return GetAlertLogName(CovStructPtr(ID.ID).AlertLogID) ;
       elsif CovStructPtr(ID.ID).CovMessage /= NULL then
@@ -2320,7 +2380,7 @@ package body CoveragePkg is
       if CovStructPtr(ID.ID).CovName /= NULL then
         -- return Name if set
         return prefix & CovStructPtr(ID.ID).CovName.all & suffix ;
-      elsif CovStructPtr(ID.ID).AlertLogID = OSVVM_ALERTLOG_ID and CovStructPtr(ID.ID).CovMessage /= NULL then
+      elsif CovStructPtr(ID.ID).AlertLogID = OSVVM_COVERAGE_ALERTLOG_ID and CovStructPtr(ID.ID).CovMessage /= NULL then
         -- If AlertLogID not set, then use Message
         return prefix & GetWord(CovStructPtr(ID.ID).CovMessage.Name.all) & suffix ;
       else
@@ -2495,7 +2555,7 @@ package body CoveragePkg is
       if CovStructPtr(ID.ID).NumBins = 0 then
         CovStructPtr(ID.ID).BinValLength := CurBinValLength ; -- number of points in cross
       else
-        AlertIf(CovStructPtr(ID.ID).AlertLogID, CovStructPtr(ID.ID).BinValLength /= CurBinValLength, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" &
+        AlertIfNotEqual(CovStructPtr(ID.ID).AlertLogID, CovStructPtr(ID.ID).BinValLength, CurBinValLength, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" &
         " Cross coverage bins of different dimensions prohibited", FAILURE) ;
       end if;
     end procedure CheckBinValLength ;
@@ -2904,7 +2964,7 @@ package body CoveragePkg is
 --      CovStructPtr(ID.ID).CountMode          := COUNT_FIRST ;
 --      CovStructPtr(ID.ID).RV                 := (1, 7) ;
 --      CovStructPtr(ID.ID).RvSeedInit         := FALSE ;
---      CovStructPtr(ID.ID).AlertLogID         := OSVVM_ALERTLOG_ID ;
+--      CovStructPtr(ID.ID).AlertLogID         := OSVVM_COVERAGE_ALERTLOG_ID ;
 
     end procedure deallocate ;
 
@@ -3064,7 +3124,7 @@ package body CoveragePkg is
     impure function IsCovered (ID : CoverageIDType; PercentCov : real ) return boolean is
     ------------------------------------------------------------
     begin
-      -- AlertIf(CovStructPtr(ID.ID).NumBins < 1, OSVVM_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
+      -- AlertIf(CovStructPtr(ID.ID).NumBins < 1, OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
       return CountCovHoles(ID, PercentCov) = 0 ;
     end function IsCovered ;
 
@@ -3072,7 +3132,7 @@ package body CoveragePkg is
     impure function IsCovered (ID : CoverageIDType) return boolean is
     ------------------------------------------------------------
     begin
-      -- AlertIf(CovStructPtr(ID.ID).NumBins < 1, OSVVM_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
+      -- AlertIf(CovStructPtr(ID.ID).NumBins < 1, OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
       return CountCovHoles(ID, CovStructPtr(ID.ID).CovTarget) = 0 ;
     end function IsCovered ;
 
@@ -3745,31 +3805,6 @@ package body CoveragePkg is
     end function GetBinName;
 
     ------------------------------------------------------------
-    -- pt local
-    procedure WriteToCovFile (variable buf : inout line) is
-    ------------------------------------------------------------
-    begin
-      if buf /= NULL then
-        if WriteBinFileInit then
-          -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
-          writeline(WriteBinFile, buf) ;
-        elsif IsTranscriptEnabled then
-          if IsTranscriptMirrored then
-            -- Write to TranscriptFile and OUTPUT
-            tee(TranscriptFile, buf) ;
-          else
-            -- Write to TranscriptFile
-            writeline(TranscriptFile, buf) ;
-          end if ;
-        else
-          -- Default Write to OUTPUT
-          writeline(OUTPUT, buf) ;
-        end if ;
-      end if ;
-    end procedure WriteToCovFile ;
-
-
-    ------------------------------------------------------------
     -- pt local for now -- file formal parameter not allowed with a public method
 --    procedure WriteBinName (ID : CoverageIDType; file f : text ; S : string ; Prefix : string := "%% " ) is
     procedure WriteBinName (ID : CoverageIDType; variable buf : inout line; S : string ; Prefix : string := "%% " ) is
@@ -3787,7 +3822,7 @@ package body CoveragePkg is
         if CovStructPtr(ID.ID).CovName /= NULL then
           -- Print Name if set
           write(buf, Prefix & S & CovStructPtr(ID.ID).CovName.all) ;
-        elsif CovStructPtr(ID.ID).AlertLogID /= OSVVM_ALERTLOG_ID then
+        elsif CovStructPtr(ID.ID).AlertLogID /= OSVVM_COVERAGE_ALERTLOG_ID then
           -- otherwise Print AlertLogName if it is set
           write(buf, Prefix & S & string'(GetAlertLogName(CovStructPtr(ID.ID).AlertLogID)) ) ;
         else
@@ -6372,6 +6407,16 @@ package body CoveragePkg is
   begin
     CoverageStore.FileCloseWriteBin ;
   end procedure FileCloseWriteBin ;
+  
+--  procedure WriteToCovFile (variable buf : inout line) is
+--  begin
+--    CoverageStore.WriteToCovFile (buf) ;
+--  end procedure WriteToCovFile ;
+
+  procedure PrintToCovFile(S : string) is
+  begin
+    CoverageStore.PrintToCovFile (S) ;
+  end procedure PrintToCovFile ;
 
   ------------------------------------------------------------
   procedure SetReportOptions (
@@ -7306,24 +7351,24 @@ package body CoveragePkg is
     for i in 1 to NumBins1 loop
       BinInfo1 := Bin1.GetBinInfo(i) ;
       BinInfo2 := Bin2.GetBinInfo(i) ;
-      BinVal1  := Bin1.GetBinVal(i) ;
-      BinVal2  := Bin2.GetBinVal(i) ;
+      BinVal1  := Bin1.GetBinVal (i) ;
+      BinVal2  := Bin2.GetBinVal (i) ;
       if BinInfo1 /= BinInfo2 or BinVal1 /= BinVal2 then
-        write(buf, "%% Bin:" & integer'image(i) & " miscompare." & LF) ;
+        write(buf, "%% Bin:" & to_string(i) & " miscompare." & LF) ;
         -- writeline(OUTPUT, buf) ;
         swrite(buf, "%% Bin1: ") ;
         write(buf, BinVal1) ;
-        write(buf, "   Action = " & integer'image(BinInfo1.action)) ;
-        write(buf, "   Count = " & integer'image(BinInfo1.count)) ;
-        write(buf, "   AtLeast = " & integer'image(BinInfo1.AtLeast)) ;
-        write(buf, "   Weight = " & integer'image(BinInfo1.Weight) & LF ) ;
+        write(buf, "   Action = " &  to_string(BinInfo1.action)) ;
+        write(buf, "   Count = " &   to_string(BinInfo1.count)) ;
+        write(buf, "   AtLeast = " & to_string(BinInfo1.AtLeast)) ;
+        write(buf, "   Weight = " &  to_string(BinInfo1.Weight) & LF ) ;
         -- writeline(OUTPUT, buf) ;
         swrite(buf, "%% Bin2: ") ;
         write(buf, BinVal2) ;
-        write(buf, "   Action = " & integer'image(BinInfo2.action)) ;
-        write(buf, "   Count = " & integer'image(BinInfo2.count)) ;
-        write(buf, "   AtLeast = " & integer'image(BinInfo2.AtLeast)) ;
-        write(buf, "   Weight = " & integer'image(BinInfo2.Weight) & LF ) ;
+        write(buf, "   Action = " &  to_string(BinInfo2.action)) ;
+        write(buf, "   Count = " &   to_string(BinInfo2.count)) ;
+        write(buf, "   AtLeast = " & to_string(BinInfo2.AtLeast)) ;
+        write(buf, "   Weight = " &  to_string(BinInfo2.Weight) & LF ) ;
         -- writeline(OUTPUT, buf) ;
         ErrorCount := ErrorCount + 1 ;
         writeline(buf) ;
@@ -7346,7 +7391,82 @@ package body CoveragePkg is
   begin
     CompareBins(Bin1, Bin2, ErrorCount) ;
     iAlertLogID := Bin1.GetAlertLogID ;
-    AlertIf(ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " are not the same.") ;
+    AffirmIfEqual(ErrorCount, 0, "CompareBins(Bin1, Bin2, ErrorCount) " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " ErrorCount:") ;
+  end procedure CompareBins ;
+
+
+  ------------------------------------------------------------
+  -- Experimental.  Intended primarily for development.
+  procedure CompareBins (
+  ------------------------------------------------------------
+    constant Bin1       : in    CoverageIDType ;
+    constant Bin2       : in    CoverageIDType ;
+    variable Valid      : out   Boolean
+  ) is
+    variable NumBins1, NumBins2 : integer ;
+    variable BinInfo1, BinInfo2 : CovBinBaseType ;
+    variable BinVal1, BinVal2 : RangeArrayType(1 to GetBinValLength(Bin1)) ;
+    variable buf : line ;
+    variable iAlertLogID : AlertLogIDType ;
+  begin
+    iAlertLogID := GetAlertLogID(Bin1) ;
+
+    NumBins1 := GetNumBins(Bin1) ;
+    NumBins2 := GetNumBins(Bin2) ;
+    
+    Valid := TRUE ;
+
+    if (NumBins1 /= NumBins2) then
+      Valid := FALSE ;
+      print("CoveragePkg.CompareBins: CoverageModels " & GetCovModelName(Bin1) & " and " & GetCovModelName(Bin2) &
+            " have different bin lengths") ;
+      return ;
+    end if ;
+
+    for i in 1 to NumBins1 loop
+      BinInfo1 := GetBinInfo(Bin1, i) ;
+      BinInfo2 := GetBinInfo(Bin2, i) ;
+      BinVal1  := GetBinVal (Bin1, i) ;
+      BinVal2  := GetBinVal (Bin2, i) ;
+      if BinInfo1 /= BinInfo2 or BinVal1 /= BinVal2 then
+        write(buf, "%% Bin: " & to_string(i) & " miscompare." & LF) ;
+        -- writeline(OUTPUT, buf) ;
+        swrite(buf, "%% Bin1: ") ;
+        write(buf, BinVal1) ;
+        write(buf, "   Action = " &  to_string(BinInfo1.action)) ;
+        write(buf, "   Count = " &   to_string(BinInfo1.count)) ;
+        write(buf, "   AtLeast = " & to_string(BinInfo1.AtLeast)) ;
+        write(buf, "   Weight = " &  to_string(BinInfo1.Weight) & LF ) ;
+        -- writeline(OUTPUT, buf) ;
+        swrite(buf, "%% Bin2: ") ;
+        write(buf, BinVal2) ;
+        write(buf, "   Action = " &  to_string(BinInfo2.action)) ;
+        write(buf, "   Count = " &   to_string(BinInfo2.count)) ;
+        write(buf, "   AtLeast = " & to_string(BinInfo2.AtLeast)) ;
+        write(buf, "   Weight = " &  to_string(BinInfo2.Weight) ) ;  -- & LF 
+        -- writeline(OUTPUT, buf) ;
+        Valid := FALSE ;
+        writeline(buf) ;
+        -- Alert(iAlertLogID, buf.all, ERROR) ;
+        -- deallocate(buf) ;
+      end if ;
+    end loop ;
+  end procedure CompareBins ;
+
+
+  ------------------------------------------------------------
+  -- Experimental.  Intended primarily for development.
+  procedure CompareBins (
+  ------------------------------------------------------------
+    constant Bin1       : in    CoverageIDType ;
+    constant Bin2       : in    CoverageIDType 
+  ) is
+    variable Valid : boolean ;
+    variable iAlertLogID : AlertLogIDType ;
+  begin
+    CompareBins(Bin1, Bin2, Valid) ;
+    iAlertLogID := GetAlertLogID(Bin1) ;
+    AffirmIf(iAlertLogID, Valid, "CompareBins(Bin1, Bin2) " & GetCovModelName(Bin1) & " and " & GetCovModelName(Bin2)) ;
   end procedure CompareBins ;
 
   ------------------------------------------------------------
@@ -7371,7 +7491,7 @@ package body CoveragePkg is
       report "OSVVM.CoveragePkg.MakeBin (called by GenBin, IllegalBin, or IgnoreBin) MAX > MIN generated NULL_BIN"
         severity WARNING ;
       -- No Alerts. They make this impure.
-      -- Alert(OSVVM_ALERTLOG_ID, "CoveragePkg.MakeBin (called by GenBin, IllegalBin, IgnoreBin): Min must be <= Max", WARNING) ;
+      -- Alert(OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.MakeBin (called by GenBin, IllegalBin, IgnoreBin): Min must be <= Max", WARNING) ;
       return NULL_BIN ;
 
     elsif NumBin <= 0 then
@@ -7379,7 +7499,7 @@ package body CoveragePkg is
       report "OSVVM.CoveragePkg.MakeBin (called by GenBin, IllegalBin, or IgnoreBin) NumBin <= 0 generated NULL_BIN"
         severity WARNING ;
       -- Alerts make this impure.
-      -- Alert(OSVVM_ALERTLOG_ID, "CoveragePkg.MakeBin (called by GenBin, IllegalBin, IgnoreBin): NumBin must be <= 0", WARNING) ;
+      -- Alert(OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.MakeBin (called by GenBin, IllegalBin, IgnoreBin): NumBin must be <= 0", WARNING) ;
       return NULL_BIN ;
 
     elsif NumBin = 1 then
@@ -7438,7 +7558,7 @@ package body CoveragePkg is
       report "OSVVM.CoveragePkg.MakeBin (called by GenBin, IllegalBin, or IgnoreBin) integer_vector length <= 0 generated NULL_BIN"
         severity WARNING ;
       -- Alerts make this impure.
-      -- Alert(OSVVM_ALERTLOG_ID, "CoveragePkg.MakeBin (GenBin, IllegalBin, IgnoreBin): integer_vector parameter must have values", WARNING) ;
+      -- Alert(OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.MakeBin (GenBin, IllegalBin, IgnoreBin): integer_vector parameter must have values", WARNING) ;
       return NULL_BIN ;
 
     else
