@@ -2954,16 +2954,16 @@ package body CoveragePkg is
       CovStructPtr(ID.ID).LastStimGenIndex   := 1 ;
       
       -- Changing these is beyond what deallocate should do.
---      CovStructPtr(ID.ID).NextPointMode      := RANDOM ;
---      CovStructPtr(ID.ID).IllegalMode        := ILLEGAL_ON ;
---      CovStructPtr(ID.ID).IllegalModeLevel   := ERROR ;
---      CovStructPtr(ID.ID).WeightMode         := AT_LEAST ;
---      CovStructPtr(ID.ID).WeightScale        := 1.0 ;
---      CovStructPtr(ID.ID).ThresholdingEnable := FALSE ;
---      CovStructPtr(ID.ID).CovThreshold       := 45.0 ;
---      CovStructPtr(ID.ID).CovTarget          := 100.0 ;
---      CovStructPtr(ID.ID).MergingEnable      := FALSE ;
---      CovStructPtr(ID.ID).CountMode          := COUNT_FIRST ;
+      CovStructPtr(ID.ID).NextPointMode      := RANDOM ;
+      CovStructPtr(ID.ID).IllegalMode        := ILLEGAL_ON ;
+      CovStructPtr(ID.ID).IllegalModeLevel   := ERROR ;
+      CovStructPtr(ID.ID).WeightMode         := AT_LEAST ;
+      CovStructPtr(ID.ID).WeightScale        := 1.0 ;
+      CovStructPtr(ID.ID).ThresholdingEnable := FALSE ;
+      CovStructPtr(ID.ID).CovThreshold       := 45.0 ;
+      CovStructPtr(ID.ID).CovTarget          := 100.0 ;
+      CovStructPtr(ID.ID).MergingEnable      := FALSE ;
+      CovStructPtr(ID.ID).CountMode          := COUNT_FIRST ;
 --      CovStructPtr(ID.ID).RV                 := (1, 7) ;
 --      CovStructPtr(ID.ID).RvSeedInit         := FALSE ;
 --      CovStructPtr(ID.ID).AlertLogID         := OSVVM_COVERAGE_ALERTLOG_ID ;
