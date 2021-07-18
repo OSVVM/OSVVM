@@ -2944,14 +2944,16 @@ package body CoveragePkg is
       DeallocateName(ID) ;
       DeallocateMessage(ID) ;
       -- Restore internal variables to their default values
-      CovStructPtr(ID.ID) := COV_STRUCT_INIT ;
+--      CovStructPtr(ID.ID) := COV_STRUCT_INIT ;
 
---      CovStructPtr(ID.ID).NumBins            := 0 ;
---      CovStructPtr(ID.ID).BinValLength       := 1 ;
---      CovStructPtr(ID.ID).VendorCovHandle    := 0 ;
---      CovStructPtr(ID.ID).ItemCount          := 0 ;
---      CovStructPtr(ID.ID).LastIndex          := 1 ;
---      CovStructPtr(ID.ID).LastStimGenIndex   := 1 ;
+      CovStructPtr(ID.ID).NumBins            := 0 ;
+      CovStructPtr(ID.ID).BinValLength       := 1 ;
+      CovStructPtr(ID.ID).VendorCovHandle    := 0 ;
+      CovStructPtr(ID.ID).ItemCount          := 0 ;
+      CovStructPtr(ID.ID).LastIndex          := 1 ;
+      CovStructPtr(ID.ID).LastStimGenIndex   := 1 ;
+      
+      -- Changing these is beyond what deallocate should do.
 --      CovStructPtr(ID.ID).NextPointMode      := RANDOM ;
 --      CovStructPtr(ID.ID).IllegalMode        := ILLEGAL_ON ;
 --      CovStructPtr(ID.ID).IllegalModeLevel   := ERROR ;
