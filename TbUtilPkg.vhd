@@ -51,10 +51,10 @@
 library ieee ;
   use ieee.std_logic_1164.all ;
   
-library osvvm ; 
-  use osvvm.AlertLogPkg.all ;
-  use osvvm.TranscriptPkg.all ; 
-  use osvvm.ResolutionPkg.all ; 
+  use work.AlertLogPkg.all ;
+  use work.TranscriptPkg.all ; 
+  use work.ResolutionPkg.all ; 
+  use work.OsvvmGlobalPkg.all ;
 
 package TbUtilPkg is
 
@@ -932,8 +932,8 @@ package body TbUtilPkg is
       wait until Clk = CLK_ACTIVE ; 
       ObservedPeriod := now - LastLogTime ; 
       AffirmIf(AlertLogID, ObservedPeriod = Period, 
-         "CheckClockPeriod: " & ClkName & " Period: " & to_string(ObservedPeriod) & 
-         " = Expected " & to_string(Period)) ;
+         "CheckClockPeriod: " & ClkName & " Period: " & to_string(ObservedPeriod, GetOsvvmDefaultTimeUnits) & 
+         " = Expected " & to_string(Period, GetOsvvmDefaultTimeUnits)) ;
       LastLogTime := now ; 
      end loop ; 
      wait ; 

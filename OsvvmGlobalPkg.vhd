@@ -113,12 +113,20 @@ package OsvvmGlobalPkg is
   impure function ResolveCovWriteCount     (A, B : OsvvmOptionsType) return OsvvmOptionsType ; -- Cov
   impure function ResolveCovWriteAnyIllegal(A, B : OsvvmOptionsType) return OsvvmOptionsType ;  -- Cov
   
+  procedure SetOsvvmDefaultTimeUnits (A : time) ; 
+  impure function GetOsvvmDefaultTimeUnits return time ;
+
   procedure OsvvmDeallocate ;
   
   type OptionsPType is protected 
     procedure Set (A: OsvvmOptionsType) ; 
     impure function get return OsvvmOptionsType ;
   end protected OptionsPType ;
+
+  type OsvvmDefaultTimeUnitsPType is protected 
+    procedure Set (A: time) ; 
+    impure function get return time ;
+  end protected OsvvmDefaultTimeUnitsPType ;
 end OsvvmGlobalPkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -137,15 +145,28 @@ package body OsvvmGlobalPkg is
       return GlobalVar ; 
     end function get ; 
   end protected body OptionsPType ; 
+
+  type OsvvmDefaultTimeUnitsPType is protected body
+    variable GlobalVar : time := std.env.resolution_limit ;  -- VHDL-2008
+    procedure Set (A : time) is
+    begin
+       GlobalVar := A ; 
+    end procedure Set ; 
+    impure function get return time is
+    begin
+      return GlobalVar ; 
+    end function get ; 
+  end protected body OsvvmDefaultTimeUnitsPType ; 
   
-  shared variable WritePrefixVar     : NamePType ;
-  shared variable DoneNameVar        : NamePType ;
-  shared variable PassNameVar        : NamePType ;
-  shared variable FailNameVar        : NamePType ;
-  shared variable WritePassFailVar   : OptionsPType ; -- := FALSE ;
-  shared variable WriteBinInfoVar    : OptionsPType ; -- := TRUE ;
-  shared variable WriteCountVar      : OptionsPType ; -- := TRUE ;
-  shared variable WriteAnyIllegalVar : OptionsPType ; -- := FALSE ;
+  shared variable WritePrefixVar           : NamePType ;
+  shared variable DoneNameVar              : NamePType ;
+  shared variable PassNameVar              : NamePType ;
+  shared variable FailNameVar              : NamePType ;
+  shared variable WritePassFailVar         : OptionsPType ; -- := FALSE ;
+  shared variable WriteBinInfoVar          : OptionsPType ; -- := TRUE ;
+  shared variable WriteCountVar            : OptionsPType ; -- := TRUE ;
+  shared variable WriteAnyIllegalVar       : OptionsPType ; -- := FALSE ;
+  shared variable OsvvmDefaultTimeUnitsVar : OsvvmDefaultTimeUnitsPType ; 
 
   function IsEnabled (A : OsvvmOptionsType) return boolean is
   begin
@@ -359,6 +380,16 @@ package body OsvvmGlobalPkg is
   begin
     return ResolveOsvvmOption(A, B, WriteAnyIllegalVar.Get, OSVVM_DEFAULT_WRITE_ANY_ILLEGAL) ;
   end function ResolveCovWriteAnyIllegal ;  -- Cov
+  
+  procedure SetOsvvmDefaultTimeUnits (A : time) is 
+  begin
+    OsvvmDefaultTimeUnitsVar.Set(A) ; 
+  end procedure SetOsvvmDefaultTimeUnits ; 
+
+  impure function GetOsvvmDefaultTimeUnits return time is 
+  begin
+    return OsvvmDefaultTimeUnitsVar.Get ; 
+  end function GetOsvvmDefaultTimeUnits ; 
   
   procedure OsvvmDeallocate is
   begin
