@@ -69,7 +69,7 @@ package MemoryPkg is
     Name                : String ; 
     AddrWidth           : integer ; 
     DataWidth           : integer ; 
-    ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+    ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
   ) return MemoryIDType ;
 
   ------------------------------------------------------------
@@ -169,7 +169,7 @@ package MemoryPkg is
       Name                : String ; 
       AddrWidth           : integer ; 
       DataWidth           : integer ; 
-      ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+      ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
     ) return integer ;
 
     ------------------------------------------------------------
@@ -292,7 +292,7 @@ package MemoryPkg is
     
     ------------------------------------------------------------
     procedure SetAlertLogID (A : AlertLogIDType) ;
-    procedure SetAlertLogID (Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;    
+    procedure SetAlertLogID (Name : string ; ParentID : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) ;    
     impure function GetAlertLogID return AlertLogIDType ;
     
     ------------------------------------------------------------
@@ -439,7 +439,7 @@ package body MemoryPkg is
       Name                : String ; 
       AddrWidth           : integer ; 
       DataWidth           : integer ; 
-      ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+      ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
     ) return integer is 
       variable NewNumItems : integer ;
       variable NameID : integer := LocalNameStore.find(Name) ; 
@@ -1141,7 +1141,7 @@ package body MemoryPkg is
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
-    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) is
+    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) is
     ------------------------------------------------------------
     begin
       MemStructPtr(MEM_STRUCT_PTR_LEFT).AlertLogID := GetAlertLogID(Name, ParentID, CreateHierarchy) ;
@@ -1279,7 +1279,7 @@ package body MemoryPkg is
     Name                : String ; 
     AddrWidth           : integer ; 
     DataWidth           : integer ; 
-    ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+    ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
   ) return MemoryIDType is
     variable Result : MemoryIDType ; 
   begin

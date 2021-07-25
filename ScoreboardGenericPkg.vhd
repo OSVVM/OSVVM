@@ -107,15 +107,15 @@ package ScoreboardGenericPkg is
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;  
 
   ------------------------------------------------------------
-  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
+  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDType ;
   -- Vector: 1 to Size
-  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType ;
   -- Vector: X(X'Left) to X(X'Right)
-  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType ;
   -- Matrix: 1 to X, 1 to Y
-  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType ;
   -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
-  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType ;
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
@@ -253,7 +253,7 @@ package ScoreboardGenericPkg is
   procedure SetAlertLogID(
     constant ID              : in  ScoreboardIDType ;
     constant Name            : in  string ; 
-    constant ParentID        : in  AlertLogIDType := ALERTLOG_BASE_ID ; 
+    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
     constant CreateHierarchy : in  Boolean := TRUE
   ) ;
 
@@ -387,15 +387,15 @@ package ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Used by Scoreboard Store
     procedure SetPrintIndex (Enable : boolean := TRUE) ;
-    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType ;
+    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDType ;
     -- Vector: 1 to Size
-    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType ;
     -- Vector: X(X'Left) to X(X'Right)
-    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType ;
+    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType ;
     -- Matrix: 1 to X, 1 to Y
-    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType ;
     -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
-    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType ;
+    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType ;
     ------------------------------------------------------------
 
     ------------------------------------------------------------
@@ -606,8 +606,8 @@ package ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
-    procedure SetAlertLogID(Index : Integer ; Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;
-    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;
+    procedure SetAlertLogID(Index : Integer ; Name : string ; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) ;
+    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) ;
     -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
     procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) ;  
     procedure SetAlertLogID (A : AlertLogIDType) ;
@@ -910,7 +910,7 @@ package body ScoreboardGenericPkg is
     
     ------------------------------------------------------------
     -- Used by Scoreboard Store
-    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
+    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDType is
     ------------------------------------------------------------
       variable Result : ScoreboardIDType ; 
       variable MinNewNumItems : integer ;
@@ -949,7 +949,7 @@ package body ScoreboardGenericPkg is
     
     ------------------------------------------------------------
     -- Vector: 1 to Size
-    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType is
     ------------------------------------------------------------
       variable ArrayParentID  : AlertLogIDType ; 
     begin
@@ -960,7 +960,7 @@ package body ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     -- Vector: X(X'Left) to X(X'Right)
-    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType is
     ------------------------------------------------------------
       variable ArrayParentID  : AlertLogIDType ; 
     begin
@@ -995,7 +995,7 @@ package body ScoreboardGenericPkg is
     
     ------------------------------------------------------------
     -- Matrix: 1 to X, 1 to Y
-    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType is
     ------------------------------------------------------------
       variable ArrayParentID  : AlertLogIDType ; 
     begin
@@ -1007,7 +1007,7 @@ package body ScoreboardGenericPkg is
      
     ------------------------------------------------------------
     -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
-    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType is
     ------------------------------------------------------------
       variable ArrayParentID  : AlertLogIDType ; 
     begin
@@ -1241,14 +1241,14 @@ package body ScoreboardGenericPkg is
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
-    procedure SetAlertLogID(Index : Integer ; Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) is
+    procedure SetAlertLogID(Index : Integer ; Name : string ; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) is
     ------------------------------------------------------------
     begin
       AlertLogIDVar(Index) := GetAlertLogID(Name, ParentID, CreateHierarchy) ;
     end procedure SetAlertLogID ;
     
     ------------------------------------------------------------
-    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) is
+    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) is
     ------------------------------------------------------------
     begin
       AlertLogIDVar(FirstIndexVar) := GetAlertLogID(Name, ParentID, CreateHierarchy) ;
@@ -2431,7 +2431,7 @@ package body ScoreboardGenericPkg is
   shared variable ScoreboardStore : ScoreBoardPType ;
   
   ------------------------------------------------------------
-  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDType is
+  impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDType is
   ------------------------------------------------------------
   begin
     return ScoreboardStore.NewID(Name, ParentAlertLogID) ; 
@@ -2439,7 +2439,7 @@ package body ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- Vector: 1 to Size
-  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType is
   ------------------------------------------------------------
   begin
     return ScoreboardStore.NewID(Name, Size, ParentAlertLogID) ; 
@@ -2447,7 +2447,7 @@ package body ScoreboardGenericPkg is
   
   ------------------------------------------------------------
   -- Vector: X(X'Left) to X(X'Right)
-  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIDArrayType is
+  impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIDArrayType is
   ------------------------------------------------------------
   begin
     return ScoreboardStore.NewID(Name, X, ParentAlertLogID) ; 
@@ -2455,7 +2455,7 @@ package body ScoreboardGenericPkg is
   
   ------------------------------------------------------------
   -- Matrix: 1 to X, 1 to Y
-  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+  impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType is
   ------------------------------------------------------------
   begin
     return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID) ; 
@@ -2463,7 +2463,7 @@ package body ScoreboardGenericPkg is
    
   ------------------------------------------------------------
   -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
-  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return ScoreboardIdMatrixType is
+  impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID) return ScoreboardIdMatrixType is
   ------------------------------------------------------------
   begin
     return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID) ; 
@@ -2665,7 +2665,7 @@ package body ScoreboardGenericPkg is
   procedure SetAlertLogID(
     constant ID              : in  ScoreboardIDType ;
     constant Name            : in  string ; 
-    constant ParentID        : in  AlertLogIDType := ALERTLOG_BASE_ID ; 
+    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
     constant CreateHierarchy : in  Boolean := TRUE
   ) is
   begin
