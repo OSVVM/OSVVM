@@ -49,7 +49,7 @@ library ieee ;
   use ieee.numeric_std.all ;
 
 
-package ScoreBoardPkg_int is new work.ScoreboardGenericPkg
+package ScoreBoardPkg_signed is new work.ScoreboardGenericPkg
   generic map (
     ExpectedType        => signed,
     ActualType          => signed,
