@@ -40,11 +40,12 @@
 --  
 
 use std.textio.all ;
+use work.ResolutionPkg.all ; 
 
 package NameStorePkg is
  
   type NameIDType is record
-    ID : integer ;
+    ID : integer_max ;
   end record NameIDType ; 
   alias NameStoreIDType is NameIDType ; 
   type NameIDArrayType is array (integer range <>) of NameIDType ;  
@@ -124,7 +125,8 @@ package body NameStorePkg is
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr.all(1 to CurNumItems) := oldItemArrayPtr.all(1 to CurNumItems) ;
+--        ItemArrayPtr.all(1 to CurNumItems) := oldItemArrayPtr.all(1 to CurNumItems) ;
+        ItemArrayPtr(1 to CurNumItems) := oldItemArrayPtr(1 to CurNumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
     end procedure GrowNumberItems ;

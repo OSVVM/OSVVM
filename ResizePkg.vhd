@@ -54,22 +54,26 @@ package ResizePkg is
   function Extend(A: std_logic_vector; Size : natural) return std_logic_vector ;
   function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector ;
 
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
+  impure function SafeResize(A : std_logic_vector; Size : natural) return std_logic_vector ;
+  impure function SafeResize(A : std_logic_vector; Size : natural) return std_logic_vector_max_c ;
+  impure function SafeResize(A : std_logic_vector_max_c; Size : natural) return std_logic_vector ;
+
+  function        ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
   impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c ;
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
-  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
+  function        ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
+  function        FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
   impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max_c) return integer ;
+  function        FromTransaction (A: std_logic_vector_max_c) return integer ;
   
   --
   -- ToTransaction and FromTransaction for _max provided to support a 
   -- common methodology, conversions are not needed
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max ;
+  function        ToTransaction(A : std_logic_vector) return std_logic_vector_max ;
   impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max ;
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max ;
-  function FromTransaction (A: std_logic_vector_max) return std_logic_vector ;
+  function        ToTransaction(A : integer; Size : natural) return std_logic_vector_max ;
+  function        FromTransaction (A: std_logic_vector_max) return std_logic_vector ;
   impure function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max) return integer ;    
+  function        FromTransaction (A: std_logic_vector_max) return integer ;    
   
 end package ResizePkg ;
 package body ResizePkg is 
@@ -92,7 +96,7 @@ package body ResizePkg is
   end function Reduce ;
   
   -- SafeResize - handles std_logic_vector as unsigned
-  impure function SafeResize(A: std_logic_vector; Size : natural) return std_logic_vector is
+  impure function LocalSafeResize(A : std_logic_vector; Size : natural) return std_logic_vector is
     variable Result : std_logic_vector(Size-1 downto 0) := (others => '0') ;
     alias aA : std_logic_vector(A'length-1 downto 0) is A ;
   begin
@@ -105,7 +109,24 @@ package body ResizePkg is
       Result := aA(Size-1 downto 0) ;
     end if ;    
     return Result ;
+  end function LocalSafeResize ;
+ 
+  impure function SafeResize(A : std_logic_vector; Size : natural) return std_logic_vector is
+  begin
+    return LocalSafeResize(A, Size) ;
   end function SafeResize ;
+
+ 
+  impure function SafeResize(A : std_logic_vector; Size : natural) return std_logic_vector_max_c is
+  begin
+    return std_logic_vector_max_c(LocalSafeResize(A, Size)) ;
+  end function SafeResize ;
+
+  impure function SafeResize(A : std_logic_vector_max_c; Size : natural) return std_logic_vector is
+  begin
+    return LocalSafeResize(std_logic_vector(A), Size) ;
+  end function SafeResize ;
+
 
   function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c is
   begin
@@ -114,7 +135,7 @@ package body ResizePkg is
 
   impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c is
   begin
-    return std_logic_vector_max_c(SafeResize(A, Size)) ;
+    return std_logic_vector_max_c(LocalSafeResize(A, Size)) ;
   end function ToTransaction ;
 
   function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c is
@@ -129,7 +150,7 @@ package body ResizePkg is
 
   impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector is
   begin
-    return SafeResize(std_logic_vector(A), Size) ;
+    return LocalSafeResize(std_logic_vector(A), Size) ;
   end function FromTransaction ;
 
   function FromTransaction (A: std_logic_vector_max_c) return integer is
@@ -147,7 +168,7 @@ package body ResizePkg is
 
   impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max is
   begin
-    return SafeResize(A, Size) ;
+    return LocalSafeResize(A, Size) ;
   end function ToTransaction ;
 
   function ToTransaction(A : integer; Size : natural) return std_logic_vector_max is
@@ -162,7 +183,7 @@ package body ResizePkg is
 
   impure function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector is
   begin
-    return SafeResize(A, Size) ;
+    return LocalSafeResize(A, Size) ;
   end function FromTransaction ;
 
   function FromTransaction (A: std_logic_vector_max) return integer is

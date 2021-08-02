@@ -52,14 +52,15 @@ library IEEE ;
   use IEEE.numeric_std_unsigned.all ; 
   use IEEE.math_real.all ;
   
-use work.TextUtilPkg.all ;
-use work.TranscriptPkg.all ;  
-use work.AlertLogPkg.all ;
-use work.NameStorePkg.all ;
+  use work.TextUtilPkg.all ;
+  use work.TranscriptPkg.all ;  
+  use work.AlertLogPkg.all ;
+  use work.NameStorePkg.all ;
+  use work.ResolutionPkg.all ; 
 
 package MemoryPkg is
   type MemoryIDType is record
-    ID : integer ;
+    ID : integer_max ;
   end record MemoryIDType ; 
   type MemoryIDArrayType is array (integer range <>) of MemoryIDType ;
 
@@ -69,7 +70,7 @@ package MemoryPkg is
     Name                : String ; 
     AddrWidth           : integer ; 
     DataWidth           : integer ; 
-    ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+    ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
   ) return MemoryIDType ;
 
   ------------------------------------------------------------
@@ -169,7 +170,7 @@ package MemoryPkg is
       Name                : String ; 
       AddrWidth           : integer ; 
       DataWidth           : integer ; 
-      ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+      ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
     ) return integer ;
 
     ------------------------------------------------------------
@@ -292,7 +293,7 @@ package MemoryPkg is
     
     ------------------------------------------------------------
     procedure SetAlertLogID (A : AlertLogIDType) ;
-    procedure SetAlertLogID (Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;    
+    procedure SetAlertLogID (Name : string ; ParentID : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) ;    
     impure function GetAlertLogID return AlertLogIDType ;
     
     ------------------------------------------------------------
@@ -367,7 +368,7 @@ package body MemoryPkg is
     type     ItemArrayType    is array (integer range <>) of MemStructType ; 
     type     ItemArrayPtrType is access ItemArrayType ;
     
-    variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, OSVVM_ALERTLOG_ID, NULL)) ;  -- Work around for QS 2020.04 and 2021.02
+    variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, OSVVM_MEMORY_ALERTLOG_ID, NULL)) ;  -- Work around for QS 2020.04 and 2021.02
     constant MEM_STRUCT_PTR_LEFT : integer := Template'left ; 
     variable MemStructPtr     : ItemArrayPtrType := new ItemArrayType'(Template) ;   
     variable NumItems         : integer := 0 ; 
@@ -439,7 +440,7 @@ package body MemoryPkg is
       Name                : String ; 
       AddrWidth           : integer ; 
       DataWidth           : integer ; 
-      ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+      ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
     ) return integer is 
       variable NewNumItems : integer ;
       variable NameID : integer := LocalNameStore.find(Name) ; 
@@ -1141,7 +1142,7 @@ package body MemoryPkg is
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
-    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) is
+    procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) is
     ------------------------------------------------------------
     begin
       MemStructPtr(MEM_STRUCT_PTR_LEFT).AlertLogID := GetAlertLogID(Name, ParentID, CreateHierarchy) ;
@@ -1279,7 +1280,7 @@ package body MemoryPkg is
     Name                : String ; 
     AddrWidth           : integer ; 
     DataWidth           : integer ; 
-    ParentAlertLogID    : AlertLogIDType := ALERTLOG_BASE_ID
+    ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
   ) return MemoryIDType is
     variable Result : MemoryIDType ; 
   begin
