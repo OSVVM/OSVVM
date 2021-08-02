@@ -40,11 +40,12 @@
 --  
 
 use std.textio.all ;
+use work.ResolutionPkg.all ; 
 
 package NameStorePkg is
  
   type NameIDType is record
-    ID : integer ;
+    ID : integer_max ;
   end record NameIDType ; 
   alias NameStoreIDType is NameIDType ; 
   type NameIDArrayType is array (integer range <>) of NameIDType ;  
