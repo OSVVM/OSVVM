@@ -150,7 +150,11 @@ package body OsvvmGlobalPkg is
     variable GlobalVar : time := std.env.resolution_limit ;  -- VHDL-2008
     procedure Set (A : time) is
     begin
-       GlobalVar := A ; 
+      if A > std.env.resolution_limit then
+        GlobalVar := A ; 
+      elsif A < std.env.resolution_limit then 
+        report "SetOsvvmDefaultTimeUnits:  time unit parameter too small" severity warning ;
+      end if ; 
     end procedure Set ; 
     impure function get return time is
     begin
