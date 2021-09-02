@@ -68,10 +68,14 @@ analyze CoveragePkg.vhd
 # analyze CoveragePkg_new.vhd
 analyze MemoryPkg.vhd
 
-analyze ScoreboardGenericPkg.vhd
-analyze ScoreboardPkg_slv.vhd
-analyze ScoreboardPkg_int.vhd
-
+if {$::osvvm::ToolVendor ne "Cadence"}  {
+  analyze ScoreboardGenericPkg.vhd
+  analyze ScoreboardPkg_slv.vhd
+  analyze ScoreboardPkg_int.vhd
+} else {
+  analyze ScoreboardPkg_slv_c.vhd
+  analyze ScoreboardPkg_int_c.vhd
+}
 analyze ResizePkg.vhd
 analyze TbUtilPkg.vhd
 

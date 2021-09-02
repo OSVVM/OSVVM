@@ -255,11 +255,11 @@ package body RandomBasePkg is
   --  GenRandSeed - Integer
   impure function GenRandSeed(I : integer) return RandomSeedType is
   -----------------------------------------------------------------
-    variable result : integer_vector(1 to 2) ;
+    variable result : RandomSeedType ;
   begin
-    result(1) := I * 5381 + 313 ;
-    result(2) := I * 313  + 5381 ;
-    return GenRandSeed(result) ; -- make value ranges legal
+    result(1) := integer((real(I) * 5381.0 + 313.0) mod 2.0 ** 30) ;
+    result(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
+    return result ; -- make value ranges legal
   end function GenRandSeed ;
 
   -----------------------------------------------------------------
@@ -283,16 +283,16 @@ package body RandomBasePkg is
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
     variable result : RandomSeedType ;
-    variable temp : integer := 5381 ;
+    variable temp : real := 5381.0 ;
   begin
     for i in 1 to HALF_LEN loop
-      temp := (temp*33 + character'pos(revS(i))) mod (2**30) ;
+      temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(1) := temp ;
+    result(1) := integer(temp) ;
     for i in HALF_LEN + 1 to LEN loop
-      temp := (temp*33 + character'pos(revS(i))) mod (2**30) ;
+      temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(2) := temp ;
+    result(2) := integer(temp) ;
     return result ;  
   end function GenRandSeed ;
   

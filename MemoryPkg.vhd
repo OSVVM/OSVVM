@@ -443,8 +443,10 @@ package body MemoryPkg is
       ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
     ) return integer is 
       variable NewNumItems : integer ;
-      variable NameID : integer := LocalNameStore.find(Name) ; 
+      variable NameID : integer ; 
     begin
+      NameID := LocalNameStore.find(Name) ; 
+
       -- Share the memory if they have matching Names
       if NameID /= ID_NOT_FOUND.ID then 
 --! Check that AddrWidth and DataWidth match
@@ -623,7 +625,9 @@ package body MemoryPkg is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "MemRead function") ;
       variable BlockAddr, WordAddr  : integer ;
       alias    aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
-      variable Data  : std_logic_vector(MemStructPtr(ID).DataWidth-1 downto 0) ; 
+      --!!Cadence      variable Data  : std_logic_vector(MemStructPtr(ID).DataWidth-1 downto 0) ; 
+      constant DATA_WIDTH : integer := MemStructPtr(ID).DataWidth ; 
+      variable Data  : std_logic_vector(DATA_WIDTH-1 downto 0) ; 
     begin
       MemRead(ID, Addr, Data) ; 
       return Data ; 
@@ -668,6 +672,7 @@ package body MemoryPkg is
       EndAddr      : std_logic_vector
     ) is
       constant ADDR_WIDTH : integer := MemStructPtr(ID).AddrWidth ;
+      constant DATA_WIDTH : integer := MemStructPtr(ID).DataWidth ; 
 --      constant TemplateRange : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
       -- Format:  
       --  @hh..h     -- Address in hex
@@ -678,7 +683,7 @@ package body MemoryPkg is
       variable Addr             : std_logic_vector(ADDR_WIDTH - 1 downto 0) ;
       variable SmallAddr        : std_logic_vector(ADDR_WIDTH - 1 downto 0) ;
       variable BigAddr          : std_logic_vector(ADDR_WIDTH - 1 downto 0) ;
-      variable Data             : std_logic_vector(MemStructPtr(ID).DataWidth - 1 downto 0) ;
+      variable Data             : std_logic_vector(DATA_WIDTH - 1 downto 0) ;
       variable LineNum          : natural ; 
       variable ItemNum          : natural ; 
       variable AddrInc          : std_logic_vector(ADDR_WIDTH - 1 downto 0) ; 
@@ -798,7 +803,8 @@ package body MemoryPkg is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileReadH ;
@@ -811,8 +817,9 @@ package body MemoryPkg is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileReadH ;    
@@ -840,8 +847,9 @@ package body MemoryPkg is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
-    begin
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
+    begin 
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileReadB ;
 
@@ -853,8 +861,9 @@ package body MemoryPkg is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileReadB ;    
@@ -870,9 +879,9 @@ package body MemoryPkg is
       StartAddr    : std_logic_vector ; 
       EndAddr      : std_logic_vector
     ) is
-    
-     constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
-     constant BLOCK_WIDTH : integer := MemStructPtr(ID).BlockWidth ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant DATA_WIDTH  : integer := MemStructPtr(ID).DataWidth ; 
+      constant BLOCK_WIDTH : integer := MemStructPtr(ID).BlockWidth ;
       -- Format:  
       --  @hh..h     -- Address in hex
       --  hhhhh      -- data one per line in either hex or binary as specified 
@@ -883,7 +892,7 @@ package body MemoryPkg is
       variable EndBlockAddr   : natural ;
       variable StartWordAddr  : natural ; 
       variable EndWordAddr    : natural ; 
-      variable Data           : std_logic_vector(MemStructPtr(ID).DataWidth - 1 downto 0) ;
+      variable Data           : std_logic_vector(DATA_WIDTH-1 downto 0) ;
       variable FoundData      : boolean ; 
       variable buf            : line ;
       
@@ -985,7 +994,8 @@ package body MemoryPkg is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
-      constant EndAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileWriteH ;
@@ -998,8 +1008,9 @@ package body MemoryPkg is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
 -- fails     constant StartAddr : std_logic_vector(MemStructPtr(ID).AddrWidth - 1 downto 0) := (others => '0') ;
 -- fails     constant EndAddr   : std_logic_vector(MemStructPtr(ID).AddrWidth - 1 downto 0) := (others => '1') ;
     begin
@@ -1029,7 +1040,8 @@ package body MemoryPkg is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileWriteB ;
@@ -1042,8 +1054,9 @@ package body MemoryPkg is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileWriteB ;  
@@ -1128,7 +1141,8 @@ package body MemoryPkg is
     ------------------------------------------------------------
     impure function MemRead ( Addr  : std_logic_vector ) return std_logic_vector is
     ------------------------------------------------------------
-      variable Data  : std_logic_vector(MemStructPtr(MEM_STRUCT_PTR_LEFT).DataWidth-1 downto 0) ; 
+      constant DATA_WIDTH : integer := MemStructPtr(MEM_STRUCT_PTR_LEFT).DataWidth ; 
+      variable Data  : std_logic_vector(DATA_WIDTH-1 downto 0) ; 
     begin
       MemRead(MEM_STRUCT_PTR_LEFT, Addr, Data) ; 
       return Data ; 

@@ -22,6 +22,9 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    08/2021   2021.08    Removed SetAlertLogID from singleton public interface - set instead by NewID
+--                         Moved SetName, SetMessage to deprecated 
+--                         Moved AddBins, AddCross, GenBin, and GenCross with weight parameter to deprecated 
 --    07/2021   2021.07    Updated for new data structure
 --    07/2020   2020.07    Adjusted NextPointModeType:  Changed MIN to MODE_MINIMUM.
 --                         The preferred MINIMUM will not work in some tools
@@ -143,12 +146,12 @@ package CoveragePkg is
   constant COV_IGNORE  : integer := 0 ;
   constant COV_ILLEGAL : integer := -1 ;
 
-  -- type OsvvmOptionsType is (OPT_DEFAULT, FALSE, TRUE) ;
-  alias CovOptionsType is work.OsvvmGlobalPkg.OsvvmOptionsType ;
-  constant COV_OPT_INIT_PARM_DETECT : CovOptionsType := work.OsvvmGlobalPkg.OPT_INIT_PARM_DETECT ;
-  -- For backward compatibility.  Don't add to other packages.
-  alias DISABLED is work.OsvvmGlobalPkg.DISABLED [return work.OsvvmGlobalPkg.OsvvmOptionsType ];
-  alias ENABLED  is work.OsvvmGlobalPkg.ENABLED  [return work.OsvvmGlobalPkg.OsvvmOptionsType ];
+--  -- type OsvvmOptionsType is (OPT_DEFAULT, FALSE, TRUE) ;
+--  alias OsvvmOptionsType is work.OsvvmGlobalPkg.OsvvmOptionsType ;
+  constant COV_OPT_INIT_PARM_DETECT : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+--  -- For backward compatibility.  Don't add to other packages.
+--  alias DISABLED is work.OsvvmGlobalPkg.DISABLED [return work.OsvvmGlobalPkg.OsvvmOptionsType ];
+--  alias ENABLED  is work.OsvvmGlobalPkg.ENABLED  [return work.OsvvmGlobalPkg.OsvvmOptionsType ];
 
 -- Deprecated
   -- Used for easy manual entry.  Order: min, max, action
@@ -178,7 +181,8 @@ package CoveragePkg is
 
   type CountModeType   is (COUNT_FIRST, COUNT_ALL) ;
   type IllegalModeType is (ILLEGAL_ON, ILLEGAL_FAILURE, ILLEGAL_OFF) ;
-  type WeightModeType  is (AT_LEAST, WEIGHT, REMAIN, REMAIN_EXP, REMAIN_SCALED, REMAIN_WEIGHT ) ;
+  -- WeightModeType other than AT_LEAST or REMAIN is deprecated
+  type WeightModeType  is (AT_LEAST, REMAIN, WEIGHT, REMAIN_EXP, REMAIN_SCALED, REMAIN_WEIGHT ) ;
 
 
   -- In VHDL-2008 CovMatrix?BaseType and CovMatrix?Type will be subsumed
@@ -283,8 +287,6 @@ package CoveragePkg is
     variable result   : out   integer_vector
   ) ;
 
-
-
   ------------------------------------------------------------
   impure function NewID (NameIn : String) return CoverageIDType ;
 
@@ -301,10 +303,10 @@ package CoveragePkg is
   ------------------------------------------------------------
   procedure SetReportOptions (
   ------------------------------------------------------------
-    WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
     WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
     PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
     FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -316,16 +318,16 @@ package CoveragePkg is
   --  Coverage Model Settings
   -- /////////////////////////////////////////
   ------------------------------------------------------------
-  procedure       SetName         (ID : CoverageIDType; Name : String) ;
-  impure function SetName         (ID : CoverageIDType; Name : String) return string ;
-  procedure       DeallocateName  (ID : CoverageIDType) ;
+-- AlertLogID set by NewID
+--  procedure       SetAlertLogID (ID : CoverageIDType; A : AlertLogIDType) ;
+--  procedure       SetAlertLogID (ID : CoverageIDType; Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;
+  impure function GetAlertLogID (ID : CoverageIDType) return AlertLogIDType ;
+
+  ------------------------------------------------------------
+-- Name set by NewID
   impure function GetName         (ID : CoverageIDType) return String ;
   impure function GetCovModelName (ID : CoverageIDType) return String ;
   impure function GetNamePlus     (ID : CoverageIDType; prefix, suffix : string) return String ;
-
-  ------------------------------------------------------------
-  procedure       SetMessage         (ID : CoverageIDType; Message : String) ;
-  procedure       DeallocateMessage  (ID : CoverageIDType) ;
 
   procedure       SetCovTarget       (ID : CoverageIDType; Percent : real) ;
   impure function GetCovTarget       (ID : CoverageIDType) return real ;
@@ -334,15 +336,14 @@ package CoveragePkg is
   procedure       SetMerging         (ID : CoverageIDType; A : boolean := TRUE ) ;
   procedure       SetCountMode       (ID : CoverageIDType; A : CountModeType) ;
   procedure       SetIllegalMode     (ID : CoverageIDType; A : IllegalModeType) ;
-  procedure       SetWeightMode      (ID : CoverageIDType; WeightMode : WeightModeType;  WeightScale : real := 1.0) ;
   procedure       SetNextPointMode   (ID : CoverageIDType; A : NextPointModeType) ;
+  -- 
+  -- SetWeightMode with a WeightMode other than AT_LEAST or REMAIN is deprecated
+  -- SetWeightMode with a WeightScale parameter is deprecated
+  procedure       SetWeightMode      (ID : CoverageIDType; WeightMode : WeightModeType;  WeightScale : real := 1.0) ;
 
   ------------------------------------------------------------
-  procedure       SetAlertLogID (ID : CoverageIDType; A : AlertLogIDType) ;
-  procedure       SetAlertLogID (ID : CoverageIDType; Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) ;
-  impure function GetAlertLogID (ID : CoverageIDType) return AlertLogIDType ;
-
-  ------------------------------------------------------------
+  -- Seeds are initialized by NewID.  
   procedure       InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE) ;
   impure function InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE ) return string ;
   procedure       InitSeed      (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := TRUE ) ;
@@ -351,6 +352,7 @@ package CoveragePkg is
   procedure       SetSeed (ID : CoverageIDType; RandomSeedIn : RandomSeedType ) ;
   impure function GetSeed (ID : CoverageIDType) return RandomSeedType ;
 
+  
   ------------------------------------------------------------
   -- /////////////////////////////////////////
   --  Item / Cross Bin Creation and Destruction
@@ -360,33 +362,17 @@ package CoveragePkg is
   procedure Deallocate (ID : CoverageIDType) ;
 
   ------------------------------------------------------------
-  -- Weight Deprecated
   procedure AddBins (
   ------------------------------------------------------------
     ID      : CoverageIDType ;
     Name    : String ;
     AtLeast : integer ;
-    Weight  : integer ;
     CovBin  : CovBinType
   ) ;
-  procedure AddBins (ID : CoverageIDType; Name : String ; AtLeast : integer ; CovBin : CovBinType ) ;
   procedure AddBins (ID : CoverageIDType; Name : String ;  CovBin : CovBinType) ;
-  procedure AddBins (ID : CoverageIDType; AtLeast : integer ; Weight  : integer ; CovBin : CovBinType ) ;     -- Weight Deprecated
   procedure AddBins (ID : CoverageIDType; AtLeast : integer ; CovBin : CovBinType ) ;
   procedure AddBins (ID : CoverageIDType; CovBin : CovBinType  ) ;
 
-  ------------------------------------------------------------
-  -- Weight Deprecated
-  procedure AddCross(
-  ------------------------------------------------------------
-    ID         : CoverageIDType ;
-    Name       : string ;
-    AtLeast    : integer ;
-    Weight     : integer ;
-    Bin1, Bin2 : CovBinType ;
-    Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11, Bin12, Bin13,
-    Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
-  ) ;
 
   ------------------------------------------------------------
   procedure AddCross(
@@ -404,18 +390,6 @@ package CoveragePkg is
   ------------------------------------------------------------
     ID         : CoverageIDType ;
     Name       : string ;
-    Bin1, Bin2 : CovBinType ;
-    Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11, Bin12, Bin13,
-    Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
-  ) ;
-
-  ------------------------------------------------------------
-  -- Weight Deprecated
-  procedure AddCross(
-  ------------------------------------------------------------
-    ID         : CoverageIDType ;
-    AtLeast    : integer ;
-    Weight     : integer ;
     Bin1, Bin2 : CovBinType ;
     Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11, Bin12, Bin13,
     Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
@@ -608,9 +582,6 @@ package CoveragePkg is
   procedure WriteBin (ID : CoverageIDType; LogLevel : LogType; FileName : string; OpenKind : File_Open_Kind := APPEND_MODE) ;
 
   ------------------------------------------------------------
-  procedure DumpBin (ID : CoverageIDType; LogLevel : LogType := DEBUG) ;
-
-  ------------------------------------------------------------
   procedure WriteCovHoles (ID : CoverageIDType; LogLevel : LogType := ALWAYS ) ;
   procedure WriteCovHoles (ID : CoverageIDType; PercentCov : real ) ;
   procedure WriteCovHoles (ID : CoverageIDType; LogLevel : LogType;  PercentCov : real ) ;
@@ -628,6 +599,155 @@ package CoveragePkg is
   procedure ReadCovDb  (ID : CoverageIDType; FileName : string; Merge : boolean := FALSE) ;
   procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
   --     procedure WriteCovDb (ID : CoverageIDType) ;
+
+
+  ------------------------------------------------------------
+  -- Experimental.  Intended primarily for development.
+  procedure CompareBins (
+  ------------------------------------------------------------
+    constant Bin1       : in    CoverageIDType ;
+    constant Bin2       : in    CoverageIDType ;
+    variable Valid      : out   Boolean
+  ) ;
+
+  ------------------------------------------------------------
+  -- Experimental.  Intended primarily for development.
+  procedure CompareBins (
+  ------------------------------------------------------------
+    constant Bin1       : in    CoverageIDType ;
+    constant Bin2       : in    CoverageIDType 
+  ) ;
+
+  --
+  --  Support for AddBins and AddCross
+  --
+  ------------------------------------------------------------
+  function GenBin(
+  ------------------------------------------------------------
+    AtLeast       : integer ;
+    Min, Max      : integer ;
+    NumBin        : integer
+  ) return CovBinType ;
+  
+  -- Each item in range in a separate CovBin
+  function GenBin(Min, Max, NumBin : integer ) return CovBinType ;
+  function GenBin(Min, Max : integer) return CovBinType ;
+  function GenBin(A : integer) return CovBinType ;
+
+  ------------------------------------------------------------
+  function GenBin(
+  ------------------------------------------------------------
+    AtLeast       : integer ;
+    A             : integer_vector
+  ) return CovBinType ;
+
+  function GenBin ( A : integer_vector ) return CovBinType ;
+
+  ------------------------------------------------------------
+  function IllegalBin ( Min, Max, NumBin : integer ) return CovBinType ;
+  ------------------------------------------------------------
+
+  -- All items in range in a single CovBin
+  function IllegalBin ( Min, Max : integer ) return CovBinType ;
+  function IllegalBin ( A : integer ) return CovBinType ;
+
+
+-- IgnoreBin should never have an AtLeast parameter
+  ------------------------------------------------------------
+  function IgnoreBin (Min, Max, NumBin : integer) return CovBinType ;
+  ------------------------------------------------------------
+  function IgnoreBin (Min, Max : integer) return CovBinType ;  -- All items in range in a single CovBin
+  function IgnoreBin (A : integer) return CovBinType ;
+
+
+  -- With VHDL-2008, there will be one GenCross that returns CovBinType
+  -- and has inputs initialized to NULL_BIN - see AddCross
+  ------------------------------------------------------------
+  function GenCross(  -- 2
+  -- Cross existing bins
+  -- Use AddCross for adding values directly to coverage database
+  -- Use GenCross for constants
+  ------------------------------------------------------------
+    AtLeast     : integer ;
+    Bin1, Bin2  : CovBinType
+  ) return CovMatrix2Type ;
+
+  function GenCross(Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 3
+  ------------------------------------------------------------
+    AtLeast           : integer ;
+    Bin1, Bin2, Bin3  : CovBinType
+  ) return CovMatrix3Type ;
+
+  function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 4
+  ------------------------------------------------------------
+    AtLeast                 : integer ;
+    Bin1, Bin2, Bin3, Bin4  : CovBinType
+  ) return CovMatrix4Type ;
+
+  function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 5
+  ------------------------------------------------------------
+    AtLeast                       : integer ;
+    Bin1, Bin2, Bin3, Bin4, Bin5  : CovBinType
+  ) return CovMatrix5Type ;
+
+  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 6
+  ------------------------------------------------------------
+    AtLeast                             : integer ;
+    Bin1, Bin2, Bin3, Bin4, Bin5, Bin6  : CovBinType
+  ) return CovMatrix6Type ;
+
+  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 7
+  ------------------------------------------------------------
+    AtLeast                                   : integer ;
+    Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7  : CovBinType
+  ) return CovMatrix7Type ;
+
+  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 8
+  ------------------------------------------------------------
+    AtLeast                                         : integer ;
+    Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8  : CovBinType
+  ) return CovMatrix8Type ;
+
+  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
+
+  ------------------------------------------------------------
+  function GenCross(  -- 9
+  ------------------------------------------------------------
+    AtLeast                                               : integer ;
+    Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9  : CovBinType
+  ) return CovMatrix9Type ;
+
+  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
+
+  ------------------------------------------------------------
+  -- Utilities.  Remove if added to std.standard
+  function to_integer   ( B : boolean    ) return integer ;
+  function to_boolean   ( I : integer    ) return boolean ;
+  function to_integer   ( SL : std_logic ) return integer ;
+  function to_std_logic ( I : integer    ) return std_logic ;
+  function to_integer_vector   ( BV : boolean_vector    ) return integer_vector ;
+  function to_boolean_vector   ( IV : integer_vector    ) return boolean_vector ;
+  function to_integer_vector   ( SLV : std_logic_vector ) return integer_vector ;
+  function to_std_logic_vector ( IV : integer_vector    ) return std_logic_vector ;
+  alias to_slv is to_std_logic_vector[integer_vector return std_logic_vector] ;
 
 
   ------------------------------------------------------------------------------------------
@@ -652,10 +772,10 @@ package CoveragePkg is
     ------------------------------------------------------------
     procedure SetReportOptions (
     ------------------------------------------------------------
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -1212,10 +1332,10 @@ package CoveragePkg is
 
     ------------------------------------------------------------
     procedure WriteBin (
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -1224,10 +1344,10 @@ package CoveragePkg is
     ------------------------------------------------------------
     procedure WriteBin (  -- With LogLevel
       LogLevel        : LogType ;
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -1237,10 +1357,10 @@ package CoveragePkg is
     procedure WriteBin (
       FileName        : string;
       OpenKind        : File_Open_Kind := APPEND_MODE ;
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -1251,10 +1371,10 @@ package CoveragePkg is
       LogLevel        : LogType ;
       FileName        : string;
       OpenKind        : File_Open_Kind := APPEND_MODE ;
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -1324,9 +1444,8 @@ package CoveragePkg is
   ------------------------------------------------------------------------------------------
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  ------------------------------------------------------------------------------------------
-
-
+  ------------------------------------------------------------------------------------------  
+  
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
   procedure CompareBins (
@@ -1342,31 +1461,67 @@ package CoveragePkg is
   ------------------------------------------------------------
     variable Bin1       : inout CovPType ;
     variable Bin2       : inout CovPType
-  ) ;
+  ) ;  
   
+  ------------------------------------------------------------
+  -- Deprecated items
+  -- The following will be removed from the package in the future.
+  --  
   
   ------------------------------------------------------------
-  -- Experimental.  Intended primarily for development.
-  procedure CompareBins (
+  -- SetName is deprecated, see NewID
+  procedure       SetName         (ID : CoverageIDType; Name : String) ;
+  impure function SetName         (ID : CoverageIDType; Name : String) return string ;
+  procedure       DeallocateName  (ID : CoverageIDType) ;
+
   ------------------------------------------------------------
-    constant Bin1       : in    CoverageIDType ;
-    constant Bin2       : in    CoverageIDType ;
-    variable Valid      : out   Boolean
+  -- SetMessage is deprecated, see PrintToCovFile
+  procedure       SetMessage         (ID : CoverageIDType; Message : String) ;
+  procedure       DeallocateMessage  (ID : CoverageIDType) ;
+
+  ------------------------------------------------------------
+  -- DumpBin is deprecated
+  procedure DumpBin (ID : CoverageIDType; LogLevel : LogType := DEBUG) ;
+
+  ------------------------------------------------------------
+  -- Weight Deprecated
+  procedure AddBins (
+  ------------------------------------------------------------
+    ID      : CoverageIDType ;
+    Name    : String ;
+    AtLeast : integer ;
+    Weight  : integer ;
+    CovBin  : CovBinType
+  ) ;
+  procedure AddBins (ID : CoverageIDType; AtLeast : integer ; Weight  : integer ; CovBin : CovBinType ) ;     -- Weight Deprecated
+
+  ------------------------------------------------------------
+  -- Weight Deprecated
+  procedure AddCross(
+  ------------------------------------------------------------
+    ID         : CoverageIDType ;
+    Name       : string ;
+    AtLeast    : integer ;
+    Weight     : integer ;
+    Bin1, Bin2 : CovBinType ;
+    Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11, Bin12, Bin13,
+    Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
   ) ;
 
   ------------------------------------------------------------
-  -- Experimental.  Intended primarily for development.
-  procedure CompareBins (
+  -- Weight Deprecated
+  procedure AddCross(
   ------------------------------------------------------------
-    constant Bin1       : in    CoverageIDType ;
-    constant Bin2       : in    CoverageIDType 
+    ID         : CoverageIDType ;
+    AtLeast    : integer ;
+    Weight     : integer ;
+    Bin1, Bin2 : CovBinType ;
+    Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11, Bin12, Bin13,
+    Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
   ) ;
 
-  --
-  --  Support for AddBins and AddCross
-  --
-
   ------------------------------------------------------------
+  -- Weight Parameter is deprecated
   function GenBin(
   ------------------------------------------------------------
     AtLeast       : integer ;
@@ -1374,14 +1529,9 @@ package CoveragePkg is
     Min, Max      : integer ;
     NumBin        : integer
   ) return CovBinType ;
-
-  -- Each item in range in a separate CovBin
-  function GenBin(AtLeast : integer ;  Min, Max, NumBin : integer ) return CovBinType ;
-  function GenBin(Min, Max, NumBin : integer ) return CovBinType ;
-  function GenBin(Min, Max : integer) return CovBinType ;
-  function GenBin(A : integer) return CovBinType ;
-
+  
   ------------------------------------------------------------
+  -- Weight Parameter is deprecated
   function GenBin(
   ------------------------------------------------------------
     AtLeast       : integer ;
@@ -1389,28 +1539,6 @@ package CoveragePkg is
     A             : integer_vector
   ) return CovBinType ;
 
-  function GenBin ( AtLeast : integer ;  A : integer_vector ) return CovBinType ;
-  function GenBin ( A : integer_vector ) return CovBinType ;
-
-  ------------------------------------------------------------
-  function IllegalBin ( Min, Max, NumBin : integer ) return CovBinType ;
-  ------------------------------------------------------------
-
-  -- All items in range in a single CovBin
-  function IllegalBin ( Min, Max : integer ) return CovBinType ;
-  function IllegalBin ( A : integer ) return CovBinType ;
-
-
--- IgnoreBin should never have an AtLeast parameter
-  ------------------------------------------------------------
-  function IgnoreBin (Min, Max, NumBin : integer) return CovBinType ;
-  ------------------------------------------------------------
-  function IgnoreBin (Min, Max : integer) return CovBinType ;  -- All items in range in a single CovBin
-  function IgnoreBin (A : integer) return CovBinType ;
-
-
-  -- With VHDL-2008, there will be one GenCross that returns CovBinType
-  -- and has inputs initialized to NULL_BIN - see AddCross
   ------------------------------------------------------------
   function GenCross(  -- 2
   -- Cross existing bins
@@ -1422,9 +1550,6 @@ package CoveragePkg is
     Bin1, Bin2  : CovBinType
   ) return CovMatrix2Type ;
 
-  function GenCross(AtLeast : integer ; Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
-  function GenCross(Bin1, Bin2 : CovBinType) return CovMatrix2Type ;
-
   ------------------------------------------------------------
   function GenCross(  -- 3
   ------------------------------------------------------------
@@ -1432,9 +1557,6 @@ package CoveragePkg is
     Weight            : integer ;
     Bin1, Bin2, Bin3  : CovBinType
   ) return CovMatrix3Type ;
-
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
-  function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type ;
 
   ------------------------------------------------------------
   function GenCross(  -- 4
@@ -1444,9 +1566,6 @@ package CoveragePkg is
     Bin1, Bin2, Bin3, Bin4  : CovBinType
   ) return CovMatrix4Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type ;
-
   ------------------------------------------------------------
   function GenCross(  -- 5
   ------------------------------------------------------------
@@ -1454,9 +1573,6 @@ package CoveragePkg is
     Weight                        : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5  : CovBinType
   ) return CovMatrix5Type ;
-
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type ;
 
   ------------------------------------------------------------
   function GenCross(  -- 6
@@ -1466,9 +1582,6 @@ package CoveragePkg is
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6  : CovBinType
   ) return CovMatrix6Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type ;
-
   ------------------------------------------------------------
   function GenCross(  -- 7
   ------------------------------------------------------------
@@ -1476,9 +1589,6 @@ package CoveragePkg is
     Weight                                    : integer ;
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7  : CovBinType
   ) return CovMatrix7Type ;
-
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type ;
 
   ------------------------------------------------------------
   function GenCross(  -- 8
@@ -1488,9 +1598,6 @@ package CoveragePkg is
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8  : CovBinType
   ) return CovMatrix8Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type ;
-
   ------------------------------------------------------------
   function GenCross(  -- 9
   ------------------------------------------------------------
@@ -1499,20 +1606,6 @@ package CoveragePkg is
     Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9  : CovBinType
   ) return CovMatrix9Type ;
 
-  function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
-  function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type ;
-
-  ------------------------------------------------------------
-  -- Utilities.  Remove if added to std.standard
-  function to_integer   ( B : boolean    ) return integer ;
-  function to_boolean   ( I : integer    ) return boolean ;
-  function to_integer   ( SL : std_logic ) return integer ;
-  function to_std_logic ( I : integer    ) return std_logic ;
-  function to_integer_vector   ( BV : boolean_vector    ) return integer_vector ;
-  function to_boolean_vector   ( IV : integer_vector    ) return boolean_vector ;
-  function to_integer_vector   ( SLV : std_logic_vector ) return integer_vector ;
-  function to_std_logic_vector ( IV : integer_vector    ) return std_logic_vector ;
-  alias to_slv is to_std_logic_vector[integer_vector return std_logic_vector] ;
 
 end package CoveragePkg ;
 
@@ -1954,10 +2047,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     -- Global Settings for Coverage Modeling
     -- Local WriteBin and WriteCovHoles formatting settings, defaults determined by CoverageGlobals
-    variable WritePassFailVar   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WriteBinInfoVar    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WriteCountVar      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WriteAnyIllegalVar : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    variable WritePassFailVar   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    variable WriteBinInfoVar    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    variable WriteCountVar      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    variable WriteAnyIllegalVar : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
     variable WritePrefixVar     : NamePType ;
     variable PassNameVar        : NamePType ;
     variable FailNameVar        : NamePType ;
@@ -2124,6 +2217,7 @@ package body CoveragePkg is
       NumItems      := NewNumItems ;
       CovStructPtr(NumItems) := COV_STRUCT_INIT ;
       NewCoverageID := (ID => NumItems) ;
+      InitSeed( NewCoverageID, NameIn) ;
       SetName( NewCoverageID, NameIn) ;
       SetAlertLogID(NewCoverageID, NameIn, OSVVM_COVERAGE_ALERTLOG_ID, FALSE) ; 
 --      CovStructPtr(NumItems).AlertLogID := OSVVM_COVERAGE_ALERTLOG_ID ;
@@ -2205,10 +2299,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure SetReportOptions (
     ------------------------------------------------------------
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -2323,10 +2417,10 @@ package body CoveragePkg is
         deallocate (CovStructPtr(ID.ID).CovName) ;
       end if;
       CovStructPtr(ID.ID).CovName := new string'(Name) ;
-      -- Update if name updated after model created     -- VendorCov
-      if IsInitialized(ID) then                             -- VendorCov
+      -- Update if name updated after model created                      -- VendorCov
+      if IsInitialized(ID) then                                          -- VendorCov
         VendorCovSetName(CovStructPtr(ID.ID).VendorCovHandle, Name) ;    -- VendorCov
-      end if ;                                          -- VendorCov
+      end if ;                                                           -- VendorCov
       if not CovStructPtr(ID.ID).RvSeedInit then  -- Init seed if not initialized
         InitSeed(ID, Name) ;
         CovStructPtr(ID.ID).RvSeedInit := TRUE ;
@@ -2374,10 +2468,11 @@ package body CoveragePkg is
     end function GetCovModelName ;
 
     ------------------------------------------------------------
+    -- Called in calls to AlertLogID to add Name to if set different from AlertLogID name
     impure function GetNamePlus(ID : CoverageIDType; prefix, suffix : string) return String is
     ------------------------------------------------------------
     begin
-      if CovStructPtr(ID.ID).CovName /= NULL then
+      if CovStructPtr(ID.ID).CovName /= NULL and (CovStructPtr(ID.ID).CovName.all /= GetAlertLogName(CovStructPtr(ID.ID).AlertLogID))then
         -- return Name if set
         return prefix & CovStructPtr(ID.ID).CovName.all & suffix ;
       elsif CovStructPtr(ID.ID).AlertLogID = OSVVM_COVERAGE_ALERTLOG_ID and CovStructPtr(ID.ID).CovMessage /= NULL then
@@ -3844,10 +3939,10 @@ package body CoveragePkg is
       ID              : CoverageIDType ;
       variable buf    : inout line ;
 --      file f          : text ;
-      WritePassFail   : CovOptionsType ;
-      WriteBinInfo    : CovOptionsType ;
-      WriteCount      : CovOptionsType ;
-      WriteAnyIllegal : CovOptionsType ;
+      WritePassFail   : OsvvmOptionsType ;
+      WriteBinInfo    : OsvvmOptionsType ;
+      WriteCount      : OsvvmOptionsType ;
+      WriteAnyIllegal : OsvvmOptionsType ;
       WritePrefix     : string ;
       PassName        : string ;
       FailName        : string ;
@@ -3912,13 +4007,13 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteBin (ID : CoverageIDType) is
     ------------------------------------------------------------
-      constant rWritePassFail   : CovOptionsType := ResolveCovWritePassFail  (WritePassFailVar) ;
-      constant rWriteBinInfo    : CovOptionsType := ResolveCovWriteBinInfo   (WriteBinInfoVar  ) ;
-      constant rWriteCount      : CovOptionsType := ResolveCovWriteCount     (WriteCountVar    ) ;
-      constant rWriteAnyIllegal : CovOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegalVar) ;
-      constant rWritePrefix     : string         := ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt) ;
-      constant rPassName        : string         := ResolveOsvvmPassName     (PassNameVar.GetOpt  ) ;
-      constant rFailName        : string         := ResolveOsvvmFailName     (FailNameVar.GetOpt  ) ;
+      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail  (WritePassFailVar) ;
+      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo   (WriteBinInfoVar  ) ;
+      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount     (WriteCountVar    ) ;
+      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegalVar) ;
+      -- constant rWritePrefix     : string         := ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt) ;
+      -- constant rPassName        : string         := ResolveOsvvmPassName     (PassNameVar.GetOpt  ) ;
+      -- constant rFailName        : string         := ResolveOsvvmFailName     (FailNameVar.GetOpt  ) ;
       variable buf              : line ;
     begin
       WriteBin (
@@ -3928,9 +4023,12 @@ package body CoveragePkg is
         WriteBinInfo    => rWriteBinInfo,
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
-        WritePrefix     => rWritePrefix,
-        PassName        => rPassName,
-        FailName        => rFailName
+--        WritePrefix     => rWritePrefix,
+        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+--        PassName        => rPassName,
+        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+--        FailName        => rFailName
+        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  )
       ) ;
       WriteToCovFile(buf) ;
     end procedure WriteBin ;
@@ -3949,13 +4047,13 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteBin (ID : CoverageIDType; FileName : string;  OpenKind : File_Open_Kind := APPEND_MODE) is
     ------------------------------------------------------------
-      constant rWritePassFail    : CovOptionsType := ResolveCovWritePassFail   (WritePassFailVar) ;
-      constant rWriteBinInfo     : CovOptionsType := ResolveCovWriteBinInfo    (WriteBinInfoVar  ) ;
-      constant rWriteCount       : CovOptionsType := ResolveCovWriteCount      (WriteCountVar    ) ;
-      constant rWriteAnyIllegal  : CovOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegalVar) ;
-      constant rWritePrefix      : string         := ResolveOsvvmWritePrefix   (WritePrefixVar.GetOpt) ;
-      constant rPassName         : string         := ResolveOsvvmPassName      (PassNameVar.GetOpt  ) ;
-      constant rFailName         : string         := ResolveOsvvmFailName      (FailNameVar.GetOpt  ) ;
+      constant rWritePassFail    : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFailVar) ;
+      constant rWriteBinInfo     : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfoVar  ) ;
+      constant rWriteCount       : OsvvmOptionsType := ResolveCovWriteCount      (WriteCountVar    ) ;
+      constant rWriteAnyIllegal  : OsvvmOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegalVar) ;
+      -- constant rWritePrefix      : string         := ResolveOsvvmWritePrefix   (WritePrefixVar.GetOpt) ;
+      -- constant rPassName         : string         := ResolveOsvvmPassName      (PassNameVar.GetOpt  ) ;
+      -- constant rFailName         : string         := ResolveOsvvmFailName      (FailNameVar.GetOpt  ) ;
       file     LocalWriteBinFile : text open OpenKind is FileName ;
       variable buf               : line ;
     begin
@@ -3966,9 +4064,12 @@ package body CoveragePkg is
         WriteBinInfo    => rWriteBinInfo,
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
-        WritePrefix     => rWritePrefix,
-        PassName        => rPassName,
-        FailName        => rFailName,
+--        WritePrefix     => rWritePrefix,
+        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+--        PassName        => rPassName,
+        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+--        FailName        => rFailName
+        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  ),
         UsingLocalFile  => TRUE
       );
       writeline(LocalWriteBinFile, buf) ;
@@ -4561,6 +4662,7 @@ package body CoveragePkg is
         Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
                        "CoveragePkg.WriteCovDb: no bins defined ", FAILURE) ;
       end if ;
+      file_close(CovDbFile) ;
     end procedure WriteCovDb ;
 
 --     ------------------------------------------------------------
@@ -5870,21 +5972,21 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteBin (
     ------------------------------------------------------------
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
-      constant rWritePassFail   : CovOptionsType := ResolveCovWritePassFail  (WritePassFail,    WritePassFailVar) ;
-      constant rWriteBinInfo    : CovOptionsType := ResolveCovWriteBinInfo   (WriteBinInfo,     WriteBinInfoVar  ) ;
-      constant rWriteCount      : CovOptionsType := ResolveCovWriteCount     (WriteCount,       WriteCountVar    ) ;
-      constant rWriteAnyIllegal : CovOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegal,  WriteAnyIllegalVar) ;
-      constant rWritePrefix     : string         := ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt) ;
-      constant rPassName        : string         := ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ) ;
-      constant rFailName        : string         := ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  ) ;
+      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail  (WritePassFail,    WritePassFailVar) ;
+      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo   (WriteBinInfo,     WriteBinInfoVar  ) ;
+      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount     (WriteCount,       WriteCountVar    ) ;
+      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegal,  WriteAnyIllegalVar) ;
+      -- constant rWritePrefix     : string         := ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt) ;
+      -- constant rPassName        : string         := ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ) ;
+      -- constant rFailName        : string         := ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  ) ;
       variable buf, buf2 : line ;
     begin
       WriteBin (
@@ -5894,10 +5996,13 @@ package body CoveragePkg is
         WriteBinInfo    => rWriteBinInfo,
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
-        WritePrefix     => rWritePrefix,
-        PassName        => rPassName,
-        FailName        => rFailName
-      ) ;
+--        WritePrefix     => rWritePrefix,
+        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+--        PassName        => rPassName,
+        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+--        FailName        => rFailName
+        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  )
+        ) ;
       WriteToCovFile(buf) ;
     end procedure WriteBin ;
 
@@ -5906,10 +6011,10 @@ package body CoveragePkg is
     procedure WriteBin (  -- With LogLevel
     ------------------------------------------------------------
       LogLevel        : LogType ;
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
@@ -5933,22 +6038,22 @@ package body CoveragePkg is
     ------------------------------------------------------------
       FileName        : string;
       OpenKind        : File_Open_Kind := APPEND_MODE ;
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
       file LocalWriteBinFile : text open OpenKind is FileName ;
-      constant rWritePassFail   : CovOptionsType := ResolveCovWritePassFail   (WritePassFail,    WritePassFailVar) ;
-      constant rWriteBinInfo    : CovOptionsType := ResolveCovWriteBinInfo    (WriteBinInfo,     WriteBinInfoVar  ) ;
-      constant rWriteCount      : CovOptionsType := ResolveCovWriteCount      (WriteCount,       WriteCountVar    ) ;
-      constant rWriteAnyIllegal : CovOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegal,  WriteAnyIllegalVar) ;
-      constant rWritePrefix     : string         := ResolveOsvvmWritePrefix   (WritePrefix,      WritePrefixVar.GetOpt) ;
-      constant rPassName        : string         := ResolveOsvvmPassName      (PassName,         PassNameVar.GetOpt  ) ;
-      constant rFailName        : string         := ResolveOsvvmFailName      (FailName,         FailNameVar.GetOpt  ) ;
+      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFail,    WritePassFailVar) ;
+      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfo,     WriteBinInfoVar  ) ;
+      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount      (WriteCount,       WriteCountVar    ) ;
+      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegal,  WriteAnyIllegalVar) ;
+      -- constant rWritePrefix     : string         := ResolveOsvvmWritePrefix   (WritePrefix,      WritePrefixVar.GetOpt) ;
+      -- constant rPassName        : string         := ResolveOsvvmPassName      (PassName,         PassNameVar.GetOpt  ) ;
+      -- constant rFailName        : string         := ResolveOsvvmFailName      (FailName,         FailNameVar.GetOpt  ) ;
       variable buf : line ;
     begin
       WriteBin (
@@ -5958,9 +6063,12 @@ package body CoveragePkg is
         WriteBinInfo    => rWriteBinInfo,
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
-        WritePrefix     => rWritePrefix,
-        PassName        => rPassName,
-        FailName        => rFailName,
+--        WritePrefix     => rWritePrefix,
+        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+--        PassName        => rPassName,
+        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+--        FailName        => rFailName
+        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  ),
         UsingLocalFile  => TRUE
       );
       writeline(LocalWriteBinFile, buf) ;
@@ -5972,10 +6080,10 @@ package body CoveragePkg is
       LogLevel        : LogType ;
       FileName        : string;
       OpenKind        : File_Open_Kind := APPEND_MODE ;
-      WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WritePrefix     : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
@@ -6423,10 +6531,10 @@ package body CoveragePkg is
   ------------------------------------------------------------
   procedure SetReportOptions (
   ------------------------------------------------------------
-    WritePassFail   : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    WriteBinInfo    : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    WriteCount      : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    WriteAnyIllegal : CovOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+    WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
     WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
     PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
     FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -7597,8 +7705,12 @@ package body CoveragePkg is
   end function GenBin ;
 
   ------------------------------------------------------------
-  function GenBin( AtLeast : integer ;  Min, Max, NumBin : integer ) return CovBinType is
+  function GenBin(
   ------------------------------------------------------------
+    AtLeast       : integer ;
+    Min, Max      : integer ;
+    NumBin        : integer
+  ) return CovBinType is
   begin
     return  MakeBin(
               Min      => Min,

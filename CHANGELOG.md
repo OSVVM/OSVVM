@@ -2,7 +2,8 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
-| 2021.07  | July 2021       |  Updated Data of CoveragePkg
+| 2021.08  | August 2021     |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
+| 2021.07  | July 2021       |  Updated Data Structure of CoveragePkg
 | 2021.06  | June 2021       |  Updated Data Structures
 | 2020.12  | December 2020   |  Minor Updates
 | 2020.10  | October 2020    |  Minor Updates
@@ -48,7 +49,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2021.06 June 2021
+## Revision 2021.08 August 2021
 
 ### Current Revision and Compile Order
 
@@ -69,20 +70,32 @@ in the scripts directory as well as Scripts_user_guide.pdf.
   | TranscriptPkg.vhd                                  | 2020.12  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
   | AlertLogPkg.vhd                                    | 2021.06  | 
-  | MessageListPkg.vhd                                 | **2021.07**  | 
+  | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | **2021.07**  |
+  | CoveragePkg.vhd                                    | **2021.08**  |
   | MemoryPkg.vhd                                      | 2021.06  |
-  | ScoreboardGenericPkg.vhd                           | 2021.06  |
+  | ScoreboardGenericPkg.vhd                           | **2021.08**  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
   | ResizePkg.vhd                                      | 2021.06  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
 
+
+### CoveragePkg.vhd  2021.08 
+Deprecated and removed SetAlertLogID.  Use NewID instead.
+Deprecated SetName, SetMessage.   
+Deprecated AddBins, AddCross, GenBin, and GenCross with weight parameter. 
+
+### ScoreboardGenericPkg.vhd  2021.08 
+Deprecated and removed SetAlertLogID.  Use NewID instead.
+
+
+
+## Revision 2021.07 July 2021
 
 ### MessageListPkg.vhd and deprecated MessagePkg.vhd  2021.07 
 Created linked list version for multi-line message handling.
@@ -96,6 +109,8 @@ functional coverage using ordinary procedure and function calls.
 ### Deprecated osvvm.tcl  2021.07
 The compile script, osvvm.tcl, is no longer supported.   
 Correct order is specified above as well as by osvvm.pro.  
+
+
 
 ## Revision 2021.06 June 2021
 

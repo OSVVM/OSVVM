@@ -84,11 +84,8 @@ package body NameStorePkg is
 
   type NameStorePType is protected body
 
-    alias ItemType    is String ; 
-	  type  LineArrayType    is array (integer range <>) of Line ; 
+    type  LineArrayType    is array (integer range <>) of Line ; 
     type  LineArrayPtrType is access LineArrayType ;
-    alias ItemArrayType    is LineArrayType ;  
-    alias ItemArrayPtrType is LineArrayPtrType ;
 
     variable NameArrayPtr   : LineArrayPtrType ;   
     variable NumItems       : integer := 0 ; 
@@ -99,10 +96,11 @@ package body NameStorePkg is
     -- Package Local
     function NormalizeArraySize( NewNumItems, MinNumItems : integer ) return integer is
     ------------------------------------------------------------
-      variable NormNumItems : integer := NewNumItems ;
-      variable ModNumItems  : integer := 0;
+      variable NormNumItems : integer ;
+      variable ModNumItems  : integer ;
     begin
-      ModNumItems := NewNumItems mod MinNumItems ; 
+      NormNumItems := NewNumItems ; 
+      ModNumItems  := NewNumItems mod MinNumItems ; 
       if ModNumItems > 0 then 
         NormNumItems := NormNumItems + (MinNumItems - ModNumItems) ; 
       end if ; 
@@ -113,19 +111,19 @@ package body NameStorePkg is
     -- Package Local
     procedure GrowNumberItems (
     ------------------------------------------------------------
-      variable ItemArrayPtr     : InOut ItemArrayPtrType ;
+      variable ItemArrayPtr     : InOut LineArrayPtrType ;
       constant NewNumItems      : in integer ;
       constant CurNumItems      : in integer ;
       constant MinNumItems      : in integer 
     ) is
-      variable oldItemArrayPtr  : ItemArrayPtrType ;
+      variable oldItemArrayPtr  : LineArrayPtrType ;
+      constant NormNumItems : integer := NormalizeArraySize(NewNumItems, MinNumItems) ;
     begin
       if ItemArrayPtr = NULL then
-        ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
+        ItemArrayPtr := new LineArrayType(1 to NormNumItems) ;
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
-        ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
---        ItemArrayPtr.all(1 to CurNumItems) := oldItemArrayPtr.all(1 to CurNumItems) ;
+        ItemArrayPtr := new LineArrayType(1 to NormNumItems) ;
         ItemArrayPtr(1 to CurNumItems) := oldItemArrayPtr(1 to CurNumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;

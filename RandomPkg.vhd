@@ -92,8 +92,8 @@ use ieee.math_real.all ;
 package RandomPkg is
 
   -- make things from SortListPkg_int visible
-  alias sort    is work.SortListPkg_int.sort   [integer_vector return integer_vector] ;
-  alias revsort is work.SortListPkg_int.revsort[integer_vector return integer_vector] ;
+--  alias sort    is work.SortListPkg_int.sort   [integer_vector return integer_vector] ;
+--  alias revsort is work.SortListPkg_int.revsort[integer_vector return integer_vector] ;
 
   -- Supports DistValInt functionality
   type DistRecType is record

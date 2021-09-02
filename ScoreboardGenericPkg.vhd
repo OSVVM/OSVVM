@@ -20,7 +20,8 @@
 --        http://www.SynthWorks.com
 --
 --  Revision History:
---    Date      Version     Description
+--    Date      Version     Description 
+--    08/2021   2021.08     Removed SetAlertLogID from singleton public interface - set instead by NewID
 --    06/2021   2021.06     Updated Data Structure, IDs for new use model, and Wrapper Subprograms
 --    10/2020   2020.10     Added Peek
 --    05/2020   2020.05     Updated calls to IncAffirmCount
@@ -248,21 +249,21 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string       
   ) return boolean ;                    -- Simple, Tagged
 
-  ------------------------------------------------------------
-  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
-  procedure SetAlertLogID(
-    constant ID              : in  ScoreboardIDType ;
-    constant Name            : in  string ; 
-    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
-    constant CreateHierarchy : in  Boolean := TRUE ;
-    constant DoNotReport     : in  Boolean := FALSE
-  ) ;
-
-  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
-  procedure SetAlertLogID (
-    constant ID     : in  ScoreboardIDType ;
-    constant A      : AlertLogIDType
-  ) ; 
+--  ------------------------------------------------------------
+--  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+--  procedure SetAlertLogID(
+--    constant ID              : in  ScoreboardIDType ;
+--    constant Name            : in  string ; 
+--    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
+--    constant CreateHierarchy : in  Boolean := TRUE ;
+--    constant DoNotReport     : in  Boolean := FALSE
+--  ) ;
+--
+--  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
+--  procedure SetAlertLogID (
+--    constant ID     : in  ScoreboardIDType ;
+--    constant A      : AlertLogIDType
+--  ) ; 
     
   impure function GetAlertLogID (
     constant ID     : in  ScoreboardIDType 

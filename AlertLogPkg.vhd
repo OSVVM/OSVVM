@@ -125,8 +125,6 @@ package AlertLogPkg is
   constant  ALERTLOG_ID_NOT_ASSIGNED       : AlertLogIDType := -1 ;
   constant  MIN_NUM_AL_IDS                 : AlertLogIDType := 32 ; -- Number IDs initially allocated
 
-  alias AlertLogOptionsType is work.OsvvmGlobalPkg.OsvvmOptionsType ;
-
   ------------------------------------------------------------
   --  Alert always goes to the transcript file
   procedure Alert(
@@ -398,23 +396,23 @@ package AlertLogPkg is
 
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
-    FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnWarning            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnDisabledErrors     : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnRequirementErrors  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    ReportHierarchy          : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertErrorCount     : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertLevel          : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertName           : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertTime           : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogErrorCount       : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogLevel            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogName             : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogTime             : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintPassed              : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintAffirmations        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintDisabledAlerts      : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintRequirements        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintIfHaveRequirements  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     DefaultPassedGoal        : integer             := integer'left ;
     AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -429,25 +427,25 @@ package AlertLogPkg is
 
   -- synthesis translate_off
 
-  impure function GetAlertLogFailOnWarning            return AlertLogOptionsType ;
-  impure function GetAlertLogFailOnDisabledErrors     return AlertLogOptionsType ;
-  impure function GetAlertLogFailOnRequirementErrors  return AlertLogOptionsType ;
-  impure function GetAlertLogReportHierarchy          return AlertLogOptionsType ;
+  impure function GetAlertLogFailOnWarning            return OsvvmOptionsType ;
+  impure function GetAlertLogFailOnDisabledErrors     return OsvvmOptionsType ;
+  impure function GetAlertLogFailOnRequirementErrors  return OsvvmOptionsType ;
+  impure function GetAlertLogReportHierarchy          return OsvvmOptionsType ;
   impure function GetAlertLogFoundReportHier          return boolean ;
   impure function GetAlertLogFoundAlertHier           return boolean ;
-  impure function GetAlertLogWriteAlertErrorCount     return AlertLogOptionsType ;
-  impure function GetAlertLogWriteAlertLevel          return AlertLogOptionsType ;
-  impure function GetAlertLogWriteAlertName           return AlertLogOptionsType ;
-  impure function GetAlertLogWriteAlertTime           return AlertLogOptionsType ;
-  impure function GetAlertLogWriteLogErrorCount       return AlertLogOptionsType ;
-  impure function GetAlertLogWriteLogLevel            return AlertLogOptionsType ;
-  impure function GetAlertLogWriteLogName             return AlertLogOptionsType ;
-  impure function GetAlertLogWriteLogTime             return AlertLogOptionsType ;
-  impure function GetAlertLogPrintPassed              return AlertLogOptionsType ;
-  impure function GetAlertLogPrintAffirmations        return AlertLogOptionsType ;
-  impure function GetAlertLogPrintDisabledAlerts      return AlertLogOptionsType ;
-  impure function GetAlertLogPrintRequirements        return AlertLogOptionsType ;
-  impure function GetAlertLogPrintIfHaveRequirements  return AlertLogOptionsType ;
+  impure function GetAlertLogWriteAlertErrorCount     return OsvvmOptionsType ;
+  impure function GetAlertLogWriteAlertLevel          return OsvvmOptionsType ;
+  impure function GetAlertLogWriteAlertName           return OsvvmOptionsType ;
+  impure function GetAlertLogWriteAlertTime           return OsvvmOptionsType ;
+  impure function GetAlertLogWriteLogErrorCount       return OsvvmOptionsType ;
+  impure function GetAlertLogWriteLogLevel            return OsvvmOptionsType ;
+  impure function GetAlertLogWriteLogName             return OsvvmOptionsType ;
+  impure function GetAlertLogWriteLogTime             return OsvvmOptionsType ;
+  impure function GetAlertLogPrintPassed              return OsvvmOptionsType ;
+  impure function GetAlertLogPrintAffirmations        return OsvvmOptionsType ;
+  impure function GetAlertLogPrintDisabledAlerts      return OsvvmOptionsType ;
+  impure function GetAlertLogPrintRequirements        return OsvvmOptionsType ;
+  impure function GetAlertLogPrintIfHaveRequirements  return OsvvmOptionsType ;
   impure function GetAlertLogDefaultPassedGoal        return integer ;
 
   impure function GetAlertLogAlertPrefix              return string ;
@@ -656,23 +654,23 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- Reporting Accessor
     procedure SetAlertLogOptions (
-      FailOnWarning            : AlertLogOptionsType ;
-      FailOnDisabledErrors     : AlertLogOptionsType ;
-      FailOnRequirementErrors  : AlertLogOptionsType ;
-      ReportHierarchy          : AlertLogOptionsType ;
-      WriteAlertErrorCount     : AlertLogOptionsType ;
-      WriteAlertLevel          : AlertLogOptionsType ;
-      WriteAlertName           : AlertLogOptionsType ;
-      WriteAlertTime           : AlertLogOptionsType ;
-      WriteLogErrorCount       : AlertLogOptionsType ;
-      WriteLogLevel            : AlertLogOptionsType ;
-      WriteLogName             : AlertLogOptionsType ;
-      WriteLogTime             : AlertLogOptionsType ;
-      PrintPassed              : AlertLogOptionsType ;
-      PrintAffirmations        : AlertLogOptionsType ;
-      PrintDisabledAlerts      : AlertLogOptionsType ;
-      PrintRequirements        : AlertLogOptionsType ;
-      PrintIfHaveRequirements  : AlertLogOptionsType ;
+      FailOnWarning            : OsvvmOptionsType ;
+      FailOnDisabledErrors     : OsvvmOptionsType ;
+      FailOnRequirementErrors  : OsvvmOptionsType ;
+      ReportHierarchy          : OsvvmOptionsType ;
+      WriteAlertErrorCount     : OsvvmOptionsType ;
+      WriteAlertLevel          : OsvvmOptionsType ;
+      WriteAlertName           : OsvvmOptionsType ;
+      WriteAlertTime           : OsvvmOptionsType ;
+      WriteLogErrorCount       : OsvvmOptionsType ;
+      WriteLogLevel            : OsvvmOptionsType ;
+      WriteLogName             : OsvvmOptionsType ;
+      WriteLogTime             : OsvvmOptionsType ;
+      PrintPassed              : OsvvmOptionsType ;
+      PrintAffirmations        : OsvvmOptionsType ;
+      PrintDisabledAlerts      : OsvvmOptionsType ;
+      PrintRequirements        : OsvvmOptionsType ;
+      PrintIfHaveRequirements  : OsvvmOptionsType ;
       DefaultPassedGoal        : integer ;
       AlertPrefix              : string ;
       LogPrefix                : string ;
@@ -683,25 +681,25 @@ package body AlertLogPkg is
     ) ;
     procedure ReportAlertLogOptions ;
 
-    impure function GetAlertLogFailOnWarning        return AlertLogOptionsType ;
-    impure function GetAlertLogFailOnDisabledErrors return AlertLogOptionsType ;
-    impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType ;
-    impure function GetAlertLogReportHierarchy      return AlertLogOptionsType ;
+    impure function GetAlertLogFailOnWarning        return OsvvmOptionsType ;
+    impure function GetAlertLogFailOnDisabledErrors return OsvvmOptionsType ;
+    impure function GetAlertLogFailOnRequirementErrors return OsvvmOptionsType ;
+    impure function GetAlertLogReportHierarchy      return OsvvmOptionsType ;
     impure function GetAlertLogFoundReportHier      return boolean ;
     impure function GetAlertLogFoundAlertHier       return boolean ;
-    impure function GetAlertLogWriteAlertErrorCount return AlertLogOptionsType ;
-    impure function GetAlertLogWriteAlertLevel      return AlertLogOptionsType ;
-    impure function GetAlertLogWriteAlertName       return AlertLogOptionsType ;
-    impure function GetAlertLogWriteAlertTime       return AlertLogOptionsType ;
-    impure function GetAlertLogWriteLogErrorCount   return AlertLogOptionsType ;
-    impure function GetAlertLogWriteLogLevel        return AlertLogOptionsType ;
-    impure function GetAlertLogWriteLogName         return AlertLogOptionsType ;
-    impure function GetAlertLogWriteLogTime         return AlertLogOptionsType ;
-    impure function GetAlertLogPrintPassed          return AlertLogOptionsType ;
-    impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType ;
-    impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType ;
-    impure function GetAlertLogPrintRequirements    return AlertLogOptionsType ;
-    impure function GetAlertLogPrintIfHaveRequirements  return AlertLogOptionsType ;
+    impure function GetAlertLogWriteAlertErrorCount return OsvvmOptionsType ;
+    impure function GetAlertLogWriteAlertLevel      return OsvvmOptionsType ;
+    impure function GetAlertLogWriteAlertName       return OsvvmOptionsType ;
+    impure function GetAlertLogWriteAlertTime       return OsvvmOptionsType ;
+    impure function GetAlertLogWriteLogErrorCount   return OsvvmOptionsType ;
+    impure function GetAlertLogWriteLogLevel        return OsvvmOptionsType ;
+    impure function GetAlertLogWriteLogName         return OsvvmOptionsType ;
+    impure function GetAlertLogWriteLogTime         return OsvvmOptionsType ;
+    impure function GetAlertLogPrintPassed          return OsvvmOptionsType ;
+    impure function GetAlertLogPrintAffirmations    return OsvvmOptionsType ;
+    impure function GetAlertLogPrintDisabledAlerts  return OsvvmOptionsType ;
+    impure function GetAlertLogPrintRequirements    return OsvvmOptionsType ;
+    impure function GetAlertLogPrintIfHaveRequirements  return OsvvmOptionsType ;
     impure function GetAlertLogDefaultPassedGoal    return integer ;
 
     impure function GetAlertLogAlertPrefix          return string ;
@@ -892,7 +890,7 @@ package body AlertLogPkg is
       level        : AlertType := ERROR
     ) is
       variable buf : Line ;
-      constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
+      -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -902,7 +900,8 @@ package body AlertLogPkg is
          -- Write when Alert is Enabled
         if AlertLogPtr(localAlertLogID).AlertEnabled(Level) then
           -- Print  %% Alert (nominally)
-          write(buf, AlertPrefix) ;
+--          write(buf, AlertPrefix) ;
+          write(buf, AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ) ;
           -- Debug Mode
           if WriteAlertErrorCountVar then
             write(buf, ' ' & justify(to_string(ErrorCount + 1), RIGHT, 2));
@@ -936,7 +935,8 @@ package body AlertLogPkg is
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
-          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+--          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -955,7 +955,7 @@ package body AlertLogPkg is
       level        : AlertType := ERROR
     ) is
       variable buf : Line ;
-      constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
+      -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -965,7 +965,8 @@ package body AlertLogPkg is
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
-          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+--          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -1152,10 +1153,10 @@ package body AlertLogPkg is
       variable HasDisabledAlerts  : inout Boolean ;
       variable TestFailed         : inout Boolean
     ) is
-      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
-      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
-      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
-      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
+--      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
+--      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
+--      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
+--      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ;
       variable TotalErrors : integer ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
@@ -1186,9 +1187,21 @@ package body AlertLogPkg is
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCheckCount) ;
 
       if not TestFailed then
-        write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ; -- PASSED
+        -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ; -- PASSED
+        write(buf, 
+          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
+          ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
+          Name
+        ) ;
       else
-        write(buf, ReportPrefix & DoneName & "  " & FailName & "  " & Name) ; -- FAILED
+        -- write(buf, ReportPrefix & DoneName & "  " & FailName & "  " & Name) ; -- FAILED
+        write(buf, 
+          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
+          ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
+          Name
+        ) ;
       end if ;
 --?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
       if TestFailed then
@@ -1313,7 +1326,7 @@ package body AlertLogPkg is
     ) is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
-      constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
+      -- constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -1345,7 +1358,8 @@ package body AlertLogPkg is
       -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
-          Prefix             => ReportPrefix & "  ",
+--          Prefix             => ReportPrefix & "  ",
+          Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
           IndentAmount       => 2,
           ReportAll          => ReportAll,
           HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
@@ -1361,7 +1375,7 @@ package body AlertLogPkg is
     procedure ReportRequirements is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
-      constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
+--      constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
       variable SavedPrintRequirementsVar : boolean ;
     begin
@@ -1381,7 +1395,8 @@ package body AlertLogPkg is
       ) ;
       IterateAndPrintChildren(
         AlertLogID         => REQUIREMENT_ALERTLOG_ID,
-        Prefix             => ReportPrefix & "  ",
+--        Prefix             => ReportPrefix & "  ",
+        Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
         IndentAmount       => 2,
         ReportAll          => TRUE,
         HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
@@ -1396,22 +1411,34 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) is
     ------------------------------------------------------------
-      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
-      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
-      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
-      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
+      -- constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
+      -- constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
+      -- constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
+      -- constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ;
       variable NumErrors : integer ;
     begin
       NumErrors := SumAlertCount(AlertCount) ;
       if  NumErrors = 0 then
         -- Passed
-        write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
+        -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
+        write(buf, 
+          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
+          ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
+          Name
+        ) ;
         write(buf, "  at "  & to_string(NOW, 1 ns)) ;
         WriteLine(buf) ;
       else
         -- Failed
-        write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
+        -- write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
+        write(buf, 
+          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
+          ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
+          Name
+        ) ;
         write(buf, "  Total Error(s) = "      & to_string(NumErrors) ) ;
         write(buf, "  Failures: "  & to_string(AlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
@@ -1587,16 +1614,19 @@ package body AlertLogPkg is
       Delimiter            : string 
     ) is
       variable buf : line ;
-      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
-      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
-      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
+      -- constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
+      -- constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
+      -- constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
     begin
-      write(buf, ReportPrefix &  " ") ; 
+--      write(buf, ReportPrefix &  " ") ; 
+      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  " ") ; 
       
       if (AffirmCount > 0) and (TotalErrors = 0) then
-        write(buf, PassName) ; 
+--        write(buf, PassName) ; 
+        write(buf, ResolveOsvvmPassName(PassNameVar.GetOpt)) ; 
       elsif TotalErrors > 0 then
-        write(buf, FailName) ; 
+--        write(buf, FailName) ; 
+        write(buf, ResolveOsvvmFailName(FailNameVar.GetOpt)) ; 
       else
         write(buf, string'("??????")) ; 
       end if ; 
@@ -2032,10 +2062,11 @@ package body AlertLogPkg is
       Level        : LogType
     ) is
       variable buf : line ;
-      constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
+      -- constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
     begin
       -- Print  %% log (nominally)
-      write(buf, LogPrefix) ;
+--      write(buf, LogPrefix) ;
+      write(buf,  LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX)) ;
       -- Debug Mode
       if WriteLogErrorCountVar then
           if WriteAlertErrorCountVar then
@@ -2775,23 +2806,23 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure SetAlertLogOptions (
     ------------------------------------------------------------
-      FailOnWarning            : AlertLogOptionsType ;
-      FailOnDisabledErrors     : AlertLogOptionsType ;
-      FailOnRequirementErrors  : AlertLogOptionsType ;
-      ReportHierarchy          : AlertLogOptionsType ;
-      WriteAlertErrorCount     : AlertLogOptionsType ;
-      WriteAlertLevel          : AlertLogOptionsType ;
-      WriteAlertName           : AlertLogOptionsType ;
-      WriteAlertTime           : AlertLogOptionsType ;
-      WriteLogErrorCount       : AlertLogOptionsType ;
-      WriteLogLevel            : AlertLogOptionsType ;
-      WriteLogName             : AlertLogOptionsType ;
-      WriteLogTime             : AlertLogOptionsType ;
-      PrintPassed              : AlertLogOptionsType ;
-      PrintAffirmations        : AlertLogOptionsType ;
-      PrintDisabledAlerts      : AlertLogOptionsType ;
-      PrintRequirements        : AlertLogOptionsType ;
-      PrintIfHaveRequirements  : AlertLogOptionsType ;
+      FailOnWarning            : OsvvmOptionsType ;
+      FailOnDisabledErrors     : OsvvmOptionsType ;
+      FailOnRequirementErrors  : OsvvmOptionsType ;
+      ReportHierarchy          : OsvvmOptionsType ;
+      WriteAlertErrorCount     : OsvvmOptionsType ;
+      WriteAlertLevel          : OsvvmOptionsType ;
+      WriteAlertName           : OsvvmOptionsType ;
+      WriteAlertTime           : OsvvmOptionsType ;
+      WriteLogErrorCount       : OsvvmOptionsType ;
+      WriteLogLevel            : OsvvmOptionsType ;
+      WriteLogName             : OsvvmOptionsType ;
+      WriteLogTime             : OsvvmOptionsType ;
+      PrintPassed              : OsvvmOptionsType ;
+      PrintAffirmations        : OsvvmOptionsType ;
+      PrintDisabledAlerts      : OsvvmOptionsType ;
+      PrintRequirements        : OsvvmOptionsType ;
+      PrintIfHaveRequirements  : OsvvmOptionsType ;
       DefaultPassedGoal        : integer ;
       AlertPrefix              : string ;
       LogPrefix                : string ;
@@ -2915,28 +2946,28 @@ package body AlertLogPkg is
     end procedure ReportAlertLogOptions ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogFailOnWarning        return AlertLogOptionsType is
+    impure function GetAlertLogFailOnWarning        return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(FailOnWarningVar) ;
     end function GetAlertLogFailOnWarning ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogFailOnDisabledErrors return AlertLogOptionsType is
+    impure function GetAlertLogFailOnDisabledErrors return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(FailOnDisabledErrorsVar) ;
     end function GetAlertLogFailOnDisabledErrors ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType is
+    impure function GetAlertLogFailOnRequirementErrors return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(FailOnRequirementErrorsVar) ;
     end function GetAlertLogFailOnRequirementErrors ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogReportHierarchy      return AlertLogOptionsType is
+    impure function GetAlertLogReportHierarchy      return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(ReportHierarchyVar) ;
@@ -2957,91 +2988,91 @@ package body AlertLogPkg is
     end function GetAlertLogFoundAlertHier ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteAlertErrorCount return AlertLogOptionsType is
+    impure function GetAlertLogWriteAlertErrorCount return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteAlertErrorCountVar) ;
     end function GetAlertLogWriteAlertErrorCount ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteAlertLevel      return AlertLogOptionsType is
+    impure function GetAlertLogWriteAlertLevel      return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteAlertLevelVar) ;
     end function GetAlertLogWriteAlertLevel ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteAlertName       return AlertLogOptionsType is
+    impure function GetAlertLogWriteAlertName       return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteAlertNameVar) ;
     end function GetAlertLogWriteAlertName ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteAlertTime       return AlertLogOptionsType is
+    impure function GetAlertLogWriteAlertTime       return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteAlertTimeVar) ;
     end function GetAlertLogWriteAlertTime ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteLogErrorCount return AlertLogOptionsType is
+    impure function GetAlertLogWriteLogErrorCount return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteLogErrorCountVar) ;
     end function GetAlertLogWriteLogErrorCount ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteLogLevel        return AlertLogOptionsType is
+    impure function GetAlertLogWriteLogLevel        return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteLogLevelVar) ;
     end function GetAlertLogWriteLogLevel ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteLogName         return AlertLogOptionsType is
+    impure function GetAlertLogWriteLogName         return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteLogNameVar) ;
     end function GetAlertLogWriteLogName ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogWriteLogTime         return AlertLogOptionsType is
+    impure function GetAlertLogWriteLogTime         return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteLogTimeVar) ;
     end function GetAlertLogWriteLogTime ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogPrintPassed    return AlertLogOptionsType is
+    impure function GetAlertLogPrintPassed    return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(PrintPassedVar) ;
     end function GetAlertLogPrintPassed ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType is
+    impure function GetAlertLogPrintAffirmations    return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(PrintAffirmationsVar) ;
     end function GetAlertLogPrintAffirmations ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType is
+    impure function GetAlertLogPrintDisabledAlerts  return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(PrintDisabledAlertsVar) ;
     end function GetAlertLogPrintDisabledAlerts ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogPrintRequirements    return AlertLogOptionsType is
+    impure function GetAlertLogPrintRequirements    return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(PrintRequirementsVar) ;
     end function GetAlertLogPrintRequirements ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogPrintIfHaveRequirements    return AlertLogOptionsType is
+    impure function GetAlertLogPrintIfHaveRequirements    return OsvvmOptionsType is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(PrintIfHaveRequirementsVar) ;
@@ -5003,23 +5034,23 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
   ------------------------------------------------------------
-    FailOnWarning            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    FailOnDisabledErrors     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    FailOnRequirementErrors  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    ReportHierarchy          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertErrorCount     : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertLevel          : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertName           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteAlertTime           : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogErrorCount       : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogLevel            : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogName             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    WriteLogTime             : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintPassed              : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintAffirmations        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintDisabledAlerts      : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintRequirements        : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
-    PrintIfHaveRequirements  : AlertLogOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnWarning            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnDisabledErrors     : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    FailOnRequirementErrors  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    ReportHierarchy          : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertErrorCount     : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertLevel          : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertName           : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteAlertTime           : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogErrorCount       : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogLevel            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogName             : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    WriteLogTime             : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintPassed              : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintAffirmations        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintDisabledAlerts      : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintRequirements        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    PrintIfHaveRequirements  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     DefaultPassedGoal        : integer             := integer'left ;
     AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -5073,28 +5104,28 @@ package body AlertLogPkg is
   -- synthesis translate_off
 
   ------------------------------------------------------------
-  impure function GetAlertLogFailOnWarning        return AlertLogOptionsType is
+  impure function GetAlertLogFailOnWarning        return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogFailOnWarning ;
   end function GetAlertLogFailOnWarning ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogFailOnDisabledErrors return AlertLogOptionsType is
+  impure function GetAlertLogFailOnDisabledErrors return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogFailOnDisabledErrors ;
   end function GetAlertLogFailOnDisabledErrors ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogFailOnRequirementErrors return AlertLogOptionsType is
+  impure function GetAlertLogFailOnRequirementErrors return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogFailOnRequirementErrors ;
   end function GetAlertLogFailOnRequirementErrors ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogReportHierarchy      return AlertLogOptionsType is
+  impure function GetAlertLogReportHierarchy      return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogReportHierarchy ;
@@ -5115,91 +5146,91 @@ package body AlertLogPkg is
   end function GetAlertLogFoundAlertHier ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteAlertErrorCount return AlertLogOptionsType is
+  impure function GetAlertLogWriteAlertErrorCount return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteAlertErrorCount ;
   end function GetAlertLogWriteAlertErrorCount ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteAlertLevel      return AlertLogOptionsType is
+  impure function GetAlertLogWriteAlertLevel      return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteAlertLevel ;
   end function GetAlertLogWriteAlertLevel ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteAlertName       return AlertLogOptionsType is
+  impure function GetAlertLogWriteAlertName       return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteAlertName ;
   end function GetAlertLogWriteAlertName ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteAlertTime       return AlertLogOptionsType is
+  impure function GetAlertLogWriteAlertTime       return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteAlertTime ;
   end function GetAlertLogWriteAlertTime ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteLogErrorCount return AlertLogOptionsType is
+  impure function GetAlertLogWriteLogErrorCount return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteLogErrorCount ;
   end function GetAlertLogWriteLogErrorCount ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteLogLevel        return AlertLogOptionsType is
+  impure function GetAlertLogWriteLogLevel        return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteLogLevel ;
   end function GetAlertLogWriteLogLevel ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteLogName         return AlertLogOptionsType is
+  impure function GetAlertLogWriteLogName         return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteLogName ;
   end function GetAlertLogWriteLogName ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogWriteLogTime         return AlertLogOptionsType is
+  impure function GetAlertLogWriteLogTime         return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogWriteLogTime ;
   end function GetAlertLogWriteLogTime ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogPrintPassed    return AlertLogOptionsType is
+  impure function GetAlertLogPrintPassed    return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogPrintPassed ;
   end function GetAlertLogPrintPassed ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogPrintAffirmations    return AlertLogOptionsType is
+  impure function GetAlertLogPrintAffirmations    return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogPrintAffirmations ;
   end function GetAlertLogPrintAffirmations ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogPrintDisabledAlerts  return AlertLogOptionsType is
+  impure function GetAlertLogPrintDisabledAlerts  return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogPrintDisabledAlerts ;
   end function GetAlertLogPrintDisabledAlerts ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogPrintRequirements    return AlertLogOptionsType is
+  impure function GetAlertLogPrintRequirements    return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
   return AlertLogStruct.GetAlertLogPrintRequirements ;
   end function GetAlertLogPrintRequirements ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogPrintIfHaveRequirements    return AlertLogOptionsType is
+  impure function GetAlertLogPrintIfHaveRequirements    return OsvvmOptionsType is
   ------------------------------------------------------------
   begin
   return AlertLogStruct.GetAlertLogPrintIfHaveRequirements ;
