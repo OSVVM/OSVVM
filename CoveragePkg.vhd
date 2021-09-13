@@ -5997,11 +5997,11 @@ package body CoveragePkg is
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
 --        WritePrefix     => rWritePrefix,
-        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt),
 --        PassName        => rPassName,
-        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+        PassName        => ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ),
 --        FailName        => rFailName
-        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  )
+        FailName        => ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  )
         ) ;
       WriteToCovFile(buf) ;
     end procedure WriteBin ;
@@ -6064,11 +6064,11 @@ package body CoveragePkg is
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
 --        WritePrefix     => rWritePrefix,
-        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt),
 --        PassName        => rPassName,
-        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+        PassName        => ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ),
 --        FailName        => rFailName
-        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  ),
+        FailName        => ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  ),
         UsingLocalFile  => TRUE
       );
       writeline(LocalWriteBinFile, buf) ;
