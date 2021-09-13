@@ -275,6 +275,11 @@ package AlertLogPkg is
   procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
+  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
+-- Deprecated as they are misnamed - should be AffirmIfNotDiff
   procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
@@ -289,9 +294,29 @@ package AlertLogPkg is
   procedure SetAlertLogJustify (Enable : boolean := TRUE) ;
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
   procedure ReportRequirements ;
-  procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
-  procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) ;
-  procedure WriteTestSummary   ( FileName : string ; OpenKind : File_Open_Kind := APPEND_MODE ) ;
+  procedure ReportAlerts ( 
+    Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ; 
+    AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
+    ExternalErrors : AlertCountType  := (others => 0) ;
+    ReportAll      : Boolean         := FALSE 
+  ) ;
+  procedure ReportNonZeroAlerts ( 
+    Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ; 
+    AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
+    ExternalErrors : AlertCountType  := (others => 0) 
+  ) ;
+  procedure EndOfTestSummary (
+    constant ReportAll      : boolean        := FALSE ;
+    constant ExternalErrors : AlertCountType := (0,0,0) 
+  ) ;
+  procedure WriteTestSummary   ( 
+    FileName       : string ; 
+    OpenKind       : File_Open_Kind := APPEND_MODE ; 
+    Prefix         : string := "" ; 
+    Suffix         : string := "" ; 
+    ExternalErrors : AlertCountType := (0,0,0) ;
+    WriteFieldName : boolean := FALSE 
+  ) ;
   procedure WriteTestSummaries ( FileName : string ; OpenKind : File_Open_Kind := WRITE_MODE ) ;
   procedure ReportTestSummaries ;
   procedure WriteAlerts (
@@ -560,9 +585,26 @@ package body AlertLogPkg is
       AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID
     ) ;
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) ;
+--    procedure EndOfTestSummary (
+--      constant ReportAll      : boolean        := FALSE ;
+--      constant ExternalErrors : AlertCountType := (0,0,0) 
+--    ) ;
     procedure ReportRequirements ;
-    procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (0,0,0) ; ReportAll : boolean := TRUE ) ;
-    procedure WriteTestSummary   ( FileName : string ; OpenKind : File_Open_Kind ) ;
+    procedure ReportAlerts ( 
+      Name           : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
+      ExternalErrors : AlertCountType := (0,0,0) ;
+      ReportAll      : boolean := FALSE ;
+      ReportWhenZero : boolean := TRUE
+    ) ;
+    procedure WriteTestSummary ( 
+      FileName       : string ;
+      OpenKind       : File_Open_Kind ;
+      Prefix         : string ; 
+      Suffix         : string ; 
+      ExternalErrors : AlertCountType ;
+      WriteFieldName : boolean 
+    ) ;
     procedure WriteTestSummaries ( FileName : string ; OpenKind : File_Open_Kind ) ;
     procedure ReportTestSummaries ;
     procedure WriteAlerts (
@@ -618,7 +660,7 @@ package body AlertLogPkg is
     procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
     procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) ;
-    procedure Deallocate ;
+    procedure DeallocateAlertLogStruct ;
     procedure SetAlertLogPrefix(AlertLogID : AlertLogIDType; Name : string ) ;
     procedure UnSetAlertLogPrefix(AlertLogID : AlertLogIDType) ;
     impure function GetAlertLogPrefix(AlertLogID : AlertLogIDType) return string ;
@@ -942,7 +984,7 @@ package body AlertLogPkg is
           end if ;
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
-          ReportAlerts(ReportAll => TRUE) ;
+          ReportAlerts(ReportWhenZero => TRUE) ;
           std.env.stop(ErrorCount) ;
         end if ;
       end if ;
@@ -972,7 +1014,7 @@ package body AlertLogPkg is
           end if ;
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
-          ReportAlerts(ReportAll => TRUE) ;
+          ReportAlerts(ReportWhenZero => TRUE) ;
           std.env.stop(ErrorCount) ;
         end if ;
       end if ;
@@ -1242,14 +1284,14 @@ package body AlertLogPkg is
       AlertLogID        : AlertLogIDType ;
       Prefix            : string ;
       IndentAmount      : integer ;
-      ReportAll         : boolean ;
+      ReportWhenZero    : boolean ;
       HasDisabledErrors : boolean
     ) is
       variable buf : line ;
       alias CurID  : AlertLogIDType is AlertLogID ;
     begin
       if
-         ReportAll or   -- ReportAlerts
+         ReportWhenZero or   -- ReportAlerts
          -- ReportNonZeroAlerts and  (AlertCount or (FailOn and DisabledAlertCount))
          (SumAlertCount(AlertLogPtr(CurID).AlertCount) > 0) or
          (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(CurID).DisabledAlertCount) > 0)) or
@@ -1284,7 +1326,7 @@ package body AlertLogPkg is
       AlertLogID        : AlertLogIDType ;
       Prefix            : string ;
       IndentAmount      : integer ;
-      ReportAll         : boolean ;
+      ReportWhenZero    : boolean ;
       HasDisabledErrors : boolean
     ) is
       variable buf : line ;
@@ -1302,14 +1344,14 @@ package body AlertLogPkg is
             AlertLogID         => CurID,
             Prefix             => Prefix,
             IndentAmount       => IndentAmount,
-            ReportAll          => ReportAll,
+            ReportWhenZero     => ReportWhenZero,
             HasDisabledErrors  => HasDisabledErrors
           ) ;
           IterateAndPrintChildren(
             AlertLogID         => CurID,
             Prefix             => Prefix & "  ",
             IndentAmount       => IndentAmount + 2,
-            ReportAll          => ReportAll,
+            ReportWhenZero     => ReportWhenZero,
             HasDisabledErrors  => HasDisabledErrors
           ) ;
         end if ; 
@@ -1322,7 +1364,8 @@ package body AlertLogPkg is
       Name           : string := OSVVM_STRING_INIT_PARM_DETECT ;
       AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
       ExternalErrors : AlertCountType := (0,0,0) ;
-      ReportAll      : boolean := TRUE
+      ReportAll      : boolean := FALSE ;
+      ReportWhenZero : boolean := TRUE
     ) is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
@@ -1354,14 +1397,14 @@ package body AlertLogPkg is
         ) ;
       end if ;
       --Print Hierarchy when enabled and test failed
-      if (FoundReportHierVar and ReportHierarchyVar) and TestFailed then
+      if ReportAll or (FoundReportHierVar and ReportHierarchyVar and TestFailed) then
       -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
 --          Prefix             => ReportPrefix & "  ",
           Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
           IndentAmount       => 2,
-          ReportAll          => ReportAll,
+          ReportWhenZero     => ReportAll or ReportWhenZero,
           HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
         ) ;
       end if ;
@@ -1398,7 +1441,7 @@ package body AlertLogPkg is
 --        Prefix             => ReportPrefix & "  ",
         Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
         IndentAmount       => 2,
-        ReportAll          => TRUE,
+        ReportWhenZero     => TRUE,
         HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
       ) ;
       if TurnedOnJustify then
@@ -1448,6 +1491,21 @@ package body AlertLogPkg is
       end if ;
     end procedure ReportAlerts ;
 
+--     ------------------------------------------------------------
+--     procedure EndOfTestSummary (
+--     ------------------------------------------------------------
+-- --      variable TestErrorsOut : out integer ; 
+--       constant ReportAll      : boolean        := FALSE ;
+--       constant ExternalErrors : AlertCountType := (0,0,0) 
+--     ) is
+--     begin
+--       ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
+--       WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      Results: """, Suffix => """", ExternalErrors => ExternalErrors) ; 
+--       std.env.stop(SumAlertCount(GetAlertCount + ExternalErrors)) ;
+--       -- Alternative to Stopping here.
+--       -- TestErrorsOut := SumAlertCount(GetAlertCount + ExternalErrors) ;
+--     end procedure EndOfTestSummary ;
+
     ------------------------------------------------------------
     -- PT Local
     impure function IsRequirement(AlertLogID : AlertLogIDType) return boolean is
@@ -1474,27 +1532,90 @@ package body AlertLogPkg is
       AlertCount           : AlertCountType ;
       AffirmCount          : integer ;
       PassedCount          : integer ; 
-      Delimiter            : string 
+      Delimiter            : string ;
+      Prefix               : string := "" ;
+      Suffix               : string := "" ;
+      WriteFieldName       : boolean := FALSE 
     ) is
       variable buf : line ;
     begin
 -- Should disabled errors be included here?  
 -- In the previous step, we counted DisabledErrors as a regular error if FailOnDisabledErrorsVar (default TRUE)
-      write(buf, AlertLogPtr(AlertLogID).Name.all  & Delimiter) ;
-      write(buf, to_string( RequirementsGoal )     & Delimiter) ;
-      write(buf, to_string( RequirementsPassed )   & Delimiter) ;
-      write(buf, to_string( TotalErrors )          & Delimiter) ;
-      write(buf, to_string( AlertCount(FAILURE) )  & Delimiter) ;
-      write(buf, to_string( AlertCount(ERROR) )    & Delimiter) ;
-      write(buf, to_string( AlertCount(WARNING) )  & Delimiter) ;
-      write(buf, to_string( AffirmCount )          & Delimiter) ;
-      write(buf, to_string( PassedCount )) ;
+
+      Write(buf, 
+        Prefix & 
+        IfElse(WriteFieldName, "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED") & Delimiter, "")  &
+        IfElse(WriteFieldName, "Name: ", "") & 
+        AlertLogPtr(AlertLogID).Name.all  & Delimiter &
+        IfElse(WriteFieldName, "RequirementsGoal: ", "") & 
+        to_string( RequirementsGoal )     & Delimiter & 
+        IfElse(WriteFieldName, "RequirementsPassed: ", "") & 
+        to_string( RequirementsPassed )   & Delimiter & 
+        IfElse(WriteFieldName, "TotalErrors: ", "") & 
+        to_string( TotalErrors )          & Delimiter & 
+        IfElse(WriteFieldName, "Failure: ", "") & 
+        to_string( AlertCount(FAILURE) )  & Delimiter & 
+        IfElse(WriteFieldName, "Error: ", "") & 
+        to_string( AlertCount(ERROR) )    & Delimiter & 
+        IfElse(WriteFieldName, "Warning: ", "") & 
+        to_string( AlertCount(WARNING) )  & Delimiter &
+        IfElse(WriteFieldName, "AffirmCount: ", "") & 
+        to_string( AffirmCount )          & Delimiter & 
+        IfElse(WriteFieldName, "PassedCount: ", "") & 
+        to_string( PassedCount )          & Suffix
+      ) ;        
+        
+--  **      write(buf, Prefix) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED") & Delimiter) ;
+--  **        swrite(buf, "Name: ") ; 
+--  **      end if ; 
+--  **      write(buf, AlertLogPtr(AlertLogID).Name.all  & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "RequirementsGoal: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( RequirementsGoal )     & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "RequirementsPassed: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( RequirementsPassed )   & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "TotalErrors: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( TotalErrors )          & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "Failure: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( AlertCount(FAILURE) )  & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "Error: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( AlertCount(ERROR) )    & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "Warning: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( AlertCount(WARNING) )  & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "AffirmCount: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( AffirmCount )          & Delimiter) ;
+--  **      if WriteFieldName then 
+--  **        swrite(buf, "PassedCount: ") ; 
+--  **      end if ; 
+--  **      write(buf, to_string( PassedCount )          & Suffix) ;
       WriteLine(TestFile, buf) ;
     end procedure WriteOneTestSummary ;
     
     ------------------------------------------------------------
-    procedure WriteTestSummary (file TestFile : text) is
+    --  pt local
+    procedure WriteTestSummary (
     ------------------------------------------------------------
+      file TestFile  : text ;
+      Prefix         : string := "" ; 
+      Suffix         : string := "" ; 
+      ExternalErrors : AlertCountType := (0,0,0) ;
+      WriteFieldName : boolean := FALSE 
+    ) is
       -- Format:  Action Count min1 max1 min2 max2
       variable TotalErrors : integer ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
@@ -1503,9 +1624,9 @@ package body AlertLogPkg is
       variable TotalAlertCount, DisabledAlertCount : AlertCountType ;
       constant AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ;
       variable PassedCount, AffirmCount : integer ;
-      constant DELIMITER : string := "," ;
+      constant DELIMITER : string := ", " ;
     begin
-      TotalAlertCount        := AlertLogPtr(AlertLogID).AlertCount ;
+      TotalAlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
       TotalAlertErrors     := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
 
       DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
@@ -1534,20 +1655,27 @@ package body AlertLogPkg is
         AlertCount           =>  TotalAlertCount,        
         AffirmCount          =>  AffirmCount,       
         PassedCount          =>  PassedCount,
-        Delimiter            =>  DELIMITER        
+        Delimiter            =>  DELIMITER,
+        Prefix               =>  Prefix,
+        Suffix               =>  Suffix, 
+        WriteFieldName       => WriteFieldName
       ) ;
     end procedure WriteTestSummary ;
     
     ------------------------------------------------------------
     procedure WriteTestSummary (
     ------------------------------------------------------------
-      FileName    : string ;
-      OpenKind    : File_Open_Kind
+      FileName       : string ;
+      OpenKind       : File_Open_Kind ;
+      Prefix         : string ; 
+      Suffix         : string ; 
+      ExternalErrors : AlertCountType ;
+      WriteFieldName : boolean 
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       file TestFile : text open OpenKind is FileName ;
     begin
-      WriteTestSummary(TestFile =>  TestFile) ;
+      WriteTestSummary(TestFile =>  TestFile, Prefix => Prefix, Suffix => Suffix, ExternalErrors => ExternalErrors, WriteFieldName => WriteFieldName) ;
     end procedure WriteTestSummary ;
     
     ------------------------------------------------------------
@@ -2291,7 +2419,7 @@ package body AlertLogPkg is
     constant CONSTRUCT_ALERT_DATA_STRUCTURE : boolean := LocalInitialize ;
 
     ------------------------------------------------------------
-    procedure Deallocate is
+    procedure DeallocateAlertLogStruct is
     ------------------------------------------------------------
     begin
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
@@ -2332,7 +2460,7 @@ package body AlertLogPkg is
       WriteLogLevelVar            := TRUE ;
       WriteLogNameVar             := TRUE ;
       WriteLogTimeVar             := TRUE ;
-    end procedure Deallocate ;
+    end procedure DeallocateAlertLogStruct ;
 
     ------------------------------------------------------------
     -- PT Local.
@@ -4258,6 +4386,59 @@ package body AlertLogPkg is
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
+  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  -- Open files and call AffirmIfNotDiff[text, ...]
+  ------------------------------------------------------------
+    variable Valid : boolean ;
+  begin
+    -- synthesis translate_off
+    LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
+    if Valid then
+      AlertLogStruct.Log(AlertLogID, Message & " " & Name1 & " = " & Name2, PASSED, Enable) ;
+    else
+      AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
+      -- Alert already signaled by LocalAlertIfDiff
+    end if ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotDiff ;
+
+  ------------------------------------------------------------
+  procedure AffirmIfNotDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIfNotDiff(ALERT_DEFAULT_ID, Name1, Name2, Message, Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotDiff ;
+
+  ------------------------------------------------------------
+  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
+  -- Simple diff.
+  ------------------------------------------------------------
+    variable Valid : boolean ;
+  begin
+    -- synthesis translate_off
+    LocalAlertIfDiff (AlertLogID, File1, File2, Message, ERROR, Valid ) ;
+    if Valid then
+      AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ;
+    else
+      AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
+      -- Alert already signaled by LocalAlertIfDiff
+    end if ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotDiff ;
+
+  ------------------------------------------------------------
+  procedure AffirmIfNotDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIfNotDiff(ALERT_DEFAULT_ID, File1, File2, Message, Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotDiff ;
+
+  ------------------------------------------------------------
+-- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
   procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
   -- Open files and call AffirmIfDiff[text, ...]
   ------------------------------------------------------------
@@ -4275,6 +4456,7 @@ package body AlertLogPkg is
   end procedure AffirmIfDiff ;
 
   ------------------------------------------------------------
+-- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
   procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
   ------------------------------------------------------------
   begin
@@ -4284,6 +4466,7 @@ package body AlertLogPkg is
   end procedure AffirmIfDiff ;
 
   ------------------------------------------------------------
+-- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
   procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
   -- Simple diff.
   ------------------------------------------------------------
@@ -4301,6 +4484,7 @@ package body AlertLogPkg is
   end procedure AffirmIfDiff ;
 
   ------------------------------------------------------------
+-- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
   procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
   ------------------------------------------------------------
   begin
@@ -4359,32 +4543,58 @@ package body AlertLogPkg is
   end procedure ReportRequirements ;
 
   ------------------------------------------------------------
-  procedure ReportAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) is
+  procedure ReportAlerts ( 
   ------------------------------------------------------------
+    Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ; 
+    AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
+    ExternalErrors : AlertCountType  := (others => 0) ;
+    ReportAll      : Boolean         := FALSE
+  ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, TRUE) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE) ;
     -- synthesis translate_on
   end procedure ReportAlerts ;
 
   ------------------------------------------------------------
-  procedure ReportNonZeroAlerts ( Name : string := OSVVM_STRING_INIT_PARM_DETECT ; AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID ; ExternalErrors : AlertCountType := (others => 0) ) is
+  procedure ReportNonZeroAlerts ( 
   ------------------------------------------------------------
+    Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ; 
+    AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
+    ExternalErrors : AlertCountType  := (others => 0) 
+  ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE, FALSE) ;
     -- synthesis translate_on
   end procedure ReportNonZeroAlerts ;
 
   ------------------------------------------------------------
-  procedure WriteTestSummary (
+  procedure EndOfTestSummary (
   ------------------------------------------------------------
-    FileName    : string ;
-    OpenKind    : File_Open_Kind := APPEND_MODE
+    constant ReportAll      : boolean        := FALSE ;
+    constant ExternalErrors : AlertCountType := (0,0,0) 
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.WriteTestSummary(FileName, OpenKind) ;
+    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
+    WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      Results: {", Suffix => "}", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
+    std.env.stop(SumAlertCount(GetAlertCount + ExternalErrors)) ;
+  end procedure EndOfTestSummary ;
+
+  ------------------------------------------------------------
+  procedure WriteTestSummary (
+  ------------------------------------------------------------
+    FileName       : string ; 
+    OpenKind       : File_Open_Kind := APPEND_MODE ; 
+    Prefix         : string := "" ; 
+    Suffix         : string := "" ; 
+    ExternalErrors : AlertCountType := (0,0,0) ;
+    WriteFieldName : boolean := FALSE 
+  ) is
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.WriteTestSummary(FileName, OpenKind, Prefix, Suffix, ExternalErrors, WriteFieldName) ;
     -- synthesis translate_on
   end procedure WriteTestSummary ;
   
@@ -4656,6 +4866,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   procedure Log(
+  ------------------------------------------------------------
     AlertLogID   : AlertLogIDType ;
     Message      : string ;
     Level        : LogType := ALWAYS ;
@@ -4788,7 +4999,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.Deallocate ;
+    AlertLogStruct.DeallocateAlertLogStruct ;
     -- synthesis translate_on
   end procedure DeallocateAlertLogStruct ;
 
