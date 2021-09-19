@@ -26,6 +26,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2021   2021.09    Added EndOfTestSummary and CreateYamlReport - Experimental Release 
 --    07/2021   2021.07    When printing time value from GetOsvvmDefaultTimeUnits is used.
 --    06/2021   2021.06    FindAlertLogID updated to allow an ID name to match the name set by SetAlertLogName (ALERTLOG_BASE_ID) 
 --    12/2020   2020.12    Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual for std_logic family to use MetaMatch
@@ -305,9 +306,10 @@ package AlertLogPkg is
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
     ExternalErrors : AlertCountType  := (others => 0) 
   ) ;
+  procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;
   procedure EndOfTestSummary (
-    constant ReportAll      : boolean        := FALSE ;
-    constant ExternalErrors : AlertCountType := (0,0,0) 
+    ReportAll      : boolean        := FALSE ;
+    ExternalErrors : AlertCountType := (0,0,0) 
   ) ;
   procedure WriteTestSummary   ( 
     FileName       : string ; 
@@ -1544,8 +1546,8 @@ package body AlertLogPkg is
 
       Write(buf, 
         Prefix & 
-        IfElse(WriteFieldName, "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED") & Delimiter, "")  &
-        IfElse(WriteFieldName, "Name: ", "") & 
+        IfElse(WriteFieldName, "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED") & LF, "")  &
+        IfElse(WriteFieldName, Prefix & "Results: {Name: ", "") & 
         AlertLogPtr(AlertLogID).Name.all  & Delimiter &
         IfElse(WriteFieldName, "RequirementsGoal: ", "") & 
         to_string( RequirementsGoal )     & Delimiter & 
@@ -1562,47 +1564,34 @@ package body AlertLogPkg is
         IfElse(WriteFieldName, "AffirmCount: ", "") & 
         to_string( AffirmCount )          & Delimiter & 
         IfElse(WriteFieldName, "PassedCount: ", "") & 
-        to_string( PassedCount )          & Suffix
-      ) ;        
+        to_string( PassedCount ) & 
+        IfElse(WriteFieldName, "}", "") & 
+        Suffix
+      ) ;
+-- ##      Write(buf, 
+-- ##        Prefix & 
+-- ##        IfElse(WriteFieldName, "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED") & Delimiter, "")  &
+-- ##        IfElse(WriteFieldName, "Name: ", "") & 
+-- ##        AlertLogPtr(AlertLogID).Name.all  & Delimiter &
+-- ##        IfElse(WriteFieldName, "RequirementsGoal: ", "") & 
+-- ##        to_string( RequirementsGoal )     & Delimiter & 
+-- ##        IfElse(WriteFieldName, "RequirementsPassed: ", "") & 
+-- ##        to_string( RequirementsPassed )   & Delimiter & 
+-- ##        IfElse(WriteFieldName, "TotalErrors: ", "") & 
+-- ##        to_string( TotalErrors )          & Delimiter & 
+-- ##        IfElse(WriteFieldName, "Failure: ", "") & 
+-- ##        to_string( AlertCount(FAILURE) )  & Delimiter & 
+-- ##        IfElse(WriteFieldName, "Error: ", "") & 
+-- ##        to_string( AlertCount(ERROR) )    & Delimiter & 
+-- ##        IfElse(WriteFieldName, "Warning: ", "") & 
+-- ##        to_string( AlertCount(WARNING) )  & Delimiter &
+-- ##        IfElse(WriteFieldName, "AffirmCount: ", "") & 
+-- ##        to_string( AffirmCount )          & Delimiter & 
+-- ##        IfElse(WriteFieldName, "PassedCount: ", "") & 
+-- ##        to_string( PassedCount )          & Suffix
+-- ##      ) ;        
         
---  **      write(buf, Prefix) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED") & Delimiter) ;
---  **        swrite(buf, "Name: ") ; 
---  **      end if ; 
---  **      write(buf, AlertLogPtr(AlertLogID).Name.all  & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "RequirementsGoal: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( RequirementsGoal )     & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "RequirementsPassed: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( RequirementsPassed )   & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "TotalErrors: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( TotalErrors )          & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "Failure: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( AlertCount(FAILURE) )  & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "Error: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( AlertCount(ERROR) )    & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "Warning: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( AlertCount(WARNING) )  & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "AffirmCount: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( AffirmCount )          & Delimiter) ;
---  **      if WriteFieldName then 
---  **        swrite(buf, "PassedCount: ") ; 
---  **      end if ; 
---  **      write(buf, to_string( PassedCount )          & Suffix) ;
+
       WriteLine(TestFile, buf) ;
     end procedure WriteOneTestSummary ;
     
@@ -4570,16 +4559,27 @@ package body AlertLogPkg is
   end procedure ReportNonZeroAlerts ;
 
   ------------------------------------------------------------
+  procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    --  WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      Results: {", Suffix => "}", ExternalErrors => ExternalErrors) ; 
+    WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
+    -- synthesis translate_on
+  end procedure CreateYamlReport ;
+
+  ------------------------------------------------------------
   procedure EndOfTestSummary (
   ------------------------------------------------------------
-    constant ReportAll      : boolean        := FALSE ;
-    constant ExternalErrors : AlertCountType := (0,0,0) 
+    ReportAll      : boolean        := FALSE ;
+    ExternalErrors : AlertCountType := (0,0,0) 
   ) is
   begin
     -- synthesis translate_off
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
-    WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      Results: {", Suffix => "}", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
+    CreateYamlReport(ExternalErrors => ExternalErrors) ; 
     std.env.stop(SumAlertCount(GetAlertCount + ExternalErrors)) ;
+    -- synthesis translate_on
   end procedure EndOfTestSummary ;
 
   ------------------------------------------------------------
