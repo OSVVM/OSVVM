@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2021.09  | September 2021  |  Minor updates to support Synopsys and Cadence
 | 2021.08  | August 2021     |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
 | 2021.07  | July 2021       |  Updated Data Structure of CoveragePkg
 | 2021.06  | June 2021       |  Updated Data Structures
@@ -49,15 +50,15 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2021.08 August 2021
+## Revision 2021.09 September 2021
+
 
 ### Current Revision and Compile Order
 
 The following table lists the files and revision, starting with the
 files that need to be compiled first. Be sure to turn on the VHDL-2008
-compile switch. If you are using Aldec or Mentor simulators, you may
-also use the OSVVM script - osvvm.pro -- details how to run it are 
-in the scripts directory as well as Scripts_user_guide.pdf.
+compile switch. You may also use the OSVVM script - osvvm.pro -- details 
+how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |  
   -----------------------------------------------------|----------
@@ -69,21 +70,40 @@ in the scripts directory as well as Scripts_user_guide.pdf.
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | 2021.06  | 
+  | AlertLogPkg.vhd                                    | **2021.09**  | 
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | **2021.08**  |
+  | CoveragePkg.vhd                                    | 2021.08  |
   | MemoryPkg.vhd                                      | 2021.06  |
-  | ScoreboardGenericPkg.vhd                           | **2021.08**  |
+  | ScoreboardGenericPkg.vhd                           | 2021.08  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
+  | ScoreboardPkg_slv_c.vhd                            | **2021.09**  |
+  | ScoreboardPkg_int_c.vhd                            | **2021.09**  |
   | ResizePkg.vhd                                      | 2021.06  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
 
+
+### AlertLogPkg.vhd 2021.09 
+Experimental Release of EndOfTestSummary and CreateYamlReport
+
+### CoveragePkg.vhd  2021.09 
+Minor update to WriteBin in CoveragePkg for setting parameters
+
+### ScoreboardPkg_slv_c.vhd and ScoreboardPkg_int_c.vhd  2021.09 
+Reintroduced into the repository.  Cadence Xcelium does not yet 
+support generics on a package.
+
+### Minor updates for compile/simulate in Synopsys VCS and Cadence Xcelium 
+CoveragePkg.vhd, MemoryPkg.vhd, NameStorePkg.vhd, RandomPkg.vhd, 
+RandomBasePkg.vhd, and ScoreboardGenericPkg.vhd
+
+
+## Revision 2021.08 August 2021
 
 ### CoveragePkg.vhd  2021.08 
 Deprecated and removed SetAlertLogID.  Use NewID instead.
