@@ -2211,20 +2211,27 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable NewNumItems : integer ;
       variable NewCoverageID : CoverageIDType ;
+      variable NameID : integer ; 
     begin
-      NewNumItems   := NumItems + 1 ;
-      GrowNumberItems(CovStructPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
-      NumItems      := NewNumItems ;
-      CovStructPtr(NumItems) := COV_STRUCT_INIT ;
-      NewCoverageID := (ID => NumItems) ;
-      InitSeed( NewCoverageID, NameIn) ;
-      SetName( NewCoverageID, NameIn) ;
-      SetAlertLogID(NewCoverageID, NameIn, OSVVM_COVERAGE_ALERTLOG_ID, FALSE) ; 
---      CovStructPtr(NumItems).AlertLogID := OSVVM_COVERAGE_ALERTLOG_ID ;
---!!
---!!  Set name for each Coverage Point.
---!!
-      return NewCoverageID ;
+      NameID := LocalNameStore.find(NameIn) ; 
+      if NameID /= ID_NOT_FOUND.ID then 
+        return CoverageIDType'(ID => NameID) ; 
+      else
+        NewNumItems   := NumItems + 1 ;
+        GrowNumberItems(CovStructPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
+        NumItems      := NewNumItems ;
+        NameID := LocalNameStore.NewID(NameIn) ;
+        CovStructPtr(NumItems) := COV_STRUCT_INIT ;
+        NewCoverageID := (ID => NumItems) ;
+        InitSeed( NewCoverageID, NameIn) ;
+        SetName( NewCoverageID, NameIn) ;
+        SetAlertLogID(NewCoverageID, NameIn, OSVVM_COVERAGE_ALERTLOG_ID, FALSE) ; 
+  --      CovStructPtr(NumItems).AlertLogID := OSVVM_COVERAGE_ALERTLOG_ID ;
+  --!!
+  --!!  Set name for each Coverage Point.
+  --!!
+        return NewCoverageID ;
+      end if ; 
     end function NewID ;
 
     ------------------------------------------------------------
