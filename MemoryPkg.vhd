@@ -271,10 +271,12 @@ package MemoryPkg is
     procedure deallocate ; 
 
     ------------------------------------------------------------
+    -- /////////////////////////////////////////
     -- Historical Interface
     --   In the new implementation, these use index 1. 
     --   These are for backward compatibility support
     -- 
+    -- /////////////////////////////////////////
     ------------------------------------------------------------
     procedure MemInit ( AddrWidth, DataWidth  : in  integer ) ;
     
