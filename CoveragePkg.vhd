@@ -2573,8 +2573,11 @@ package body CoveragePkg is
     begin
       -- Support names for up to a cross of 20
       for i in 1 to 20 loop 
-        if CovStructPtr(ID.ID).CovName /= NULL then
-          deallocate (CovStructPtr(ID.ID).CovName) ;
+        if CovStructPtr(ID.ID).FieldName /= NULL then
+          for i in 1 to CovStructPtr(ID.ID).FieldName'length loop 
+            deallocate (CovStructPtr(ID.ID).FieldName(i)) ; 
+          end loop ;
+          deallocate (CovStructPtr(ID.ID).FieldName) ;
         end if;
         case i is
           when  1 =>  NamePtr := NewNamePtr(Name1) ;
@@ -4820,18 +4823,14 @@ package body CoveragePkg is
         FieldWidth := FieldName'length; 
       end if; 
       
-      write(buf, Prefix & "  FieldNames: {" ) ; 
+      write(buf, Prefix & "  FieldNames: " & LF) ; 
       for i in 1 to Dimensions loop 
-        if i > 1 then 
-          write(buf, ", ") ; 
-        end if ; 
         if i > FieldWidth then 
-          write(buf, "Bin " & to_string(i)) ; 
+          write(buf, Prefix & "  - Bin" & to_string(i)  & LF) ; 
         else 
-          write(buf, FieldName(i).all) ; 
+          write(buf, Prefix & "  - " & FieldName(i).all & LF) ; 
         end if ; 
       end loop ; 
-      write(buf, "}" & LF) ; 
     end procedure WriteCovFieldNameYaml ;
     
     ------------------------------------------------------------
@@ -4842,7 +4841,7 @@ package body CoveragePkg is
       -- write bins to YAML file
       write(buf, Prefix & "BinInfo: " & LF) ; 
       write(buf, Prefix & "  Dimensions: " & to_string(CovStructPtr(ID.ID).BinValLength) & LF) ; 
-      WriteCovFieldNameYaml(ID, buf, Prefix & "  ") ; 
+      WriteCovFieldNameYaml(ID, buf, Prefix) ; 
       write(buf, Prefix & "  NumBins: " & to_string(CovStructPtr(ID.ID).NumBins) & LF) ; 
     end procedure WriteCovBinInfoYaml ;
     
@@ -4921,11 +4920,11 @@ package body CoveragePkg is
       file CovYamlFile : text open OpenKind is "./results/" & TestName & "_cov.yml" ;
       variable buf : line ;
     begin
-      write(buf, "Version: 1.0" & LF) ; 
-      write(buf, "Tests:" & LF) ; 
-      write(buf, "  - Name: " & TestName & LF) ; 
-      write(buf, "    Coverage: " & "GetCov to be written" & LF) ; 
-      write(buf, "    Models: ") ; 
+      swrite(buf, "Version: 1.0" & LF) ; 
+      swrite(buf, "Tests:" & LF) ; 
+      swrite(buf, "  - Name: " & TestName & LF) ; 
+      swrite(buf, "    Coverage: " & "GetCov to be written" & LF) ; 
+      swrite(buf, "    Models: ") ; 
       writeline(CovYamlFile, buf) ; 
       for i in 1 to NumItems loop
         WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile) ; 
