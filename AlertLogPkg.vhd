@@ -4565,6 +4565,9 @@ package body AlertLogPkg is
     -- synthesis translate_off
     --  WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      Results: {", Suffix => "}", ExternalErrors => ExternalErrors) ; 
     WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
+--    if work.CoveragePkg.GotCoverage then 
+--      work.CoveragePkg.WriteCovYaml("Osvvm") ; 
+--    end if; 
     -- synthesis translate_on
   end procedure CreateYamlReport ;
 

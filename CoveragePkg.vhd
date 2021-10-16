@@ -328,6 +328,14 @@ package CoveragePkg is
   impure function GetName         (ID : CoverageIDType) return String ;
   impure function GetCovModelName (ID : CoverageIDType) return String ;
   impure function GetNamePlus     (ID : CoverageIDType; prefix, suffix : string) return String ;
+  procedure SetFieldName (
+    ID         : CoverageIDType ;
+    Name1      : String ; 
+            Name2,  Name3,  Name4,  Name5, 
+    Name6,  Name7,  Name8,  Name9,  Name10, 
+    Name11, Name12, Name13, Name14, Name15, 
+    Name16, Name17, Name18, Name19, Name20 : string := ""
+  ) ;
 
   procedure       SetCovTarget       (ID : CoverageIDType; Percent : real) ;
   impure function GetCovTarget       (ID : CoverageIDType) return real ;
@@ -599,6 +607,9 @@ package CoveragePkg is
   procedure ReadCovDb  (ID : CoverageIDType; FileName : string; Merge : boolean := FALSE) ;
   procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
   --     procedure WriteCovDb (ID : CoverageIDType) ;
+  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
+  procedure WriteCovYaml (TestName : string; OpenKind : File_Open_Kind := WRITE_MODE) ;
+  impure function GotCoverage return boolean ;
 
 
   ------------------------------------------------------------
@@ -793,6 +804,14 @@ package CoveragePkg is
     impure function GetName         (ID : CoverageIDType) return String ;
     impure function GetCovModelName (ID : CoverageIDType) return String ;
     impure function GetNamePlus     (ID : CoverageIDType; prefix, suffix : string) return String ;
+    procedure SetFieldName (
+      ID         : CoverageIDType ;
+      Name1      : String ; 
+              Name2,  Name3,  Name4,  Name5, 
+      Name6,  Name7,  Name8,  Name9,  Name10, 
+      Name11, Name12, Name13, Name14, Name15, 
+      Name16, Name17, Name18, Name19, Name20 : string := ""
+    ) ;
 
     ------------------------------------------------------------
     procedure       SetMessage         (ID : CoverageIDType; Message : String) ;
@@ -1099,6 +1118,9 @@ package CoveragePkg is
     procedure ReadCovDb  (ID : CoverageIDType; FileName : string; Merge : boolean := FALSE) ;
     procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
     --     procedure WriteCovDb (ID : CoverageIDType) ;
+    procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
+    procedure WriteCovYaml (TestName : string; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    impure function GotCoverage return boolean ;
 
 
   ------------------------------------------------------------
@@ -1615,6 +1637,18 @@ end package CoveragePkg ;
 
 package body CoveragePkg is
   ------------------------------------------------------------
+  --  package local
+  function ActionToName(Action : integer) return string is 
+  ------------------------------------------------------------
+  begin 
+    case Action is
+      when 1 =>        return "Count" ;
+      when 0 =>        return "Ignore"  ;
+      when others =>   return "Illegal" ;
+    end case ; 
+  end function ActionToName ; 
+
+  ------------------------------------------------------------
   function inside (
   -- package local
   ------------------------------------------------------------
@@ -2066,7 +2100,7 @@ package body CoveragePkg is
     -- /////////////////////////////////////////
     type RangeArrayPtrType is access RangeArrayType ;
 
-    type CovBinBaseTempType is record
+    type CovBinInternalBaseType is record
       BinVal        : RangeArrayPtrType ;
       Action        : integer ;
       Count         : integer ;
@@ -2074,9 +2108,12 @@ package body CoveragePkg is
       Weight        : integer ;
       PercentCov    : real ;
       Name          : line ;
-    end record CovBinBaseTempType ;
-    type CovBinTempType is array (natural range <>) of CovBinBaseTempType ;
-    type CovBinPtrType is access CovBinTempType ;
+    end record CovBinInternalBaseType ;
+    type CovBinInternalType is array (natural range <>) of CovBinInternalBaseType ;
+    type CovBinPtrType is access CovBinInternalType ;
+    
+    type FieldNameArrayType is array (natural range <>) of Line ;
+    type FieldNameArrayPtrType is access FieldNameArrayType ;
 
     ------------------------------------------------------------
     -- /////////////////////////////////////////
@@ -2088,6 +2125,7 @@ package body CoveragePkg is
       CovName            : line ;
       NumBins            : integer ;
       BinValLength       : integer ;
+      FieldName          : FieldNameArrayPtrType ; 
 
       CovMessage         : MessageStructPtrType ;
       VendorCovHandle    : VendorCovHandleType ;
@@ -2125,6 +2163,7 @@ package body CoveragePkg is
         CovName            =>  NULL,
         NumBins            =>  0,
         BinValLength       =>  1,
+        FieldName          =>  NULL,
 
         CovMessage         =>  NULL,
         VendorCovHandle    =>  0,
@@ -2424,11 +2463,14 @@ package body CoveragePkg is
         deallocate (CovStructPtr(ID.ID).CovName) ;
       end if;
       CovStructPtr(ID.ID).CovName := new string'(Name) ;
+      
       -- Update if name updated after model created                      -- VendorCov
       if IsInitialized(ID) then                                          -- VendorCov
         VendorCovSetName(CovStructPtr(ID.ID).VendorCovHandle, Name) ;    -- VendorCov
       end if ;                                                           -- VendorCov
-      if not CovStructPtr(ID.ID).RvSeedInit then  -- Init seed if not initialized
+      
+      -- Init seed if not already initialized
+      if not CovStructPtr(ID.ID).RvSeedInit then  
         InitSeed(ID, Name) ;
         CovStructPtr(ID.ID).RvSeedInit := TRUE ;
       end if ;
@@ -2489,6 +2531,81 @@ package body CoveragePkg is
         return "" ;
       end if ;
     end function GetNamePlus ;
+
+    ------------------------------------------------------------
+    -- PT Local
+    impure function NewNamePtr(Name : string) return Line is 
+    ------------------------------------------------------------
+    begin
+      if Name /= "" then
+        return new string'(Name) ;
+      else
+        return NULL ;
+      end if; 
+    end function NewNamePtr ; 
+
+    ------------------------------------------------------------
+    -- pt local
+    procedure CheckBinValLength(ID : CoverageIDType; CurBinValLength : integer ; Caller : string ) is
+    ------------------------------------------------------------
+    begin
+      if CovStructPtr(ID.ID).NumBins = 0 then
+        CovStructPtr(ID.ID).BinValLength := CurBinValLength ; -- number of points in cross
+      else
+        AlertIfNotEqual(CovStructPtr(ID.ID).AlertLogID, CovStructPtr(ID.ID).BinValLength, CurBinValLength, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" &
+        " Cross coverage bins of different dimensions prohibited", FAILURE) ;
+      end if;
+    end procedure CheckBinValLength ;
+
+    ------------------------------------------------------------
+    procedure SetFieldName (
+    ------------------------------------------------------------
+      ID         : CoverageIDType ;
+      Name1      : String ; 
+              Name2,  Name3,  Name4,  Name5, 
+      Name6,  Name7,  Name8,  Name9,  Name10, 
+      Name11, Name12, Name13, Name14, Name15, 
+      Name16, Name17, Name18, Name19, Name20 : string := ""
+    ) is
+      variable NamePtr : Line ; 
+      variable FieldNameArray : FieldNameArrayType(1 to 20) ; 
+      variable Dimensions : integer := 0 ;
+    begin
+      -- Support names for up to a cross of 20
+      for i in 1 to 20 loop 
+        if CovStructPtr(ID.ID).CovName /= NULL then
+          deallocate (CovStructPtr(ID.ID).CovName) ;
+        end if;
+        case i is
+          when  1 =>  NamePtr := NewNamePtr(Name1) ;
+          when  2 =>  NamePtr := NewNamePtr(Name2) ;
+          when  3 =>  NamePtr := NewNamePtr(Name3) ;
+          when  4 =>  NamePtr := NewNamePtr(Name4) ;
+          when  5 =>  NamePtr := NewNamePtr(Name5) ;
+          when  6 =>  NamePtr := NewNamePtr(Name6) ;
+          when  7 =>  NamePtr := NewNamePtr(Name7) ;
+          when  8 =>  NamePtr := NewNamePtr(Name8) ;
+          when  9 =>  NamePtr := NewNamePtr(Name9) ;
+          when 10 =>  NamePtr := NewNamePtr(Name10) ;
+          when 11 =>  NamePtr := NewNamePtr(Name11) ;
+          when 12 =>  NamePtr := NewNamePtr(Name12) ;
+          when 13 =>  NamePtr := NewNamePtr(Name13) ;
+          when 14 =>  NamePtr := NewNamePtr(Name14) ;
+          when 15 =>  NamePtr := NewNamePtr(Name15) ;
+          when 16 =>  NamePtr := NewNamePtr(Name16) ;
+          when 17 =>  NamePtr := NewNamePtr(Name17) ;
+          when 18 =>  NamePtr := NewNamePtr(Name18) ;
+          when 19 =>  NamePtr := NewNamePtr(Name19) ;
+          when 20 =>  NamePtr := NewNamePtr(Name20) ;
+        end case ; 
+        exit when NamePtr = NULL ; 
+        FieldNameArray(i) := NamePtr ; 
+        Dimensions := i ; 
+      end loop ;
+      CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray(1 to Dimensions)) ;
+      -- Check that Dimensions match bin dimensions    
+      CheckBinValLength(ID, Dimensions, "SetFieldName") ;  
+    end procedure SetFieldName ;
 
     ------------------------------------------------------------
     procedure SetMessage (ID : CoverageIDType; Message : String) is
@@ -2640,27 +2757,15 @@ package body CoveragePkg is
       variable oldCovBinPtr : CovBinPtrType ;
     begin
       if CovStructPtr(ID.ID).CovBinPtr = NULL then
-        CovStructPtr(ID.ID).CovBinPtr := new CovBinTempType(1 to NewNumBins) ;
+        CovStructPtr(ID.ID).CovBinPtr := new CovBinInternalType(1 to NewNumBins) ;
       elsif NewNumBins > CovStructPtr(ID.ID).CovBinPtr'length then
         -- make message bigger
         oldCovBinPtr := CovStructPtr(ID.ID).CovBinPtr ;
-        CovStructPtr(ID.ID).CovBinPtr := new CovBinTempType(1 to NewNumBins) ;
+        CovStructPtr(ID.ID).CovBinPtr := new CovBinInternalType(1 to NewNumBins) ;
         CovStructPtr(ID.ID).CovBinPtr.all(1 to CovStructPtr(ID.ID).NumBins) := oldCovBinPtr.all(1 to CovStructPtr(ID.ID).NumBins) ;
         deallocate(oldCovBinPtr) ;
       end if ;
     end procedure SetBinSize ;
-
-    ------------------------------------------------------------
-    -- pt local
-    procedure CheckBinValLength(ID : CoverageIDType; CurBinValLength : integer ; Caller : string ) is
-    begin
-      if CovStructPtr(ID.ID).NumBins = 0 then
-        CovStructPtr(ID.ID).BinValLength := CurBinValLength ; -- number of points in cross
-      else
-        AlertIfNotEqual(CovStructPtr(ID.ID).AlertLogID, CovStructPtr(ID.ID).BinValLength, CurBinValLength, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" &
-        " Cross coverage bins of different dimensions prohibited", FAILURE) ;
-      end if;
-    end procedure CheckBinValLength ;
 
     ------------------------------------------------------------
     --  pt local
@@ -2681,11 +2786,11 @@ package body CoveragePkg is
     begin
       NewNumBins := CovStructPtr(ID.ID).NumBins + ReqNumBins ;
       if CovStructPtr(ID.ID).CovBinPtr = NULL then
-        CovStructPtr(ID.ID).CovBinPtr := new CovBinTempType(1 to NormalizeNumBins(ID, NewNumBins)) ;
+        CovStructPtr(ID.ID).CovBinPtr := new CovBinInternalType(1 to NormalizeNumBins(ID, NewNumBins)) ;
       elsif NewNumBins > CovStructPtr(ID.ID).CovBinPtr'length then
         -- make message bigger
         oldCovBinPtr := CovStructPtr(ID.ID).CovBinPtr ;
-        CovStructPtr(ID.ID).CovBinPtr := new CovBinTempType(1 to NormalizeNumBins(ID, NewNumBins)) ;
+        CovStructPtr(ID.ID).CovBinPtr := new CovBinInternalType(1 to NormalizeNumBins(ID, NewNumBins)) ;
         CovStructPtr(ID.ID).CovBinPtr.all(1 to CovStructPtr(ID.ID).NumBins) := oldCovBinPtr.all(1 to CovStructPtr(ID.ID).NumBins) ;
         deallocate(oldCovBinPtr) ;
       end if ;
@@ -4671,7 +4776,7 @@ package body CoveragePkg is
       end if ;
       file_close(CovDbFile) ;
     end procedure WriteCovDb ;
-
+    
 --     ------------------------------------------------------------
 --     procedure WriteCovDb (ID : CoverageIDType) is
 --     ------------------------------------------------------------
@@ -4682,6 +4787,158 @@ package body CoveragePkg is
 --         report "CoveragePkg: WriteCovDb file not specified" severity failure ;
 --       end if ;
 --     end procedure WriteCovDb ;
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteCovSettingsYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
+    ------------------------------------------------------------
+    begin
+      -- write bins to YAML file
+      write(buf, Prefix & "Settings: " & LF) ; 
+      write(buf, Prefix & "  Goal: "             & to_string(CovStructPtr(ID.ID).CovTarget, 1)       & LF) ; 
+      write(buf, Prefix & "  WeightMode: "       & to_string(CovStructPtr(ID.ID).WeightMode)         & LF) ; 
+      write(buf, Prefix & "  Seeds: "            & to_string(CovStructPtr(ID.ID).RV)                 & LF) ; 
+      write(buf, Prefix & "  CountMode: "        & to_string(CovStructPtr(ID.ID).CountMode)          & LF) ; 
+      write(buf, Prefix & "  IllegalMode: "      & to_string(CovStructPtr(ID.ID).IllegalMode)        & LF) ; 
+      write(buf, Prefix & "  Threashold: "       & to_string(CovStructPtr(ID.ID).CovThreshold, 1)    & LF) ; 
+      write(buf, Prefix & "  ThresholdEnable: "  & to_string(CovStructPtr(ID.ID).ThresholdingEnable) & LF) ; 
+    end procedure WriteCovSettingsYaml ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteCovFieldNameYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
+    ------------------------------------------------------------
+      variable Dimensions : integer ;
+      variable FieldWidth : integer ; 
+      variable FieldName  : FieldNameArrayPtrType ;
+    begin
+      FieldName  := CovStructPtr(ID.ID).FieldName ; 
+      Dimensions := CovStructPtr(ID.ID).BinValLength ;
+      if FieldName = NULL then 
+        FieldWidth := 0 ; 
+      else 
+        FieldWidth := FieldName'length; 
+      end if; 
+      
+      write(buf, Prefix & "  FieldNames: {" ) ; 
+      for i in 1 to Dimensions loop 
+        if i > 1 then 
+          write(buf, ", ") ; 
+        end if ; 
+        if i > FieldWidth then 
+          write(buf, "Bin " & to_string(i)) ; 
+        else 
+          write(buf, FieldName(i).all) ; 
+        end if ; 
+      end loop ; 
+      write(buf, "}" & LF) ; 
+    end procedure WriteCovFieldNameYaml ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteCovBinInfoYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
+    ------------------------------------------------------------
+    begin
+      -- write bins to YAML file
+      write(buf, Prefix & "BinInfo: " & LF) ; 
+      write(buf, Prefix & "  Dimensions: " & to_string(CovStructPtr(ID.ID).BinValLength) & LF) ; 
+      WriteCovFieldNameYaml(ID, buf, Prefix & "  ") ; 
+      write(buf, Prefix & "  NumBins: " & to_string(CovStructPtr(ID.ID).NumBins) & LF) ; 
+    end procedure WriteCovBinInfoYaml ;
+    
+    ------------------------------------------------------------
+    procedure WriteBinValYaml (
+    -- package local for now
+    ------------------------------------------------------------
+      variable buf    : inout line ;
+      constant BinVal : in    RangeArrayType ;
+      constant Prefix : in    string
+    ) is
+    begin
+      for i in BinVal'range loop
+        write(buf, Prefix & 
+            "- {From: " & to_string(BinVal(i).min) & 
+            ", To: "    & to_string(BinVal(i).max) & "}" & LF) ; 
+      end loop ;
+    end procedure WriteBinValYaml ;
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteCovBinsYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
+    ------------------------------------------------------------
+      variable Action : integer ; 
+      variable CovBin : CovBinInternalBaseType ;
+    begin
+      -- write bins to YAML file
+      write(buf, Prefix & "Bins: " & LF) ; 
+      
+      writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
+        CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
+        write(buf, Prefix & "  - Name: " & IfElse(CovBin.Name'length > 0, CovBin.Name.all, "-") & LF) ;
+        write(buf, Prefix & "    Type: " & ActionToName(CovBin.Action) & LF ) ;
+        write(buf, Prefix & "    Range: " & LF) ;
+        WriteBinValYaml(buf, CovBin.BinVal.all, Prefix & "      ") ; 
+        write(buf, Prefix & "    Count: "      & to_string(CovBin.Count) & LF) ;
+        write(buf, Prefix & "    AtLeast: "    & to_string(CovBin.AtLeast) & LF) ;
+        write(buf, Prefix & "    PercentCov: " & to_string(CovBin.PercentCov, 4) & LF) ;
+      end loop writeloop ; 
+    end procedure WriteCovBinsYaml ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteCovYaml (ID : CoverageIDType; file CovYamlFile : text ) is
+    ------------------------------------------------------------
+      variable buf       : line ;
+      constant NAME_PREFIX : string := "      " ; 
+    begin
+      -- If no bins, FAIL and return (if resumed)
+      if CovStructPtr(ID.ID).NumBins < 1 then
+        Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
+                       "CoveragePkg.WriteCovDb: no bins defined ", FAILURE) ;
+        return ; 
+      end if ; 
+      
+      write(buf, NAME_PREFIX & "- Name: "     & GetName(ID)  & LF) ; 
+      write(buf, NAME_PREFIX & "  Coverage: " & to_string(GetCov(ID), 2) & LF) ; 
+      WriteCovSettingsYaml(ID, buf, NAME_PREFIX &  "  ") ; 
+      WriteCovBinInfoYaml (ID, buf, NAME_PREFIX &  "  ") ; 
+      WriteCovBinsYaml    (ID, buf, NAME_PREFIX &  "  ") ;
+      writeline(CovYamlFile, buf) ;
+    end procedure WriteCovYaml ;
+
+    ------------------------------------------------------------
+    procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
+    ------------------------------------------------------------
+      file CovYamlFile : text open OpenKind is FileName ;
+    begin
+      WriteCovYaml(ID, CovYamlFile) ; 
+      file_close(CovYamlFile) ;
+    end procedure WriteCovYaml ;
+
+    ------------------------------------------------------------
+    procedure WriteCovYaml (TestName : string; OpenKind : File_Open_Kind := WRITE_MODE) is
+    ------------------------------------------------------------
+      file CovYamlFile : text open OpenKind is "./results/" & TestName & "_cov.yml" ;
+      variable buf : line ;
+    begin
+      write(buf, "Version: 1.0" & LF) ; 
+      write(buf, "Tests:" & LF) ; 
+      write(buf, "  - Name: " & TestName & LF) ; 
+      write(buf, "    Coverage: " & "GetCov to be written" & LF) ; 
+      write(buf, "    Models: ") ; 
+      writeline(CovYamlFile, buf) ; 
+      for i in 1 to NumItems loop
+        WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile) ; 
+      end loop ; 
+      file_close(CovYamlFile) ;
+    end procedure WriteCovYaml ;
+    
+    ------------------------------------------------------------
+    impure function GotCoverage return boolean is
+    ------------------------------------------------------------
+    begin
+      return NumItems > 0 ; 
+    end function GotCoverage ;
 
     ------------------------------------------------------------
     impure function GetErrorCount (ID : CoverageIDType) return integer is
@@ -6594,6 +6851,24 @@ package body CoveragePkg is
     return CoverageStore.GetNamePlus (ID, prefix, suffix) ;
   end function GetNamePlus ;
 
+  procedure SetFieldName (
+    ID         : CoverageIDType ;
+    Name1      : String ; 
+            Name2,  Name3,  Name4,  Name5, 
+    Name6,  Name7,  Name8,  Name9,  Name10, 
+    Name11, Name12, Name13, Name14, Name15, 
+    Name16, Name17, Name18, Name19, Name20 : string := ""
+  ) is
+  begin
+    CoverageStore.SetFieldName (
+      ID,
+      Name1,  Name2,  Name3,  Name4,  Name5, 
+      Name6,  Name7,  Name8,  Name9,  Name10, 
+      Name11, Name12, Name13, Name14, Name15, 
+      Name16, Name17, Name18, Name19, Name20
+    ) ;
+  end procedure SetFieldName ;
+
 
   ------------------------------------------------------------
   procedure SetMessage (ID : CoverageIDType; Message : String) is
@@ -7437,6 +7712,28 @@ package body CoveragePkg is
   end procedure WriteCovDb ;
 
   --     procedure WriteCovDb (ID : CoverageIDType) is
+  
+  ------------------------------------------------------------
+  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
+  ------------------------------------------------------------
+    file CovYamlFile : text open OpenKind is FileName ;
+  begin
+    CoverageStore.WriteCovYaml (ID, FileName, OpenKind) ;
+  end procedure WriteCovYaml ;
+
+  ------------------------------------------------------------
+  procedure WriteCovYaml (TestName : string; OpenKind : File_Open_Kind := WRITE_MODE) is
+  ------------------------------------------------------------
+  begin
+    CoverageStore.WriteCovYaml(TestName, OpenKind) ;
+  end procedure WriteCovYaml ;
+  
+  ------------------------------------------------------------
+  impure function GotCoverage return boolean is
+  ------------------------------------------------------------
+  begin
+    return CoverageStore.GotCoverage ; 
+  end function GotCoverage ;
 
 
   ------------------------------------------------------------
