@@ -114,7 +114,7 @@ package RandomBasePkg is
   
   -----------------------------------------------------------------
   --- RandomSeedType IO
-  function  to_string(A : RandomSeedType) return string ;
+  function  to_string(A : RandomSeedType; Separator : string := " ") return string ;
   procedure write(variable L: inout line ; A : RandomSeedType ) ;
   procedure read (variable L: inout line ; A : out RandomSeedType ; good : out boolean ) ;
   procedure read (variable L: inout line ; A : out RandomSeedType ) ;
@@ -321,10 +321,10 @@ package body RandomBasePkg is
   --  RandomSeedType IO
   -- 
   -----------------------------------------------------------------
-  function to_string(A : RandomSeedType) return string is
+  function to_string(A : RandomSeedType; Separator : string := " ") return string is
   -----------------------------------------------------------------
   begin
-    return to_string(A(A'left)) & " " & to_string(A(A'right)) ;
+    return to_string(A(A'left)) & Separator & to_string(A(A'right)) ;
   end function to_string ;
 
   -----------------------------------------------------------------

@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    10/2021   2021.10    Added WriteCovYaml to write out coverage as a YAML file
 --    08/2021   2021.08    Removed SetAlertLogID from singleton public interface - set instead by NewID
 --                         Moved SetName, SetMessage to deprecated 
 --                         Moved AddBins, AddCross, GenBin, and GenCross with weight parameter to deprecated 
@@ -4800,7 +4801,7 @@ package body CoveragePkg is
       write(buf, Prefix & "Settings: " & LF) ; 
       write(buf, Prefix & "  Goal: "             & to_string(CovStructPtr(ID.ID).CovTarget, 1)       & LF) ; 
       write(buf, Prefix & "  WeightMode: "       & to_string(CovStructPtr(ID.ID).WeightMode)         & LF) ; 
-      write(buf, Prefix & "  Seeds: "            & to_string(CovStructPtr(ID.ID).RV)                 & LF) ; 
+      write(buf, Prefix & "  Seeds: ["           & to_string(CovStructPtr(ID.ID).RV, ", ") & "]"     & LF) ; 
       write(buf, Prefix & "  CountMode: "        & to_string(CovStructPtr(ID.ID).CountMode)          & LF) ; 
       write(buf, Prefix & "  IllegalMode: "      & to_string(CovStructPtr(ID.ID).IllegalMode)        & LF) ; 
       write(buf, Prefix & "  Threashold: "       & to_string(CovStructPtr(ID.ID).CovThreshold, 1)    & LF) ; 
@@ -4856,8 +4857,8 @@ package body CoveragePkg is
     begin
       for i in BinVal'range loop
         write(buf, Prefix & 
-            "- {From: " & to_string(BinVal(i).min) & 
-            ", To: "    & to_string(BinVal(i).max) & "}" & LF) ; 
+            "- {Min: " & to_string(BinVal(i).min) & 
+            ", Max: "  & to_string(BinVal(i).max) & "}" & LF) ; 
       end loop ;
     end procedure WriteBinValYaml ;
 
@@ -4873,7 +4874,7 @@ package body CoveragePkg is
       
       writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
         CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
-        write(buf, Prefix & "  - Name: " & IfElse(CovBin.Name'length > 0, CovBin.Name.all, "-") & LF) ;
+        write(buf, Prefix & "  - Name: " & IfElse(CovBin.Name'length > 0, CovBin.Name.all, "~") & LF) ;
         write(buf, Prefix & "    Type: " & ActionToName(CovBin.Action) & LF ) ;
         write(buf, Prefix & "    Range: " & LF) ;
         WriteBinValYaml(buf, CovBin.BinVal.all, Prefix & "      ") ; 
