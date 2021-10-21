@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2021.10  | October 2021    |  Added ReportPkg and reporting updates.
 | 2021.09  | September 2021  |  Minor updates to support Synopsys and Cadence
 | 2021.08  | August 2021     |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
 | 2021.07  | July 2021       |  Updated Data Structure of CoveragePkg
