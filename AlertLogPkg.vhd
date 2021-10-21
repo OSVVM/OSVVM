@@ -26,6 +26,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    10/2021   2021.10    Moved EndOfTestSummary to ReportPkg 
 --    09/2021   2021.09    Added EndOfTestSummary and CreateYamlReport - Experimental Release 
 --    07/2021   2021.07    When printing time value from GetOsvvmDefaultTimeUnits is used.
 --    06/2021   2021.06    FindAlertLogID updated to allow an ID name to match the name set by SetAlertLogName (ALERTLOG_BASE_ID) 
@@ -306,11 +307,12 @@ package AlertLogPkg is
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
     ExternalErrors : AlertCountType  := (others => 0) 
   ) ;
-  procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;
-  procedure EndOfTestSummary (
-    ReportAll      : boolean        := FALSE ;
-    ExternalErrors : AlertCountType := (0,0,0) 
-  ) ;
+  procedure WriteAlertSummaryYaml (ExternalErrors : AlertCountType := (0,0,0)) ;
+  alias CreateYamlReport is WriteAlertSummaryYaml [AlertCountType] ;  
+--  procedure EndOfTestSummary (
+--    ReportAll      : boolean        := FALSE ;
+--    ExternalErrors : AlertCountType := (0,0,0) 
+--  ) ;
   procedure WriteTestSummary   ( 
     FileName       : string ; 
     OpenKind       : File_Open_Kind := APPEND_MODE ; 
@@ -4559,31 +4561,27 @@ package body AlertLogPkg is
   end procedure ReportNonZeroAlerts ;
 
   ------------------------------------------------------------
-  procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) is
+  procedure WriteAlertSummaryYaml (ExternalErrors : AlertCountType := (0,0,0)) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    --  WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      Results: {", Suffix => "}", ExternalErrors => ExternalErrors) ; 
     WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
---    if work.CoveragePkg.GotCoverage then 
---      work.CoveragePkg.WriteCovYaml("Osvvm") ; 
---    end if; 
     -- synthesis translate_on
-  end procedure CreateYamlReport ;
+  end procedure WriteAlertSummaryYaml ;
 
-  ------------------------------------------------------------
-  procedure EndOfTestSummary (
-  ------------------------------------------------------------
-    ReportAll      : boolean        := FALSE ;
-    ExternalErrors : AlertCountType := (0,0,0) 
-  ) is
-  begin
-    -- synthesis translate_off
-    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
-    CreateYamlReport(ExternalErrors => ExternalErrors) ; 
-    std.env.stop(SumAlertCount(GetAlertCount + ExternalErrors)) ;
-    -- synthesis translate_on
-  end procedure EndOfTestSummary ;
+--  ------------------------------------------------------------
+--  procedure EndOfTestSummary (
+--  ------------------------------------------------------------
+--    ReportAll      : boolean        := FALSE ;
+--    ExternalErrors : AlertCountType := (0,0,0) 
+--  ) is
+--  begin
+--    -- synthesis translate_off
+--    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
+--    WriteAlertSummaryYaml(ExternalErrors => ExternalErrors) ; 
+--    std.env.stop(SumAlertCount(GetAlertCount + ExternalErrors)) ;
+--    -- synthesis translate_on
+--  end procedure EndOfTestSummary ;
 
   ------------------------------------------------------------
   procedure WriteTestSummary (
