@@ -17,6 +17,7 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#    10/2021   2021.10    Added ReportPkg
 #     6/2021   2021.06    Updated for release
 #     1/2020   2020.01    Updated Licenses to Apache
 #    11/2016   2016.11    Compile Script for OSVVM
@@ -78,5 +79,7 @@ if {$::osvvm::ToolVendor ne "Cadence"}  {
 }
 analyze ResizePkg.vhd
 analyze TbUtilPkg.vhd
+
+analyze ReportPkg.vhd
 
 analyze OsvvmContext.vhd 

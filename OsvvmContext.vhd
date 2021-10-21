@@ -16,6 +16,7 @@
 --
 --  Revision History:      
 --    Date      Version    Description
+--    10/2021   2021.10    Added ReportPkg
 --    06/2021   2021.06    Updated for release
 --    01/2020   2020.01    Updated Licenses to Apache
 --    11/2016   2016.11    Added TbUtilPkg and ResolutionPkg
@@ -57,6 +58,7 @@ context OsvvmContext is
   use OSVVM.ResolutionPkg.all ;
   use OSVVM.ResizePkg.all ;
   use OSVVM.TbUtilPkg.all ;
+  use OSVVM.ReportPkg.all ;
 
 end context OsvvmContext ; 
 
