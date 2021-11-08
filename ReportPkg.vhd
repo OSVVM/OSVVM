@@ -77,8 +77,10 @@ package body ReportPkg is
   begin
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
     WriteAlertSummaryYaml(ExternalErrors => ExternalErrors) ; 
-    
---    WriteAlertDetailedYaml(ExternalErrors => ExternalErrors) ; 
+    WriteAlertYaml (
+      FileName        => "./reports/" & GetAlertLogName & "_alerts.yml", 
+      ExternalErrors  => ExternalErrors
+    ) ; 
         
     if GotCoverage then 
       WriteCovYaml ;
