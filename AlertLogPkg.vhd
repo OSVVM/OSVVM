@@ -307,6 +307,14 @@ package AlertLogPkg is
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ; 
     ExternalErrors : AlertCountType  := (others => 0) 
   ) ;
+  procedure WriteAlertYaml (
+    FileName       : string ;
+    ExternalErrors : AlertCountType := (0,0,0) ;
+    Prefix         : string := "" ;
+    PrintSettings  : boolean := TRUE ;
+    PrintChildren  : boolean := TRUE ;
+    OpenKind       : File_Open_Kind := WRITE_MODE
+  ) ;
   procedure WriteAlertSummaryYaml (ExternalErrors : AlertCountType := (0,0,0)) ;
   alias CreateYamlReport is WriteAlertSummaryYaml [AlertCountType] ;  
 --  procedure EndOfTestSummary (
@@ -601,6 +609,14 @@ package body AlertLogPkg is
       ReportAll      : boolean := FALSE ;
       ReportWhenZero : boolean := TRUE
     ) ;
+    procedure WriteAlertYaml (
+      FileName       : string ;
+      ExternalErrors : AlertCountType := (0,0,0) ;
+      Prefix         : string := "" ;
+      PrintSettings  : boolean := TRUE ;
+      PrintChildren  : boolean := TRUE ;
+      OpenKind       : File_Open_Kind := WRITE_MODE
+    ) ;
     procedure WriteTestSummary ( 
       FileName       : string ;
       OpenKind       : File_Open_Kind ;
@@ -784,8 +800,8 @@ package body AlertLogPkg is
       ChildIDLast         : AlertLogIDType ;
       AlertCount          : AlertCountType ;
       DisabledAlertCount  : AlertCountType ;
-      AffirmCount         : Integer ;
       PassedCount         : Integer ;
+      AffirmCount         : Integer ;
       PassedGoal          : Integer ;
       PassedGoalSet       : Boolean ;
       AlertStopCount      : AlertCountType ;
@@ -1138,7 +1154,10 @@ package body AlertLogPkg is
     end function GetDisabledAlertCount ;
 
     ------------------------------------------------------------
-    -- Local
+    -- Local  GetRequirementsCount
+    --    Each bin contains a separate requirement 
+    --    RequirementsGoal   = # of bins with PassedGoal > 0
+    --    RequirementsPassed = # bins with PassedGoal > 0 and PassedCount > PassedGoal 
     procedure GetRequirementsCount(
       AlertLogID              : AlertLogIDType;
       RequirementsPassed      : out integer ;
@@ -1167,6 +1186,7 @@ package body AlertLogPkg is
     end procedure GetRequirementsCount ;
 
     ------------------------------------------------------------
+-- Only used at top level and superceded by variables PassedCountVar AffirmCheckCountVar
     -- Local
     procedure GetPassedAffirmCount(
       AlertLogID       : AlertLogIDType;
@@ -1190,6 +1210,73 @@ package body AlertLogPkg is
     end procedure GetPassedAffirmCount ;
 
     ------------------------------------------------------------
+    -- Local
+    procedure CalcTopTotalErrors (
+    ------------------------------------------------------------
+      constant ExternalErrors           : in  AlertCountType ;
+      variable TotalErrors              : out integer ;
+      variable TotalAlertCount          : out AlertCountType ; 
+      variable TotalRequirementsPassed  : out integer ; 
+      variable TotalRequirementsCount   : out integer
+    ) is 
+      variable DisabledAlertCount : AlertCountType ;
+      variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
+      variable TotalRequirementErrors : integer ;
+    begin
+      TotalAlertCount        := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount + ExternalErrors ;
+      TotalAlertErrors       := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
+      TotalErrors            := TotalAlertErrors ;
+
+      DisabledAlertCount        := GetDisabledAlertCount(ALERTLOG_BASE_ID) ;
+      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
+      if FailOnDisabledErrorsVar then
+        TotalAlertCount := TotalAlertCount + DisabledAlertCount ; 
+        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
+      end if ;
+
+      -- Perspective, 1 requirement per bin
+      GetRequirementsCount(ALERTLOG_BASE_ID, TotalRequirementsPassed, TotalRequirementsCount) ;
+      TotalRequirementErrors := TotalRequirementsCount - TotalRequirementsPassed ;
+      if FailOnRequirementErrorsVar then
+        TotalErrors := TotalErrors + TotalRequirementErrors ;
+      end if ;
+      
+      -- Set AffirmCount for top level
+      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
+      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
+    end procedure CalcTopTotalErrors ;
+
+    ------------------------------------------------------------
+    -- Local
+    impure function CalcTotalErrors (AlertLogID : AlertLogIDType) return integer is 
+    ------------------------------------------------------------
+      variable TotalErrors : integer ;
+      variable TotalAlertCount, DisabledAlertCount : AlertCountType ;
+      variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
+      variable TotalRequirementErrors : integer ;
+      variable TotalRequirementsPassed, TotalRequirementsCount : integer ;
+    begin
+      TotalAlertCount        := AlertLogPtr(AlertLogID).AlertCount ;
+      TotalAlertErrors       := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
+      TotalErrors            := TotalAlertErrors ;
+
+      DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
+      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
+      if FailOnDisabledErrorsVar then
+        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
+      end if ;
+
+      -- Perspective, 1 requirement per bin
+      GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsCount) ;
+      TotalRequirementErrors := TotalRequirementsCount - TotalRequirementsPassed ;
+      if FailOnRequirementErrorsVar then
+        TotalErrors := TotalErrors + TotalRequirementErrors ;
+      end if ;
+      
+      return TotalErrors ;
+    end function CalcTotalErrors ;
+
+    ------------------------------------------------------------
     -- PT Local
     procedure PrintTopAlerts (
     ------------------------------------------------------------
@@ -1210,6 +1297,9 @@ package body AlertLogPkg is
       variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       variable PassedCount, AffirmCheckCount : integer ;
     begin
+--!! 
+--!! Update to use CalcTopTotalErrors
+--!! 
       AlertCountVar     := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
       TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCountVar)) ;
 
@@ -1343,7 +1433,7 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ;
-        if not AlertLogPtr(AlertLogID).DoNotReport then
+        if not AlertLogPtr(CurID).DoNotReport then
           PrintOneChild(
             AlertLogID         => CurID,
             Prefix             => Prefix,
@@ -1494,6 +1584,183 @@ package body AlertLogPkg is
         writeLine(buf) ;
       end if ;
     end procedure ReportAlerts ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteOneAlertYaml (
+    ------------------------------------------------------------
+      file TestFile : text ;
+      AlertLogID           : AlertLogIDType ; 
+      TotalErrors          : integer ;
+      RequirementsPassed   : integer ; 
+      RequirementsGoal     : integer ;
+      FirstPrefix          : string := "" ;
+      Prefix               : string := ""
+    ) is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+    begin
+      Write(buf, 
+        FirstPrefix & "Name: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  & 
+        Prefix & "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED")        & LF  &
+        Prefix & "Results: {" & 
+          "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER & 
+          "AlertCount: {" & 
+            "Failure: "            & to_string( AlertLogPtr(AlertLogID).AlertCount(FAILURE) )  & DELIMITER & 
+            "Error: "              & to_string( AlertLogPtr(AlertLogID).AlertCount(ERROR) )    & DELIMITER & 
+            "Warning: "            & to_string( AlertLogPtr(AlertLogID).AlertCount(WARNING) )  & 
+          "}" & DELIMITER &
+          "PassedCount: "        & to_string( AlertLogPtr(AlertLogID).PassedCount )          & DELIMITER &
+          "AffirmCount: "        & to_string( AlertLogPtr(AlertLogID).AffirmCount )          & DELIMITER & 
+          "RequirementsPassed: " & to_string( RequirementsPassed )   & DELIMITER & 
+          "RequirementsGoal: "   & to_string( RequirementsGoal )     & DELIMITER & 
+          "DisabledAlertCount: {" & 
+            "Failure: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(FAILURE) )  & DELIMITER & 
+            "Error: "              & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(ERROR) )    & DELIMITER & 
+            "Warning: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(WARNING) )  &
+          "}" & 
+        "}"
+      ) ;        
+      WriteLine(TestFile, buf) ;
+    end procedure WriteOneAlertYaml ;
+
+    ------------------------------------------------------------
+    -- PT Local
+    procedure IterateAndWriteChildrenYaml(
+    ------------------------------------------------------------
+      file TestFile     : text ;
+      AlertLogID        : AlertLogIDType ;
+      Prefix            : string 
+    ) is
+      variable buf : line ;
+      variable CurID : AlertLogIDType ;
+    begin
+      CurID := AlertLogPtr(AlertLogID).ChildID ;
+      if CurID >= ALERTLOG_BASE_ID then 
+        -- Write "Children:" at current level
+        Write(buf, Prefix & "Children: " ) ;  
+        WriteLine(TestFile, buf) ;
+        while CurID > ALERTLOG_BASE_ID loop
+          -- Don't print requirements if there no requirements
+          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+            CurID := AlertLogPtr(CurID).SiblingID ;
+            next ;
+          end if ;
+          if not AlertLogPtr(CurID).DoNotReport then
+            WriteOneAlertYaml(
+              TestFile             => TestFile,
+              AlertLogID           => CurID,
+              TotalErrors          => CalcTotalErrors(CurID),
+              RequirementsPassed   => AlertLogPtr(CurID).PassedCount,
+              RequirementsGoal     => AlertLogPtr(CurID).PassedGoal,
+              FirstPrefix          => Prefix & "  - ",
+              Prefix               => Prefix & "    "
+            ) ;
+            IterateAndWriteChildrenYaml(
+              TestFile             => TestFile,
+              AlertLogID           => CurID,
+              Prefix               => Prefix & "    "
+            ) ;
+          end if ; 
+          CurID := AlertLogPtr(CurID).SiblingID ;
+        end loop ;
+      else
+        -- No Children, Print Empty List
+        Write(buf, Prefix & "Children: {}" ) ;  
+        WriteLine(TestFile, buf) ;
+      end if ;
+    end procedure IterateAndWriteChildrenYaml ;  
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteSettingsYaml (
+    ------------------------------------------------------------
+      file TestFile  : text ;
+      ExternalErrors : AlertCountType ;
+      Prefix         : string := ""
+    ) is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+    begin
+      Write(buf, 
+        Prefix & "Settings: {" & 
+          "ExternalErrors: {" & 
+            "Failure: "                & '"' & to_string( ExternalErrors(FAILURE) )  & '"'  & DELIMITER & 
+            "Error: "                  & '"' & to_string( ExternalErrors(ERROR) )    & '"'  & DELIMITER & 
+            "Warning: "                & '"' & to_string( ExternalErrors(WARNING) )  & '"'  & 
+          "}" & DELIMITER &
+          "FailOnDisabledErrors: "     & '"' & to_string( FailOnDisabledErrorsVar )     & '"' & DELIMITER &
+          "FailOnRequirementErrors: "  & '"' & to_string( FailOnRequirementErrorsVar )  & '"' & DELIMITER & 
+          "FailOnWarning: "            & '"' & to_string( FailOnWarningVar )   & '"' &
+        "}"
+      ) ;        
+      WriteLine(TestFile, buf) ;
+    end procedure WriteSettingsYaml ;  
+
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteAlertYaml (
+    ------------------------------------------------------------
+      file TestFile  : text ;
+      ExternalErrors : AlertCountType ;
+      Prefix         : string ;
+      PrintSettings  : boolean ;
+      PrintChildren  : boolean 
+    ) is
+      -- Format:  Action Count min1 max1 min2 max2
+      variable TotalErrors : integer ;
+      variable TotalAlertCount : AlertCountType ;
+      variable TotalRequirementsPassed, TotalRequirementsCount : integer ;
+    begin
+      CalcTopTotalErrors (
+        ExternalErrors           => ExternalErrors         ,
+        TotalErrors              => TotalErrors            ,
+        TotalAlertCount          => TotalAlertCount        ,
+        TotalRequirementsPassed  => TotalRequirementsPassed,
+        TotalRequirementsCount   => TotalRequirementsCount
+      ) ; 
+      
+      WriteOneAlertYaml (
+        TestFile                 => TestFile,
+        AlertLogID               => ALERTLOG_BASE_ID,
+        TotalErrors              => TotalErrors,
+        RequirementsPassed       => TotalRequirementsPassed,
+        RequirementsGoal         => TotalRequirementsCount,
+        FirstPrefix              => Prefix,
+        Prefix                   => Prefix
+      ) ;   
+      if PrintSettings then 
+        WriteSettingsYaml(
+          TestFile               => TestFile,
+          ExternalErrors         => ExternalErrors,
+          Prefix                 => Prefix
+        ) ; 
+      end if ; 
+      if PrintChildren then 
+        IterateAndWriteChildrenYaml(
+          TestFile             => TestFile,
+          AlertLogID           => ALERTLOG_BASE_ID,
+          Prefix               => Prefix
+        ) ;
+      end if ; 
+    end procedure WriteAlertYaml ;
+    
+    ------------------------------------------------------------
+    procedure WriteAlertYaml (
+    ------------------------------------------------------------
+      FileName       : string ;
+      ExternalErrors : AlertCountType := (0,0,0) ;
+      Prefix         : string := "" ;
+      PrintSettings  : boolean := TRUE ;
+      PrintChildren  : boolean := TRUE ;
+      OpenKind       : File_Open_Kind := WRITE_MODE
+    ) is
+      file TestFile : text open OpenKind is FileName ;
+    begin
+      WriteAlertYaml(TestFile, ExternalErrors, Prefix, PrintSettings, PrintChildren) ; 
+    end procedure WriteAlertYaml ;
+    
 
 --     ------------------------------------------------------------
 --     procedure EndOfTestSummary (
@@ -1617,6 +1884,9 @@ package body AlertLogPkg is
       variable PassedCount, AffirmCount : integer ;
       constant DELIMITER : string := ", " ;
     begin
+--!! 
+--!! Update to use CalcTopTotalErrors
+--!!    
       TotalAlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
       TotalAlertErrors     := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
 
@@ -4561,11 +4831,28 @@ package body AlertLogPkg is
   end procedure ReportNonZeroAlerts ;
 
   ------------------------------------------------------------
+  procedure WriteAlertYaml (
+  ------------------------------------------------------------
+    FileName       : string ;
+    ExternalErrors : AlertCountType := (0,0,0) ;
+    Prefix         : string := "" ;
+    PrintSettings  : boolean := TRUE ;
+    PrintChildren  : boolean := TRUE ;
+    OpenKind       : File_Open_Kind := WRITE_MODE
+  ) is
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.WriteAlertYaml(FileName, ExternalErrors, Prefix, PrintSettings, PrintChildren, OpenKind) ;
+    -- synthesis translate_on
+  end procedure WriteAlertYaml ;
+
+  ------------------------------------------------------------
   procedure WriteAlertSummaryYaml (ExternalErrors : AlertCountType := (0,0,0)) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
+    WriteAlertYaml(FileName => "OsvvmRun.yml", ExternalErrors => ExternalErrors, Prefix => "      ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ; 
+    -- WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;
 
