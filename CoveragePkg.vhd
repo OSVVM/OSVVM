@@ -2255,7 +2255,9 @@ package body CoveragePkg is
     begin
       NameID := LocalNameStore.find(NameIn) ; 
       if NameID /= ID_NOT_FOUND.ID then 
-        return CoverageIDType'(ID => NameID) ; 
+        NewCoverageID := (ID => NumItems) ;
+        SetName( NewCoverageID, NameIn) ;
+        return NewCoverageID ; 
       else
         NewNumItems   := NumItems + 1 ;
         GrowNumberItems(CovStructPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
@@ -2545,18 +2547,31 @@ package body CoveragePkg is
       end if; 
     end function NewNamePtr ; 
 
+--    ------------------------------------------------------------
+--    -- pt local
+--    procedure CheckBinValLength(ID : CoverageIDType; CurBinValLength : integer ; Caller : string ) is
+--    ------------------------------------------------------------
+--    begin
+--      if CovStructPtr(ID.ID).NumBins = 0 then
+--        CovStructPtr(ID.ID).BinValLength := CurBinValLength ; -- number of points in cross
+--      else
+--        AlertIfNotEqual(CovStructPtr(ID.ID).AlertLogID, CovStructPtr(ID.ID).BinValLength, CurBinValLength, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" &
+--        " Cross coverage bins of different dimensions prohibited", FAILURE) ;
+--      end if;
+--    end procedure CheckBinValLength ;
+
     ------------------------------------------------------------
     -- pt local
-    procedure CheckBinValLength(ID : CoverageIDType; CurBinValLength : integer ; Caller : string ) is
+    impure function BinValLengthNotEqual(ID : CoverageIDType; CurBinValLength : integer) return boolean is
     ------------------------------------------------------------
     begin
       if CovStructPtr(ID.ID).NumBins = 0 then
-        CovStructPtr(ID.ID).BinValLength := CurBinValLength ; -- number of points in cross
+        CovStructPtr(ID.ID).BinValLength := CurBinValLength ; 
+        return FALSE ;
       else
-        AlertIfNotEqual(CovStructPtr(ID.ID).AlertLogID, CovStructPtr(ID.ID).BinValLength, CurBinValLength, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." & Caller & ":" &
-        " Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return CurBinValLength /= CovStructPtr(ID.ID).BinValLength ;
       end if;
-    end procedure CheckBinValLength ;
+    end function BinValLengthNotEqual ;
 
     ------------------------------------------------------------
     procedure SetFieldName (
@@ -2608,7 +2623,9 @@ package body CoveragePkg is
       end loop ;
       CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray(1 to Dimensions)) ;
       -- Check that Dimensions match bin dimensions    
-      CheckBinValLength(ID, Dimensions, "SetFieldName") ;  
+      if BinValLengthNotEqual(ID, Dimensions) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.SetFieldName: Coverage bins of different dimensions prohibited", FAILURE) ;
+      end if ;
     end procedure SetFieldName ;
 
     ------------------------------------------------------------
@@ -2953,7 +2970,10 @@ package body CoveragePkg is
       variable vCalcAtLeast : integer ;
       variable vCalcWeight  : integer ;
     begin
-      CheckBinValLength(ID, 1, "AddBins") ;
+      if BinValLengthNotEqual(ID, 1) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddBins: Coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
 
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -3033,7 +3053,10 @@ package body CoveragePkg is
       variable vCalcAction, vCalcCount, vCalcAtLeast, vCalcWeight : integer ;
       variable vCalcBinVal   : RangeArrayType(BinIndex'range) ;
     begin
-      CheckBinValLength(ID, BIN_LENS'length, "AddCross") ;
+      if BinValLengthNotEqual(ID, BIN_LENS'length) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
 
       GrowBins(ID, NUM_NEW_BINS) ;
       vCalcCount := 0 ;
@@ -3366,7 +3389,11 @@ package body CoveragePkg is
           end if ;
         end if ;
       end loop BinLoop ;
-      return 100.0 * real(TotalCovCount) / real(TotalCovGoal) ;
+      if TotalCovGoal > 0 then 
+        return 100.0 * real(TotalCovCount) / real(TotalCovGoal) ;
+      else
+        return 0.0 ; 
+      end if ; 
     end function GetCov ;
 
     ------------------------------------------------------------
@@ -4898,9 +4925,9 @@ package body CoveragePkg is
         return ; 
       end if ; 
       
-      write(buf, NAME_PREFIX & "- Name: "     & GetName(ID)  & LF) ; 
+      write(buf, NAME_PREFIX & "- Name: "     & '"' & GetName(ID) & '"' & LF) ; 
       write(buf, NAME_PREFIX & "  TestCases: " & LF) ; 
-      write(buf, NAME_PREFIX & "    - " & TestCaseName & LF) ; 
+      write(buf, NAME_PREFIX & "    - " & '"' & TestCaseName & '"' & LF) ; 
 --!! Add code to list out merged tests      
       write(buf, NAME_PREFIX & "  Coverage: " & to_string(GetCov(ID), 2) & LF) ; 
       WriteCovSettingsYaml(ID, buf, NAME_PREFIX &  "  ") ; 
@@ -4933,7 +4960,9 @@ package body CoveragePkg is
       swrite(buf, "Models: ") ; 
       writeline(CovYamlFile, buf) ; 
       for i in 1 to NumItems loop
-        WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, RESOLVED_TEST_NAME) ; 
+        if CovStructPtr(i).NumBins >= 1 then 
+          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, RESOLVED_TEST_NAME) ; 
+        end if ; 
       end loop ; 
       file_close(CovYamlFile) ;
     end procedure WriteCovYaml ;
@@ -4942,7 +4971,12 @@ package body CoveragePkg is
     impure function GotCoverage return boolean is
     ------------------------------------------------------------
     begin
-      return NumItems > 0 ; 
+      for i in 1 to NumItems loop 
+        if CovStructPtr(i).NumBins >= 1 then 
+          return TRUE ; 
+        end if; 
+      end loop ; 
+      return FALSE ;     
     end function GotCoverage ;
 
     ------------------------------------------------------------
@@ -4970,7 +5004,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix2Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 2, "AddCross") ;
+      if BinValLengthNotEqual(ID, 2) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -4984,7 +5021,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix3Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 3, "AddCross") ;
+      if BinValLengthNotEqual(ID, 3) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -4998,7 +5038,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix4Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 4, "AddCross") ;
+      if BinValLengthNotEqual(ID, 4) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -5012,7 +5055,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix5Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 5, "AddCross") ;
+      if BinValLengthNotEqual(ID, 5) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -5026,7 +5072,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix6Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 6, "AddCross") ;
+      if BinValLengthNotEqual(ID, 6) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -5040,7 +5089,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix7Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 7, "AddCross") ;
+      if BinValLengthNotEqual(ID, 7) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -5054,7 +5106,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix8Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 8, "AddCross") ;
+      if BinValLengthNotEqual(ID, 8) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
@@ -5068,7 +5123,10 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix9Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      CheckBinValLength(ID, 9, "AddCross") ;
+      if BinValLengthNotEqual(ID, 9) then 
+        Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
+        return ; 
+      end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
         InsertBin(ID,
