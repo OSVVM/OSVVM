@@ -46,7 +46,7 @@ analyze NameStorePkg.vhd
 analyze OsvvmGlobalPkg.vhd
 
 # Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
-if {[info exists aldec]} {
+if {$::osvvm::ToolVendor eq "Aldec"}  {
   analyze VendorCovApiPkg_Aldec.vhd
 } else {
   analyze VendorCovApiPkg.vhd
