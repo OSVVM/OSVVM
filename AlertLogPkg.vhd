@@ -1634,6 +1634,7 @@ package body AlertLogPkg is
     ) is
       variable buf : line ;
       variable CurID : AlertLogIDType ;
+      variable RequirementsPassed, RequirementsGoal : integer ; 
     begin
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       if CurID >= ALERTLOG_BASE_ID then 
@@ -1646,13 +1647,20 @@ package body AlertLogPkg is
             CurID := AlertLogPtr(CurID).SiblingID ;
             next ;
           end if ;
+          RequirementsGoal   := AlertLogPtr(CurID).PassedGoal ;
+          if AlertLogPtr(CurID).PassedGoalSet and (RequirementsGoal > 0) then 
+            RequirementsPassed := AlertLogPtr(CurID).PassedCount ;
+          else
+            RequirementsPassed := 0 ;
+            RequirementsGoal   := 0 ;
+          end if ; 
           if not AlertLogPtr(CurID).DoNotReport then
             WriteOneAlertYaml(
               TestFile             => TestFile,
               AlertLogID           => CurID,
               TotalErrors          => CalcTotalErrors(CurID),
-              RequirementsPassed   => AlertLogPtr(CurID).PassedCount,
-              RequirementsGoal     => AlertLogPtr(CurID).PassedGoal,
+              RequirementsPassed   => RequirementsPassed,
+              RequirementsGoal     => RequirementsGoal,
               FirstPrefix          => Prefix & "  - ",
               Prefix               => Prefix & "    "
             ) ;
