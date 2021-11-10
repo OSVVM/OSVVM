@@ -50,15 +50,19 @@ use work.ScoreboardPkg_int.all ;
 package ReportPkg is
 
 
-  impure function EndOfTestSummary (
-    ExternalErrors : AlertCountType := (0,0,0) ;
-    ReportAll      : boolean        := FALSE 
+  impure function EndOfTestReports (
+    ReportAll      : boolean        := FALSE ;
+    ExternalErrors : AlertCountType := (0,0,0) 
   ) return integer ;
 
-  procedure EndOfTestSummary (
+  procedure EndOfTestReports (
+    ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
-    ReportAll      : boolean        := FALSE 
+    Stop           : boolean        := FALSE
   ) ;
+  
+  alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType return integer] ;
+  alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean] ;
 
 end ReportPkg ;
 
@@ -69,10 +73,10 @@ end ReportPkg ;
 package body ReportPkg is
 
   ------------------------------------------------------------
-  impure function EndOfTestSummary (
+  impure function EndOfTestReports (
   ------------------------------------------------------------
-    ExternalErrors : AlertCountType := (0,0,0) ;
-    ReportAll      : boolean        := FALSE 
+    ReportAll      : boolean        := FALSE ;
+    ExternalErrors : AlertCountType := (0,0,0) 
   ) return integer is
   begin
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
@@ -95,18 +99,22 @@ package body ReportPkg is
 --    end if ; 
 
     return SumAlertCount(GetAlertCount + ExternalErrors) ;
-  end function EndOfTestSummary ;
+  end function EndOfTestReports ;
 
   ------------------------------------------------------------
-  procedure EndOfTestSummary (
+  procedure EndOfTestReports (
   ------------------------------------------------------------
+    ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
-    ReportAll      : boolean        := FALSE 
+    Stop           : boolean        := FALSE
   ) is
+    variable ErrorCount : integer ; 
   begin
-    
-    std.env.stop( EndOfTestSummary(ExternalErrors, ReportAll) ) ;
-  end procedure EndOfTestSummary ;
+    ErrorCount := EndOfTestReports(ReportAll, ExternalErrors) ;
+    if Stop then 
+      std.env.stop(ErrorCount) ; 
+    end if ;
+  end procedure EndOfTestReports ;
 
 
 end package body ReportPkg ;
