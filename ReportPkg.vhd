@@ -80,14 +80,20 @@ package body ReportPkg is
   ) return integer is
   begin
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
-    WriteAlertSummaryYaml(ExternalErrors => ExternalErrors) ; 
+    
+    WriteAlertSummaryYaml(
+      FileName        => "OsvvmRun.yml", 
+      ExternalErrors => ExternalErrors
+    ) ; 
     WriteAlertYaml (
       FileName        => "./reports/" & GetAlertLogName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
         
     if GotCoverage then 
-      WriteCovYaml ;
+      WriteCovYaml (
+        FileName     => "./reports/" & GetAlertLogName & "_cov.yml"
+      ) ;
     end if ; 
     
 --    if work.ScoreboardPkg_slv.GotScoreboard then 

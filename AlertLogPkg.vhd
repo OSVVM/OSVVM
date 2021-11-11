@@ -315,8 +315,8 @@ package AlertLogPkg is
     PrintChildren  : boolean := TRUE ;
     OpenKind       : File_Open_Kind := WRITE_MODE
   ) ;
-  procedure WriteAlertSummaryYaml (ExternalErrors : AlertCountType := (0,0,0)) ;
-  alias CreateYamlReport is WriteAlertSummaryYaml [AlertCountType] ;  
+  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) ;
+  procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;  -- Deprecated.  Use WriteAlertSummaryYaml.
 --  procedure EndOfTestSummary (
 --    ReportAll      : boolean        := FALSE ;
 --    ExternalErrors : AlertCountType := (0,0,0) 
@@ -4855,14 +4855,24 @@ package body AlertLogPkg is
   end procedure WriteAlertYaml ;
 
   ------------------------------------------------------------
-  procedure WriteAlertSummaryYaml (ExternalErrors : AlertCountType := (0,0,0)) is
+  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) is
   ------------------------------------------------------------
+    constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "OsvvmRun.yml", FileName) ; 
   begin
     -- synthesis translate_off
-    WriteAlertYaml(FileName => "OsvvmRun.yml", ExternalErrors => ExternalErrors, Prefix => "      ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ; 
+    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "      ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ; 
     -- WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ; 
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;
+
+  ------------------------------------------------------------
+  -- Deprecated.  Use WriteAlertSummaryYaml Instead.
+  procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) is
+  begin
+    -- synthesis translate_off
+    WriteAlertSummaryYaml(ExternalErrors => ExternalErrors) ; 
+    -- synthesis translate_on
+  end procedure CreateYamlReport ;
 
 --  ------------------------------------------------------------
 --  procedure EndOfTestSummary (

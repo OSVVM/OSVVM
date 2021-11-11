@@ -2,7 +2,9 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
-| 2021.10  | October 2021    |  Added ReportPkg and reporting updates.
+| 2021.10  | October 2021    |  Updates to generate HTML and JUnit XML for test suite information
+|          |                 |     Generate YAML and HTML for reporting Alert and Coverag information
+|          |                 |     Added ReportPkg. Uupdated CoveragePkg and AlertLogPkg 
 | 2021.09  | September 2021  |  Minor updates to support Synopsys and Cadence
 | 2021.08  | August 2021     |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
 | 2021.07  | July 2021       |  Updated Data Structure of CoveragePkg
@@ -51,8 +53,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2021.09 September 2021
-
+## Revision 2021.10 October 2021
 
 ### Current Revision and Compile Order
 
@@ -71,24 +72,48 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | **2021.09**  | 
+  | AlertLogPkg.vhd                                    | **2021.10**  | 
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | 2021.08  |
+  | CoveragePkg.vhd                                    | **2021.10**  |
   | MemoryPkg.vhd                                      | 2021.06  |
   | ScoreboardGenericPkg.vhd                           | 2021.08  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ScoreboardPkg_slv_c.vhd                            | **2021.09**  |
-  | ScoreboardPkg_int_c.vhd                            | **2021.09**  |
+  | ScoreboardPkg_slv_c.vhd                            | 2021.09  |
+  | ScoreboardPkg_int_c.vhd                            | 2021.09  |
   | ResizePkg.vhd                                      | 2021.06  |
   | TbUtilPkg.vhd                                      | 2020.01  |
   | OsvvmContext.vhd                                   | 2020.01  |
 
+### ReportPkg.vhd 2021.10 
+Implements EndOfTestReports (was called EndOfTestSummary in 2021.09).
+EndOfTestReports calls 
+   - ReportAlerts from AlertPkg,
+   - WriteAlertSummaryYaml from AlertPkg to generate Build Report <build>.yml,
+   - WriteAlertYaml from AlertPkg to generate ./reports/<test>_alerts.yml
+   - WriteCovYaml from CoveragePkg to generate ./reports/<test>_cov.yml
+See the OSVVM scripts as the above YAML files are all automatically converted to HTML.
+Make sure to name your tests with AlertLogPkg.SetAlertLogName as that is where the 
+above "<test>" comes from.   
 
+### AlertLogPkg.vhd 2021.10 
+Added WriteAlertYaml to create AlertLog reports in Yaml (which the scripts convert to HTML)
+WriteAlertSummaryYaml replaced the experimental CreateYamlReport.
+Both of the above are called by ReportPkg.EndOfTestReports.  See above.
+Deprecated Items:
+  - CreateYamlReport is deprecated.  Please use WriteAlertSummaryYaml.
+  - EndOfTestSummary was moved to ReportPkg and deprecated.   It is replaced by EndOfTestReports.
+    The move was necessary as it calls procedures from AlertLogPkg and CoveragePkg. 
+
+### CoveragePkg.vhd  2021.10 
+Added WriteCovYaml which is called by EndOfTestReports
+
+
+## Revision 2021.09 September 2021
 ### AlertLogPkg.vhd 2021.09 
 Experimental Release of EndOfTestSummary and CreateYamlReport
 

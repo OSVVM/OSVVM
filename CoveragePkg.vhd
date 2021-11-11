@@ -622,7 +622,7 @@ package CoveragePkg is
   --  Operations across all coverage models
   -- /////////////////////////////////////////
   ------------------------------------------------------------
-  procedure WriteCovYaml (TestName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
+  procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
   impure function GotCoverage return boolean ;
   impure function GetCov (PercentCov : real ) return real ;
   impure function GetCov return real ;
@@ -1142,7 +1142,7 @@ package CoveragePkg is
     procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
     --     procedure WriteCovDb (ID : CoverageIDType) ;
 --    procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
-    procedure WriteCovYaml (TestName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
     impure function GotCoverage return boolean ;
 
 
@@ -4897,6 +4897,7 @@ package body CoveragePkg is
     --  pt local
     procedure WriteCovSettingsYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
     ------------------------------------------------------------
+      variable TotalCovCount, TotalCovGoal : integer ; 
     begin
       -- write bins to YAML file
       write(buf, Prefix & "Settings: " & LF) ; 
@@ -4907,6 +4908,10 @@ package body CoveragePkg is
       write(buf, Prefix & "  IllegalMode: "      & to_string(CovStructPtr(ID.ID).IllegalMode)        & LF) ; 
       write(buf, Prefix & "  Threashold: "       & to_string(CovStructPtr(ID.ID).CovThreshold, 1)    & LF) ; 
       write(buf, Prefix & "  ThresholdEnable: "  & to_string(CovStructPtr(ID.ID).ThresholdingEnable) & LF) ; 
+      write(buf, Prefix & "  CovWeight: "        & to_string(CovStructPtr(ID.ID).CovWeight)          & LF) ; 
+      GetTotalCovCounts (ID, TotalCovCount, TotalCovGoal) ;
+      write(buf, Prefix & "  TotalCovCount: "    & to_string(TotalCovCount)                          & LF) ; 
+      write(buf, Prefix & "  TotalCovGoal: "     & to_string(TotalCovGoal)                           & LF) ; 
     end procedure WriteCovSettingsYaml ;
     
     ------------------------------------------------------------
@@ -5020,23 +5025,19 @@ package body CoveragePkg is
 --     end procedure WriteCovYaml ;
 
     ------------------------------------------------------------
-    procedure WriteCovYaml (TestName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
+    procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_TEST_NAME : string := IfElse(TestName = "", GetAlertLogName, TestName) ; 
-      file CovYamlFile : text open OpenKind is "./reports/" & RESOLVED_TEST_NAME & "_cov.yml" ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ; 
+      file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin
       swrite(buf, "Version: 1.0" & LF) ; 
       swrite(buf, "Coverage: " & to_string(Coverage, 2) & LF) ; 
---      swrite(buf, "Tests:" & LF) ; 
---      swrite(buf, "  - Name: " & TestName & LF) ; 
---      swrite(buf, "    Coverage: " & "GetCov to be written" & LF) ; 
---      swrite(buf, "    Models: ") ; 
       swrite(buf, "Models: ") ; 
       writeline(CovYamlFile, buf) ; 
       for i in 1 to NumItems loop
         if CovStructPtr(i).NumBins >= 1 then 
-          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, RESOLVED_TEST_NAME) ; 
+          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ; 
         end if ; 
       end loop ; 
       file_close(CovYamlFile) ;
@@ -7894,10 +7895,10 @@ package body CoveragePkg is
 --  end procedure WriteCovYaml ;
 
   ------------------------------------------------------------
-  procedure WriteCovYaml (TestName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
+  procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
   ------------------------------------------------------------
   begin
-    CoverageStore.WriteCovYaml(TestName, GetCov, OpenKind) ;
+    CoverageStore.WriteCovYaml(FileName, GetCov, OpenKind) ;
   end procedure WriteCovYaml ;
   
   ------------------------------------------------------------
