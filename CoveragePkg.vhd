@@ -986,8 +986,8 @@ package CoveragePkg is
 
     ------------------------------------------------------------
     impure function GetItemCount    (ID : CoverageIDType) return integer ;
-    procedure GetTotalCovCounts     (ID : CoverageIDType; PercentCov : real; TotalCovCount : out integer; TotalCovGoal : out integer ) ;
-    procedure GetTotalCovCounts     (ID : CoverageIDType; TotalCovCount : out integer; TotalCovGoal : out integer ) ;
+    procedure GetTotalCovCountAndGoal     (ID : CoverageIDType; PercentCov : real; TotalCovCount : out integer; TotalCovGoal : out integer ) ;
+    procedure GetTotalCovCountAndGoal     (ID : CoverageIDType; TotalCovCount : out integer; TotalCovGoal : out integer ) ;
     impure function GetCov          (ID : CoverageIDType; PercentCov : real ) return real ;
     impure function GetCov          (ID : CoverageIDType) return real ;
     impure function GetTotalCovCount(ID : CoverageIDType; PercentCov : real ) return integer ;
@@ -3420,7 +3420,7 @@ package body CoveragePkg is
     end function IsCovered ;
 
     ------------------------------------------------------------
-    procedure GetTotalCovCounts (ID : CoverageIDType; PercentCov : real; TotalCovCount : out integer; TotalCovGoal : out integer ) is
+    procedure GetTotalCovCountAndGoal (ID : CoverageIDType; PercentCov : real; TotalCovCount : out integer; TotalCovGoal : out integer ) is
     ------------------------------------------------------------
       variable ScaledCovGoal : integer := 0 ;
     begin
@@ -3438,21 +3438,21 @@ package body CoveragePkg is
           end if ;
         end if ;
       end loop BinLoop ;
-    end procedure GetTotalCovCounts ;
+    end procedure GetTotalCovCountAndGoal ;
 
     ------------------------------------------------------------
-    procedure GetTotalCovCounts (ID : CoverageIDType; TotalCovCount : out integer; TotalCovGoal : out integer ) is
+    procedure GetTotalCovCountAndGoal (ID : CoverageIDType; TotalCovCount : out integer; TotalCovGoal : out integer ) is
     ------------------------------------------------------------
     begin
-      GetTotalCovCounts(ID, CovStructPtr(ID.ID).CovTarget, TotalCovCount, TotalCovGoal) ; 
-    end procedure GetTotalCovCounts ;
+      GetTotalCovCountAndGoal(ID, CovStructPtr(ID.ID).CovTarget, TotalCovCount, TotalCovGoal) ; 
+    end procedure GetTotalCovCountAndGoal ;
 
     ------------------------------------------------------------
     impure function GetCov (ID : CoverageIDType; PercentCov : real ) return real is
     ------------------------------------------------------------
       variable TotalCovCount, TotalCovGoal : integer ;
     begin
-      GetTotalCovCounts(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
+      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
       if TotalCovGoal > 0 then 
         return 100.0 * real(TotalCovCount) / real(TotalCovGoal) ;
       else
@@ -3472,7 +3472,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable TotalCovCount, TotalCovGoal : integer ;
     begin
-      GetTotalCovCounts(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
+      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
       return TotalCovCount ; 
     end function GetTotalCovCount ;
 
@@ -3488,7 +3488,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable TotalCovCount, TotalCovGoal : integer ;
     begin
-      GetTotalCovCounts(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
+      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
       return TotalCovGoal ;
     end function GetTotalCovGoal ;
 
@@ -4909,7 +4909,7 @@ package body CoveragePkg is
       write(buf, Prefix & "  Threashold: "       & to_string(CovStructPtr(ID.ID).CovThreshold, 1)    & LF) ; 
       write(buf, Prefix & "  ThresholdEnable: "  & to_string(CovStructPtr(ID.ID).ThresholdingEnable) & LF) ; 
       write(buf, Prefix & "  CovWeight: "        & to_string(CovStructPtr(ID.ID).CovWeight)          & LF) ; 
-      GetTotalCovCounts (ID, TotalCovCount, TotalCovGoal) ;
+      GetTotalCovCountAndGoal (ID, TotalCovCount, TotalCovGoal) ;
       write(buf, Prefix & "  TotalCovCount: "    & to_string(TotalCovCount)                          & LF) ; 
       write(buf, Prefix & "  TotalCovGoal: "     & to_string(TotalCovGoal)                           & LF) ; 
     end procedure WriteCovSettingsYaml ;
@@ -7918,7 +7918,7 @@ package body CoveragePkg is
   begin
     for i in 1 to CoverageStore.GetNumIDs loop 
       ID := (ID => i) ; 
-      CoverageStore.GetTotalCovCounts(ID, PercentCov, ItemCovCount, ItemCovGoal) ; 
+      CoverageStore.GetTotalCovCountAndGoal(ID, PercentCov, ItemCovCount, ItemCovGoal) ; 
       CovWeight     := GetCovWeight(ID) ;    
       TotalCovCount := TotalCovCount + (ItemCovCount * CovWeight) ;
       TotalCovGoal  := TotalCovGoal  + (ItemCovGoal  * CovWeight) ;
