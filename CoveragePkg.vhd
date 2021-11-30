@@ -4901,6 +4901,7 @@ package body CoveragePkg is
     begin
       -- write bins to YAML file
       write(buf, Prefix & "Settings: " & LF) ; 
+      write(buf, Prefix & "  CovWeight: "        & to_string(CovStructPtr(ID.ID).CovWeight)          & LF) ; 
       write(buf, Prefix & "  Goal: "             & to_string(CovStructPtr(ID.ID).CovTarget, 1)       & LF) ; 
       write(buf, Prefix & "  WeightMode: "       & to_string(CovStructPtr(ID.ID).WeightMode)         & LF) ; 
       write(buf, Prefix & "  Seeds: ["           & to_string(CovStructPtr(ID.ID).RV, ", ") & "]"     & LF) ; 
@@ -4908,7 +4909,6 @@ package body CoveragePkg is
       write(buf, Prefix & "  IllegalMode: "      & to_string(CovStructPtr(ID.ID).IllegalMode)        & LF) ; 
       write(buf, Prefix & "  Threashold: "       & to_string(CovStructPtr(ID.ID).CovThreshold, 1)    & LF) ; 
       write(buf, Prefix & "  ThresholdEnable: "  & to_string(CovStructPtr(ID.ID).ThresholdingEnable) & LF) ; 
-      write(buf, Prefix & "  CovWeight: "        & to_string(CovStructPtr(ID.ID).CovWeight)          & LF) ; 
       GetTotalCovCountAndGoal (ID, TotalCovCount, TotalCovGoal) ;
       write(buf, Prefix & "  TotalCovCount: "    & to_string(TotalCovCount)                          & LF) ; 
       write(buf, Prefix & "  TotalCovGoal: "     & to_string(TotalCovGoal)                           & LF) ; 
