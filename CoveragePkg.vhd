@@ -80,7 +80,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2010 - 2020 by SynthWorks Design Inc.
+--  Copyright (c) 2010 - 2021 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -7915,16 +7915,22 @@ package body CoveragePkg is
     variable ItemCovCount, ItemCovGoal   : integer ; 
     variable TotalCovCount, TotalCovGoal : integer := 0; 
     variable CovWeight : integer ; 
+    variable ScaledCovGoal, rTotalCovCount : real ; 
   begin
     for i in 1 to CoverageStore.GetNumIDs loop 
       ID := (ID => i) ; 
-      CoverageStore.GetTotalCovCountAndGoal(ID, PercentCov, ItemCovCount, ItemCovGoal) ; 
+      CoverageStore.GetTotalCovCountAndGoal(ID, ItemCovCount, ItemCovGoal) ; 
       CovWeight     := GetCovWeight(ID) ;    
       TotalCovCount := TotalCovCount + (ItemCovCount * CovWeight) ;
       TotalCovGoal  := TotalCovGoal  + (ItemCovGoal  * CovWeight) ;
     end loop ;
-    if TotalCovGoal > 0 then 
-      return (100.0 * real(TotalCovCount)) / real(TotalCovGoal) ;
+    ScaledCovGoal  := PercentCov * real(TotalCovGoal) / 100.0 ;
+    rTotalCovCount := real(TotalCovCount) ;
+    
+    if rTotalCovCount >= ScaledCovGoal then 
+      return 100.0 ;
+    elsif ScaledCovGoal > 0.0 then 
+      return (100.0 * rTotalCovCount) / ScaledCovGoal ;
     else
       return 0.0 ;
     end if; 
