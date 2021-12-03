@@ -22,6 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2021   2021.11    Updated WriteCovYaml to write CovWeight first.   
+--                         Updated GetCov calculation with PercentCov.
 --    10/2021   2021.10    Added WriteCovYaml to write out coverage as a YAML file
 --    08/2021   2021.08    Removed SetAlertLogID from singleton public interface - set instead by NewID
 --                         Moved SetName, SetMessage to deprecated 

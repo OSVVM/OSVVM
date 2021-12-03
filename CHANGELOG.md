@@ -2,6 +2,8 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2021.11  | November 2021   |  Minor updates.  Print CovWeight first in WriteCovYaml. 
+|          |                 |     Update to usage of PercentCov in GetCov. 
 | 2021.10  | October 2021    |  Updates to generate HTML and JUnit XML for test suite information
 |          |                 |     Generate YAML and HTML for reporting Alert and Coverag information
 |          |                 |     Added ReportPkg. Uupdated CoveragePkg and AlertLogPkg 
