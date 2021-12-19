@@ -1815,6 +1815,19 @@ package body RandomPkg is
     end function RandSigned ;
 
     ------------------------------------------------------------
+    impure function SizeByLeftMostBit (A : unsigned) return integer is
+    ------------------------------------------------------------
+      alias normA : unsigned (A'length downto 1) is A ;
+    begin
+      for i in normA'range loop 
+        if normA(i) = '1' then 
+          return i ; 
+        end if ; 
+      end loop ;
+      return -1 ; 
+    end function SizeByLeftMostBit ; 
+
+    ------------------------------------------------------------
     impure function RandUnsigned (Max : unsigned) return unsigned is
     ------------------------------------------------------------
       alias normMax : unsigned (Max'length downto 1) is Max ;
@@ -1823,7 +1836,7 @@ package body RandomPkg is
       variable Size : integer ;
     begin
       -- Size = -1 if not found or Max'length = 0
-      Size := find_leftmost(normMax, '1') ;
+      Size := SizeByLeftMostBit(Max) ;
 
       if Size > 0 then
         loop

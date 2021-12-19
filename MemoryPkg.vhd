@@ -765,11 +765,16 @@ package body MemoryPkg is
             Addr := Addr + AddrInc ; 
           
           else
-          -- Invalid Text, Issue Warning and skip it
-            Alert(MemStructPtr(ID).AlertLogID,  
-              "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
-              "  Item: " & to_string(ItemNum) & ".  Skipping text: " & buf.all) ;
-            exit ItemLoop ; 
+            if NextChar = LF or NextChar = CR then 
+              -- If LF or CR, silently skip the character (DOS file in Unix)
+              read(buf, NextChar) ; 
+            else
+              -- invalid Text, issue warning and skip rest of line
+              Alert(MemStructPtr(ID).AlertLogID,  
+                "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
+                "  Item: " & to_string(ItemNum) & ".  Skipping text: " & buf.all) ;
+              exit ItemLoop ; 
+            end if ; 
           end if ; 
           
         end loop ItemLoop ; 

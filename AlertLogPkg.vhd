@@ -118,6 +118,7 @@ package AlertLogPkg is
   constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := ALERTLOG_BASE_ID + 3 ;
   -- May have its own ID or OSVVM_ALERTLOG_ID as default - most scoreboards allocate their own ID
   constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  constant  OSVVM_COV_ALERTLOG_ID          : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- Same as ALERTLOG_DEFAULT_ID
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
@@ -2751,7 +2752,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- Sets a AlertLogPtr to a particular size
     -- Use for small bins to save space or large bins to
-    -- suppress the resize and copy as a CovBin autosizes.
+    -- suppress the resize and copy in autosizes.
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) is
     ------------------------------------------------------------
       variable oldAlertLogPtr : AlertLogArrayPtrType ;
@@ -4086,11 +4087,32 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
+  ------------------------------------------------------------
+  -- Local
+  function LocalDiff (Line1, Line2 : string) return boolean is
+  -- Simple diff.  Move to string handling functions?
+  ------------------------------------------------------------
+    alias aLine1 : string (1 to Line1'length) is Line1 ;
+    alias aLine2 : string (1 to Line2'length) is Line2 ;
+    variable EndLine1 : integer := Line1'length; 
+    variable EndLine2 : integer := Line2'length; 
+  begin
+    -- Strip off any windows or unix end of line characters 
+    for i in Line1'length downto 1 loop
+      exit when aLine1(i) /= LF and aLine1(i) /= CR ;
+      EndLine1 := i - 1; 
+    end loop ;
+    for i in Line2'length downto 1 loop
+      exit when aLine2(i) /= LF and aLine2(i) /= CR ;
+      EndLine2 := i - 1; 
+    end loop ;
+    
+    return aLine1(1 to EndLine1) /= aLine2(1 to EndLine2) ;
+  end function LocalDiff ; 
 
   ------------------------------------------------------------
   -- Local
   procedure LocalAlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string ; Level : AlertType ; Valid : out boolean ) is
-  -- Simple diff.
   ------------------------------------------------------------
     variable Buf1, Buf2 : line ;
     variable File1Done, File2Done : boolean ;
@@ -4106,7 +4128,8 @@ package body AlertLogPkg is
       ReadLine(File2, Buf2) ;
       LineCount := LineCount + 1 ;
 
-      if Buf1.all /= Buf2.all then
+--      if Buf1.all /= Buf2.all then  -- fails when use Windows file in Unix
+      if LocalDiff(Buf1.all, Buf2.all) then
         AlertLogStruct.Alert(AlertLogID , Message & " File miscompare on line " & to_string(LineCount), Level) ;
         exit ReadLoop ;
       end if ;

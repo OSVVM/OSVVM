@@ -1669,9 +1669,9 @@ package body CoveragePkg is
   ------------------------------------------------------------
   begin 
     case Action is
-      when 1 =>        return "Count" ;
-      when 0 =>        return "Ignore"  ;
-      when others =>   return "Illegal" ;
+      when 1 =>        return "COUNT" ;
+      when 0 =>        return "IGNORE"  ;
+      when others =>   return "ILLEGAL" ;
     end case ; 
   end function ActionToName ; 
 
@@ -3268,7 +3268,8 @@ package body CoveragePkg is
         ) ;
       if CovStructPtr(ID.ID).CovBinPtr(Index).action = COV_ILLEGAL then
         if CovStructPtr(ID.ID).IllegalMode /= ILLEGAL_OFF then
-          if CovPoint = NULL_INTV then
+--          if CovPoint = NULL_INTV then
+          if CovPoint'length = 0 then
             alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.ICoverLast:" &
                           " Value randomized is in an illegal bin.", CovStructPtr(ID.ID).IllegalModeLevel) ;
           else
@@ -4903,17 +4904,17 @@ package body CoveragePkg is
     begin
       -- write bins to YAML file
       write(buf, Prefix & "Settings: " & LF) ; 
-      write(buf, Prefix & "  CovWeight: "        & to_string(CovStructPtr(ID.ID).CovWeight)          & LF) ; 
-      write(buf, Prefix & "  Goal: "             & to_string(CovStructPtr(ID.ID).CovTarget, 1)       & LF) ; 
-      write(buf, Prefix & "  WeightMode: "       & to_string(CovStructPtr(ID.ID).WeightMode)         & LF) ; 
-      write(buf, Prefix & "  Seeds: ["           & to_string(CovStructPtr(ID.ID).RV, ", ") & "]"     & LF) ; 
-      write(buf, Prefix & "  CountMode: "        & to_string(CovStructPtr(ID.ID).CountMode)          & LF) ; 
-      write(buf, Prefix & "  IllegalMode: "      & to_string(CovStructPtr(ID.ID).IllegalMode)        & LF) ; 
-      write(buf, Prefix & "  Threashold: "       & to_string(CovStructPtr(ID.ID).CovThreshold, 1)    & LF) ; 
-      write(buf, Prefix & "  ThresholdEnable: "  & to_string(CovStructPtr(ID.ID).ThresholdingEnable) & LF) ; 
+      write(buf, Prefix & "  CovWeight: "          & to_string(CovStructPtr(ID.ID).CovWeight)                    & LF) ; 
+      write(buf, Prefix & "  Goal: "               & to_string(CovStructPtr(ID.ID).CovTarget, 1)                 & LF) ; 
+      write(buf, Prefix & "  WeightMode: """       & to_upper(to_string(CovStructPtr(ID.ID).WeightMode))         & '"' & LF) ; 
+      write(buf, Prefix & "  Seeds: ["             & to_string(CovStructPtr(ID.ID).RV, ", ") & "]"               & LF) ; 
+      write(buf, Prefix & "  CountMode: """        & to_upper(to_string(CovStructPtr(ID.ID).CountMode))          & '"' & LF) ; 
+      write(buf, Prefix & "  IllegalMode: """      & to_upper(to_string(CovStructPtr(ID.ID).IllegalMode))        & '"' & LF) ; 
+      write(buf, Prefix & "  Threashold: "         & to_string(CovStructPtr(ID.ID).CovThreshold, 1)              & LF) ; 
+      write(buf, Prefix & "  ThresholdEnable: """  & to_upper(to_string(CovStructPtr(ID.ID).ThresholdingEnable)) & '"' & LF) ; 
       GetTotalCovCountAndGoal (ID, TotalCovCount, TotalCovGoal) ;
-      write(buf, Prefix & "  TotalCovCount: "    & to_string(TotalCovCount)                          & LF) ; 
-      write(buf, Prefix & "  TotalCovGoal: "     & to_string(TotalCovGoal)                           & LF) ; 
+      write(buf, Prefix & "  TotalCovCount: "      & to_string(TotalCovCount)                                    & LF) ; 
+      write(buf, Prefix & "  TotalCovGoal: "       & to_string(TotalCovGoal)                                     & LF) ; 
     end procedure WriteCovSettingsYaml ;
     
     ------------------------------------------------------------
@@ -4935,9 +4936,9 @@ package body CoveragePkg is
       write(buf, Prefix & "  FieldNames: " & LF) ; 
       for i in 1 to Dimensions loop 
         if i > FieldWidth then 
-          write(buf, Prefix & "    - Bin" & to_string(i)  & LF) ; 
+          write(buf, Prefix & "    - ""Bin" & to_string(i)  & '"' & LF) ; 
         else 
-          write(buf, Prefix & "    - " & FieldName(i).all & LF) ; 
+          write(buf, Prefix & "    - """ & FieldName(i).all & '"' & LF) ; 
         end if ; 
       end loop ; 
     end procedure WriteCovFieldNameYaml ;
@@ -4982,8 +4983,8 @@ package body CoveragePkg is
       
       writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
         CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
-        write(buf, Prefix & "  - Name: " & IfElse(CovBin.Name'length > 0, CovBin.Name.all, "~") & LF) ;
-        write(buf, Prefix & "    Type: " & ActionToName(CovBin.Action) & LF ) ;
+        write(buf, Prefix & "  - Name: """ & CovBin.Name.all             & '"' & LF) ;
+        write(buf, Prefix & "    Type: """ & ActionToName(CovBin.Action) & '"' & LF ) ;
         write(buf, Prefix & "    Range: " & LF) ;
         WriteBinValYaml(buf, CovBin.BinVal.all, Prefix & "      ") ; 
         write(buf, Prefix & "    Count: "      & to_string(CovBin.Count) & LF) ;
