@@ -75,13 +75,13 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
   | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | **2021.10**  | 
+  | AlertLogPkg.vhd                                    | 2021.10  | 
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | **2021.10**  |
+  | CoveragePkg.vhd                                    | **2021.12**  |
   | MemoryPkg.vhd                                      | 2021.06  |
   | ScoreboardGenericPkg.vhd                           | 2021.08  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
@@ -90,7 +90,20 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | ScoreboardPkg_int_c.vhd                            | 2021.09  |
   | ResizePkg.vhd                                      | 2021.06  |
   | TbUtilPkg.vhd                                      | 2020.01  |
+  | ReportPkg.vhd                                      | 2021.10  | 
   | OsvvmContext.vhd                                   | 2020.01  |
+
+### CoveragePkg.vhd  2021.12 
+Added ReadCovYaml.
+
+
+## Revision 2021.11 November 2021
+
+### CoveragePkg.vhd  2021.11 
+Minor updates.  Print CovWeight first in WriteCovYaml. 
+Update to usage of PercentCov in GetCov. 
+
+## Revision 2021.10 October 2021
 
 ### ReportPkg.vhd 2021.10 
 Implements EndOfTestReports (was called EndOfTestSummary in 2021.09).
