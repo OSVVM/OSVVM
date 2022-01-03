@@ -22,6 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--     1/2022   2022.01    Added TCover   
+--    12/2021   2021.12    Added ReadCovYaml   
 --    11/2021   2021.11    Updated WriteCovYaml to write CovWeight first.   
 --                         Updated GetCov calculation with PercentCov.
 --    10/2021   2021.10    Added WriteCovYaml to write out coverage as a YAML file
@@ -82,7 +84,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2010 - 2021 by SynthWorks Design Inc.
+--  Copyright (c) 2010 - 2022 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -451,6 +453,7 @@ package CoveragePkg is
   procedure ICoverLast (ID : CoverageIDType) ;
   procedure ICover     (ID : CoverageIDType; CovPoint : integer_vector) ;
   procedure ICover     (ID : CoverageIDType; CovPoint : integer) ;
+  procedure TCover     (CoverID : CoverageIDType; A : integer) ;
 
   procedure ClearCov (ID : CoverageIDType) ;
 
@@ -973,6 +976,7 @@ package CoveragePkg is
     procedure ICoverLast (ID : CoverageIDType) ;
     procedure ICover     (ID : CoverageIDType; CovPoint : integer_vector) ;
     procedure ICover     (ID : CoverageIDType; CovPoint : integer) ;
+    procedure TCover     (CoverID : CoverageIDType; A : integer) ;
 
     procedure ClearCov (ID : CoverageIDType) ;
 
@@ -1278,6 +1282,7 @@ package CoveragePkg is
     procedure ICoverLast ;
     procedure ICover( CovPoint : integer) ;
     procedure ICover( CovPoint : integer_vector) ;
+    procedure TCover( A : integer) ;
 
     procedure ClearCov ;
     procedure SetCovZero ;  -- Deprecated
@@ -2143,6 +2148,8 @@ package body CoveragePkg is
     
     type FieldNameArrayType is array (natural range <>) of Line ;
     type FieldNameArrayPtrType is access FieldNameArrayType ;
+    
+    type IntegerVectorPtrType is access integer_vector ;
 
     ------------------------------------------------------------
     -- /////////////////////////////////////////
@@ -2156,6 +2163,9 @@ package body CoveragePkg is
       BinValLength       : integer ;
       FieldName          : FieldNameArrayPtrType ; 
       CovWeight          : integer ; -- Set GetCov for entire model
+      
+      TCoverCount        : integer ; 
+      TCoverValuePtr     : IntegerVectorPtrType ;
 
       CovMessage         : MessageStructPtrType ;
       VendorCovHandle    : VendorCovHandleType ;
@@ -2195,6 +2205,9 @@ package body CoveragePkg is
         BinValLength       =>  1,
         FieldName          =>  NULL,
         CovWeight          =>  1,
+        
+        TCoverCount        =>  0, 
+        TCoverValuePtr     =>  NULL,
 
         CovMessage         =>  NULL,
         VendorCovHandle    =>  0,
@@ -2599,14 +2612,16 @@ package body CoveragePkg is
 
     ------------------------------------------------------------
     -- pt local
-    impure function BinValLengthNotEqual(ID : CoverageIDType; CurBinValLength : integer) return boolean is
+    impure function BinValLengthNotEqual(CoverID : CoverageIDType; CurBinValLength : integer) return boolean is
     ------------------------------------------------------------
+      constant ID : integer := CoverID.ID ; 
     begin
-      if CovStructPtr(ID.ID).NumBins = 0 then
-        CovStructPtr(ID.ID).BinValLength := CurBinValLength ; 
+      if CovStructPtr(ID).NumBins = 0 then
+        CovStructPtr(ID).BinValLength   := CurBinValLength ; 
+        CovStructPtr(ID).TCoverValuePtr := new integer_vector(1 to CurBinValLength) ;
         return FALSE ;
       else
-        return CurBinValLength /= CovStructPtr(ID.ID).BinValLength ;
+        return CurBinValLength /= CovStructPtr(ID).BinValLength ;
       end if;
     end function BinValLengthNotEqual ;
 
@@ -3333,6 +3348,18 @@ package body CoveragePkg is
     begin
      ICover(ID, (1=> CovPoint)) ;
     end procedure ICover ;
+
+    ------------------------------------------------------------
+    procedure TCover (CoverID : CoverageIDType; A : integer) is
+    ------------------------------------------------------------
+      constant ID : integer := CoverID.ID ; 
+    begin
+      CovStructPtr(ID).TCoverCount        := CovStructPtr(ID).TCoverCount + 1 ; 
+      CovStructPtr(ID).TCoverValuePtr.all := CovStructPtr(ID).TCoverValuePtr.all(2 to CovStructPtr(ID).BinValLength) & A ; 
+      if (CovStructPtr(ID).TCoverCount >= CovStructPtr(ID).BinValLength) then 
+        ICover(CoverID, CovStructPtr(ID).TCoverValuePtr.all) ;
+      end if ; 
+    end procedure TCover ;
 
     ------------------------------------------------------------
     procedure ClearCov (ID : CoverageIDType) is
@@ -6464,6 +6491,13 @@ package body CoveragePkg is
     begin
       ICover(COV_STRUCT_ID_DEFAULT, CovPoint) ;
      end procedure ICover ;
+     
+    ------------------------------------------------------------
+    procedure TCover ( A : integer) is
+    ------------------------------------------------------------
+    begin
+      TCover(COV_STRUCT_ID_DEFAULT, A) ;
+    end procedure TCover ;
 
     ------------------------------------------------------------
     procedure ClearCov is
@@ -7969,6 +8003,10 @@ package body CoveragePkg is
     CoverageStore.ICover (ID, CovPoint) ;
   end procedure ICover ;
 
+  procedure TCover (CoverID : CoverageIDType; A : integer) is
+  begin
+    CoverageStore.TCover (CoverID, A) ;
+  end procedure TCover ;
 
   procedure ClearCov (ID : CoverageIDType) is
   begin
