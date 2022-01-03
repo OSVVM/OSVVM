@@ -73,6 +73,21 @@ end ReportPkg ;
 package body ReportPkg is
 
   ------------------------------------------------------------
+  procedure WriteCovSummaryYaml (FileName : string ) is
+  ------------------------------------------------------------
+    file OsvvmYamlFile : text open APPEND_MODE is FileName ;
+    variable buf : line ;
+  begin
+    if GotCoverage then 
+      swrite(buf, "      FunctionalCoverage: " & to_string(GetCov, 2)) ; 
+    else
+      swrite(buf, "      FunctionalCoverage:  ") ; 
+    end if ; 
+    writeline(OsvvmYamlFile, buf) ; 
+    file_close(OsvvmYamlFile) ;
+  end procedure WriteCovSummaryYaml ;
+
+  ------------------------------------------------------------
   impure function EndOfTestReports (
   ------------------------------------------------------------
     ReportAll      : boolean        := FALSE ;
@@ -85,6 +100,9 @@ package body ReportPkg is
       FileName        => "./reports/OsvvmRun.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
+    WriteCovSummaryYaml (
+      FileName        => "./reports/OsvvmRun.yml"
+    ) ;
     WriteAlertYaml (
       FileName        => "./reports/" & GetAlertLogName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors
