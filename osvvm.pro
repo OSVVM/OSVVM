@@ -67,7 +67,7 @@ analyze RandomPkg.vhd
 analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 # analyze CoveragePkg_new.vhd
-analyze MemoryPkg.vhd
+
 
 if {$::osvvm::ToolVendor ne "Cadence"}  {
   analyze ScoreboardGenericPkg.vhd
@@ -78,8 +78,11 @@ if {$::osvvm::ToolVendor ne "Cadence"}  {
   analyze ScoreboardPkg_int_c.vhd
 }
 analyze ResizePkg.vhd
+analyze MemoryPkg.vhd
+
 analyze TbUtilPkg.vhd
 
 analyze ReportPkg.vhd
+analyze OsvvmTypesPkg.vhd
 
 analyze OsvvmContext.vhd 

@@ -59,6 +59,6 @@ context OsvvmContext is
   use OSVVM.ResizePkg.all ;
   use OSVVM.TbUtilPkg.all ;
   use OSVVM.ReportPkg.all ;
-
+  use OSVVM.OsvvmTypesPkg.all ; 
 end context OsvvmContext ; 
 
