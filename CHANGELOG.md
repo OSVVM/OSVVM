@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2022.01  | January 2022    |  Added Transition Coverage. 
 | 2021.12  | December 2021   |  Added ReadCovYaml. 
 | 2021.11  | November 2021   |  Minor updates.  Print CovWeight first in WriteCovYaml. 
 |          |                 |     Update to usage of PercentCov in GetCov. 
