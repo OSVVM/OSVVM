@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2022   2022.01    Added MetaTo01
 --    02/2021   2021.02    Added AckType, RdyType, RequestTransaction, WaitForTransaction for AckType/RdyType
 --    12/2020   2020.12    Added IfElse functions for string and integer.
 --                         Added Increment function for integer
@@ -70,6 +71,13 @@ package TbUtilPkg is
   ------------------------------------------------------------
   function OneHot ( constant A : in std_logic_vector ) return boolean ;  
   function ZeroOneHot ( constant A : in std_logic_vector ) return boolean ;  
+
+  ------------------------------------------------------------
+  -- MetaTo01
+  --   Convert Meta values to 0
+  ------------------------------------------------------------
+  function MetaTo01 ( constant A : in std_ulogic ) return std_ulogic ;
+  function MetaTo01 ( constant A : in std_ulogic_vector ) return std_ulogic_vector ;
 
   ------------------------------------------------------------
   -- IfElse
@@ -310,6 +318,7 @@ end TbUtilPkg ;
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 package body TbUtilPkg is 
+  type stdulogic_indexby_stdulogic is array (std_ulogic) of std_ulogic;
 
   ------------------------------------------------------------
   -- ZeroOneHot, OneHot
@@ -344,6 +353,29 @@ package body TbUtilPkg is
     return TRUE ;  -- all zero or found a one
   end function ZeroOneHot ; 
 
+  ------------------------------------------------------------
+  -- MetaTo01
+  --   Convert Meta values to 0
+  ------------------------------------------------------------
+  constant MetaTo01Table : stdulogic_indexby_stdulogic := (
+      '1'     => '1', 
+      'H'     => '1', 
+      others  => '0' 
+  ); 
+
+  function MetaTo01 ( constant A : in std_ulogic ) return std_ulogic is
+  begin
+    return MetaTo01Table(A) ; 
+  end function MetaTo01 ; 
+  
+  function MetaTo01 ( constant A : in std_ulogic_vector ) return std_ulogic_vector is
+    variable result : std_logic_vector(A'range) ; 
+  begin
+    for i in A'range loop
+      result(i) := MetaTo01Table(A(i)) ;
+    end loop ; 
+    return result ; 
+  end function MetaTo01 ; 
 
   ------------------------------------------------------------
   -- IfElse
@@ -609,7 +641,6 @@ package body TbUtilPkg is
   -- Toggle, WaitForToggle
   --   Used for communicating between processes
   ------------------------------------------------------------
-  type stdulogic_indexby_stdulogic is array (std_ulogic) of std_ulogic;
   constant toggle_sl_table : stdulogic_indexby_stdulogic := (
       '0'     => '1', 
       'L'     => '1', 
