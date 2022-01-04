@@ -163,6 +163,34 @@ package ScoreboardGenericPkg is
     constant ActualData   : in  ActualType
   ) return boolean ;
 
+  ----------------------------------------------
+  -- Simple Scoreboard, no tag
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) ;
+  
+  -- Simple Tagged Scoreboard
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) ;
+  
+  -- Simple Scoreboard, no tag
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) return boolean ; 
+  
+  -- Simple Tagged Scoreboard
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) return boolean ;
+
+
 
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
@@ -505,6 +533,15 @@ package ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) return boolean ;
+
+    -------------------------------
+    -- Array of Tagged Scoreboards
+    impure function CheckExpected (
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ExpectedData : in  ActualType
+    ) return boolean ;
+
 
     ------------------------------------------------------------
     -- Pop the top item (FIFO) from the scoreboard/FIFO
@@ -1478,9 +1515,10 @@ package body ScoreboardGenericPkg is
     -- Local Only
     procedure LocalCheck (
     ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant ActualData   : in ActualType ;
-      variable FoundError   : inout boolean  
+      constant Index          : in    integer ;
+      constant ActualData     : in    ActualType ;
+      variable FoundError     : inout boolean ;
+      constant ExpectedInFIFO : in    boolean := TRUE
     ) is
       variable ExpectedPtr    : ExpectedPointerType ;
       variable CurrentItem  : integer ;
@@ -1516,9 +1554,16 @@ package body ScoreboardGenericPkg is
         if ArrayLengthVar > 1 and PrintIndexVar then 
           write(WriteBuf, " (" & to_string(Index) & ") ") ; 
         end if ; 
-        write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
-        if FoundError then 
-          write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
+        if ExpectedInFIFO then 
+          write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
+          if FoundError then 
+            write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
+          end if ; 
+        else
+          write(WriteBuf, "   Received: " & expected_to_string(ExpectedPtr.all)) ;
+          if FoundError then 
+            write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
+          end if ; 
         end if ; 
         if PopListPointer(Index).TagPtr.all /= "" then
           write(WriteBuf, "   Tag: " & PopListPointer(Index).TagPtr.all) ;
@@ -1656,6 +1701,24 @@ package body ScoreboardGenericPkg is
       LocalCheck(FirstIndexVar, ActualData, FoundError) ; 
       return not FoundError ; 
     end function Check ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard Store.  Index. Tag.
+    impure function CheckExpected (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ExpectedData : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then 
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ; 
+      LocalPop(Index, Tag, "Check") ; 
+      LocalCheck(Index, ExpectedData, FoundError, ExpectedInFIFO => FALSE) ; 
+      return not FoundError ; 
+    end function CheckExpected ;
 
     ------------------------------------------------------------
     -- Array of Tagged Scoreboards
@@ -2536,6 +2599,47 @@ package body ScoreboardGenericPkg is
     return ScoreboardStore.Check(ID.ID, Tag, ActualData) ; 
   end function Check ;
 
+  -------------
+  ----------------------------------------------
+  -- Simple Scoreboard, no tag
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) is
+    variable Passed : boolean ; 
+  begin
+    Passed := ScoreboardStore.CheckExpected(ID.ID, "", ExpectedData) ; 
+  end procedure CheckExpected ; 
+  
+  -- Simple Tagged Scoreboard
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) is
+    variable Passed : boolean ; 
+  begin
+    Passed := ScoreboardStore.CheckExpected(ID.ID, Tag, ExpectedData) ; 
+  end procedure CheckExpected ; 
+  
+  -- Simple Scoreboard, no tag
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) return boolean is
+  begin
+    return ScoreboardStore.CheckExpected(ID.ID, "", ExpectedData) ; 
+  end function CheckExpected ; 
+  
+  -- Simple Tagged Scoreboard
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) return boolean is
+  begin
+    return ScoreboardStore.CheckExpected(ID.ID, Tag, ExpectedData) ; 
+  end function CheckExpected ;
 
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
