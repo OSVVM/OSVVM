@@ -378,6 +378,7 @@ package CoveragePkg is
   ------------------------------------------------------------
   procedure SetBinSize (ID : CoverageIDType; NewNumBins : integer) ;
   procedure Deallocate (ID : CoverageIDType) ;
+  procedure DeallocateBins (CoverID : CoverageIDType) ;
 
   ------------------------------------------------------------
   procedure AddBins (
@@ -873,6 +874,7 @@ package CoveragePkg is
     ------------------------------------------------------------
     procedure SetBinSize (ID : CoverageIDType; NewNumBins : integer) ;
     procedure Deallocate (ID : CoverageIDType) ;
+    procedure DeallocateBins (CoverID : CoverageIDType) ;
 
     ------------------------------------------------------------
     -- Weight Deprecated
@@ -7788,6 +7790,11 @@ package body CoveragePkg is
   begin
     CoverageStore.SetBinSize (ID, NewNumBins) ;
   end procedure SetBinSize ;
+
+  procedure DeallocateBins (CoverID : CoverageIDType) is
+  begin
+    CoverageStore.DeallocateBins (CoverID) ;
+  end procedure DeallocateBins ;
 
   procedure Deallocate (ID : CoverageIDType) is
   begin
