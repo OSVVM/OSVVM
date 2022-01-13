@@ -514,11 +514,9 @@ package body TbUtilPkg is
     signal Rdy      : In    RdyType ;
     signal Ack      : InOut AckType 
   ) is
-    variable AckTime : time ; 
   begin
     -- End of Previous Cycle.  Signal Done
     Ack <= Increment(Ack) ; 
-    AckTime    := NOW ; 
     
     -- Find Start of Transaction
     wait until Ack /= Rdy ; 
@@ -616,7 +614,6 @@ package body TbUtilPkg is
     signal Rdy  : In  std_logic ;
     signal Ack  : Out std_logic 
   ) is
-    variable AckTime : time ; 
   begin
     -- End of Previous Cycle.  Signal Done
     Ack        <= '1' ;               --  #6
@@ -634,7 +631,6 @@ package body TbUtilPkg is
     signal Rdy  : in  bit ;
     signal Ack  : out bit 
   ) is
-    variable AckTime : time ; 
   begin
     -- End of Previous Cycle.  Signal Done
     Ack        <= '1' ;               --  #6
