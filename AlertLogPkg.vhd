@@ -160,45 +160,45 @@ package AlertLogPkg is
 
   ------------------------------------------------------------
   -- overloading for common functionality
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic ;         Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic_vector ;  Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : unsigned ;          Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : signed ;            Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : integer ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : real ;              Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : character ;         Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : string ;            Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : time ;              Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : std_logic ;         Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : std_logic_vector ;  Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : unsigned ;          Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : signed ;            Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : integer ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : real ;              Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : character ;         Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : string ;            Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : time ;              Message : string ; Level : AlertType := ERROR )  ;
 
-  procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : signed ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : integer ;          Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : real ;             Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( Actual, Expected : time ;             Message : string ; Level : AlertType := ERROR )  ;
 
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : signed ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : integer ;          Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : real ;             Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : character ;        Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : string ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : time ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  Actual, Expected : time ;             Message : string ; Level : AlertType := ERROR )  ;
 
-  procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : signed ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : integer ;          Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : real ;             Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR )  ;
-  procedure AlertIfNotEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfNotEqual( Actual, Expected : time ;             Message : string ; Level : AlertType := ERROR )  ;
 
   ------------------------------------------------------------
   -- Simple Diff for file comparisons
@@ -253,29 +253,29 @@ package AlertLogPkg is
   procedure AffirmError( Message : string ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE );
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE );
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
 
   -- Without AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Actual, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
   procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
@@ -3679,101 +3679,100 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   -- AlertIfEqual with AlertLogID
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(Actual) & "   Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(Actual) & "   Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(to_integer(Actual)) & "   Exp = " & to_string(to_integer(Expected)), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(to_integer(Actual)) & "   Exp = " & to_string(to_integer(Expected)), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : integer ;          Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(Actual) & "   Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : real ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(Actual, 4) & "   Exp = " & to_string(Expected, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : character ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & Actual & "   Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : string ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & Actual & "   Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : time ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : time ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) 
-                                                     & "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act = Exp, Act = " & to_string(Actual, GetOsvvmDefaultTimeUnits) & "   Exp = " & to_string(Expected, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3782,101 +3781,100 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   -- AlertIfEqual without AlertLogID
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : integer ;          Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : real ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(Actual, 4) & "  Exp = " & to_string(Expected, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & Actual & "  Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & Actual & "  Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfEqual( Actual, Expected : time ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) 
-                                                           & "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
+    if Actual = Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(Actual, GetOsvvmDefaultTimeUnits) & "  Exp = " & to_string(Expected, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3885,101 +3883,100 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   -- AlertIfNotEqual with AlertLogID
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if  not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if  not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : integer ;          Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : real ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual, 4) & "  Exp = " & to_string(Expected, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : character ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & Actual & "  Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : string ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & Actual & "  Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : time ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; Actual, Expected : time ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) & 
-                                                        "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual, GetOsvvmDefaultTimeUnits) & "  Exp = " & to_string(Expected, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -3988,101 +3985,100 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   -- AlertIfNotEqual without AlertLogID
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : std_logic ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : std_logic_vector ; Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : unsigned ;         Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : signed ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : signed ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if not MetaMatch(Actual, Expected) then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : integer ;          Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : integer ;          Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : real ;             Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : real ;             Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual, 4) & "  Exp = " & to_string(Expected, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : character ;        Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & Actual & "  Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : string ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & Actual & "  Exp = " & Expected, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AlertIfNotEqual( L, R : time ;           Message : string ; Level : AlertType := ERROR )  is
+  procedure AlertIfNotEqual( Actual, Expected : time ;           Message : string ; Level : AlertType := ERROR )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) & 
-                                                              "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
+    if Actual /= Expected then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act /= Exp,  Act = " & to_string(Actual, GetOsvvmDefaultTimeUnits) & "  Exp = " & to_string(Expected, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4435,244 +4431,252 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmError ;
 
+  function JoinStr(msg: string; text: string) return string is
+  begin
+    if msg'length > 0 then
+      return msg & text;
+    end if;
+    return "";
+  end function;
+
   -- With AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+    AffirmIf(AlertLogID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_string(Received),
+    AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+    AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+    AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
+      "?= Expected : " & to_string(to_integer(Expected)),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+    AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
+      "?= Expected : " & to_string(to_integer(Expected)),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+    AffirmIf(AlertLogID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : real ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received, 4),
+    AffirmIf(AlertLogID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, 4),
       "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : character ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+    AffirmIf(AlertLogID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : string ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & Received,
+    AffirmIf(AlertLogID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & Actual,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Actual, Expected : time ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received, GetOsvvmDefaultTimeUnits),
-               "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+    AffirmIf(AlertLogID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, GetOsvvmDefaultTimeUnits),
+      "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   -- Without AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+    AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_string(Received),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
+      "?= Expected : " & to_string(to_integer(Expected)),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+    AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
+      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
+        "?= Expected : " & to_string(to_integer(Expected)),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+    AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : real ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received, 4),
+    AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, 4),
       "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : character ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+    AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : string ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & Received,
+    AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & Actual,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE )  is
+  procedure AffirmIfEqual( Actual, Expected : time ; Message : string := "" ; Enable : boolean := FALSE )  is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits),
-                "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+    AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
+      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, GetOsvvmDefaultTimeUnits),
+      "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5920,7 +5924,7 @@ package body AlertLogPkg is
     end if ;
     for i in LenA downto 1 loop
       if aA(i) = ':' then
-        return aA(i+1 to LenA)  ;
+        return (1 to LenA - i => aA(i+1 to LenA));
       end if ;
     end loop ;
     return aA(1 to LenA) ;
