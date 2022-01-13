@@ -3819,7 +3819,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(Actual, Expected) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " Act = Exp, Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3910,7 +3910,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if  not MetaMatch(Actual, Expected) then
-      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -3921,7 +3921,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(Actual, Expected) then
-      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(to_integer(Actual)) & "  Exp = " & to_string(to_integer(Expected)), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " Act /= Exp,  Act = " & to_string(Actual) & "  Exp = " & to_string(Expected), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4482,8 +4482,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
-      "?= Expected : " & to_string(to_integer(Expected)),
+      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4494,8 +4494,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
-      "?= Expected : " & to_string(to_integer(Expected)),
+      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4603,8 +4603,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
-      "?= Expected : " & to_string(to_integer(Expected)),
+      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4615,8 +4615,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(to_integer(Actual)),
-        "?= Expected : " & to_string(to_integer(Expected)),
+      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+        "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
