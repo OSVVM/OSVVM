@@ -4446,7 +4446,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4458,7 +4458,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4470,7 +4470,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4482,7 +4482,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_hstring(Actual),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4494,7 +4494,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_hstring(Actual),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4506,7 +4506,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4518,7 +4518,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, 4),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual, 4),
       "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
@@ -4530,7 +4530,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4542,7 +4542,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & Actual,
+      JoinStr(Message, " ") & "Actual : " & Actual,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -4554,7 +4554,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, GetOsvvmDefaultTimeUnits),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual, GetOsvvmDefaultTimeUnits),
       "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
@@ -4567,7 +4567,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4579,7 +4579,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4591,7 +4591,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4603,7 +4603,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_hstring(Actual),
       "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4615,7 +4615,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Actual, Expected),
-      JoinStr(Message, "; ") & "Actual : " & to_hstring(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_hstring(Actual),
         "?= Expected : " & to_hstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4627,7 +4627,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4639,7 +4639,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, 4),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual, 4),
       "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
@@ -4651,7 +4651,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -4663,7 +4663,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & Actual,
+      JoinStr(Message, " ") & "Actual : " & Actual,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -4675,7 +4675,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Actual = Expected,
-      JoinStr(Message, "; ") & "Actual : " & to_string(Actual, GetOsvvmDefaultTimeUnits),
+      JoinStr(Message, " ") & "Actual : " & to_string(Actual, GetOsvvmDefaultTimeUnits),
       "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
