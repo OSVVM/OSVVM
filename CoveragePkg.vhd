@@ -3068,14 +3068,14 @@ package body CoveragePkg is
     procedure AddBins (ID : CoverageIDType; Name : String ; AtLeast : integer ; CovBin : CovBinType ) is
     ------------------------------------------------------------
     begin
-      AddBins(ID, Name, AtLeast, 0, CovBin) ;
+      AddBins(ID, Name, AtLeast, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (ID : CoverageIDType; Name : String ;  CovBin : CovBinType) is
     ------------------------------------------------------------
     begin
-      AddBins(ID, Name, 0, 0, CovBin) ;
+      AddBins(ID, Name, 1, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
@@ -3089,14 +3089,14 @@ package body CoveragePkg is
     procedure AddBins (ID : CoverageIDType; AtLeast : integer ; CovBin : CovBinType ) is
     ------------------------------------------------------------
     begin
-      AddBins(ID, "", AtLeast, 0, CovBin) ;
+      AddBins(ID, "", AtLeast, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (ID : CoverageIDType; CovBin : CovBinType  ) is
     ------------------------------------------------------------
     begin
-      AddBins(ID, "", 0, 0, CovBin) ;
+      AddBins(ID, "", 1, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
@@ -3153,7 +3153,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross(ID, Name, AtLeast, 0,
+      AddCross(ID, Name, AtLeast, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -3169,7 +3169,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross(ID, Name, 0, 0,
+      AddCross(ID, Name, 1, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -3202,7 +3202,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross(ID, "", AtLeast, 0,
+      AddCross(ID, "", AtLeast, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -3217,7 +3217,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross(ID, "", 0, 0,
+      AddCross(ID, "", 1, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -5711,6 +5711,40 @@ package body CoveragePkg is
     end function GetErrorCount ;
 
     ------------------------------------------------------------
+    --  pt local
+    -- Adjusted InsertBin
+    --   Ensures minimum of Count and AtLeast are 1
+    procedure AdjustedInsertBin (
+      ID           : CoverageIDType ;
+      BinVal       : RangeArrayType ;
+      Action       : integer ;
+      Count        : integer ;
+      AtLeast      : integer ;
+      Weight       : integer ;
+      Name         : string
+    ) is
+      variable vCalcAtLeast : integer ;
+      variable vCalcWeight  : integer ;
+    begin
+      if Action = COV_COUNT then
+        vCalcAtLeast := maximum(0, AtLeast) ;
+        vCalcWeight  := maximum(0,  Weight) ;
+      else
+        vCalcAtLeast := 0 ;
+        vCalcWeight  := 0 ;
+      end if ;
+      InsertBin(
+        ID       => ID,
+        BinVal   => BinVal,
+        Action   => Action,
+        Count    => Count,
+        AtLeast  => vCalcAtLeast,
+        Weight   => vCalcWeight,
+        Name     => Name
+      ) ;
+    end procedure AdjustedInsertBin ;
+      
+    ------------------------------------------------------------
     -- These support usage of cross coverage constants
     -- Also support the older AddCross(GenCross(...)) methodology
     -- which has been replaced by AddCross(GenBin, GenBin, ...)
@@ -5741,7 +5775,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -5758,7 +5792,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -5775,7 +5809,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -5792,7 +5826,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -5809,7 +5843,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -5826,7 +5860,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -5843,7 +5877,7 @@ package body CoveragePkg is
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
-        InsertBin(ID,
+        AdjustedInsertBin(ID,
           CovBin(i).BinVal, CovBin(i).Action, CovBin(i).Count,
           CovBin(i).AtLeast, CovBin(i).Weight, Name
         ) ;
@@ -6342,14 +6376,14 @@ package body CoveragePkg is
     procedure AddBins ( Name : String ; AtLeast : integer ; CovBin : CovBinType ) is
     ------------------------------------------------------------
     begin
-      AddBins(Name, AtLeast, 0, CovBin) ;
+      AddBins(Name, AtLeast, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (Name : String ;  CovBin : CovBinType) is
     ------------------------------------------------------------
     begin
-      AddBins(Name, 0, 0, CovBin) ;
+      AddBins(Name, 1, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
@@ -6363,14 +6397,14 @@ package body CoveragePkg is
     procedure AddBins ( AtLeast : integer ; CovBin : CovBinType ) is
     ------------------------------------------------------------
     begin
-      AddBins("", AtLeast, 0, CovBin) ;
+      AddBins("", AtLeast, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins ( CovBin : CovBinType  ) is
     ------------------------------------------------------------
     begin
-      AddBins("", 0, 0, CovBin) ;
+      AddBins("", 1, 1, CovBin) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
@@ -6399,7 +6433,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross(Name, AtLeast, 0,
+      AddCross(Name, AtLeast, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -6414,7 +6448,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross(Name, 0, 0,
+      AddCross(Name, 1, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -6445,7 +6479,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross("", AtLeast, 0,
+      AddCross("", AtLeast, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -6459,7 +6493,7 @@ package body CoveragePkg is
       Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20 : CovBinType := NULL_BIN
     ) is
     begin
-      AddCross("", 0, 0,
+      AddCross("", 1, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -8903,8 +8937,8 @@ package body CoveragePkg is
               Min      => Min,
               Max      => Max,
               NumBin   => NumBin,
-              AtLeast  => 1,
-              Weight   => 1,
+              AtLeast  => 0,
+              Weight   => 0,
               Action   => COV_COUNT
             ) ;
   end function GenBin ;
@@ -8919,8 +8953,8 @@ package body CoveragePkg is
               Min      => Min,
               Max      => Max,
               NumBin   => Max - Min + 1,
-              AtLeast  => 1,
-              Weight   => 1,
+              AtLeast  => 0,
+              Weight   => 0,
               Action   => COV_COUNT
             ) ;
   end function GenBin ;
@@ -8935,8 +8969,8 @@ package body CoveragePkg is
               Min      => A,
               Max      => A,
               NumBin   => 1,
-              AtLeast  => 1,
-              Weight   => 1,
+              AtLeast  => 0,
+              Weight   => 0,
               Action   => COV_COUNT
             ) ;
   end function GenBin ;
@@ -8964,7 +8998,7 @@ package body CoveragePkg is
     return  MakeBin(
               A        => A,
               AtLeast  => AtLeast,
-              Weight   => 1,
+              Weight   => 0,
               Action   => COV_COUNT
             ) ;
   end function GenBin ;
@@ -8975,8 +9009,8 @@ package body CoveragePkg is
   begin
     return  MakeBin(
               A        => A,
-              AtLeast  => 1,
-              Weight   => 1,
+              AtLeast  => 0,
+              Weight   => 0,
               Action   => COV_COUNT
             ) ;
   end function GenBin ;
@@ -9103,7 +9137,7 @@ package body CoveragePkg is
   -- Cross existing bins  -- use AddCross instead
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9111,7 +9145,7 @@ package body CoveragePkg is
   -- Cross existing bins  -- use AddCross instead
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2) ;
+    return GenCross(1, 1, Bin1, Bin2) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9145,14 +9179,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3 : CovBinType ) return CovMatrix3Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9186,14 +9220,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3, Bin4) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3, Bin4 : CovBinType ) return CovMatrix4Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3, Bin4) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9227,14 +9261,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3, Bin4, Bin5) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5 : CovBinType ) return CovMatrix5Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3, Bin4, Bin5) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9268,14 +9302,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6 : CovBinType ) return CovMatrix6Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9309,14 +9343,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7 : CovBinType ) return CovMatrix7Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9350,14 +9384,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8 : CovBinType ) return CovMatrix8Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8) ;
   end function GenCross ;
 
   ------------------------------------------------------------
@@ -9391,14 +9425,14 @@ package body CoveragePkg is
   function GenCross( AtLeast : integer ; Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type is
   ------------------------------------------------------------
   begin
-    return GenCross(AtLeast, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9) ;
+    return GenCross(AtLeast, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9) ;
   end function GenCross ;
 
   ------------------------------------------------------------
   function GenCross( Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9 : CovBinType ) return CovMatrix9Type is
   ------------------------------------------------------------
   begin
-    return GenCross(0, 0, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9) ;
+    return GenCross(1, 1, Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9) ;
   end function GenCross ;
 
   ------------------------------------------------------------
