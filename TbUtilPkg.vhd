@@ -174,7 +174,19 @@ package TbUtilPkg is
     signal Rdy : In  std_logic ; 
     signal Ack : Out std_logic 
   ) ;
+  
+  -- Variation for clockless models
+  procedure WaitForTransaction (
+    signal Rdy      : In    RdyType ;
+    signal Ack      : InOut AckType 
+  );
 
+  -- Variation for clockless models
+  procedure WaitForTransaction ( 
+    signal Rdy : in  bit ; 
+    signal Ack : out bit 
+  ) ;
+  
 
   ------------------------------------------------------------
   -- Toggle, WaitForToggle
@@ -271,7 +283,7 @@ package TbUtilPkg is
     constant ResetActive : in  std_logic ; 
     signal   Clk         : in  std_logic ; 
     constant Period      :     time ; 
-    constant tpd         :     time 
+    constant tpd         :     time := 0 ns
   ) ;
   
   procedure LogReset ( 
@@ -529,6 +541,18 @@ package body TbUtilPkg is
       wait until Clk = CLK_ACTIVE ;
     end if ; 
   end procedure WaitForTransaction ;
+
+  procedure WaitForTransaction (
+    signal Rdy      : In    RdyType ;
+    signal Ack      : InOut AckType 
+  ) is
+  begin
+    -- End of Previous Cycle.  Signal Done
+    Ack <= Increment(Ack) ; 
+    
+    -- Find Start of Transaction
+    wait until Ack /= Rdy ; 
+  end procedure WaitForTransaction ;
   
   ------------------------------------------------------------
   -- WaitForTransaction
@@ -622,7 +646,6 @@ package body TbUtilPkg is
     signal Rdy  : In  std_logic ;
     signal Ack  : Out std_logic 
   ) is
-    variable AckTime : time ; 
   begin
     -- End of Previous Cycle.  Signal Done
     Ack        <= '1' ;               --  #6
@@ -635,7 +658,23 @@ package body TbUtilPkg is
     Ack        <= '0' ;               --  #3
     wait for 0 ns ; -- allow 0 time transactions
   end procedure WaitForTransaction ;
-
+  
+  procedure WaitForTransaction (
+    signal Rdy  : in  bit ;
+    signal Ack  : out bit 
+  ) is
+  begin
+    -- End of Previous Cycle.  Signal Done
+    Ack        <= '1' ;               --  #6
+    -- Find Start of Transaction
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
+    if Rdy /= '1' then                --   #2
+      wait until Rdy = '1' ; 
+    end if ; 
+    -- Model active and owns the record
+    Ack        <= '0' ;               --  #3
+    wait for 0 ns ; -- allow 0 time transactions
+  end procedure WaitForTransaction ;
 
   ------------------------------------------------------------
   -- Toggle, WaitForToggle
@@ -991,7 +1030,7 @@ package body TbUtilPkg is
     constant ResetActive : in  std_logic ; 
     signal   Clk         : in  std_logic ; 
     constant Period      :     time ; 
-    constant tpd         :     time 
+    constant tpd         :     time := 0 ns
   ) is 
   begin
     wait until Clk = CLK_ACTIVE ; 

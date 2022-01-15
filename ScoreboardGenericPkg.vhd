@@ -794,6 +794,8 @@ package ScoreboardGenericPkg is
     -- Clear error counter.  Caution does not change AlertCounts, must also use AlertLogPkg.ClearAlerts
     procedure SetErrorCountZero ;                      -- Simple, with or without tags
     procedure SetErrorCountZero (Index  : integer) ;   -- Arrays, with or without tags 
+    -- Clear check counter. Caution does not change AffirmationCounters
+    procedure SetCheckCountZero;
     
     ------------------------------------------------------------
     ------------------------------------------------------------
@@ -2137,6 +2139,13 @@ package body ScoreboardGenericPkg is
     begin
       ErrCntVar(FirstIndexVar) := 0 ;
     end procedure SetErrorCountZero ;
+
+    ------------------------------------------------------------
+    procedure SetCheckCountZero is
+    ------------------------------------------------------------
+    begin
+      CheckCountVar(FirstIndexVar) := 0;
+    end procedure;
 
     ------------------------------------------------------------
     impure function GetItemCount (Index  : integer) return integer is
