@@ -5920,7 +5920,7 @@ package body AlertLogPkg is
     end if ;
     for i in LenA downto 1 loop
       if aA(i) = ':' then
-        return aA(i+1 to LenA)  ;
+        return (1 to LenA - i => aA(i+1 to LenA)) ;
       end if ;
     end loop ;
     return aA(1 to LenA) ;
