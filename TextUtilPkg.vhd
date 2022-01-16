@@ -47,6 +47,7 @@
 use std.textio.all ;
 library ieee ; 
 use ieee.std_logic_1164.all ; 
+use ieee.numeric_std.all ; 
 
 package TextUtilPkg is
   ------------------------------------------------------------
@@ -117,6 +118,14 @@ package TextUtilPkg is
     variable Result : Out   std_logic_vector ;
     variable StrLen : Out   integer 
   ) ;   
+
+  ------------------------------------------------------------
+  -- to_hxstring
+  --   print in hex.  If string contains X, then also print in binary
+  ------------------------------------------------------------
+  function to_hxstring ( A : std_logic_vector) return string ;
+  function to_hxstring ( A : unsigned) return string ;
+  function to_hxstring (A : signed) return string ; 
 
 end TextUtilPkg ;
   
@@ -505,6 +514,42 @@ package body TextUtilPkg is
     StrLen := CharCount ; 
     Result := ReturnVal ;
   end procedure ReadBinaryToken ;   
+
+  ------------------------------------------------------------
+  -- to_hxstring  
+  function to_hxstring ( A : std_logic_vector) return string is 
+  ------------------------------------------------------------
+  begin
+    if is_X(A) then 
+      return to_hstring(A) & " (" & to_string(A) & ")" ;
+    else
+      return to_hstring(A) ;
+    end if ; 
+  end function to_hxstring ; 
+
+  ------------------------------------------------------------
+  -- to_hxstring  
+  function to_hxstring ( A : unsigned) return string is 
+  ------------------------------------------------------------
+  begin
+    if is_X(A) then 
+      return to_hstring(A) & " (" & to_string(A) & ")" ;
+    else
+      return to_hstring(A) ;
+    end if ; 
+  end function to_hxstring ; 
+
+  ------------------------------------------------------------
+  -- to_hxstring  
+  function to_hxstring (A : signed) return string is 
+  ------------------------------------------------------------
+  begin
+    if is_X(A) then 
+      return to_hstring(A) & " (" & to_string(A) & ")" ;
+    else
+      return to_hstring(A) ;
+    end if ; 
+  end function to_hxstring ; 
 
 
 end package body TextUtilPkg ;
