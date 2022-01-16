@@ -795,7 +795,8 @@ package ScoreboardGenericPkg is
     procedure SetErrorCountZero ;                      -- Simple, with or without tags
     procedure SetErrorCountZero (Index  : integer) ;   -- Arrays, with or without tags 
     -- Clear check counter. Caution does not change AffirmationCounters
-    procedure SetCheckCountZero;
+    procedure SetCheckCountZero ;                      -- Simple, with or without tags
+    procedure SetCheckCountZero (Index  : integer) ;   -- Arrays, with or without tags
     
     ------------------------------------------------------------
     ------------------------------------------------------------
@@ -2141,11 +2142,18 @@ package body ScoreboardGenericPkg is
     end procedure SetErrorCountZero ;
 
     ------------------------------------------------------------
+    procedure SetCheckCountZero (Index  : integer) is
+    ------------------------------------------------------------
+    begin
+      CheckCountVar(Index) := 0;
+    end procedure SetCheckCountZero ;
+
+    ------------------------------------------------------------
     procedure SetCheckCountZero is
     ------------------------------------------------------------
     begin
       CheckCountVar(FirstIndexVar) := 0;
-    end procedure;
+    end procedure SetCheckCountZero ;
 
     ------------------------------------------------------------
     impure function GetItemCount (Index  : integer) return integer is
