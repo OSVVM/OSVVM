@@ -3695,7 +3695,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3706,7 +3706,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3717,7 +3717,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3798,7 +3798,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3809,7 +3809,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3820,7 +3820,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -3901,7 +3901,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -3912,7 +3912,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if  not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -3923,7 +3923,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4004,7 +4004,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4015,7 +4015,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4026,7 +4026,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hstring(L) & "   R = " & to_hstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4466,8 +4466,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+      Message & " Received : " & to_hxstring(Received),
+      "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4478,8 +4478,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+      Message & " Received : " & to_hxstring(Received),
+      "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4490,8 +4490,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+      Message & " Received : " & to_hxstring(Received),
+      "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4587,8 +4587,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+      Message & " Received : " & to_hxstring(Received),
+      "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4599,8 +4599,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+      Message & " Received : " & to_hxstring(Received),
+      "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -4611,8 +4611,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hstring(Received),
-      "?= Expected : " & to_hstring(Expected),
+      Message & " Received : " & to_hxstring(Received),
+      "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5914,13 +5914,17 @@ package body AlertLogPkg is
   ------------------------------------------------------------
     alias aA : string(1 to A'length) is A ;
     variable LenA : integer := A'length ;
+    variable Result : string(1 to A'length) ; 
   begin
     if aA(LenA) = ':' then
       LenA := LenA - 1 ;
     end if ;
     for i in LenA downto 1 loop
       if aA(i) = ':' then
-        return (1 to LenA - i => aA(i+1 to LenA)) ;
+--!! GHDL Issue
+--         return (1 to LenA - i => aA(i+1 to LenA)) ;
+        Result(1 to LenA - i) := aA(i+1 to LenA) ;
+        return Result(1 to LenA - i) ;
       end if ;
     end loop ;
     return aA(1 to LenA) ;
