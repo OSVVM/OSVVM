@@ -22,7 +22,9 @@
 --
 --  Revision History:
 --    Date      Version    Description
---     1/2022   2022.01    Added TCover   
+--    01/2022   2022.01    Added DeallocateBins and TCover   
+--                         Updated AddBins and AddCross s.t. can set AtLeast and Weight to 0
+--                             GenBin defaults AtLeast and Weight to 0.  AddBins and AddCross to 1.
 --    12/2021   2021.12    Added ReadCovYaml   
 --    11/2021   2021.11    Updated WriteCovYaml to write CovWeight first.   
 --                         Updated GetCov calculation with PercentCov.

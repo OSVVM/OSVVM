@@ -17,7 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2022   2022.01    Added MetaTo01
+--    01/2022   2022.01    Added MetaTo01.  Added WaitForTransaction without clock for RdyType/AckType and bit.
 --    02/2021   2021.02    Added AckType, RdyType, RequestTransaction, WaitForTransaction for AckType/RdyType
 --    12/2020   2020.12    Added IfElse functions for string and integer.
 --                         Added Increment function for integer

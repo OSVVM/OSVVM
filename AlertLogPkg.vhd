@@ -26,6 +26,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2022   2022.01    For AlertIfEqual and AffirmIfEqual, all arrays of std_ulogic use to_hxstring
+--                         Updated return value for PathTail
 --    10/2021   2021.10    Moved EndOfTestSummary to ReportPkg 
 --    09/2021   2021.09    Added EndOfTestSummary and CreateYamlReport - Experimental Release 
 --    07/2021   2021.07    When printing time value from GetOsvvmDefaultTimeUnits is used.

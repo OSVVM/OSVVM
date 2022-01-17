@@ -20,11 +20,12 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2015   2015.05    Initial revision
---    01/2016   2016.01    Update for L.all(L'left)
---    11/2016   2016.11    Added IsUpper, IsLower, to_upper, to_lower
---    01/2020   2020.01    Updated Licenses to Apache
+--    01/2022   2022.01    Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
 --    08/2020   2020.08    Added ReadUntilDelimiterOrEOL and FindDelimiter
+--    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Added IsUpper, IsLower, to_upper, to_lower
+--    01/2016   2016.01    Update for L.all(L'left)
+--    01/2015   2015.05    Initial revision
 --
 --
 --  This file is part of OSVVM.

@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description 
+--    01/2022   2022.01     Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType   
 --    08/2021   2021.08     Removed SetAlertLogID from singleton public interface - set instead by NewID
 --    06/2021   2021.06     Updated Data Structure, IDs for new use model, and Wrapper Subprograms
 --    10/2020   2020.10     Added Peek

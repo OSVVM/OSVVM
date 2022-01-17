@@ -16,6 +16,7 @@
 --
 --  Revision History:      
 --    Date      Version    Description
+--    01/2022   2022.01    Added OsvvmTypesPkg
 --    10/2021   2021.10    Added ReportPkg
 --    06/2021   2021.06    Updated for release
 --    01/2020   2020.01    Updated Licenses to Apache
@@ -60,5 +61,6 @@ context OsvvmContext is
   use OSVVM.TbUtilPkg.all ;
   use OSVVM.ReportPkg.all ;
   use OSVVM.OsvvmTypesPkg.all ; 
+
 end context OsvvmContext ; 
 

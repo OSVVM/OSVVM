@@ -57,7 +57,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2021.10 October 2021
+## Revision 2022.01 January 2022
 
 ### Current Revision and Compile Order
 
@@ -75,24 +75,57 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
-  | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | 2021.10  | 
+  | TextUtilPkg.vhd                                    | **2022.01**  | 
+  | AlertLogPkg.vhd                                    | **2022.01**  | 
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | **2021.12**  |
+  | CoveragePkg.vhd                                    | **2022.01**  |
   | MemoryPkg.vhd                                      | 2021.06  |
-  | ScoreboardGenericPkg.vhd                           | 2021.08  |
+  | ScoreboardGenericPkg.vhd                           | **2022.01**  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ScoreboardPkg_slv_c.vhd                            | 2021.09  |
-  | ScoreboardPkg_int_c.vhd                            | 2021.09  |
+  | ScoreboardPkg_slv_c.vhd                            | **2022.01**  | 
+  | ScoreboardPkg_int_c.vhd                            | **2022.01**  | 
   | ResizePkg.vhd                                      | 2021.06  |
-  | TbUtilPkg.vhd                                      | 2020.01  |
-  | ReportPkg.vhd                                      | 2021.10  | 
-  | OsvvmContext.vhd                                   | 2020.01  |
+  | TbUtilPkg.vhd                                      | **2022.01**  |
+  | ReportPkg.vhd                                      | **2022.01**  | 
+  | OsvvmTypesPkg.vhd                                  | **2022.01**  |
+  | OsvvmContext.vhd                                   | **2022.01**  |
+
+
+## Revision 2022.01 January 2022
+
+### TextUtilPkg.vhd  2022.01 
+Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
+
+### AlertLogPkg.vhd  2022.01 
+For AlertIfEqual and AffirmIfEqual, all arrays of std_ulogic use to_hxstring
+Updated return value for PathTail
+
+### CoveragePkg.vhd  2022.01 
+Added DeallocateBins and TCover
+Updates to allow AddBins and AddCross with 0 for AtLeast and Weight
+    Updated GenBin s.t. defaults AtLeast and Weight to 0
+    Updated AddBins and AddCross s.t. defaults AtLeast and Weight to 1
+
+### ScoreboardGenericPkg.vhd, ScoreboardPkg_slv_c, ScoreboardPkg_int_c  2022.01 
+Added CheckExpected
+Added SetCheckCountZero to ScoreboardPType
+
+### TbUtilPkg.vhd  2022.01 
+Added MetaTo01
+Added WaitForTransaction without clock for RdyType/AckType and bit
+
+### OsvvmTypesPkg.vhd  2022.01 
+Defined slv_vector
+
+### OsvvmContext.vhd  2022.01 
+Added OsvvmTypesPkg
+
+## Revision 2021.12 December 2021
 
 ### CoveragePkg.vhd  2021.12 
 Added ReadCovYaml.
