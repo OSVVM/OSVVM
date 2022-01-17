@@ -1,5 +1,5 @@
 --
---  File Name:         ScoreBoardPkg_slv_c.vhd
+--  File Name:         ScoreBoardPkg_slv.vhd
 --  Design Unit Name:  ScoreBoardPkg_slv
 --  Revision:          STANDARD VERSION
 --
@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description 
+--    01/2022   2022.01     Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType   
 --    08/2021   2021.08     Removed SetAlertLogID from singleton public interface - set instead by NewID
 --    06/2021   2021.06     Updated Data Structure, IDs for new use model, and Wrapper Subprograms
 --    10/2020   2020.10     Added Peek
@@ -162,6 +163,34 @@ package ScoreBoardPkg_slv is
     constant Tag          : in  string ;
     constant ActualData   : in  ActualType
   ) return boolean ;
+
+  ----------------------------------------------
+  -- Simple Scoreboard, no tag
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) ;
+  
+  -- Simple Tagged Scoreboard
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) ;
+  
+  -- Simple Scoreboard, no tag
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) return boolean ; 
+  
+  -- Simple Tagged Scoreboard
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) return boolean ;
+
 
 
   ------------------------------------------------------------
@@ -506,6 +535,15 @@ package ScoreBoardPkg_slv is
       constant ActualData   : in  ActualType
     ) return boolean ;
 
+    -------------------------------
+    -- Array of Tagged Scoreboards
+    impure function CheckExpected (
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ExpectedData : in  ActualType
+    ) return boolean ;
+
+
     ------------------------------------------------------------
     -- Pop the top item (FIFO) from the scoreboard/FIFO
     
@@ -757,6 +795,9 @@ package ScoreBoardPkg_slv is
     -- Clear error counter.  Caution does not change AlertCounts, must also use AlertLogPkg.ClearAlerts
     procedure SetErrorCountZero ;                      -- Simple, with or without tags
     procedure SetErrorCountZero (Index  : integer) ;   -- Arrays, with or without tags 
+    -- Clear check counter. Caution does not change AffirmationCounters
+    procedure SetCheckCountZero ;                      -- Simple, with or without tags
+    procedure SetCheckCountZero (Index  : integer) ;   -- Arrays, with or without tags
     
     ------------------------------------------------------------
     ------------------------------------------------------------
@@ -1049,13 +1090,13 @@ package body ScoreBoardPkg_slv is
     begin
       ReportModeVar := ReportModeIn ; 
       if ReportModeVar = REPORT_ALL then 
-        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "ScoreboardGenericPkg.SetReportMode: To turn off REPORT_ALL, use osvvm.AlertLogPkg.SetLogEnable(PASSED, FALSE)", WARNING) ; 
+        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "ScoreBoardPkg_slv.SetReportMode: To turn off REPORT_ALL, use osvvm.AlertLogPkg.SetLogEnable(PASSED, FALSE)", WARNING) ; 
         for i in AlertLogIDVar'range loop
           SetLogEnable(AlertLogIDVar(i), PASSED, TRUE) ; 
         end loop ;
       end if ; 
       if ReportModeVar = REPORT_NONE then 
-        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "ScoreboardGenericPkg.SetReportMode: ReportMode REPORT_NONE has been deprecated and will be removed in next revision.  Please contact OSVVM architect Jim Lewis if you need this capability.", WARNING) ; 
+        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "ScoreBoardPkg_slv.SetReportMode: ReportMode REPORT_NONE has been deprecated and will be removed in next revision.  Please contact OSVVM architect Jim Lewis if you need this capability.", WARNING) ; 
       end if ; 
     end procedure SetReportMode ;
 
@@ -1147,7 +1188,7 @@ package body ScoreBoardPkg_slv is
         end if ; 
         
       elsif Len < OldLen then 
-        report "ScoreboardGenericPkg: SetArrayIndex, new array Length <= current array length" 
+        report "ScoreBoardPkg_slv: SetArrayIndex, new array Length <= current array length" 
         severity failure ; 
         
       end if ;
@@ -1478,9 +1519,10 @@ package body ScoreBoardPkg_slv is
     -- Local Only
     procedure LocalCheck (
     ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant ActualData   : in ActualType ;
-      variable FoundError   : inout boolean  
+      constant Index          : in    integer ;
+      constant ActualData     : in    ActualType ;
+      variable FoundError     : inout boolean ;
+      constant ExpectedInFIFO : in    boolean := TRUE
     ) is
       variable ExpectedPtr    : ExpectedPointerType ;
       variable CurrentItem  : integer ;
@@ -1516,9 +1558,16 @@ package body ScoreBoardPkg_slv is
         if ArrayLengthVar > 1 and PrintIndexVar then 
           write(WriteBuf, " (" & to_string(Index) & ") ") ; 
         end if ; 
-        write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
-        if FoundError then 
-          write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
+        if ExpectedInFIFO then 
+          write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
+          if FoundError then 
+            write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
+          end if ; 
+        else
+          write(WriteBuf, "   Received: " & expected_to_string(ExpectedPtr.all)) ;
+          if FoundError then 
+            write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
+          end if ; 
         end if ; 
         if PopListPointer(Index).TagPtr.all /= "" then
           write(WriteBuf, "   Tag: " & PopListPointer(Index).TagPtr.all) ;
@@ -1656,6 +1705,24 @@ package body ScoreBoardPkg_slv is
       LocalCheck(FirstIndexVar, ActualData, FoundError) ; 
       return not FoundError ; 
     end function Check ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard Store.  Index. Tag.
+    impure function CheckExpected (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ExpectedData : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then 
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ; 
+      LocalPop(Index, Tag, "Check") ; 
+      LocalCheck(Index, ExpectedData, FoundError, ExpectedInFIFO => FALSE) ; 
+      return not FoundError ; 
+    end function CheckExpected ;
 
     ------------------------------------------------------------
     -- Array of Tagged Scoreboards
@@ -2076,6 +2143,20 @@ package body ScoreBoardPkg_slv is
     end procedure SetErrorCountZero ;
 
     ------------------------------------------------------------
+    procedure SetCheckCountZero (Index  : integer) is
+    ------------------------------------------------------------
+    begin
+      CheckCountVar(Index) := 0;
+    end procedure SetCheckCountZero ;
+
+    ------------------------------------------------------------
+    procedure SetCheckCountZero is
+    ------------------------------------------------------------
+    begin
+      CheckCountVar(FirstIndexVar) := 0;
+    end procedure SetCheckCountZero ;
+
+    ------------------------------------------------------------
     impure function GetItemCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
@@ -2168,7 +2249,7 @@ package body ScoreBoardPkg_slv is
       FStatus     : boolean := TRUE
     ) is 
     begin
-      Alert(AlertLogIDVar(Index), "OSVVM.ScoreboardGenericPkg.SetFinish: Deprecated and removed.  See CheckFinish", ERROR) ; 
+      Alert(AlertLogIDVar(Index), "OSVVM.ScoreBoardPkg_slv.SetFinish: Deprecated and removed.  See CheckFinish", ERROR) ; 
     end procedure SetFinish ; 
     
     ------------------------------------------------------------
@@ -2536,6 +2617,47 @@ package body ScoreBoardPkg_slv is
     return ScoreboardStore.Check(ID.ID, Tag, ActualData) ; 
   end function Check ;
 
+  -------------
+  ----------------------------------------------
+  -- Simple Scoreboard, no tag
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) is
+    variable Passed : boolean ; 
+  begin
+    Passed := ScoreboardStore.CheckExpected(ID.ID, "", ExpectedData) ; 
+  end procedure CheckExpected ; 
+  
+  -- Simple Tagged Scoreboard
+  procedure CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) is
+    variable Passed : boolean ; 
+  begin
+    Passed := ScoreboardStore.CheckExpected(ID.ID, Tag, ExpectedData) ; 
+  end procedure CheckExpected ; 
+  
+  -- Simple Scoreboard, no tag
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant ExpectedData : in  ActualType
+  ) return boolean is
+  begin
+    return ScoreboardStore.CheckExpected(ID.ID, "", ExpectedData) ; 
+  end function CheckExpected ; 
+  
+  -- Simple Tagged Scoreboard
+  impure function CheckExpected (
+    constant ID           : in  ScoreboardIDType ;
+    constant Tag          : in  string ;
+    constant ExpectedData : in  ActualType
+  ) return boolean is
+  begin
+    return ScoreboardStore.CheckExpected(ID.ID, Tag, ExpectedData) ; 
+  end function CheckExpected ;
 
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
