@@ -2028,7 +2028,7 @@ package body AlertLogPkg is
 --        write(buf, FailName) ; 
         write(buf, ResolveOsvvmFailName(FailNameVar.GetOpt)) ; 
       else
-        write(buf, string'("??????")) ; 
+        write(buf, string'("ReportTestSummaries Warning:  No checking done. ")) ; 
       end if ; 
       write(buf, " " & LeftJustify(AlertLogPtr(AlertLogID).Name.all, ReportJustifyAmountVar)) ;
       write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
