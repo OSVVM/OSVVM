@@ -772,6 +772,7 @@ package body TbUtilPkg is
 
   function Increment (constant Sig : in integer ; constant Amount : in integer := 1) return integer is
   begin
+--! Sig = integer'high - Amount + 1 ; 
     return (Sig + Amount) mod 2**30 ; 
   end function Increment ;
   
@@ -779,9 +780,7 @@ package body TbUtilPkg is
   begin
     wait on Sig ;
   end procedure WaitForToggle ;
-  
-  
-  
+    
   ------------------------------------------------------------
   -- WaitForBarrier
   --   Barrier Synchronization
