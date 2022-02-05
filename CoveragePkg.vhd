@@ -2552,7 +2552,11 @@ package body CoveragePkg is
     impure function GetName (ID : CoverageIDType) return String is
     ------------------------------------------------------------
     begin
-      return CovStructPtr(ID.ID).CovName.all ;
+      if CovStructPtr(ID.ID).CovName /= NULL then
+        return CovStructPtr(ID.ID).CovName.all ;
+      else
+        return "!!! CovName is NULL !!!" ;
+      end if ; 
     end function GetName ;
 
     ------------------------------------------------------------
