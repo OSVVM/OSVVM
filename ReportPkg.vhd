@@ -20,11 +20,12 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
 --    10/2021   2021.10    Initial revision
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2021 by SynthWorks Design Inc.
+--  Copyright (c) 2021-2022 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -110,17 +111,21 @@ package body ReportPkg is
         
     if GotCoverage then 
       WriteCovYaml (
-        FileName     => "./reports/" & GetAlertLogName & "_cov.yml"
+        FileName      => "./reports/" & GetAlertLogName & "_cov.yml"
       ) ;
     end if ; 
     
---    if work.ScoreboardPkg_slv.GotScoreboard then 
---       work.ScoreboardPkg_slv.WriteScoreboardYaml ;
---    end if ; 
---
---    if work.ScoreboardPkg_int.GotScoreboard then 
---       work.ScoreboardPkg_int.WriteScoreboardYaml ;
---    end if ; 
+    if work.ScoreboardPkg_slv.GotScoreboards then 
+      work.ScoreboardPkg_slv.WriteScoreboardYaml (
+        FileName     => "./reports/" & GetAlertLogName & "_sb_slv.yml"
+      ) ;
+    end if ; 
+    
+    if work.ScoreboardPkg_int.GotScoreboards then 
+      work.ScoreboardPkg_int.WriteScoreboardYaml (
+        FileName     => "./reports/" & GetAlertLogName & "_sb_int.yml"
+      ) ;
+    end if ; 
 
     return SumAlertCount(GetAlertCount + ExternalErrors) ;
   end function EndOfTestReports ;

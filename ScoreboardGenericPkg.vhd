@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description 
+--    02/2022   2022.02     Added WriteScoreboardYaml and GotScoreboard
 --    01/2022   2022.01     Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType   
 --    08/2021   2021.08     Removed SetAlertLogID from singleton public interface - set instead by NewID
 --    06/2021   2021.06     Updated Data Structure, IDs for new use model, and Wrapper Subprograms
@@ -73,6 +74,7 @@ library ieee ;
   use ieee.numeric_std.all ;
   
   use work.TranscriptPkg.all ; 
+  use work.TextUtilPkg.all ; 
   use work.AlertLogPkg.all ; 
   use work.NamePkg.all ; 
   use work.ResolutionPkg.all ; 
@@ -366,6 +368,11 @@ package ScoreboardGenericPkg is
     constant ItemNumber  :  in  integer 
   ) ; 
   
+  ------------------------------------------------------------
+  -- Writing YAML Reports 
+  impure function GotScoreboards return boolean ;
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
+
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and 
   -- another simulation is started, a simulator will release all allocated items.  
@@ -745,6 +752,11 @@ package ScoreboardGenericPkg is
     ) ; 
     
     ------------------------------------------------------------
+    -- Writing YAML Reports 
+    impure function GotScoreboards return boolean ;
+    procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    
+    ------------------------------------------------------------
     -- Generally these are not required.  When a simulation ends and 
     -- another simulation is started, a simulator will release all allocated items.  
     procedure Deallocate ;  -- Deletes all allocated items
@@ -923,6 +935,8 @@ package body ScoreboardGenericPkg is
     variable FirstIndexVar   : integer := 1 ;
     
     variable PrintIndexVar   : boolean := TRUE ; 
+    
+    variable CalledNewID     : boolean := FALSE ; 
 
     ------------------------------------------------------------
     -- Used by ScoreboardStore
@@ -958,6 +972,7 @@ package body ScoreboardGenericPkg is
       variable Result : ScoreboardIDType ; 
       variable MinNewNumItems : integer ;
     begin
+      CalledNewID := TRUE ;
       SetPrintIndex(FALSE) ; 
       MinNewNumItems := NumItems + 1 ; 
       if MinNewNumItems > HeadPointer'length then
@@ -976,6 +991,7 @@ package body ScoreboardGenericPkg is
       variable Result         : ScoreboardIDArrayType(X(X'left) to X(X'right)) ; 
       variable MinNewNumItems : integer ;
     begin
+      CalledNewID := TRUE ;
       SetPrintIndex(FALSE) ; 
       MinNewNumItems := NumItems + X(X'right) - X(X'left) + 1 ; 
       if MinNewNumItems > HeadPointer'length then
@@ -1020,6 +1036,7 @@ package body ScoreboardGenericPkg is
       variable Result         : ScoreboardIdMatrixType(X(X'left) to X(X'right), Y(Y'left) to Y(Y'right)) ; 
       variable MinNewNumItems : integer ;
     begin
+      CalledNewID := TRUE ;
       SetPrintIndex(FALSE) ; 
       MinNewNumItems := NumItems + ( (X(X'right) - X(X'left) + 1) * (Y(Y'right) - Y(Y'left) + 1) ) ; 
       if MinNewNumItems > HeadPointer'length then
@@ -1245,6 +1262,8 @@ package body ScoreboardGenericPkg is
       NameVar.Deallocate ; 
       
       ArrayLengthVar := 0 ; 
+      NumItems       := 0 ;
+      CalledNewID    := FALSE ;
     end procedure Deallocate ; 
 
     ------------------------------------------------------------
@@ -2449,6 +2468,62 @@ package body ScoreboardGenericPkg is
       Flush(FirstIndexVar, ItemNumber) ;
     end procedure Flush ; 
     
+    
+    ------------------------------------------------------------
+    impure function GotScoreboards return boolean is
+    ------------------------------------------------------------
+    begin
+      return CalledNewID ; 
+    end function GotScoreboards ;
+    
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteScoreboardYaml (Index : integer; file CovYamlFile : text) is
+    ------------------------------------------------------------
+      variable buf       : line ;
+      constant NAME_PREFIX : string := "  " ; 
+    begin
+      write(buf, NAME_PREFIX & "- Name:         " & '"' & GetAlertLogName(AlertLogIDVar(Index)) & '"' & LF) ; 
+      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ; 
+      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ; 
+      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ; 
+      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(PopCountVar(Index))         & '"' & LF) ; 
+      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(DropCountVar(Index))        & '"' & LF) ; 
+
+      writeline(CovYamlFile, buf) ;
+    end procedure WriteScoreboardYaml ;
+
+    ------------------------------------------------------------
+    procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
+    ------------------------------------------------------------
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_sb.yml", FileName) ; 
+      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      variable buf : line ;
+    begin
+      if AlertLogIDVar = NULL or AlertLogIDVar'length <= 0 then
+        Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
+        return ; 
+      end if ; 
+      
+      swrite(buf, "Version: 1.0" & LF) ; 
+      swrite(buf, "TestCase: " & '"' & GetAlertLogName & '"' & LF) ; 
+      swrite(buf, "Scoreboards: ") ; 
+      writeline(SbYamlFile, buf) ; 
+      if CalledNewID then 
+        -- Used by singleton
+        for i in 1 to NumItems loop
+          WriteScoreboardYaml(i, SbYamlFile) ; 
+        end loop ; 
+      else
+        -- Used by PT method, but not singleton
+        for i in AlertLogIDVar'range loop
+          WriteScoreboardYaml(i, SbYamlFile) ; 
+        end loop ; 
+      end if ; 
+      file_close(SbYamlFile) ;
+    end procedure WriteScoreboardYaml ;
+    
     ------------------------------------------------------------
     ------------------------------------------------------------
     -- Remaining Deprecated.     
@@ -2894,7 +2969,7 @@ package body ScoreboardGenericPkg is
   
   -- Simple Scoreboards
   procedure Flush (
-    constant ID          : in  ScoreboardIDType ;
+    constant ID          :  in  ScoreboardIDType ;
     constant ItemNumber  :  in  integer 
   ) is
   begin
@@ -2904,13 +2979,27 @@ package body ScoreboardGenericPkg is
 
   -- Tagged Scoreboards - only removes items that also match the tag
   procedure Flush (
-    constant ID          : in  ScoreboardIDType ;
+    constant ID          :  in  ScoreboardIDType ;
     constant Tag         :  in  string ; 
     constant ItemNumber  :  in  integer 
   ) is
   begin
     ScoreboardStore.Flush(ID.ID, Tag, ItemNumber) ; 
   end procedure Flush ; 
+  
+  
+  ------------------------------------------------------------
+  -- Scoreboard YAML Reports
+  impure function GotScoreboards return boolean is
+  begin
+    return ScoreboardStore.GotScoreboards ; 
+  end function GotScoreboards ; 
+  
+  ------------------------------------------------------------
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
+  begin
+    ScoreboardStore.WriteScoreboardYaml(FileName, OpenKind) ; 
+  end procedure WriteScoreboardYaml ; 
   
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and 
