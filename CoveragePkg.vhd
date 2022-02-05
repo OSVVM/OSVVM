@@ -5050,7 +5050,7 @@ package body CoveragePkg is
       -- If no bins, FAIL and return (if resumed)
       if CovStructPtr(ID.ID).NumBins < 1 then
         Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
-                       "CoveragePkg.WriteCovDb: no bins defined ", FAILURE) ;
+                       "CoveragePkg.WriteCovYaml: no bins defined ", FAILURE) ;
         return ; 
       end if ; 
       
