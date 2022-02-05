@@ -736,11 +736,11 @@ package body MemoryPkg is
             ReadHexToken(buf, Addr, StrLen) ; 
             exit ReadLineLoop when AlertIf(MemStructPtr(ID).AlertLogID, StrLen = 0, "MemoryPkg.FileReadX: Address length 0 on line: " & to_string(LineNum), FAILURE) ;
             exit ItemLoop when AlertIf(MemStructPtr(ID).AlertLogID, Addr < SmallAddr, 
-                                           "MemoryPkg.FileReadX: Address in file: " & to_hstring(Addr) & 
-                                           " < StartAddr: " & to_hstring(StartAddr) & " on line: " & to_string(LineNum)) ; 
+                                           "MemoryPkg.FileReadX: Address in file: " & to_hxstring(Addr) & 
+                                           " < StartAddr: " & to_hxstring(StartAddr) & " on line: " & to_string(LineNum)) ; 
             exit ItemLoop when AlertIf(MemStructPtr(ID).AlertLogID, Addr > BigAddr, 
-                                           "MemoryPkg.FileReadX: Address in file: " & to_hstring(Addr) & 
-                                           " > EndAddr: " & to_hstring(BigAddr) & " on line: " & to_string(LineNum)) ; 
+                                           "MemoryPkg.FileReadX: Address in file: " & to_hxstring(Addr) & 
+                                           " > EndAddr: " & to_hxstring(BigAddr) & " on line: " & to_string(LineNum)) ; 
           
           elsif DataFormat = HEX and ishex(NextChar) then 
           -- Get Hex Data
@@ -748,7 +748,7 @@ package body MemoryPkg is
             exit ReadLineLoop when AlertIfNot(MemStructPtr(ID).AlertLogID, StrLen > 0, 
               "MemoryPkg.FileReadH: Error while reading data on line: " & to_string(LineNum) &
               "  Item number: " & to_string(ItemNum), FAILURE) ;
-            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hstring(Addr) & ", Data => " & to_hstring(Data) & ")", DEBUG) ; 
+            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hxstring(Addr) & ", Data => " & to_hxstring(Data) & ")", DEBUG) ; 
             MemWrite(ID, Addr, data) ; 
             Addr := Addr + AddrInc ; 
             
@@ -760,7 +760,7 @@ package body MemoryPkg is
             exit ReadLineLoop when AlertIfNot(MemStructPtr(ID).AlertLogID, StrLen > 0, 
               "MemoryPkg.FileReadB: Error while reading data on line: " & to_string(LineNum) &
               "  Item number: " & to_string(ItemNum), FAILURE) ;
-            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hstring(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
+            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hxstring(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
             MemWrite(ID, Addr, data) ; 
             Addr := Addr + AddrInc ; 
           
@@ -921,8 +921,8 @@ package body MemoryPkg is
 
       if StartAddr > EndAddr then 
       -- Only support ascending addresses
-        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  StartAddr: " & to_hstring(StartAddr) & 
-                             " > EndAddr: " & to_hstring(EndAddr), FAILURE) ;
+        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  StartAddr: " & to_hxstring(StartAddr) & 
+                             " > EndAddr: " & to_hxstring(EndAddr), FAILURE) ;
         return ; 
       end if ; 
             
