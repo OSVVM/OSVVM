@@ -2484,7 +2484,7 @@ package body ScoreboardGenericPkg is
       variable buf       : line ;
       constant NAME_PREFIX : string := "  " ; 
     begin
-      write(buf, NAME_PREFIX & "- Name:         " & '"' & GetAlertLogName(AlertLogIDVar(Index)) & '"' & LF) ; 
+      write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(AlertLogIDVar(Index))) & '"' & LF) ; 
       write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ; 
       write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ; 
       write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ; 
