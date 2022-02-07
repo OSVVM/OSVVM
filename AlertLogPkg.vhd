@@ -26,6 +26,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2022   2022.02    SetAlertPrintCount and GetAlertPrintCount
 --    01/2022   2022.01    For AlertIfEqual and AffirmIfEqual, all arrays of std_ulogic use to_hxstring
 --                         Updated return value for PathTail
 --    10/2021   2021.10    Moved EndOfTestSummary to ReportPkg 
@@ -433,7 +434,12 @@ package AlertLogPkg is
   procedure SetAlertStopCount(Level : AlertType ;  Count : integer) ;
   impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
   impure function GetAlertStopCount(Level : AlertType) return integer ;
-
+  
+  procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
+  procedure SetAlertPrintCount(Level : AlertType ;  Count : integer) ;
+  impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
+  impure function GetAlertPrintCount(Level : AlertType) return integer ;
+  
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
     FailOnWarning            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
@@ -706,6 +712,9 @@ package body AlertLogPkg is
     procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
     impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
 
+    procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
+    impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
+  
     procedure SetAlertEnable(Level : AlertType ;  Enable : boolean) ;
     procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
     impure function GetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType) return boolean ;
@@ -808,6 +817,7 @@ package body AlertLogPkg is
       PassedGoal          : Integer ;
       PassedGoalSet       : Boolean ;
       AlertStopCount      : AlertCountType ;
+      AlertPrintCount     : AlertCountType ;
       AlertEnabled        : AlertEnableType ;
       LogEnabled          : LogEnableType ;
       DoNotReport         : Boolean ;
@@ -963,7 +973,7 @@ package body AlertLogPkg is
       if GlobalAlertEnabledVar then
         localAlertLogID := VerifyID(AlertLogID) ;
          -- Write when Alert is Enabled
-        if AlertLogPtr(localAlertLogID).AlertEnabled(Level) then
+        if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) < AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
           -- Print  %% Alert (nominally)
 --          write(buf, AlertPrefix) ;
           write(buf, AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ) ;
@@ -2616,7 +2626,7 @@ package body AlertLogPkg is
           LogEnabled   := AlertLogPtr(ParentID).LogEnabled ;
           EnQueueID(AlertLogID, ParentID, TRUE) ;
         end if ;
-        AlertStopCount := (FAILURE => integer'right, ERROR => integer'right, WARNING => integer'right) ;
+        AlertStopCount := (FAILURE | ERROR | WARNING => integer'right) ;
       end if ;
       AlertLogPtr(AlertLogID).Name                := new string'(NAME) ;
       AlertLogPtr(AlertLogID).NameLower           := new string'(to_lower(NAME)) ;
@@ -2627,6 +2637,7 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).PassedGoal          := 0 ;
       AlertLogPtr(AlertLogID).AlertEnabled        := AlertEnabled ;
       AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
+      AlertLogPtr(AlertLogID).AlertPrintCount     := (FAILURE | ERROR | WARNING => integer'right) ;
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
       AlertLogPtr(AlertLogID).DoNotReport         := DoNotReport ;
       -- Set ChildID, ChildIDLast, SiblingID to ALERTLOG_ID_NOT_ASSIGNED
@@ -3050,7 +3061,7 @@ package body AlertLogPkg is
       variable localAlertLogID : AlertLogIDType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      LocalSetAlertStopCount(AlertLogID, Level, Count) ;
+      LocalSetAlertStopCount(localAlertLogID, Level, Count) ;
     end procedure SetAlertStopCount ;
 
     ------------------------------------------------------------
@@ -3061,6 +3072,24 @@ package body AlertLogPkg is
       localAlertLogID := VerifyID(AlertLogID) ;
       return AlertLogPtr(localAlertLogID).AlertStopCount(Level) ;
     end function GetAlertStopCount ;
+
+    ------------------------------------------------------------
+    procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      AlertLogPtr(localAlertLogID).AlertPrintCount(Level) := Count ;
+    end procedure SetAlertPrintCount ;
+
+    ------------------------------------------------------------
+    impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).AlertPrintCount(Level) ;
+    end function GetAlertPrintCount ;
 
     ------------------------------------------------------------
     procedure SetAlertEnable(Level : AlertType ;  Enable : boolean) is
@@ -5572,6 +5601,45 @@ package body AlertLogPkg is
     return result ;
   end function GetAlertStopCount ;
 
+  ------------------------------------------------------------
+  procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertPrintCount(AlertLogID, Level, Count) ;
+    -- synthesis translate_on
+  end procedure SetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  procedure SetAlertPrintCount(Level : AlertType ;  Count : integer) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertPrintCount(ALERTLOG_DEFAULT_ID, Level, Count) ;
+    -- synthesis translate_on
+  end procedure SetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer is
+  ------------------------------------------------------------
+    variable result : integer ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertPrintCount(AlertLogID, Level) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  impure function GetAlertPrintCount(Level : AlertType) return integer is
+  ------------------------------------------------------------
+    variable result : integer ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertPrintCount(ALERTLOG_DEFAULT_ID, Level) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertPrintCount ;
 
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
