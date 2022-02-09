@@ -554,7 +554,6 @@ package body TextUtilPkg is
   -- Copyright 2019 IEEE P1076 WG Authors
   -- License:  Apache License 2.0 - same as this package
   ------------------------------------------------------------
-    alias    aA : std_logic_vector(1 to A'length) is A ; -- NULL array handling
     constant STRING_LEN   : integer := (A'length+3)/4;
     variable result       : string(1 to STRING_LEN);
     constant EXTEND_A_LEN : integer := STRING_LEN*4 ;
@@ -563,8 +562,11 @@ package body TextUtilPkg is
     variable HexVal       : std_ulogic_vector(1 to 4) ; 
     variable PrintBinary  : boolean := FALSE ; 
   begin
-    if IsSigned or is_x(aA(1)) then 
-      PadA := (others => aA(1)) ; 
+    if A'length = 0 then 
+      return "" ;
+    end if ; 
+    if IsSigned or is_x(A(A'left)) then 
+      PadA := (others => A(A'left)) ; 
     else
       PadA := (others => '0') ; 
     end if ; 
