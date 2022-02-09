@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
 --    01/2022   2022.01    Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
 --    08/2020   2020.08    Added ReadUntilDelimiterOrEOL and FindDelimiter
 --    01/2020   2020.01    Updated Licenses to Apache
@@ -553,6 +554,7 @@ package body TextUtilPkg is
   -- Copyright 2019 IEEE P1076 WG Authors
   -- License:  Apache License 2.0 - same as this package
   ------------------------------------------------------------
+    alias    aA : std_logic_vector(1 to A'length) is A ; -- NULL array handling
     constant STRING_LEN   : integer := (A'length+3)/4;
     variable result       : string(1 to STRING_LEN);
     constant EXTEND_A_LEN : integer := STRING_LEN*4 ;
@@ -561,8 +563,8 @@ package body TextUtilPkg is
     variable HexVal       : std_ulogic_vector(1 to 4) ; 
     variable PrintBinary  : boolean := FALSE ; 
   begin
-    if IsSigned or is_x(A(A'left)) then 
-      PadA := (others => A(A'left)) ; 
+    if IsSigned or is_x(aA(1)) then 
+      PadA := (others => aA(1)) ; 
     else
       PadA := (others => '0') ; 
     end if ; 

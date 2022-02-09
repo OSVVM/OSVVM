@@ -24,7 +24,7 @@
 --    11/2016   2016.11    Refinement to MemRead to return value, X (if X), U (if not initialized)
 --    01/2016   2016.01    Update for buf.all(buf'left)
 --    06/2015   2015.06    Updated for Alerts, ...
---                         Numerous revisions for VHDL Testbenches and Verification
+--    ...       ...        Numerous revisions for VHDL Testbenches and Verification
 --    05/2005   0.1        Initial revision
 --
 --
