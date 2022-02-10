@@ -128,6 +128,28 @@ package TextUtilPkg is
   function to_hxstring ( A : std_ulogic_vector) return string ;
   function to_hxstring ( A : unsigned) return string ;
   function to_hxstring ( A : signed) return string ; 
+  
+  ------------------------------------------------------------
+  -- Justify
+  --   w/ Fill Character
+  --   w/o Fill character, Parameter order & names sensible
+  ------------------------------------------------------------
+  type AlignType is (RIGHT, LEFT, CENTER) ;
+  
+  function Justify (
+    S       : string ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string ;  
+
+  function Justify (
+    S       : string ;
+    Fill    : character ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string ;
+
+
 
 end TextUtilPkg ;
   
@@ -629,6 +651,40 @@ package body TextUtilPkg is
   begin
     return local_to_hxstring(std_ulogic_vector(A), IsSigned => TRUE) ; 
   end function to_hxstring ; 
+  
+  ------------------------------------------------------------
+  -- Justify
+  --   w/ Fill Character
+  --   w/o Fill character, Parameter order & names sensible
+  ------------------------------------------------------------
+  function Justify (
+    S       : string ;
+    Fill    : character ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string is
+    constant FillLen     : integer := maximum(1, Amount - S'length) ; 
+    constant HalfFillLen : integer := (FillLen+1)/2 ; 
+    constant FillString  : string(1 to  FillLen) := (others => FILL) ;
+  begin
+    if S'length >= Amount then
+      return S ;
+    end if ;
+    
+    case Align is
+      when LEFT   =>  return S & FillString ; 
+      when RIGHT  =>  return FillString & S ;
+      when CENTER =>  return FillString(1 to HalfFillLen) & S & FillString(HalfFillLen+1 to FillLen) ; 
+    end case ; 
+  end function Justify ; 
 
+  function Justify (
+    S       : string ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string is
+  begin
+    return Justify(S, ' ', Amount, Align) ; 
+  end function Justify ;   
 
 end package body TextUtilPkg ;
