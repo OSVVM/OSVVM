@@ -42,7 +42,6 @@
 library osvvm
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
-analyze NameStorePkg.vhd
 analyze OsvvmGlobalPkg.vhd
 
 # Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
@@ -55,6 +54,8 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
 analyze TranscriptPkg.vhd
 analyze TextUtilPkg.vhd
 analyze AlertLogPkg.vhd
+
+analyze NameStorePkg.vhd
 
 analyze MessageListPkg.vhd
 # PT based MessagePkg replaced by List based MessageListPkg

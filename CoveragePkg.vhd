@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2022   2022.02    Updated NewID for new searching modes
 --    01/2022   2022.01    Added DeallocateBins and TCover   
 --                         Updated AddBins and AddCross s.t. can set AtLeast and Weight to 0
 --                             GenBin defaults AtLeast and Weight to 0.  AddBins and AddCross to 1.
@@ -295,7 +296,13 @@ package CoveragePkg is
   ) ;
 
   ------------------------------------------------------------
-  impure function NewID (NameIn : String) return CoverageIDType ;
+  impure function NewID (
+    Name                : String ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ; 
+    Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+  ) return CoverageIDType ;
 
   ------------------------------------------------------------
   -- /////////////////////////////////////////
@@ -793,7 +800,13 @@ package CoveragePkg is
   ------------------------------------------------------------------------------------------
   type CovPType is protected
     ------------------------------------------------------------
-    impure function NewID (NameIn : String) return CoverageIDType ;
+    impure function NewID (
+      Name                : String ;
+      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ; 
+      Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+    ) return CoverageIDType ;
     impure function GetNumIDs return integer ;
 
     ------------------------------------------------------------
@@ -2277,48 +2290,62 @@ package body CoveragePkg is
     procedure GrowNumberItems (
     ------------------------------------------------------------
       variable ItemArrayPtr     : InOut ItemArrayPtrType ;
-      constant NewNumItems      : in integer ;
-      constant CurNumItems      : in integer ;
+      variable NumItems         : InOut integer ;
+      constant GrowAmount       : in integer ;
+--      constant NewNumItems      : in integer ;
+--      constant CurNumItems      : in integer ;
       constant MinNumItems      : in integer
     ) is
       variable oldItemArrayPtr  : ItemArrayPtrType ;
+      variable NewNumItems : integer ;
     begin
+      NewNumItems := NumItems + GrowAmount ;
       if ItemArrayPtr = NULL then
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr(1 to CurNumItems) := oldItemArrayPtr(1 to CurNumItems) ;
+        ItemArrayPtr(1 to NumItems) := oldItemArrayPtr(1 to NumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
+      NumItems := NewNumItems ; 
     end procedure GrowNumberItems ;
 
     ------------------------------------------------------------
-    impure function NewID (NameIn : String) return CoverageIDType is
+    impure function NewID (
     ------------------------------------------------------------
-      variable NewNumItems : integer ;
-      variable NewCoverageID : CoverageIDType ;
-      variable NameID : integer ; 
+      Name                : String ;
+      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ; 
+      Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+    ) return CoverageIDType is
+      variable NewCoverageID       : CoverageIDType ;
+      variable NameID              : integer ; 
+      variable ResolvedSearch      : NameSearchType ; 
+      variable ResolvedPrintParent : AlertLogPrintParentType ; 
     begin
-      NameID := LocalNameStore.find(NameIn) ; 
+      ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, Search) ; 
+      ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, PrintParent) ; 
+    
+      NameID := LocalNameStore.find(Name, ParentID, ResolvedSearch) ; 
+      
       if NameID /= ID_NOT_FOUND.ID then 
         NewCoverageID := (ID => NameID) ;
-        SetName(NewCoverageID, NameIn) ;
+        SetName(NewCoverageID, Name) ; -- redundant - refactor after diverge.  Needed if deallocate
         return NewCoverageID ; 
       else
-        NewNumItems   := NumItems + 1 ;
-        GrowNumberItems(CovStructPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
-        NumItems      := NewNumItems ;
-        NameID := LocalNameStore.NewID(NameIn) ;
+        -- Add New Coverage Model to Structure 
+        GrowNumberItems(CovStructPtr, NumItems, 1, MIN_NUM_ITEMS) ;
         CovStructPtr(NumItems) := COV_STRUCT_INIT ;
         NewCoverageID := (ID => NumItems) ;
-        InitSeed( NewCoverageID, NameIn) ;
-        SetName( NewCoverageID, NameIn) ;
-        SetAlertLogID(NewCoverageID, NameIn, OSVVM_COVERAGE_ALERTLOG_ID, FALSE) ; 
-  --      CovStructPtr(NumItems).AlertLogID := OSVVM_COVERAGE_ALERTLOG_ID ;
-  --!!
-  --!!  Set name for each Coverage Point.
-  --!!
+        -- Create AlertLogID
+        CovStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
+        -- Add item to NameStore
+        NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
+        AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;  
+        InitSeed( NewCoverageID, Name) ;
+        SetName( NewCoverageID, Name) ; -- redundant - refactor after diverge     
         return NewCoverageID ;
       end if ; 
     end function NewID ;
@@ -2582,7 +2609,7 @@ package body CoveragePkg is
     impure function GetNamePlus(ID : CoverageIDType; prefix, suffix : string) return String is
     ------------------------------------------------------------
     begin
-      if CovStructPtr(ID.ID).CovName /= NULL and (CovStructPtr(ID.ID).CovName.all /= GetAlertLogName(CovStructPtr(ID.ID).AlertLogID))then
+      if CovStructPtr(ID.ID).CovName /= NULL and (CovStructPtr(ID.ID).CovName.all /= GetAlertLogName(CovStructPtr(ID.ID).AlertLogID)) then
         -- return Name if set
         return prefix & CovStructPtr(ID.ID).CovName.all & suffix ;
       elsif CovStructPtr(ID.ID).AlertLogID = OSVVM_COVERAGE_ALERTLOG_ID and CovStructPtr(ID.ID).CovMessage /= NULL then
@@ -5055,6 +5082,7 @@ package body CoveragePkg is
       end if ; 
       
       write(buf, NAME_PREFIX & "- Name: "     & '"' & GetName(ID) & '"' & LF) ; 
+--!! TODO: Add Writing for ParentName, ReportMode, Search, PrintParent
       write(buf, NAME_PREFIX & "  TestCases: " & LF) ; 
       write(buf, NAME_PREFIX & "    - " & '"' & TestCaseName & '"' & LF) ; 
 --!! Add code to list out merged tests      
@@ -5180,18 +5208,20 @@ package body CoveragePkg is
       variable Found       : out boolean
     ) is
       variable buf  : line ;
-      variable Name : line ; 
+      variable sName : line ; 
     begin
       Found := FALSE ; 
       ReadLoop: loop
         ReadFindToken (CovYamlFile, "- Name:", buf, Found) ; 
         exit ReadLoop when not Found ; 
         -- Get the Name
-        ReadQuotedString(buf, Name) ;
-        exit when AlertIf(OSVVM_COV_ALERTLOG_ID, Name = NULL, 
+        ReadQuotedString(buf, sName) ;
+        exit when AlertIf(OSVVM_COV_ALERTLOG_ID, sName = NULL, 
             "CoveragePkg.ReadCovYaml: Unnamed Coverage Model.", COV_READ_YAML_ALERT_LEVEL);
-        ID := NewID(Name.all) ; 
-        deallocate(Name) ; 
+            
+--!! TODO: Add reading for ParentName, ReportMode, Search, PrintParent
+        ID := NewID(sName.all, ReportMode => ENABLED, Search => NAME_AND_PARENT, PrintParent => PRINT_NAME_AND_PARENT) ; 
+        deallocate(sName) ; 
         Found := TRUE ; 
         exit ; 
       end loop ReadLoop ; 
@@ -7599,9 +7629,15 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  impure function NewID (NameIn : String) return CoverageIDType is
+  impure function NewID (
+    Name                : String ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ; 
+    Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+  ) return CoverageIDType is
   begin
-    return CoverageStore.NewID (NameIn) ;
+    return CoverageStore.NewID (Name) ;
   end function NewID ;
 
 

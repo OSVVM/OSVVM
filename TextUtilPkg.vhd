@@ -149,6 +149,11 @@ package TextUtilPkg is
     Align   : AlignType := LEFT
   ) return string ;
 
+  ------------------------------------------------------------
+  -- FileExists
+  --    Return TRUE if file exists
+  ------------------------------------------------------------
+  impure function FileExists(FileName : string) return boolean ; 
 
 
 end TextUtilPkg ;
@@ -686,5 +691,18 @@ package body TextUtilPkg is
   begin
     return Justify(S, ' ', Amount, Align) ; 
   end function Justify ;   
+  
+  ------------------------------------------------------------
+  -- FileExists
+  --    Return TRUE if file exists
+  ------------------------------------------------------------
+  impure function FileExists(FileName : string) return boolean is 
+    file     FileID : text ;
+    variable status : file_open_status ;
+  begin
+    file_open(status, FileID, FileName, READ_MODE) ;
+    file_close(FileID) ;
+    return status = OPEN_OK ; 
+  end function FileExists ;   
 
 end package body TextUtilPkg ;

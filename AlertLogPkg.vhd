@@ -107,13 +107,15 @@ package AlertLogPkg is
 --  type   AlertLogIDType       is range integer'low to integer'high ; -- next revision
   subtype  AlertLogIDType       is integer ;
   type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;
-  type     AlertType        is (FAILURE, ERROR, WARNING) ;  -- NEVER
-  subtype  AlertIndexType   is AlertType range FAILURE to WARNING ;
-  type     AlertCountType   is array (AlertIndexType) of integer ;
-  type     AlertEnableType  is array(AlertIndexType) of boolean ;
-  type     LogType          is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER  -- See function IsLogEnableType
-  subtype  LogIndexType     is LogType range DEBUG to PASSED ;
-  type     LogEnableType    is array (LogIndexType) of boolean ;
+  type     AlertType            is (FAILURE, ERROR, WARNING) ;  -- NEVER
+  subtype  AlertIndexType       is AlertType range FAILURE to WARNING ;
+  type     AlertCountType       is array (AlertIndexType) of integer ;
+  type     AlertEnableType      is array(AlertIndexType) of boolean ;
+  type     LogType              is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER  -- See function IsLogEnableType
+  subtype  LogIndexType         is LogType range DEBUG to PASSED ;
+  type     LogEnableType        is array (LogIndexType) of boolean ;
+  type     AlertLogReportModeType  is (NONE, ENABLED, NONZERO) ; 
+  type     AlertLogPrintParentType is (PRINT_NAME, PRINT_NAME_AND_PARENT) ; 
 
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := ALERTLOG_BASE_ID + 1 ;
@@ -405,7 +407,13 @@ package AlertLogPkg is
   procedure InitializeAlertLogStruct ;
   impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
   impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
-  impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType ;
+  impure function NewID(
+    Name            : string ; 
+    ParentID        : AlertLogIDType          := ALERTLOG_ID_NOT_ASSIGNED ; 
+    ReportMode      : AlertLogReportModeType  := ENABLED ;
+    PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ; 
+    CreateHierarchy : boolean                 := TRUE
+  ) return AlertLogIDType ; 
   impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
@@ -524,12 +532,23 @@ package AlertLogPkg is
   function MetaMatch (L, R : std_ulogic_vector) return boolean ;
   function MetaMatch (L, R : unresolved_unsigned) return boolean ;
   function MetaMatch (L, R : unresolved_signed) return boolean ;
+  
+  ------------------------------------------------------------
+  -- Helper function for NewID in data structures
+  function ResolvePrintParent (
+  ------------------------------------------------------------
+    UniqueParent : boolean ;
+    PrintParent  : AlertLogPrintParentType 
+  ) return AlertLogPrintParentType ; 
+
 
   -- synthesis translate_on
 
   --  ------------------------------------------------------------
   -- Deprecated
   --
+  -- See NewID - consistency and parameter update.  DoNotReport replaced by ReportMode
+  impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType ;
 
   -- deprecated
   procedure AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
@@ -684,7 +703,14 @@ package body AlertLogPkg is
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
     impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
-    impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType; CreateHierarchy : Boolean; DoNotReport : Boolean) return AlertLogIDType ;
+    impure function NewID(
+      Name            : string ; 
+      ParentID        : AlertLogIDType ; 
+      ReportMode      : AlertLogReportModeType ;
+      PrintParent     : AlertLogPrintParentType ; 
+      CreateHierarchy : boolean
+    ) return AlertLogIDType ; 
+    -- impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType; CreateHierarchy : Boolean; DoNotReport : Boolean) return AlertLogIDType ;
     impure function GetReqID(Name : string ; PassedGoal : integer ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
     procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
@@ -820,7 +846,8 @@ package body AlertLogPkg is
       AlertPrintCount     : AlertCountType ;
       AlertEnabled        : AlertEnableType ;
       LogEnabled          : LogEnableType ;
-      DoNotReport         : Boolean ;
+      ReportMode          : AlertLogReportModeType ;
+      PrintParent         : AlertLogPrintParentType ;
       -- Used only by ReadTestSummaries
       TotalErrors         : integer ;
       AffirmPassedCount   : integer ; 
@@ -871,6 +898,7 @@ package body AlertLogPkg is
     variable DoneNameVar                 : NamePType ;
     variable PassNameVar                 : NamePType ;
     variable FailNameVar                 : NamePType ;
+    variable IdSeparatorVar              : NamePType ; 
 
     variable AlertLogJustifyAmountVar    : integer := 0 ;
     variable ReportJustifyAmountVar      : integer := 0 ;
@@ -879,13 +907,14 @@ package body AlertLogPkg is
     -- PT Local
     impure function VerifyID(
       AlertLogID : AlertLogIDType ;
-      LOWEST_ID  : AlertLogIDType := ALERTLOG_BASE_ID
+      LowestID   : AlertLogIDType := ALERTLOG_BASE_ID ;
+      InvalidID  : AlertLogIDType := ALERTLOG_DEFAULT_ID
     ) return AlertLogIDType is
     ------------------------------------------------------------
     begin
-      if AlertLogID < LOWEST_ID or AlertLogID > NumAlertLogIDsVar then
+      if AlertLogID < LowestID or AlertLogID > NumAlertLogIDsVar then
         Alert("Invalid AlertLogID") ;
-        return ALERTLOG_DEFAULT_ID ;
+        return InvalidID ;
       else
         return AlertLogID ;
       end if ;
@@ -966,8 +995,9 @@ package body AlertLogPkg is
     ) is
       variable buf : Line ;
       -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
-      variable StopDueToCount : boolean := FALSE ;
+      variable StopDueToCount  : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
+      variable ParentID        : AlertLogIDType ;
     begin
       -- Only write and count when GlobalAlertEnabledVar is enabled
       if GlobalAlertEnabledVar then
@@ -987,7 +1017,13 @@ package body AlertLogPkg is
           end if ;
           -- AlertLog Name
           if FoundAlertHierVar and WriteAlertNameVar then
-            write(buf, " in " & LeftJustify(AlertLogPtr(localAlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+            if AlertLogPtr(localAlertLogID).PrintParent = PRINT_NAME then 
+              write(buf, " in " & LeftJustify(AlertLogPtr(localAlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+            else
+              ParentID := AlertLogPtr(localAlertLogID).ParentID ;
+              write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) & 
+                AlertLogPtr(localAlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+            end if ; 
           end if ;
           -- Prefix
           if AlertLogPtr(localAlertLogID).Prefix /= NULL then
@@ -1070,7 +1106,7 @@ package body AlertLogPkg is
         end if ;
         LowerLevelValues := CalcJustify(CurID, AlertLogPtr(CurID).Name'length, IndentAmount + 2) ;
         ResultValues(1)  := maximum(ResultValues(1), LowerLevelValues(1)) ;
-        if not AlertLogPtr(AlertLogID).DoNotReport then
+        if AlertLogPtr(AlertLogID).ReportMode /= NONE then
           ResultValues(2)  := maximum(ResultValues(2), LowerLevelValues(2)) ;
         end if ; 
         CurID := AlertLogPtr(CurID).SiblingID ;
@@ -1392,18 +1428,13 @@ package body AlertLogPkg is
       Prefix            : string ;
       IndentAmount      : integer ;
       ReportWhenZero    : boolean ;
+      HasErrors         : boolean ;
       HasDisabledErrors : boolean
     ) is
       variable buf : line ;
       alias CurID  : AlertLogIDType is AlertLogID ;
     begin
-      if
-         ReportWhenZero or   -- ReportAlerts
-         -- ReportNonZeroAlerts and  (AlertCount or (FailOn and DisabledAlertCount))
-         (SumAlertCount(AlertLogPtr(CurID).AlertCount) > 0) or
-         (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(CurID).DisabledAlertCount) > 0)) or
-         (FailOnRequirementErrorsVar and (AlertLogPtr(CurID).PassedCount < AlertLogPtr(CurID).PassedGoal))
-      then
+      if ReportWhenZero or HasErrors then
         write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(CurID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
         write(buf, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
         write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
@@ -1438,6 +1469,7 @@ package body AlertLogPkg is
     ) is
       variable buf : line ;
       variable CurID : AlertLogIDType ;
+      variable HasErrors : boolean ; 
     begin
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
@@ -1446,12 +1478,18 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ;
-        if not AlertLogPtr(CurID).DoNotReport then
+        HasErrors :=          
+          (SumAlertCount(AlertLogPtr(CurID).AlertCount) > 0) or
+          (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(CurID).DisabledAlertCount) > 0)) or
+          (FailOnRequirementErrorsVar and (AlertLogPtr(CurID).PassedCount < AlertLogPtr(CurID).PassedGoal)) ;
+
+        if AlertLogPtr(AlertLogID).ReportMode = ENABLED or (AlertLogPtr(AlertLogID).ReportMode = NONZERO and HasErrors) then
           PrintOneChild(
             AlertLogID         => CurID,
             Prefix             => Prefix,
             IndentAmount       => IndentAmount,
             ReportWhenZero     => ReportWhenZero,
+            HasErrors          => HasErrors,
             HasDisabledErrors  => HasDisabledErrors
           ) ;
           IterateAndPrintChildren(
@@ -1667,7 +1705,7 @@ package body AlertLogPkg is
             RequirementsPassed := 0 ;
             RequirementsGoal   := 0 ;
           end if ; 
-          if not AlertLogPtr(CurID).DoNotReport then
+          if AlertLogPtr(AlertLogID).ReportMode /= NONE then
             WriteOneAlertYaml(
               TestFile             => TestFile,
               AlertLogID           => CurID,
@@ -2472,6 +2510,7 @@ package body AlertLogPkg is
       Level        : LogType
     ) is
       variable buf : line ;
+      variable ParentID : AlertLogIDType ;
       -- constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
     begin
       -- Print  %% log (nominally)
@@ -2493,7 +2532,13 @@ package body AlertLogPkg is
       end if ;
       -- AlertLog Name
       if FoundAlertHierVar and WriteLogNameVar then
-        write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then 
+          write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        else
+          ParentID := AlertLogPtr(AlertLogID).ParentID ;
+          write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) & 
+            AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        end if ; 
       end if ;
       -- Prefix
       if AlertLogPtr(AlertLogID).Prefix /= NULL then
@@ -2604,7 +2649,7 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    procedure NewAlertLogRec(AlertLogID : AlertLogIDType ; Name : string ; ParentID : AlertLogIDType; DoNotReport : Boolean := FALSE) is
+    procedure NewAlertLogRec(AlertLogID : AlertLogIDType ; iName : string ; ParentID : AlertLogIDType; ReportMode : AlertLogReportModeType := ENABLED; PrintParent : AlertLogPrintParentType := PRINT_NAME_AND_PARENT) is
     ------------------------------------------------------------
       variable AlertEnabled   : AlertEnableType ;
       variable AlertStopCount : AlertCountType ;
@@ -2628,8 +2673,8 @@ package body AlertLogPkg is
         end if ;
         AlertStopCount := (FAILURE | ERROR | WARNING => integer'right) ;
       end if ;
-      AlertLogPtr(AlertLogID).Name                := new string'(NAME) ;
-      AlertLogPtr(AlertLogID).NameLower           := new string'(to_lower(NAME)) ;
+      AlertLogPtr(AlertLogID).Name                := new string'(iName) ;
+      AlertLogPtr(AlertLogID).NameLower           := new string'(to_lower(iName)) ;
       AlertLogPtr(AlertLogID).AlertCount          := (0, 0, 0) ;
       AlertLogPtr(AlertLogID).DisabledAlertCount  := (0, 0, 0) ;
       AlertLogPtr(AlertLogID).AffirmCount         := 0 ;
@@ -2639,7 +2684,14 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
       AlertLogPtr(AlertLogID).AlertPrintCount     := (FAILURE | ERROR | WARNING => integer'right) ;
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
-      AlertLogPtr(AlertLogID).DoNotReport         := DoNotReport ;
+      AlertLogPtr(AlertLogID).ReportMode          := ReportMode ;
+      -- Update PrintParent
+      if ParentID /= ALERTLOG_BASE_ID then 
+        AlertLogPtr(AlertLogID).PrintParent := PrintParent ;
+      else 
+        AlertLogPtr(AlertLogID).PrintParent := PRINT_NAME ;
+      end if ; 
+      
       -- Set ChildID, ChildIDLast, SiblingID to ALERTLOG_ID_NOT_ASSIGNED
       AlertLogPtr(AlertLogID).SiblingID           := ALERTLOG_ID_NOT_ASSIGNED ;
       AlertLogPtr(AlertLogID).ChildID             := ALERTLOG_ID_NOT_ASSIGNED ;
@@ -2849,31 +2901,48 @@ package body AlertLogPkg is
     end procedure AdjustID ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType; CreateHierarchy : Boolean; DoNotReport : Boolean) return AlertLogIDType is
+    impure function NewID(
+      Name            : string ; 
+      ParentID        : AlertLogIDType ; 
+      ReportMode      : AlertLogReportModeType ;
+      PrintParent     : AlertLogPrintParentType ; 
+      CreateHierarchy : boolean
+    ) return AlertLogIDType is 
+    -- impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType; CreateHierarchy : Boolean; DoNotReport : Boolean) return AlertLogIDType is
     ------------------------------------------------------------
       variable ResultID : AlertLogIDType ;
       variable localParentID : AlertLogIDType ;
     begin
-      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
+      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED, ALERTLOG_ID_NOT_ASSIGNED) ;
       ResultID      := LocalFindAlertLogID(Name, localParentID) ;
-      if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
-        if AlertLogPtr(ResultID).ParentIDSet = FALSE and localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
-          AdjustID(ResultID, localParentID, TRUE) ;
-        -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
-        end if ;
-      else
+      if ResultID = ALERTLOG_ID_NOT_FOUND then  
         -- Create a new ID
         ResultID := GetNextAlertLogID ;
-        NewAlertLogRec(ResultID, Name, localParentID, DoNotReport) ;
+        NewAlertLogRec(ResultID, Name, localParentID, ReportMode, PrintParent) ;
         FoundAlertHierVar := TRUE ;
         if CreateHierarchy then
           FoundReportHierVar := TRUE ;
         end if ;
         AlertLogPtr(ResultID).PassedGoal := 0 ;
         AlertLogPtr(ResultID).PassedGoalSet := FALSE ;
+      else
+        -- Found existing ID.  Update it.
+        if AlertLogPtr(ResultID).ParentIDSet = FALSE then
+          if localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
+            -- Update ParentID and potentially relocate in the structure
+            AdjustID(ResultID, localParentID, TRUE) ;
+            -- Update PrintParent
+            if localParentID /= ALERTLOG_BASE_ID then 
+              AlertLogPtr(ResultID).PrintParent := PrintParent ;
+            else 
+              AlertLogPtr(ResultID).PrintParent := PRINT_NAME ;
+            end if ; 
+          -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
+          end if ;
+        end if ;
       end if ;
       return ResultID ;
-    end function GetAlertLogID ;
+    end function NewID ;
 
     ------------------------------------------------------------
     impure function GetReqID(Name : string ; PassedGoal : integer ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType is
@@ -2882,33 +2951,18 @@ package body AlertLogPkg is
       variable localParentID : AlertLogIDType ;
     begin
       HasRequirementsVar := TRUE ;
-      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED) ;
+      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED, ALERTLOG_ID_NOT_ASSIGNED) ;
       ResultID := LocalFindAlertLogID(Name, localParentID) ;
-      if ResultID /= ALERTLOG_ID_NOT_FOUND then  -- found it, set localParentID
-        if AlertLogPtr(ResultID).ParentIDSet = FALSE then
-          if localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
-            AdjustID(ResultID, localParentID, TRUE) ;
-          else
-            AdjustID(ResultID, REQUIREMENT_ALERTLOG_ID, FALSE) ;
-          end if ;
-        end if ;
-        if AlertLogPtr(ResultID).PassedGoalSet = FALSE then
-          if PassedGoal >= 0 then
-            AlertLogPtr(ResultID).PassedGoal    := PassedGoal ;
-            AlertLogPtr(ResultID).PassedGoalSet := TRUE ;
-          else
-            AlertLogPtr(ResultID).PassedGoal    := DefaultPassedGoalVar ;
-            AlertLogPtr(ResultID).PassedGoalSet := FALSE ;
-          end if ;
-        end if ;
-      else
+      if ResultID = ALERTLOG_ID_NOT_FOUND then  
         -- Create a new ID
         ResultID := GetNextAlertLogID ;
         if localParentID = ALERTLOG_ID_NOT_ASSIGNED then
-          NewAlertLogRec(ResultID, Name, REQUIREMENT_ALERTLOG_ID) ;
+          NewAlertLogRec(ResultID, Name, REQUIREMENT_ALERTLOG_ID, ENABLED, PRINT_NAME) ;
           AlertLogPtr(ResultID).ParentIDSet := FALSE ;
         else
-          NewAlertLogRec(ResultID, Name, localParentID) ;
+          -- May want just PRINT_NAME here as PRINT_NAME_AND_PARENT is not backward compatible
+--          NewAlertLogRec(ResultID, Name, localParentID, ENABLED, PRINT_NAME_AND_PARENT) ;
+          NewAlertLogRec(ResultID, Name, localParentID, ENABLED, PRINT_NAME) ;
         end if ;
         FoundAlertHierVar := TRUE ;
         if CreateHierarchy then
@@ -2920,6 +2974,32 @@ package body AlertLogPkg is
         else
           AlertLogPtr(ResultID).PassedGoal := DefaultPassedGoalVar ;
           AlertLogPtr(ResultID).PassedGoalSet := FALSE ;
+        end if ;
+      else
+        -- Found existing ID.  Update it.
+        if AlertLogPtr(ResultID).ParentIDSet = FALSE then
+          if localParentID /= ALERTLOG_ID_NOT_ASSIGNED then
+            AdjustID(ResultID, localParentID, TRUE) ;
+            if localParentID /= REQUIREMENT_ALERTLOG_ID then 
+              -- May want just PRINT_NAME here as PRINT_NAME_AND_PARENT is not backward compatible
+--              AlertLogPtr(ResultID).PrintParent := PRINT_NAME_AND_PARENT ;
+              AlertLogPtr(ResultID).PrintParent := PRINT_NAME ;
+            else 
+              AlertLogPtr(ResultID).PrintParent := PRINT_NAME ;
+            end if ;             
+          else
+            -- Update if originally set by NewID/GetAlertLogID
+            AdjustID(ResultID, REQUIREMENT_ALERTLOG_ID, FALSE) ;
+          end if ;
+        end if ;
+        if AlertLogPtr(ResultID).PassedGoalSet = FALSE then
+          if PassedGoal >= 0 then
+            AlertLogPtr(ResultID).PassedGoal    := PassedGoal ;
+            AlertLogPtr(ResultID).PassedGoalSet := TRUE ;
+          else
+            AlertLogPtr(ResultID).PassedGoal    := DefaultPassedGoalVar ;
+            AlertLogPtr(ResultID).PassedGoalSet := FALSE ;
+          end if ;
         end if ;
       end if ;
       return ResultID ;
@@ -5395,12 +5475,35 @@ package body AlertLogPkg is
   end function FindAlertLogID ;
 
   ------------------------------------------------------------
+  impure function NewID(
+  ------------------------------------------------------------
+    Name            : string ; 
+    ParentID        : AlertLogIDType          := ALERTLOG_ID_NOT_ASSIGNED; 
+    ReportMode      : AlertLogReportModeType  := ENABLED ;
+    PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ; 
+    CreateHierarchy : boolean                 := TRUE
+  ) return AlertLogIDType is 
+    variable result : AlertLogIDType ;
+	begin
+    -- synthesis translate_off
+    result := AlertLogStruct.NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy) ; 
+    -- synthesis translate_on
+    return result ;
+  end function NewID ;
+
+  ------------------------------------------------------------
   impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType is
   ------------------------------------------------------------
     variable result : AlertLogIDType ;
-  begin
+		variable ReportMode  : AlertLogReportModeType := ENABLED ; 
+	begin
     -- synthesis translate_off
-    result := AlertLogStruct.GetAlertLogID(Name, ParentID, CreateHierarchy, DoNotReport) ;
+    if DoNotReport then 
+        ReportMode := NONE ;
+    end if;
+    -- PrintParent PRINT_NAME_AND_PARENT is not backward compatible with PRINT_NAME of the past 
+    result := AlertLogStruct.NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ; 
+--    result := AlertLogStruct.GetAlertLogID(Name, ParentID, CreateHierarchy, DoNotReport) ;
     -- synthesis translate_on
     return result ;
   end function GetAlertLogID ;
@@ -6060,6 +6163,24 @@ package body AlertLogPkg is
   begin
     return MetaMatch( std_ulogic_vector(L), std_ulogic_vector(R)) ;
   end function MetaMatch;
+  
+  ------------------------------------------------------------
+  -- Helper function for NewID in data structures
+  function ResolvePrintParent (
+  ------------------------------------------------------------
+    UniqueParent : boolean ;
+    PrintParent  : AlertLogPrintParentType 
+  ) return AlertLogPrintParentType is
+    variable result : AlertLogPrintParentType ; 
+  begin
+    if (not UniqueParent) and PrintParent = PRINT_NAME_AND_PARENT then 
+      result := PRINT_NAME ;
+    else 
+      result := PrintParent ; 
+    end if ; 
+    return result ; 
+  end function ResolvePrintParent ; 
+
   -- synthesis translate_on
 
   --  ------------------------------------------------------------
