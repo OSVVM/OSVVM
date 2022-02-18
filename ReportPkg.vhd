@@ -41,15 +41,10 @@
 --
 
 
-use std.textio.all ;
-use work.AlertLogPkg.all ;
-use work.CoveragePkg.all ;
-use work.ScoreboardPkg_slv.all ;
-use work.ScoreboardPkg_int.all ;
+  use work.AlertLogPkg.AlertCountType ;
 
 
 package ReportPkg is
-
 
   impure function EndOfTestReports (
     ReportAll      : boolean        := FALSE ;
@@ -72,6 +67,11 @@ end ReportPkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body ReportPkg is
+  use std.textio.all ;
+  use work.AlertLogPkg.all ;
+  use work.CoveragePkg.all ;
+  use work.ScoreboardPkg_slv.all ;
+  use work.ScoreboardPkg_int.all ;
 
   ------------------------------------------------------------
   procedure WriteCovSummaryYaml (FileName : string ) is
@@ -98,11 +98,11 @@ package body ReportPkg is
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
     
     WriteAlertSummaryYaml(
-      FileName        => "./reports/OsvvmRun.yml", 
+      FileName        => "OsvvmRun.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
     WriteCovSummaryYaml (
-      FileName        => "./reports/OsvvmRun.yml"
+      FileName        => "OsvvmRun.yml"
     ) ;
     WriteAlertYaml (
       FileName        => "./reports/" & GetAlertLogName & "_alerts.yml", 

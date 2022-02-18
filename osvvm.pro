@@ -40,6 +40,7 @@
 #  limitations under the License.
 #  
 library osvvm
+analyze TextUtilPkg.vhd
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
 analyze OsvvmGlobalPkg.vhd
@@ -52,7 +53,6 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
 }
 
 analyze TranscriptPkg.vhd
-analyze TextUtilPkg.vhd
 analyze AlertLogPkg.vhd
 
 analyze NameStorePkg.vhd
