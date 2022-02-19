@@ -27,6 +27,8 @@
 --  Revision History:
 --    Date      Version    Description
 --    02/2022   2022.02    SetAlertPrintCount and GetAlertPrintCount
+--                         Updated Alert s.t. on StopCount prints WriteAlertSummaryYaml and WriteAlertYaml
+--                         Added NewID with ReportMode, PrintParent
 --    01/2022   2022.01    For AlertIfEqual and AffirmIfEqual, all arrays of std_ulogic use to_hxstring
 --                         Updated return value for PathTail
 --    10/2021   2021.10    Moved EndOfTestSummary to ReportPkg
@@ -456,9 +458,23 @@ package AlertLogPkg is
   impure function GetAlertStopCount(Level : AlertType) return integer ;
 
   procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
-  procedure SetAlertPrintCount(Level : AlertType ;  Count : integer) ;
+  procedure SetAlertPrintCount(                               Level : AlertType ;  Count : integer) ;
   impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
-  impure function GetAlertPrintCount(Level : AlertType) return integer ;
+  impure function GetAlertPrintCount(                               Level : AlertType) return integer ;
+  procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Count : AlertCountType) ;
+  procedure SetAlertPrintCount(                               Count : AlertCountType) ;
+  impure function GetAlertPrintCount(AlertLogID : AlertLogIDType) return AlertCountType ;
+  impure function GetAlertPrintCount                              return AlertCountType ;
+
+  procedure SetAlertLogPrintParent(AlertLogID : AlertLogIDType ;  PrintParent : AlertLogPrintParentType) ;
+  procedure SetAlertLogPrintParent(                               PrintParent : AlertLogPrintParentType) ;
+  impure function GetAlertLogPrintParent(AlertLogID : AlertLogIDType) return AlertLogPrintParentType ;
+  impure function GetAlertLogPrintParent                              return AlertLogPrintParentType ;
+
+  procedure SetAlertLogReportMode(AlertLogID : AlertLogIDType ;  ReportMode : AlertLogReportModeType) ;
+  procedure SetAlertLogReportMode(                               ReportMode : AlertLogReportModeType) ;
+  impure function GetAlertLogReportMode(AlertLogID : AlertLogIDType) return AlertLogReportModeType ;
+  impure function GetAlertLogReportMode                              return AlertLogReportModeType ;
 
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
@@ -748,6 +764,15 @@ package body AlertLogPkg is
 
     procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
     impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
+    
+    procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Count : AlertCountType) ;
+    impure function GetAlertPrintCount(AlertLogID : AlertLogIDType) return AlertCountType ;
+
+    procedure SetAlertLogPrintParent(AlertLogID : AlertLogIDType ;  PrintParent : AlertLogPrintParentType) ;
+    impure function GetAlertLogPrintParent(AlertLogID : AlertLogIDType) return AlertLogPrintParentType ;
+
+    procedure SetAlertLogReportMode(AlertLogID : AlertLogIDType ;  ReportMode : AlertLogReportModeType) ;
+    impure function GetAlertLogReportMode(AlertLogID : AlertLogIDType) return AlertLogReportModeType ;  
 
     procedure SetAlertEnable(Level : AlertType ;  Enable : boolean) ;
     procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
@@ -3180,6 +3205,62 @@ package body AlertLogPkg is
       localAlertLogID := VerifyID(AlertLogID) ;
       return AlertLogPtr(localAlertLogID).AlertPrintCount(Level) ;
     end function GetAlertPrintCount ;
+
+    ------------------------------------------------------------
+    procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Count : AlertCountType) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      AlertLogPtr(localAlertLogID).AlertPrintCount(FAILURE) := Count(FAILURE) ;
+      AlertLogPtr(localAlertLogID).AlertPrintCount(ERROR)   := Count(ERROR) ;
+      AlertLogPtr(localAlertLogID).AlertPrintCount(WARNING) := Count(WARNING) ;
+    end procedure SetAlertPrintCount ;
+
+    ------------------------------------------------------------
+    impure function GetAlertPrintCount(AlertLogID : AlertLogIDType) return AlertCountType is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).AlertPrintCount ;
+    end function GetAlertPrintCount ;
+
+    ------------------------------------------------------------
+    procedure SetAlertLogPrintParent(AlertLogID : AlertLogIDType ;  PrintParent : AlertLogPrintParentType) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      AlertLogPtr(localAlertLogID).PrintParent := PrintParent ;
+    end procedure SetAlertLogPrintParent ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogPrintParent(AlertLogID : AlertLogIDType) return AlertLogPrintParentType is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).PrintParent ;
+    end function GetAlertLogPrintParent ;
+
+    ------------------------------------------------------------
+    procedure SetAlertLogReportMode(AlertLogID : AlertLogIDType ;  ReportMode : AlertLogReportModeType) is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      AlertLogPtr(localAlertLogID).ReportMode := ReportMode ;
+    end procedure SetAlertLogReportMode ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogReportMode(AlertLogID : AlertLogIDType) return AlertLogReportModeType is
+    ------------------------------------------------------------
+      variable localAlertLogID : AlertLogIDType ;
+    begin
+      localAlertLogID := VerifyID(AlertLogID) ;
+      return AlertLogPtr(localAlertLogID).ReportMode ;
+    end function GetAlertLogReportMode ;
 
     ------------------------------------------------------------
     procedure SetAlertEnable(Level : AlertType ;  Enable : boolean) is
@@ -5739,6 +5820,126 @@ package body AlertLogPkg is
     -- synthesis translate_on
     return result ;
   end function GetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Count : AlertCountType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertPrintCount(AlertLogID, Count) ;
+    -- synthesis translate_on
+  end procedure SetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  procedure SetAlertPrintCount(Count : AlertCountType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertPrintCount(ALERTLOG_DEFAULT_ID, Count) ;
+    -- synthesis translate_on
+  end procedure SetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  impure function GetAlertPrintCount(AlertLogID : AlertLogIDType) return AlertCountType is
+  ------------------------------------------------------------
+    variable result : AlertCountType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertPrintCount(AlertLogID) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  impure function GetAlertPrintCount return AlertCountType is
+  ------------------------------------------------------------
+    variable result : AlertCountType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertPrintCount(ALERTLOG_DEFAULT_ID) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertPrintCount ;
+
+  ------------------------------------------------------------
+  procedure SetAlertLogPrintParent(AlertLogID : AlertLogIDType ;  PrintParent : AlertLogPrintParentType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertLogPrintParent(AlertLogID, PrintParent) ;
+    -- synthesis translate_on
+  end procedure SetAlertLogPrintParent ;
+
+  ------------------------------------------------------------
+  procedure SetAlertLogPrintParent(                                PrintParent : AlertLogPrintParentType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertLogPrintParent(ALERTLOG_DEFAULT_ID, PrintParent) ;
+    -- synthesis translate_on
+  end procedure SetAlertLogPrintParent ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogPrintParent(AlertLogID : AlertLogIDType) return AlertLogPrintParentType is
+  ------------------------------------------------------------
+    variable result : AlertLogPrintParentType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertLogPrintParent(AlertLogID) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertLogPrintParent ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogPrintParent                              return AlertLogPrintParentType is
+  ------------------------------------------------------------
+    variable result : AlertLogPrintParentType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertLogPrintParent(ALERTLOG_DEFAULT_ID) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertLogPrintParent ;
+
+  ------------------------------------------------------------
+  procedure SetAlertLogReportMode(AlertLogID : AlertLogIDType ;  ReportMode : AlertLogReportModeType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertLogReportMode(AlertLogID, ReportMode) ;
+    -- synthesis translate_on
+  end procedure SetAlertLogReportMode ;
+
+  ------------------------------------------------------------
+  procedure SetAlertLogReportMode(                                ReportMode : AlertLogReportModeType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetAlertLogReportMode(ALERTLOG_DEFAULT_ID, ReportMode) ;
+    -- synthesis translate_on
+  end procedure SetAlertLogReportMode ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogReportMode(AlertLogID : AlertLogIDType) return AlertLogReportModeType is
+  ------------------------------------------------------------
+    variable result : AlertLogReportModeType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertLogReportMode(AlertLogID) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertLogReportMode ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogReportMode                              return AlertLogReportModeType is
+  ------------------------------------------------------------
+    variable result : AlertLogReportModeType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetAlertLogReportMode(ALERTLOG_DEFAULT_ID) ;
+    -- synthesis translate_on
+    return result ;
+  end function GetAlertLogReportMode ;
 
   ------------------------------------------------------------
   procedure SetAlertLogOptions (
