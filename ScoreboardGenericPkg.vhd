@@ -2788,7 +2788,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable ReportMode : AlertLogReportModeType ;
     begin
-      ReportMode := ENABLED when not DoNotReport else NONE ;  
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
       return NewID(Name, ParentAlertLogID, ReportMode => ReportMode) ; 
     end function NewID ;
 
@@ -2799,7 +2799,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable ReportMode : AlertLogReportModeType ;
     begin
-      ReportMode := ENABLED when not DoNotReport else NONE ;  
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
       return NewID(Name, (1, Size) , ParentAlertLogID, ReportMode => ReportMode) ; 
     end function NewID ;
 
@@ -2810,7 +2810,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable ReportMode     : AlertLogReportModeType ;
     begin
-      ReportMode := ENABLED when not DoNotReport else NONE ;  
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
       return NewID(Name, X, ParentAlertLogID, ReportMode => ReportMode) ; 
     end function NewID ;
 
@@ -2821,7 +2821,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable ReportMode     : AlertLogReportModeType ;
     begin
-      ReportMode := ENABLED when not DoNotReport else NONE ;  
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
       return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
     end function NewID ;        
      
@@ -2832,7 +2832,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable ReportMode     : AlertLogReportModeType ;
     begin
-      ReportMode := ENABLED when not DoNotReport else NONE ;  
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
       return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
     end function NewID ; 
         

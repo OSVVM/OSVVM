@@ -53,6 +53,7 @@ package NamePkg is
     impure function Get (DefaultName : string := "") return string ;
     impure function GetOpt return string ;
     impure function IsSet return boolean ; 
+    impure function NameLength return integer ; 
     procedure Clear ; -- clear name
     procedure Deallocate ; -- effectively alias to clear name
   end protected NamePType ;
@@ -105,6 +106,17 @@ package body NamePkg is
       return NamePtr /= NULL ; 
     end function IsSet ;      
     
+    ------------------------------------------------------------
+    impure function NameLength return integer is
+    ------------------------------------------------------------
+    begin
+      if NamePtr = NULL then 
+        return 0 ; 
+      else
+        return NamePtr.all'length ; 
+      end if ; 
+    end function NameLength ;
+
     ------------------------------------------------------------
     procedure Clear is  -- clear name
     ------------------------------------------------------------
