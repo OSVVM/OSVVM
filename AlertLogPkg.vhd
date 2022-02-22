@@ -27,8 +27,8 @@
 --  Revision History:
 --    Date      Version    Description
 --    02/2022   2022.02    SetAlertPrintCount and GetAlertPrintCount
---                         Updated Alert s.t. on StopCount prints WriteAlertSummaryYaml and WriteAlertYaml
 --                         Added NewID with ReportMode, PrintParent
+--                         Updated Alert s.t. on StopCount prints WriteAlertSummaryYaml and WriteAlertYaml
 --    01/2022   2022.01    For AlertIfEqual and AffirmIfEqual, all arrays of std_ulogic use to_hxstring
 --                         Updated return value for PathTail
 --    10/2021   2021.10    Moved EndOfTestSummary to ReportPkg
@@ -115,8 +115,11 @@ package AlertLogPkg is
   type     LogType              is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER  -- See function IsLogEnableType
   subtype  LogIndexType         is LogType range DEBUG to PASSED ;
   type     LogEnableType        is array (LogIndexType) of boolean ;
-  type     AlertLogReportModeType  is (NONE, ENABLED, NONZERO) ;
+  type     AlertLogReportModeType  is (DISABLED, ENABLED, NONZERO) ;
   type     AlertLogPrintParentType is (PRINT_NAME, PRINT_NAME_AND_PARENT) ;
+  
+  constant REPORTS_DIRECTORY : string := "" ; 
+--  constant REPORTS_DIRECTORY : string := "./reports/" ; 
 
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := ALERTLOG_BASE_ID + 1 ;
@@ -501,7 +504,8 @@ package AlertLogPkg is
     ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
     DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
+    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT
   ) ;
 
   procedure ReportAlertLogOptions ;
@@ -810,7 +814,8 @@ package body AlertLogPkg is
       ReportPrefix             : string ;
       DoneName                 : string ;
       PassName                 : string ;
-      FailName                 : string
+      FailName                 : string ;
+      IdSeparator              : string
     ) ;
     procedure ReportAlertLogOptions ;
 
@@ -1086,17 +1091,15 @@ package body AlertLogPkg is
           end if ;
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
+          ReportAlerts(ReportWhenZero => TRUE) ;
           if FileExists("OsvvmRun.yml") then 
 --          work.ReportPkg.EndOfTestReports ;  -- creates circular package issues
-            ReportAlerts(ReportWhenZero => TRUE) ;
             WriteAlertSummaryYaml(
               FileName        => "OsvvmRun.yml"
             ) ; 
             WriteAlertYaml (
-              FileName        => "./reports/" & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
+              FileName        => REPORTS_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
             ) ; 
-          else 
-            ReportAlerts(ReportWhenZero => TRUE) ;
           end if ; 
           std.env.stop(ErrorCount) ;
         end if ;
@@ -1135,22 +1138,29 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    impure function CalcJustify (AlertLogID : AlertLogIDType ; CurrentLength : integer ; IndentAmount : integer) return integer_vector is
+    impure function CalcJustify (AlertLogID : AlertLogIDType; CurrentLength : integer; IndentAmount : integer; IdSeparatorLength : integer) return integer_vector is
     ------------------------------------------------------------
       variable ResultValues, LowerLevelValues : integer_vector(1 to 2) ;  -- 1 = Max, 2 = Indented
-      variable CurID : AlertLogIDType ;
+      variable CurID, ParentID : AlertLogIDType ;
+      variable ParentNameLen   : integer ;
     begin
       ResultValues(1) := CurrentLength + 1 ;            -- AlertLogJustifyAmountVar
       ResultValues(2) := CurrentLength + IndentAmount ; -- ReportJustifyAmountVar
+      if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME_AND_PARENT then 
+        ParentID := AlertLogPtr(AlertLogID).ParentID ; 
+        ParentNameLen := AlertLogPtr(ParentID).Name'length ;
+        ResultValues(1) := IdSeparatorLength + ParentNameLen + ResultValues(1) ;  -- AlertLogJustifyAmountVar
+--        ResultValues(2) := IdSeparatorLength + ParentNameLen + ResultValues(2) ;  -- ReportJustifyAmountVar
+      end if ; 
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
         if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ;
-        LowerLevelValues := CalcJustify(CurID, AlertLogPtr(CurID).Name'length, IndentAmount + 2) ;
+        LowerLevelValues := CalcJustify(CurID, AlertLogPtr(CurID).Name'length, IndentAmount + 2, IdSeparatorLength) ;
         ResultValues(1)  := maximum(ResultValues(1), LowerLevelValues(1)) ;
-        if AlertLogPtr(AlertLogID).ReportMode /= NONE then
+        if AlertLogPtr(AlertLogID).ReportMode /= DISABLED then
           ResultValues(2)  := maximum(ResultValues(2), LowerLevelValues(2)) ;
         end if ;
         CurID := AlertLogPtr(CurID).SiblingID ;
@@ -1164,9 +1174,10 @@ package body AlertLogPkg is
       Enable      : boolean := TRUE ;
       AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID
     ) is
+      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
       if Enable then
-        (AlertLogJustifyAmountVar, ReportJustifyAmountVar) := CalcJustify(AlertLogID, 0, 0) ;
+        (AlertLogJustifyAmountVar, ReportJustifyAmountVar) := CalcJustify(AlertLogID, 0, 0, Separator'length) ;
       else
         AlertLogJustifyAmountVar := 0 ;
         ReportJustifyAmountVar   := 0 ;
@@ -1527,7 +1538,7 @@ package body AlertLogPkg is
           (FailOnDisabledErrorsVar and (SumAlertCount(AlertLogPtr(CurID).DisabledAlertCount) > 0)) or
           (FailOnRequirementErrorsVar and (AlertLogPtr(CurID).PassedCount < AlertLogPtr(CurID).PassedGoal)) ;
 
-        if AlertLogPtr(AlertLogID).ReportMode = ENABLED or (AlertLogPtr(AlertLogID).ReportMode = NONZERO and HasErrors) then
+        if AlertLogPtr(CurID).ReportMode = ENABLED or (AlertLogPtr(CurID).ReportMode = NONZERO and HasErrors) then
           PrintOneChild(
             AlertLogID         => CurID,
             Prefix             => Prefix,
@@ -1749,7 +1760,7 @@ package body AlertLogPkg is
             RequirementsPassed := 0 ;
             RequirementsGoal   := 0 ;
           end if ;
-          if AlertLogPtr(AlertLogID).ReportMode /= NONE then
+          if AlertLogPtr(AlertLogID).ReportMode /= DISABLED then
             WriteOneAlertYaml(
               TestFile             => TestFile,
               AlertLogID           => CurID,
@@ -2165,9 +2176,10 @@ package body AlertLogPkg is
     procedure ReportTestSummaries is
     ------------------------------------------------------------
       variable IgnoredValue, OldReportJustifyAmount : integer ;
+      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
-      OldReportJustifyAmount        := ReportJustifyAmountVar ;
-      (IgnoredValue, ReportJustifyAmountVar) := CalcJustify(REQUIREMENT_ALERTLOG_ID, 0, 0) ;
+      OldReportJustifyAmount  := ReportJustifyAmountVar ;
+      (IgnoredValue, ReportJustifyAmountVar) := CalcJustify(REQUIREMENT_ALERTLOG_ID, 0, 0, Separator'length) ;
 
       ReportTestSummaries(AlertLogID   => REQUIREMENT_ALERTLOG_ID) ;
       ReportJustifyAmountVar := OldReportJustifyAmount ;
@@ -3229,10 +3241,15 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure SetAlertLogPrintParent(AlertLogID : AlertLogIDType ;  PrintParent : AlertLogPrintParentType) is
     ------------------------------------------------------------
-      variable localAlertLogID : AlertLogIDType ;
+      variable localAlertLogID, ParentID : AlertLogIDType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      AlertLogPtr(localAlertLogID).PrintParent := PrintParent ;
+      ParentID := AlertLogPtr(localAlertLogID).ParentID ;
+      if (ParentID = ALERTLOG_BASE_ID or ParentID = REQUIREMENT_ALERTLOG_ID) then
+        AlertLogPtr(localAlertLogID).PrintParent := PRINT_NAME ;
+      else
+        AlertLogPtr(localAlertLogID).PrintParent := PrintParent ;
+      end if ;
     end procedure SetAlertLogPrintParent ;
 
     ------------------------------------------------------------
@@ -3429,7 +3446,8 @@ package body AlertLogPkg is
       ReportPrefix             : string ;
       DoneName                 : string ;
       PassName                 : string ;
-      FailName                 : string
+      FailName                 : string ;
+      IdSeparator              : string
     ) is
     begin
       if FailOnWarning /= OPT_INIT_PARM_DETECT then
@@ -3503,6 +3521,9 @@ package body AlertLogPkg is
       end if ;
       if FailName /= OSVVM_STRING_INIT_PARM_DETECT then
         FailNameVar.Set(FailName) ;
+      end if ;
+      if IdSeparator /= OSVVM_STRING_INIT_PARM_DETECT then
+        IdSeparatorVar.Set(FailName) ;
       end if ;
     end procedure SetAlertLogOptions ;
 
@@ -5576,7 +5597,7 @@ package body AlertLogPkg is
 	begin
     -- synthesis translate_off
     if DoNotReport then
-        ReportMode := NONE ;
+        ReportMode := DISABLED ;
     end if;
     -- PrintParent PRINT_NAME_AND_PARENT is not backward compatible with PRINT_NAME of the past
     result := AlertLogStruct.NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
@@ -5967,7 +5988,8 @@ package body AlertLogPkg is
     ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
     DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT
+    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT
   ) is
   begin
     -- synthesis translate_off
@@ -5995,7 +6017,8 @@ package body AlertLogPkg is
       ReportPrefix             => ReportPrefix,
       DoneName                 => DoneName,
       PassName                 => PassName,
-      FailName                 => FailName
+      FailName                 => FailName,
+      IdSeparator              => IdSeparator
     );
     -- synthesis translate_on
   end procedure SetAlertLogOptions ;
