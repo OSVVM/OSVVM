@@ -2733,7 +2733,7 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
       AlertLogPtr(AlertLogID).ReportMode          := ReportMode ;
       -- Update PrintParent
-      if ParentID /= ALERTLOG_BASE_ID then
+      if ParentID > ALERTLOG_BASE_ID then
         AlertLogPtr(AlertLogID).PrintParent := PrintParent ;
       else
         AlertLogPtr(AlertLogID).PrintParent := PRINT_NAME ;
