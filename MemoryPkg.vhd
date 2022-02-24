@@ -466,9 +466,9 @@ package body MemoryPkg is
         if MemStructPtr(NumItems).MemArrayPtr /= NULL then 
           -- Found ID and structure exists, does structure match?
           AlertIf(MemStructPtr(NumItems).AlertLogID, AddrWidth /= MemStructPtr(NameID).AddrWidth,  
-            "NewID: AddrWidth: " & to_string(AddrWidth) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth));
+            "NewID: AddrWidth: " & to_string(AddrWidth) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
           AlertIf(MemStructPtr(NumItems).AlertLogID, DataWidth /= MemStructPtr(NameID).DataWidth,  
-            "NewID: DataWidth: " & to_string(DataWidth) & " /= Existing DataWidth: "  & to_string(MemStructPtr(NameID).DataWidth));
+            "NewID: DataWidth: " & to_string(DataWidth) & " /= Existing DataWidth: "  & to_string(MemStructPtr(NameID).DataWidth), FAILURE);
           -- NameStore IDs are issued sequentially and match MemoryID
         else 
           -- Found ID and structure does not exist, Reconstruct Memory
