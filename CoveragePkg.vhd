@@ -7637,7 +7637,7 @@ package body CoveragePkg is
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType is
   begin
-    return CoverageStore.NewID (Name) ;
+    return CoverageStore.NewID (Name, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
 

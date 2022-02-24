@@ -1208,7 +1208,7 @@ package body ScoreboardGenericPkg is
     begin
       AlertIf(ParentID, X'length /= 2, "ScoreboardPkg.NewID Array parameter X has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ; 
       AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Array parameter X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ; 
-      return LocalNewID(Name, X, ParentID, ReportMode => ReportMode) ; 
+      return LocalNewID(Name, X, ParentID, ReportMode, Search, PrintParent) ; 
     end function NewID ;
 
     ------------------------------------------------------------

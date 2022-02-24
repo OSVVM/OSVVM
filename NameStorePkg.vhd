@@ -254,7 +254,7 @@ package body NameStorePkg is
         -- skip if private
         next when NameArrayPtr(ID).Search = PRIVATE ; 
         -- find Name and Parent
-        if iName = NameArrayPtr(ID).Name.all and ParentID = NameArrayPtr(ID).ParentID then 
+        if iName = NameArrayPtr(ID).Name.all and (ParentID = NameArrayPtr(ID).ParentID or NameArrayPtr(ID).Search = NAME) then 
           return ID ;
         end if ;
       end loop ;
