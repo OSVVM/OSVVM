@@ -6217,6 +6217,30 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogFailName ;
   end function GetAlertLogFailName ;
+  
+  ------------------------------------------------------------
+  -- Package Local
+  procedure ToLogLevel(LogLevel : out LogType; Name : in String; LogValid : out boolean) is
+  ------------------------------------------------------------
+  -- type LogType is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER
+  begin
+    if    Name = "PASSED" then 
+      LogLevel := PASSED ; 
+      LogValid := TRUE ;
+    elsif Name = "DEBUG" then 
+      LogLevel := DEBUG ; 
+      LogValid := TRUE ;
+    elsif Name = "FINAL" then 
+      LogLevel := FINAL ; 
+      LogValid := TRUE ;
+    elsif Name = "INFO"  then 
+      LogLevel := INFO ; 
+      LogValid := TRUE ;
+    else
+      LogLevel := ALWAYS ; 
+      LogValid := FALSE ;
+    end if ;
+  end procedure ToLogLevel ;
 
   ------------------------------------------------------------
   function IsLogEnableType (Name : String) return boolean is
@@ -6254,6 +6278,7 @@ package body AlertLogPkg is
     variable NameLen          : integer ;
     variable AlertLogID       : AlertLogIDType ;
     variable ReadAnEnable     : boolean ;
+    variable LogValid         : boolean ;
     variable LogLevel         : LogType ;
   begin
     ReadState := GET_ID ;
@@ -6282,12 +6307,14 @@ package body AlertLogPkg is
             sread(buf, Name, NameLen) ;
             exit ReadNameLoop when NameLen = 0 ;
             ReadAnEnable := TRUE ;
-            if not IsLogEnableType(Name(1 to NameLen)) then
-              Alert(OSVVM_ALERTLOG_ID, "AlertLogPkg.ReadLogEnables: Found Invalid LogEnable: " & Name(1 to NameLen)) ;
-              exit ReadNameLoop ;
-            end if ;
---            Log(OSVVM_ALERTLOG_ID, "SetLogEnable(OSVVM_ALERTLOG_ID, " & Name(1 to NameLen) & ", TRUE) ;", DEBUG) ;
-            LogLevel := LogType'value("" & Name(1 to NameLen)) ;  -- "" & added for RivieraPro 2020.10
+--            if not IsLogEnableType(Name(1 to NameLen)) then
+--              Alert(OSVVM_ALERTLOG_ID, "AlertLogPkg.ReadLogEnables: Found Invalid LogEnable: " & Name(1 to NameLen)) ;
+--              exit ReadNameLoop ;
+--            end if ;
+----            Log(OSVVM_ALERTLOG_ID, "SetLogEnable(OSVVM_ALERTLOG_ID, " & Name(1 to NameLen) & ", TRUE) ;", DEBUG) ;
+--            LogLevel := LogType'value("" & Name(1 to NameLen)) ;  -- "" & added for RivieraPro 2020.10
+            ToLogLevel(LogLevel, Name(1 to NameLen), LogValid) ; 
+            exit ReadNameLoop when not LogValid ; 
             SetLogEnable(AlertLogID, LogLevel, TRUE) ;
         end case ;
       end loop ReadNameLoop ;
