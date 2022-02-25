@@ -21,6 +21,7 @@
 --  Revision History:
 --    Date      Version    Description
 --    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
+--                         Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
 --    01/2022   2022.01    Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
 --    08/2020   2020.08    Added ReadUntilDelimiterOrEOL and FindDelimiter
 --    01/2020   2020.01    Updated Licenses to Apache

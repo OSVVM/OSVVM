@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2022.02  | February 2022   |  Added Transition Coverage. 
 | 2022.01  | January 2022    |  Added Transition Coverage. 
 | 2021.12  | December 2021   |  Added ReadCovYaml. 
 | 2021.11  | November 2021   |  Minor updates.  Print CovWeight first in WriteCovYaml. 
@@ -57,7 +58,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2022.01 January 2022
+## Revision 2022.02 February 2022
 
 ### Current Revision and Compile Order
 
@@ -68,33 +69,63 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |  
   -----------------------------------------------------|----------
+  | TextUtilPkg.vhd                                    | **2022.02**  | 
   | ResolutionPkg.vhd                                  | 2021.06  |
-  | NamePkg.vhd                                        | 2020.01  |  
-  | NameStorePkg.vhd                                   | 2021.06  |  
-  | OsvvmGlobalPkg.vhd                                 | 2020.01  |  
+  | NamePkg.vhd                                        | **2022.02**  |  
+  | OsvvmGlobalPkg.vhd                                 | **2022.02**  |  
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
-  | TextUtilPkg.vhd                                    | **2022.01**  | 
-  | AlertLogPkg.vhd                                    | **2022.01**  | 
+  | AlertLogPkg.vhd                                    | **2022.02**  | 
+  | NameStorePkg.vhd                                   | **2022.02**  |  
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | **2022.01**  |
-  | MemoryPkg.vhd                                      | 2021.06  |
-  | ScoreboardGenericPkg.vhd                           | **2022.01**  |
+  | CoveragePkg.vhd                                    | **2022.02**  |
+  | MemoryPkg.vhd                                      | **2022.02**  |
+  | ScoreboardGenericPkg.vhd                           | **2022.02**  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ScoreboardPkg_slv_c.vhd                            | **2022.01**  | 
-  | ScoreboardPkg_int_c.vhd                            | **2022.01**  | 
+  | ScoreboardPkg_slv_c.vhd                            | 2022.01  | 
+  | ScoreboardPkg_int_c.vhd                            | 2022.01  | 
   | ResizePkg.vhd                                      | 2021.06  |
-  | TbUtilPkg.vhd                                      | **2022.01**  |
-  | ReportPkg.vhd                                      | **2022.01**  | 
-  | OsvvmTypesPkg.vhd                                  | **2022.01**  |
-  | OsvvmContext.vhd                                   | **2022.01**  |
+  | TbUtilPkg.vhd                                      | 2022.01  |
+  | ReportPkg.vhd                                      | **2022.02**  | 
+  | OsvvmTypesPkg.vhd                                  | 2022.01  |
+  | OsvvmContext.vhd                                   | 2022.01  |
 
+
+### AlertLogPkg.vhd  2022.02 
+Added SetAlertPrintCount.   Sets a maximum number of times to print an Alert level for an AlertLogID. 
+Added NewID to bring consistent naming with other Singleton data structures and new capability (PrintParent and ReportMode).
+
+### CoveragePkg.vhd  2022.02 
+Updated NewID with ParentID, ReportMode, Search, PrintParent.   Supports searching for coverage models.
+
+### MemoryPkg.vhd  2022.02 
+Updated NewID with ReportMode, Search, PrintParent.   Supports searching for Memory models.
+
+### ScoreboardGenericPkg.vhd  2022.02 
+Updated NewID with ParentID, ReportMode, Search, PrintParent.   Supports searching for Scoreboard models.
+Added support to do Scoreboard Reports (GotScoreboards, WriteScoreboardYaml)
+
+### ReportPkg.vhd  2022.02 
+In EndOfTestReports, added calls to WriteScoreboardYaml for Scoreboard reporting.
+
+### NameStorePkg.vhd  2022.02 
+Updated NewID and Find with ParentID and Search.   Supports searching in CoveragePkg, ScoreboardGenericPkg, and MemoryPkg.
+
+### TextUtilPkg.vhd  2022.02 
+Updated to_hxstring for better meta value handling (U, X, Z, W, ).  Four consecutive meta values result in that character.  Mixed meta results in '?'.
+Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.  
+
+### OsvvmGlobalPkg.vhd  2022.02 
+Added support for IdSeparator.  Supports PrintParent mode PRINT_NAME_AND_PARENT.  <Parent Name> <IdSeparator> <AlertLogID Name>
+
+### NamePkg.vhd  2022.02 
+Added NameLength method to NamePType
 
 ## Revision 2022.01 January 2022
 

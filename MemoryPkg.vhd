@@ -19,7 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    02/2022   2022.02    Updated NewID for new searching modes
+--    02/2022   2022.02    Updated NewID with ReportMode, Search, PrintParent.   Supports searching for Memory models.
 --    06/2021   2021.06    Updated Data Structure, IDs for new use model, and Wrapper Subprograms
 --    01/2020   2020.01    Updated Licenses to Apache
 --    11/2016   2016.11    Refinement to MemRead to return value, X (if X), U (if not initialized)

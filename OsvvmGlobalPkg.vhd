@@ -20,8 +20,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2014   2015.01    Initial revision
+--    02/2022   2022.02    Added support for IdSeparator.  
+--                         Supports PrintParent mode PRINT_NAME_AND_PARENT.  <Parent Name> <IdSeparator> <AlertLogID Name>.   
 --    01/2020   2020.01    Updated Licenses to Apache
+--    01/2014   2015.01    Initial revision
 --
 --
 --  This file is part of OSVVM.

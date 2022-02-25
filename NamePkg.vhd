@@ -19,12 +19,13 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    06/2010:  0.1        Initial revision
+--    02/2022   2022.02    Added NameLength method to NamePType
+--    01/2020   2020.01    Updated Licenses to Apache
+--    05/2015   2015.06    Added input to Get to return when not initialized
+--    12/2014:  2014.07a   Removed initialized pointers which can lead to memory leaks.
 --    07/2014:  2014.07    Moved specialization required by CoveragePkg to CoveragePkg
 --                         Separated name handling from message handling to simplify naming
---    12/2014:  2014.07a   Removed initialized pointers which can lead to memory leaks.
---    05/2015   2015.06    Added input to Get to return when not initialized
---    01/2020   2020.01    Updated Licenses to Apache
+--    06/2010:  0.1        Initial revision
 --
 --
 --  This file is part of OSVVM.
