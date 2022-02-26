@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description 
+--    03/2022   2022.03     Removed deprecated SetAlertLogID in Singleton API  
 --    02/2022   2022.02     Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID, 
 --                          ReportMode, Search, PrintParent.   Supports searching for Scoreboard models..
 --    01/2022   2022.01     Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType   
@@ -330,21 +331,21 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string       
   ) return boolean ;                    -- Simple, Tagged
 
---  ------------------------------------------------------------
---  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
---  procedure SetAlertLogID(
---    constant ID              : in  ScoreboardIDType ;
---    constant Name            : in  string ; 
---    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
---    constant CreateHierarchy : in  Boolean := TRUE ;
---    constant DoNotReport     : in  Boolean := FALSE
---  ) ;
---
---  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
---  procedure SetAlertLogID (
---    constant ID     : in  ScoreboardIDType ;
---    constant A      : AlertLogIDType
---  ) ; 
+--!!  ------------------------------------------------------------
+--!!  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+--!!  procedure SetAlertLogID(
+--!!    constant ID              : in  ScoreboardIDType ;
+--!!    constant Name            : in  string ; 
+--!!    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
+--!!    constant CreateHierarchy : in  Boolean := TRUE ;
+--!!    constant DoNotReport     : in  Boolean := FALSE
+--!!  ) ;
+--!!
+--!!  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
+--!!  procedure SetAlertLogID (
+--!!    constant ID     : in  ScoreboardIDType ;
+--!!    constant A      : AlertLogIDType
+--!!  ) ; 
     
   impure function GetAlertLogID (
     constant ID     : in  ScoreboardIDType 
@@ -743,6 +744,7 @@ package ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+    -- ReportMode := ENABLED when not DoNotReport else DISABLED ;
     procedure SetAlertLogID(Index : Integer; Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) ;
     procedure SetAlertLogID(Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) ;
     -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
@@ -941,16 +943,16 @@ package ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     ------------------------------------------------------------
-    -- Deprecated Interface to NewID
-    impure function NewID (Name : String; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType ;
-    -- Vector: 1 to Size
-    impure function NewID (Name : String; Size : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
-    -- Vector: X(X'Left) to X(X'Right)
-    impure function NewID (Name : String; X : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
-    -- Matrix: 1 to X, 1 to Y
-    impure function NewID (Name : String; X, Y : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
-    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
-    impure function NewID (Name : String; X, Y : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
+--    -- Deprecated Interface to NewID
+--    impure function NewID (Name : String; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType ;
+--    -- Vector: 1 to Size
+--    impure function NewID (Name : String; Size : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
+--    -- Vector: X(X'Left) to X(X'Right)
+--    impure function NewID (Name : String; X : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
+--    -- Matrix: 1 to X, 1 to Y
+--    impure function NewID (Name : String; X, Y : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
+--    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+--    impure function NewID (Name : String; X, Y : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
 
 
   end protected ScoreBoardPType ;
@@ -1503,15 +1505,19 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     procedure SetAlertLogID(Index : Integer; Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) is
     ------------------------------------------------------------
+      variable ReportMode : AlertLogReportModeType ;
     begin
-      AlertLogIDVar(Index) := GetAlertLogID(Name, ParentID, CreateHierarchy, DoNotReport) ;
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+      AlertLogIDVar(Index) := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
     end procedure SetAlertLogID ;
     
     ------------------------------------------------------------
     procedure SetAlertLogID(Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) is
     ------------------------------------------------------------
+      variable ReportMode : AlertLogReportModeType ;
     begin
-      AlertLogIDVar(FirstIndexVar) := GetAlertLogID(Name, ParentID, CreateHierarchy, DoNotReport) ;
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+      AlertLogIDVar(FirstIndexVar) := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
     end procedure SetAlertLogID ;
     
     ------------------------------------------------------------
@@ -2783,59 +2789,59 @@ package body ScoreboardGenericPkg is
       return GetName("Scoreboard") ;
     end function GetMessage ;
     
-    ------------------------------------------------------------
-    -- Deprecated Call to NewID, refactored to call new version of NewID
-    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType is
-    ------------------------------------------------------------
-      variable ReportMode : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
-      return NewID(Name, ParentAlertLogID, ReportMode => ReportMode) ; 
-    end function NewID ;
-
-    ------------------------------------------------------------
-    -- Deprecated Call to NewID, refactored to call new version of NewID
-    -- Vector: 1 to Size
-    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
-    ------------------------------------------------------------
-      variable ReportMode : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
-      return NewID(Name, (1, Size) , ParentAlertLogID, ReportMode => ReportMode) ; 
-    end function NewID ;
-
-    ------------------------------------------------------------
-    -- Deprecated Call to NewID, refactored to call new version of NewID
-    -- Vector: X(X'Left) to X(X'Right)
-    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
-    ------------------------------------------------------------
-      variable ReportMode     : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
-      return NewID(Name, X, ParentAlertLogID, ReportMode => ReportMode) ; 
-    end function NewID ;
-
-    ------------------------------------------------------------
-    -- Deprecated Call to NewID, refactored to call new version of NewID
-    -- Matrix: 1 to X, 1 to Y
-    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
-    ------------------------------------------------------------
-      variable ReportMode     : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
-      return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
-    end function NewID ;        
-     
-    ------------------------------------------------------------
-    -- Deprecated Call to NewID, refactored to call new version of NewID
-    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
-    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
-    ------------------------------------------------------------
-      variable ReportMode     : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
-      return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
-    end function NewID ; 
+--!!    ------------------------------------------------------------
+--!!    -- Deprecated Call to NewID, refactored to call new version of NewID
+--!!    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType is
+--!!    ------------------------------------------------------------
+--!!      variable ReportMode : AlertLogReportModeType ;
+--!!    begin
+--!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+--!!      return NewID(Name, ParentAlertLogID, ReportMode => ReportMode) ; 
+--!!    end function NewID ;
+--!!
+--!!    ------------------------------------------------------------
+--!!    -- Deprecated Call to NewID, refactored to call new version of NewID
+--!!    -- Vector: 1 to Size
+--!!    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
+--!!    ------------------------------------------------------------
+--!!      variable ReportMode : AlertLogReportModeType ;
+--!!    begin
+--!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+--!!      return NewID(Name, (1, Size) , ParentAlertLogID, ReportMode => ReportMode) ; 
+--!!    end function NewID ;
+--!!
+--!!    ------------------------------------------------------------
+--!!    -- Deprecated Call to NewID, refactored to call new version of NewID
+--!!    -- Vector: X(X'Left) to X(X'Right)
+--!!    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
+--!!    ------------------------------------------------------------
+--!!      variable ReportMode     : AlertLogReportModeType ;
+--!!    begin
+--!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+--!!      return NewID(Name, X, ParentAlertLogID, ReportMode => ReportMode) ; 
+--!!    end function NewID ;
+--!!
+--!!    ------------------------------------------------------------
+--!!    -- Deprecated Call to NewID, refactored to call new version of NewID
+--!!    -- Matrix: 1 to X, 1 to Y
+--!!    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
+--!!    ------------------------------------------------------------
+--!!      variable ReportMode     : AlertLogReportModeType ;
+--!!    begin
+--!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+--!!      return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
+--!!    end function NewID ;        
+--!!     
+--!!    ------------------------------------------------------------
+--!!    -- Deprecated Call to NewID, refactored to call new version of NewID
+--!!    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
+--!!    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
+--!!    ------------------------------------------------------------
+--!!      variable ReportMode     : AlertLogReportModeType ;
+--!!    begin
+--!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+--!!      return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
+--!!    end function NewID ; 
         
   end protected body ScoreBoardPType ;
   
@@ -3102,8 +3108,8 @@ package body ScoreboardGenericPkg is
   ) return ExpectedType is
   begin
 --      return ScoreboardStore.Peek(Tag) ;
-    log("Issues compiling return later");
-    return ScoreboardStore.Peek(ID.ID) ; 
+--    log("Issues compiling return later");
+    return ScoreboardStore.Peek(Index => ID.ID, Tag => Tag) ; 
   end function Peek ;
 
   -- Simple Scoreboard
@@ -3111,7 +3117,7 @@ package body ScoreboardGenericPkg is
     constant ID     : in  ScoreboardIDType 
   ) return ExpectedType is
   begin
-    return ScoreboardStore.Peek(ID.ID) ; 
+    return ScoreboardStore.Peek(Index => ID.ID) ; 
   end function Peek ;
   
   ------------------------------------------------------------
@@ -3149,27 +3155,27 @@ package body ScoreboardGenericPkg is
     return ScoreboardStore.Empty(ID.ID, Tag) ; 
   end function Empty ;
   
-  ------------------------------------------------------------
-  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
-  procedure SetAlertLogID(
-    constant ID              : in  ScoreboardIDType ;
-    constant Name            : in  string ; 
-    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
-    constant CreateHierarchy : in  Boolean := TRUE ;
-    constant DoNotReport     : in  Boolean := FALSE
-  ) is
-  begin
-    ScoreboardStore.SetAlertLogID(ID.ID, Name, ParentID, CreateHierarchy, DoNotReport) ; 
-  end procedure SetAlertLogID ;
-
-  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
-  procedure SetAlertLogID (
-    constant ID     : in  ScoreboardIDType ;
-    constant A      : AlertLogIDType
-  ) is
-  begin
-    ScoreboardStore.SetAlertLogID(ID.ID, A) ; 
-  end procedure SetAlertLogID ; 
+--!!  ------------------------------------------------------------
+--!!  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+--!!  procedure SetAlertLogID(
+--!!    constant ID              : in  ScoreboardIDType ;
+--!!    constant Name            : in  string ; 
+--!!    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ; 
+--!!    constant CreateHierarchy : in  Boolean := TRUE ;
+--!!    constant DoNotReport     : in  Boolean := FALSE
+--!!  ) is
+--!!  begin
+--!!    ScoreboardStore.SetAlertLogID(ID.ID, Name, ParentID, CreateHierarchy, DoNotReport) ; 
+--!!  end procedure SetAlertLogID ;
+--!!
+--!!  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
+--!!  procedure SetAlertLogID (
+--!!    constant ID     : in  ScoreboardIDType ;
+--!!    constant A      : AlertLogIDType
+--!!  ) is
+--!!  begin
+--!!    ScoreboardStore.SetAlertLogID(ID.ID, A) ; 
+--!!  end procedure SetAlertLogID ; 
     
   impure function GetAlertLogID (
     constant ID     : in  ScoreboardIDType 
@@ -3371,40 +3377,50 @@ package body ScoreboardGenericPkg is
   -- Deprecated interface to NewID
   impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType is
   ------------------------------------------------------------
+    variable ReportMode : AlertLogReportModeType ;
   begin
-    return ScoreboardStore.NewID(Name, ParentAlertLogID, DoNotReport) ; 
+    ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+    return ScoreboardStore.NewID(Name, ParentAlertLogID, ReportMode => ReportMode) ; 
   end function NewID ;
 
   ------------------------------------------------------------
   -- Vector: 1 to Size
   impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
   ------------------------------------------------------------
+    variable ReportMode : AlertLogReportModeType ;
   begin
-    return ScoreboardStore.NewID(Name, Size, ParentAlertLogID, DoNotReport) ; 
+    ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+    return ScoreboardStore.NewID(Name, Size, ParentAlertLogID, ReportMode => ReportMode) ; 
   end function NewID ;
   
   ------------------------------------------------------------
   -- Vector: X(X'Left) to X(X'Right)
   impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
   ------------------------------------------------------------
+    variable ReportMode : AlertLogReportModeType ;
   begin
-    return ScoreboardStore.NewID(Name, X, ParentAlertLogID, DoNotReport) ; 
+    ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+    return ScoreboardStore.NewID(Name, X, ParentAlertLogID, ReportMode => ReportMode) ; 
   end function NewID ;
   
   ------------------------------------------------------------
   -- Matrix: 1 to X, 1 to Y
   impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
   ------------------------------------------------------------
+    variable ReportMode : AlertLogReportModeType ;
   begin
-    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID, DoNotReport) ; 
+    ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
   end function NewID ;        
    
   ------------------------------------------------------------
   -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
   impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
   ------------------------------------------------------------
+    variable ReportMode : AlertLogReportModeType ;
   begin
-    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID, DoNotReport) ; 
+    ReportMode := ENABLED when not DoNotReport else DISABLED ;  
+    return ScoreboardStore.NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ; 
   end function NewID ; 
 
   
