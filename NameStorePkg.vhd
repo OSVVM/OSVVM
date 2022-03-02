@@ -171,21 +171,25 @@ package body NameStorePkg is
     procedure GrowNumberItems (
     ------------------------------------------------------------
       variable ItemArrayPtr     : InOut NameArrayPtrType ;
-      constant NewNumItems      : in integer ;
-      constant CurNumItems      : in integer ;
+      variable NumItems         : InOut integer ;
+      constant GrowAmount       : in integer ;
+--      constant NewNumItems      : in integer ;
+--      constant CurNumItems      : in integer ;
       constant MinNumItems      : in integer 
     ) is
       variable oldItemArrayPtr  : NameArrayPtrType ;
-      constant NormNumItems : integer := NormalizeArraySize(NewNumItems, MinNumItems) ;
+      constant NewNumItems      : integer := NumItems + GrowAmount ; 
+      constant NewSize : integer := NormalizeArraySize(NewNumItems, MinNumItems) ;
     begin
       if ItemArrayPtr = NULL then
-        ItemArrayPtr := new NameArrayType(1 to NormNumItems) ;
+        ItemArrayPtr := new NameArrayType(1 to NewSize) ;
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
-        ItemArrayPtr := new NameArrayType(1 to NormNumItems) ;
-        ItemArrayPtr(1 to CurNumItems) := oldItemArrayPtr(1 to CurNumItems) ;
+        ItemArrayPtr := new NameArrayType(1 to NewSize) ;
+        ItemArrayPtr(1 to NumItems) := oldItemArrayPtr(1 to NumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
+      NumItems := NewNumItems ; 
     end procedure GrowNumberItems ;
 
     ------------------------------------------------------------
@@ -195,11 +199,8 @@ package body NameStorePkg is
       ParentID : AlertLogIdType := ALERTLOG_BASE_ID ;
       Search   : NameSearchType := NAME 
     ) return integer is
-      variable NewNumItems : integer ;
     begin
-      NewNumItems := NumItems + 1 ; 
-      GrowNumberItems(NameArrayPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
-      NumItems  := NewNumItems ;
+      GrowNumberItems(NameArrayPtr, NumItems, 1, MIN_NUM_ITEMS) ;
       Set(NumItems, iName, ParentID, Search) ; 
       return NumItems ; 
     end function NewID ;
