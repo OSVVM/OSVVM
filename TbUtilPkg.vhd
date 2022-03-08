@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    03/2022   2022.03    Added EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge.
 --    01/2022   2022.01    Added MetaTo01.  Added WaitForTransaction without clock for RdyType/AckType and bit.
 --    02/2021   2021.02    Added AckType, RdyType, RequestTransaction, WaitForTransaction for AckType/RdyType
 --    12/2020   2020.12    Added IfElse functions for string and integer.
@@ -72,6 +73,16 @@ package TbUtilPkg is
   function OneHot ( constant A : in std_logic_vector ) return boolean ;  
   function ZeroOneHot ( constant A : in std_logic_vector ) return boolean ;  
 
+  ------------------------------------------------------------
+  -- EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge
+  ------------------------------------------------------------
+  function  EdgeRose ( signal C : in std_logic ) return boolean ;
+  function  EdgeFell ( signal C : in std_logic ) return boolean ;
+  function  EdgeActive ( signal C : in std_logic; A : std_logic ) return boolean ;
+  procedure FindRisingEdge ( signal C : in std_logic) ; 
+  procedure FindFallingEdge ( signal C : in std_logic ) ;
+  procedure FindActiveEdge ( signal C : in std_logic; A : std_logic ) ;
+  
   ------------------------------------------------------------
   -- MetaTo01
   --   Convert Meta values to 0
@@ -364,6 +375,60 @@ package body TbUtilPkg is
     end loop ;
     return TRUE ;  -- all zero or found a one
   end function ZeroOneHot ; 
+  
+  ------------------------------------------------------------
+  -- EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge
+  ------------------------------------------------------------
+  function EdgeRose ( signal C : in std_logic ) return boolean is
+  begin
+    return  to_x01(C)='1' and to_x01(C'last_value)='0' and C'last_event= 0 sec ;
+  end function EdgeRose ; 
+  
+  function EdgeFell ( signal C : in std_logic ) return boolean is
+  begin
+    return  to_x01(C)='0' and to_x01(C'last_value)='1' and C'last_event= 0 sec ;
+  end function EdgeFell ; 
+  
+  function EdgeActive ( signal C : in std_logic; A : std_logic ) return boolean is
+  begin
+    return  to_x01(C)=A and to_x01(C'last_value)=not A and C'last_event= 0 sec ;
+  end function EdgeActive ; 
+  
+  procedure FindRisingEdge ( signal C : in std_logic) is
+  begin
+    if not EdgeRose(C) then 
+      wait until rising_edge(C) ;
+    end if ; 
+  end procedure FindRisingEdge ; 
+  
+--!!  Rejected as the semantic is confusing 
+--!!  procedure FindRisingEdge ( signal C : in std_logic; Count : integer) is
+--!!    variable Start : integer := 1 ; 
+--!!  begin
+--!!    if EdgeRose(C) then 
+--!!      Start := 2 ;
+--!!    end if 
+--!!    for i in Start to Count loop 
+--!!      wait until rising_edge(C) ;
+--!!    end loop ; 
+--!!  end procedure FindRisingEdge ; 
+
+  procedure FindFallingEdge ( signal C : in std_logic ) is
+  begin
+    if not EdgeFell(C) then 
+      wait until falling_edge(C) ;
+    end if ; 
+  end procedure FindFallingEdge ; 
+  
+  procedure FindActiveEdge ( signal C : in std_logic; A : std_logic ) is
+  begin 
+    if A = '1' then 
+      FindRisingEdge(C) ; 
+    else
+      FindFallingEdge(C) ; 
+    end if ; 
+  end procedure FindActiveEdge ; 
+
 
   ------------------------------------------------------------
   -- MetaTo01
@@ -527,17 +592,15 @@ package body TbUtilPkg is
     signal Rdy      : In    RdyType ;
     signal Ack      : InOut AckType 
   ) is
-    variable AckTime : time ; 
   begin
     -- End of Previous Cycle.  Signal Done
     Ack <= Increment(Ack) ; 
-    AckTime    := NOW ; 
     
     -- Find Start of Transaction
     wait until Ack /= Rdy ; 
 
     -- Align to clock if needed (not back-to-back transactions)
-    if NOW /= AckTime then 
+    if not EdgeActive(Clk, CLK_ACTIVE) then 
       wait until Clk = CLK_ACTIVE ;
     end if ; 
   end procedure WaitForTransaction ;
