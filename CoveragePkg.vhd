@@ -22,18 +22,18 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    02/2022   2022.02    Updated NewID with ParentID, ReportMode, Search, PrintParent.   
+--    02/2022   2022.02    Updated NewID with ParentID, ReportMode, Search, PrintParent.
 --                         Supports searching for coverage models.
---    01/2022   2022.01    Added DeallocateBins and TCover   
+--    01/2022   2022.01    Added DeallocateBins and TCover
 --                         Updated AddBins and AddCross s.t. can set AtLeast and Weight to 0
 --                             GenBin defaults AtLeast and Weight to 0.  AddBins and AddCross to 1.
---    12/2021   2021.12    Added ReadCovYaml   
---    11/2021   2021.11    Updated WriteCovYaml to write CovWeight first.   
+--    12/2021   2021.12    Added ReadCovYaml
+--    11/2021   2021.11    Updated WriteCovYaml to write CovWeight first.
 --                         Updated GetCov calculation with PercentCov.
 --    10/2021   2021.10    Added WriteCovYaml to write out coverage as a YAML file
 --    08/2021   2021.08    Removed SetAlertLogID from singleton public interface - set instead by NewID
---                         Moved SetName, SetMessage to deprecated 
---                         Moved AddBins, AddCross, GenBin, and GenCross with weight parameter to deprecated 
+--                         Moved SetName, SetMessage to deprecated
+--                         Moved AddBins, AddCross, GenBin, and GenCross with weight parameter to deprecated
 --    07/2021   2021.07    Updated for new data structure
 --    07/2020   2020.07    Adjusted NextPointModeType:  Changed MIN to MODE_MINIMUM.
 --                         The preferred MINIMUM will not work in some tools
@@ -133,7 +133,7 @@ package CoveragePkg is
   end record CoverageIDType ;
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
-  
+
   constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- CovPType allocates bins that are multiples of MIN_NUM_BINS
@@ -300,7 +300,7 @@ package CoveragePkg is
   impure function NewID (
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ; 
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType ;
@@ -345,15 +345,15 @@ package CoveragePkg is
   impure function GetNamePlus     (ID : CoverageIDType; prefix, suffix : string) return String ;
   procedure SetItemBinNames (
     ID         : CoverageIDType ;
-    Name1      : String ; 
-            Name2,  Name3,  Name4,  Name5, 
-    Name6,  Name7,  Name8,  Name9,  Name10, 
-    Name11, Name12, Name13, Name14, Name15, 
+    Name1      : String ;
+            Name2,  Name3,  Name4,  Name5,
+    Name6,  Name7,  Name8,  Name9,  Name10,
+    Name11, Name12, Name13, Name14, Name15,
     Name16, Name17, Name18, Name19, Name20 : string := ""
   ) ;
-  alias SetFieldName is SetItemBinNames [CoverageIDType, 
-    string, string, string, string, string, string, string, string, string, string, 
-    string, string, string, string, string, string, string, string, string, string] ;                      
+  alias SetFieldName is SetItemBinNames [CoverageIDType,
+    string, string, string, string, string, string, string, string, string, string,
+    string, string, string, string, string, string, string, string, string, string] ;
 
   procedure       SetCovTarget       (ID : CoverageIDType; Percent : real) ;
   impure function GetCovTarget       (ID : CoverageIDType) return real ;
@@ -363,7 +363,7 @@ package CoveragePkg is
   procedure       SetCountMode       (ID : CoverageIDType; A : CountModeType) ;
   procedure       SetIllegalMode     (ID : CoverageIDType; A : IllegalModeType) ;
   procedure       SetNextPointMode   (ID : CoverageIDType; A : NextPointModeType) ;
-  -- 
+  --
   -- SetWeightMode with a WeightMode other than AT_LEAST or REMAIN is deprecated
   -- SetWeightMode with a WeightScale parameter is deprecated
   procedure       SetWeightMode      (ID : CoverageIDType; WeightMode : WeightModeType;  WeightScale : real := 1.0) ;
@@ -371,7 +371,7 @@ package CoveragePkg is
   impure function GetCovWeight       (ID : CoverageIDType) return integer ;
 
   ------------------------------------------------------------
-  -- Seeds are initialized by NewID.  
+  -- Seeds are initialized by NewID.
   procedure       InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE) ;
   impure function InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE ) return string ;
   procedure       InitSeed      (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := TRUE ) ;
@@ -380,7 +380,7 @@ package CoveragePkg is
   procedure       SetSeed (ID : CoverageIDType; RandomSeedIn : RandomSeedType ) ;
   impure function GetSeed (ID : CoverageIDType) return RandomSeedType ;
 
-  
+
   ------------------------------------------------------------
   -- /////////////////////////////////////////
   --  Item / Cross Bin Creation and Destruction
@@ -659,7 +659,7 @@ package CoveragePkg is
   procedure CompareBins (
   ------------------------------------------------------------
     constant Bin1       : in    CoverageIDType ;
-    constant Bin2       : in    CoverageIDType 
+    constant Bin2       : in    CoverageIDType
   ) ;
 
   --
@@ -672,7 +672,7 @@ package CoveragePkg is
     Min, Max      : integer ;
     NumBin        : integer
   ) return CovBinType ;
-  
+
   -- Each item in range in a separate CovBin
   function GenBin(Min, Max, NumBin : integer ) return CovBinType ;
   function GenBin(Min, Max : integer) return CovBinType ;
@@ -804,7 +804,7 @@ package CoveragePkg is
     impure function NewID (
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ; 
+      ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return CoverageIDType ;
@@ -846,10 +846,10 @@ package CoveragePkg is
     impure function GetNamePlus     (ID : CoverageIDType; prefix, suffix : string) return String ;
     procedure SetItemBinNames (
       ID         : CoverageIDType ;
-      Name1      : String ; 
-              Name2,  Name3,  Name4,  Name5, 
-      Name6,  Name7,  Name8,  Name9,  Name10, 
-      Name11, Name12, Name13, Name14, Name15, 
+      Name1      : String ;
+              Name2,  Name3,  Name4,  Name5,
+      Name6,  Name7,  Name8,  Name9,  Name10,
+      Name11, Name12, Name13, Name14, Name15,
       Name16, Name17, Name18, Name19, Name20 : string := ""
     ) ;
 
@@ -1518,8 +1518,8 @@ package CoveragePkg is
   ------------------------------------------------------------------------------------------
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  ------------------------------------------------------------------------------------------  
-  
+  ------------------------------------------------------------------------------------------
+
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
   procedure CompareBins (
@@ -1535,13 +1535,13 @@ package CoveragePkg is
   ------------------------------------------------------------
     variable Bin1       : inout CovPType ;
     variable Bin2       : inout CovPType
-  ) ;  
-  
+  ) ;
+
   ------------------------------------------------------------
   -- Deprecated items
   -- The following will be removed from the package in the future.
-  --  
-  
+  --
+
   ------------------------------------------------------------
   -- SetName is deprecated, see NewID
   procedure       SetName         (ID : CoverageIDType; Name : String) ;
@@ -1603,7 +1603,7 @@ package CoveragePkg is
     Min, Max      : integer ;
     NumBin        : integer
   ) return CovBinType ;
-  
+
   ------------------------------------------------------------
   -- Weight Parameter is deprecated
   function GenBin(
@@ -1690,15 +1690,15 @@ end package CoveragePkg ;
 package body CoveragePkg is
   ------------------------------------------------------------
   --  package local
-  function ActionToName(Action : integer) return string is 
+  function ActionToName(Action : integer) return string is
   ------------------------------------------------------------
-  begin 
+  begin
     case Action is
       when 1 =>        return "COUNT" ;
       when 0 =>        return "IGNORE"  ;
       when others =>   return "ILLEGAL" ;
-    end case ; 
-  end function ActionToName ; 
+    end case ;
+  end function ActionToName ;
 
   ------------------------------------------------------------
   function inside (
@@ -2163,10 +2163,10 @@ package body CoveragePkg is
     end record CovBinInternalBaseType ;
     type CovBinInternalType is array (natural range <>) of CovBinInternalBaseType ;
     type CovBinPtrType is access CovBinInternalType ;
-    
+
     type FieldNameArrayType is array (natural range <>) of Line ;
     type FieldNameArrayPtrType is access FieldNameArrayType ;
-    
+
     type IntegerVectorPtrType is access integer_vector ;
 
     ------------------------------------------------------------
@@ -2179,10 +2179,10 @@ package body CoveragePkg is
       CovName            : line ;
       NumBins            : integer ;
       BinValLength       : integer ;
-      FieldName          : FieldNameArrayPtrType ; 
+      FieldName          : FieldNameArrayPtrType ;
       CovWeight          : integer ; -- Set GetCov for entire model
-      
-      TCoverCount        : integer ; 
+
+      TCoverCount        : integer ;
       TCoverValuePtr     : IntegerVectorPtrType ;
 
       CovMessage         : MessageStructPtrType ;
@@ -2223,8 +2223,8 @@ package body CoveragePkg is
         BinValLength       =>  1,
         FieldName          =>  NULL,
         CovWeight          =>  1,
-        
-        TCoverCount        =>  0, 
+
+        TCoverCount        =>  0,
         TCoverValuePtr     =>  NULL,
 
         CovMessage         =>  NULL,
@@ -2309,7 +2309,7 @@ package body CoveragePkg is
         ItemArrayPtr(1 to NumItems) := oldItemArrayPtr(1 to NumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
-      NumItems := NewNumItems ; 
+      NumItems := NewNumItems ;
     end procedure GrowNumberItems ;
 
     ------------------------------------------------------------
@@ -2317,26 +2317,26 @@ package body CoveragePkg is
     ------------------------------------------------------------
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ; 
+      ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return CoverageIDType is
       variable NewCoverageID       : CoverageIDType ;
-      variable NameID              : integer ; 
-      variable ResolvedSearch      : NameSearchType ; 
-      variable ResolvedPrintParent : AlertLogPrintParentType ; 
+      variable NameID              : integer ;
+      variable ResolvedSearch      : NameSearchType ;
+      variable ResolvedPrintParent : AlertLogPrintParentType ;
     begin
-      ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, Search) ; 
-      ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, PrintParent) ; 
-    
-      NameID := LocalNameStore.find(Name, ParentID, ResolvedSearch) ; 
-      
-      if NameID /= ID_NOT_FOUND.ID then 
+      ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, Search) ;
+      ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, PrintParent) ;
+
+      NameID := LocalNameStore.find(Name, ParentID, ResolvedSearch) ;
+
+      if NameID /= ID_NOT_FOUND.ID then
         NewCoverageID := (ID => NameID) ;
         SetName(NewCoverageID, Name) ; -- redundant - refactor after diverge.  Needed if deallocate
-        return NewCoverageID ; 
+        return NewCoverageID ;
       else
-        -- Add New Coverage Model to Structure 
+        -- Add New Coverage Model to Structure
         GrowNumberItems(CovStructPtr, NumItems, 1, MIN_NUM_ITEMS) ;
         CovStructPtr(NumItems) := COV_STRUCT_INIT ;
         NewCoverageID := (ID => NumItems) ;
@@ -2344,20 +2344,20 @@ package body CoveragePkg is
         CovStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
-        AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;  
+        AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;
         InitSeed( NewCoverageID, Name) ;
-        SetName( NewCoverageID, Name) ; -- redundant - refactor after diverge     
+        SetName( NewCoverageID, Name) ; -- redundant - refactor after diverge
         return NewCoverageID ;
-      end if ; 
+      end if ;
     end function NewID ;
-    
+
     ------------------------------------------------------------
     impure function GetNumIDs return integer is
     ------------------------------------------------------------
     begin
       return NumItems ;
     end function GetNumIDs ;
-    
+
     ------------------------------------------------------------
     -- /////////////////////////////////////////
     --  Coverage Global Settings Common to All Coverage Models
@@ -2405,10 +2405,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure PrintToCovFile(S : string) is
     ------------------------------------------------------------
-      variable buf : line ; 
+      variable buf : line ;
     begin
-      write(buf, S) ; 
-      WriteToCovFile(buf) ; 
+      write(buf, S) ;
+      WriteToCovFile(buf) ;
     end procedure PrintToCovFile ;
 
 --      ------------------------------------------------------------
@@ -2548,14 +2548,14 @@ package body CoveragePkg is
         deallocate (CovStructPtr(ID.ID).CovName) ;
       end if;
       CovStructPtr(ID.ID).CovName := new string'(Name) ;
-      
+
       -- Update if name updated after model created                      -- VendorCov
       if IsInitialized(ID) then                                          -- VendorCov
         VendorCovSetName(CovStructPtr(ID.ID).VendorCovHandle, Name) ;    -- VendorCov
       end if ;                                                           -- VendorCov
-      
+
       -- Init seed if not already initialized
-      if not CovStructPtr(ID.ID).RvSeedInit then  
+      if not CovStructPtr(ID.ID).RvSeedInit then
         InitSeed(ID, Name) ;
         CovStructPtr(ID.ID).RvSeedInit := TRUE ;
       end if ;
@@ -2584,7 +2584,7 @@ package body CoveragePkg is
         return CovStructPtr(ID.ID).CovName.all ;
       else
         return "!!! CovName is NULL !!!" ;
-      end if ; 
+      end if ;
     end function GetName ;
 
     ------------------------------------------------------------
@@ -2623,15 +2623,15 @@ package body CoveragePkg is
 
     ------------------------------------------------------------
     -- PT Local
-    impure function NewNamePtr(Name : string) return Line is 
+    impure function NewNamePtr(Name : string) return Line is
     ------------------------------------------------------------
     begin
       if Name /= "" then
         return new string'(Name) ;
       else
         return NULL ;
-      end if; 
-    end function NewNamePtr ; 
+      end if;
+    end function NewNamePtr ;
 
 --    ------------------------------------------------------------
 --    -- pt local
@@ -2650,10 +2650,10 @@ package body CoveragePkg is
     -- pt local
     impure function BinValLengthNotEqual(CoverID : CoverageIDType; CurBinValLength : integer) return boolean is
     ------------------------------------------------------------
-      constant ID : integer := CoverID.ID ; 
+      constant ID : integer := CoverID.ID ;
     begin
       if CovStructPtr(ID).NumBins = 0 then
-        CovStructPtr(ID).BinValLength   := CurBinValLength ; 
+        CovStructPtr(ID).BinValLength   := CurBinValLength ;
         CovStructPtr(ID).TCoverValuePtr := new integer_vector(1 to CurBinValLength) ;
         return FALSE ;
       else
@@ -2665,21 +2665,21 @@ package body CoveragePkg is
     procedure SetItemBinNames (
     ------------------------------------------------------------
       ID         : CoverageIDType ;
-      Name1      : String ; 
-              Name2,  Name3,  Name4,  Name5, 
-      Name6,  Name7,  Name8,  Name9,  Name10, 
-      Name11, Name12, Name13, Name14, Name15, 
+      Name1      : String ;
+              Name2,  Name3,  Name4,  Name5,
+      Name6,  Name7,  Name8,  Name9,  Name10,
+      Name11, Name12, Name13, Name14, Name15,
       Name16, Name17, Name18, Name19, Name20 : string := ""
     ) is
-      variable NamePtr : Line ; 
-      variable FieldNameArray : FieldNameArrayType(1 to 20) ; 
+      variable NamePtr : Line ;
+      variable FieldNameArray : FieldNameArrayType(1 to 20) ;
       variable Dimensions : integer := 0 ;
     begin
       -- Support names for up to a cross of 20
-      for i in 1 to 20 loop 
+      for i in 1 to 20 loop
         if CovStructPtr(ID.ID).FieldName /= NULL then
-          for i in 1 to CovStructPtr(ID.ID).FieldName'length loop 
-            deallocate (CovStructPtr(ID.ID).FieldName(i)) ; 
+          for i in 1 to CovStructPtr(ID.ID).FieldName'length loop
+            deallocate (CovStructPtr(ID.ID).FieldName(i)) ;
           end loop ;
           deallocate (CovStructPtr(ID.ID).FieldName) ;
         end if;
@@ -2704,14 +2704,14 @@ package body CoveragePkg is
           when 18 =>  NamePtr := NewNamePtr(Name18) ;
           when 19 =>  NamePtr := NewNamePtr(Name19) ;
           when 20 =>  NamePtr := NewNamePtr(Name20) ;
-        end case ; 
-        exit when NamePtr = NULL ; 
-        FieldNameArray(i) := NamePtr ; 
-        Dimensions := i ; 
+        end case ;
+        exit when NamePtr = NULL ;
+        FieldNameArray(i) := NamePtr ;
+        Dimensions := i ;
       end loop ;
       CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray(1 to Dimensions)) ;
-      -- Check that Dimensions match bin dimensions    
-      if BinValLengthNotEqual(ID, Dimensions) then 
+      -- Check that Dimensions match bin dimensions
+      if BinValLengthNotEqual(ID, Dimensions) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.SetItemBinNames: Coverage bins of different dimensions prohibited", FAILURE) ;
       end if ;
     end procedure SetItemBinNames ;
@@ -2856,7 +2856,7 @@ package body CoveragePkg is
         CovStructPtr(ID.ID).WeightScale := 1.0 ;
       end if;
     end procedure SetWeightMode ;
-    
+
     ------------------------------------------------------------
     procedure SetCovWeight (ID : CoverageIDType; Weight : integer) is
     ------------------------------------------------------------
@@ -3072,9 +3072,9 @@ package body CoveragePkg is
       variable vCalcAtLeast : integer ;
       variable vCalcWeight  : integer ;
     begin
-      if BinValLengthNotEqual(ID, 1) then 
+      if BinValLengthNotEqual(ID, 1) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddBins: Coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
 
       GrowBins(ID, CovBin'length) ;
@@ -3155,9 +3155,9 @@ package body CoveragePkg is
       variable vCalcAction, vCalcCount, vCalcAtLeast, vCalcWeight : integer ;
       variable vCalcBinVal   : RangeArrayType(BinIndex'range) ;
     begin
-      if BinValLengthNotEqual(ID, BIN_LENS'length) then 
+      if BinValLengthNotEqual(ID, BIN_LENS'length) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
 
       GrowBins(ID, NUM_NEW_BINS) ;
@@ -3260,7 +3260,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure DeallocateBins(CoverID : CoverageIDType) is
     ------------------------------------------------------------
-      constant Index   : integer := CoverID.ID ; 
+      constant Index   : integer := CoverID.ID ;
     begin
       -- Local for a particular CoverageModel
       if CovStructPtr(Index).CovBinPtr /= NULL then
@@ -3269,14 +3269,14 @@ package body CoveragePkg is
           deallocate(CovStructPtr(Index).CovBinPtr(i).Name) ;
         end loop ;
         deallocate(CovStructPtr(Index).CovBinPtr) ;
-      end if ; 
+      end if ;
       CovStructPtr(Index).NumBins := 0 ;
     end procedure DeallocateBins ;
-    
+
     ------------------------------------------------------------
     procedure Deallocate(ID : CoverageIDType) is
     ------------------------------------------------------------
-      constant Index   : integer := ID.ID ; 
+      constant Index   : integer := ID.ID ;
     begin
 --!!?? These are only done when removing all coverage models.
 --      -- Globals - for all coverage models
@@ -3287,7 +3287,7 @@ package body CoveragePkg is
 --      WritePrefixVar.deallocate ;
 --      PassNameVar.deallocate ;
 --      FailNameVar.deallocate ;
-      DeallocateBins(ID) ; 
+      DeallocateBins(ID) ;
       DeallocateName(ID) ;
       DeallocateMessage(ID) ;
       -- Restore internal variables to their default values
@@ -3298,7 +3298,7 @@ package body CoveragePkg is
       CovStructPtr(Index).ItemCount          := 0 ;
       CovStructPtr(Index).LastIndex          := 1 ;
       CovStructPtr(Index).LastStimGenIndex   := 1 ;
-      
+
       -- Changing these is beyond what deallocate should do.
       CovStructPtr(Index).NextPointMode      := RANDOM ;
       CovStructPtr(Index).IllegalMode        := ILLEGAL_ON ;
@@ -3388,13 +3388,13 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure TCover (CoverID : CoverageIDType; A : integer) is
     ------------------------------------------------------------
-      constant ID : integer := CoverID.ID ; 
+      constant ID : integer := CoverID.ID ;
     begin
-      CovStructPtr(ID).TCoverCount        := CovStructPtr(ID).TCoverCount + 1 ; 
-      CovStructPtr(ID).TCoverValuePtr.all := CovStructPtr(ID).TCoverValuePtr.all(2 to CovStructPtr(ID).BinValLength) & A ; 
-      if (CovStructPtr(ID).TCoverCount >= CovStructPtr(ID).BinValLength) then 
+      CovStructPtr(ID).TCoverCount        := CovStructPtr(ID).TCoverCount + 1 ;
+      CovStructPtr(ID).TCoverValuePtr.all := CovStructPtr(ID).TCoverValuePtr.all(2 to CovStructPtr(ID).BinValLength) & A ;
+      if (CovStructPtr(ID).TCoverCount >= CovStructPtr(ID).BinValLength) then
         ICover(CoverID, CovStructPtr(ID).TCoverValuePtr.all) ;
-      end if ; 
+      end if ;
     end procedure TCover ;
 
     ------------------------------------------------------------
@@ -3502,8 +3502,8 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable ScaledCovGoal : integer := 0 ;
     begin
-      TotalCovCount := 0 ; 
-      TotalCovGoal  := 0 ; 
+      TotalCovCount := 0 ;
+      TotalCovGoal  := 0 ;
       BinLoop : for i in 1 to CovStructPtr(ID.ID).NumBins loop
         if CovStructPtr(ID.ID).CovBinPtr(i).action = COV_COUNT then
           ScaledCovGoal := integer(ceil(PercentCov * real(CovStructPtr(ID.ID).CovBinPtr(i).AtLeast)/100.0)) ;
@@ -3522,7 +3522,7 @@ package body CoveragePkg is
     procedure GetTotalCovCountAndGoal (ID : CoverageIDType; TotalCovCount : out integer; TotalCovGoal : out integer ) is
     ------------------------------------------------------------
     begin
-      GetTotalCovCountAndGoal(ID, CovStructPtr(ID.ID).CovTarget, TotalCovCount, TotalCovGoal) ; 
+      GetTotalCovCountAndGoal(ID, CovStructPtr(ID.ID).CovTarget, TotalCovCount, TotalCovGoal) ;
     end procedure GetTotalCovCountAndGoal ;
 
     ------------------------------------------------------------
@@ -3530,12 +3530,12 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable TotalCovCount, TotalCovGoal : integer ;
     begin
-      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
-      if TotalCovGoal > 0 then 
+      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ;
+      if TotalCovGoal > 0 then
         return 100.0 * real(TotalCovCount) / real(TotalCovGoal) ;
       else
-        return 0.0 ; 
-      end if ; 
+        return 0.0 ;
+      end if ;
     end function GetCov ;
 
     ------------------------------------------------------------
@@ -3550,8 +3550,8 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable TotalCovCount, TotalCovGoal : integer ;
     begin
-      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
-      return TotalCovCount ; 
+      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ;
+      return TotalCovCount ;
     end function GetTotalCovCount ;
 
     ------------------------------------------------------------
@@ -3566,7 +3566,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable TotalCovCount, TotalCovGoal : integer ;
     begin
-      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ; 
+      GetTotalCovCountAndGoal(ID, PercentCov, TotalCovCount, TotalCovGoal) ;
       return TotalCovGoal ;
     end function GetTotalCovGoal ;
 
@@ -4959,7 +4959,7 @@ package body CoveragePkg is
       end if ;
       file_close(CovDbFile) ;
     end procedure WriteCovDb ;
-    
+
 --     ------------------------------------------------------------
 --     procedure WriteCovDb (ID : CoverageIDType) is
 --     ------------------------------------------------------------
@@ -4975,61 +4975,61 @@ package body CoveragePkg is
     --  pt local
     procedure WriteCovSettingsYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
     ------------------------------------------------------------
-      variable TotalCovCount, TotalCovGoal : integer ; 
+      variable TotalCovCount, TotalCovGoal : integer ;
     begin
       -- write bins to YAML file
-      write(buf, Prefix & "Settings: " & LF) ; 
-      write(buf, Prefix & "  CovWeight: "          & to_string(CovStructPtr(ID.ID).CovWeight)                    & LF) ; 
-      write(buf, Prefix & "  Goal: "               & to_string(CovStructPtr(ID.ID).CovTarget, 1)                 & LF) ; 
-      write(buf, Prefix & "  WeightMode: """       & to_upper(to_string(CovStructPtr(ID.ID).WeightMode))         & '"' & LF) ; 
-      write(buf, Prefix & "  Seeds: ["             & to_string(CovStructPtr(ID.ID).RV, ", ") & "]"               & LF) ; 
-      write(buf, Prefix & "  CountMode: """        & to_upper(to_string(CovStructPtr(ID.ID).CountMode))          & '"' & LF) ; 
-      write(buf, Prefix & "  IllegalMode: """      & to_upper(to_string(CovStructPtr(ID.ID).IllegalMode))        & '"' & LF) ; 
-      write(buf, Prefix & "  Threshold: "          & to_string(CovStructPtr(ID.ID).CovThreshold, 1)              & LF) ; 
-      write(buf, Prefix & "  ThresholdEnable: """  & to_upper(to_string(CovStructPtr(ID.ID).ThresholdingEnable)) & '"' & LF) ; 
+      write(buf, Prefix & "Settings: " & LF) ;
+      write(buf, Prefix & "  CovWeight: "          & to_string(CovStructPtr(ID.ID).CovWeight)                    & LF) ;
+      write(buf, Prefix & "  Goal: "               & to_string(CovStructPtr(ID.ID).CovTarget, 1)                 & LF) ;
+      write(buf, Prefix & "  WeightMode: """       & to_upper(to_string(CovStructPtr(ID.ID).WeightMode))         & '"' & LF) ;
+      write(buf, Prefix & "  Seeds: ["             & to_string(CovStructPtr(ID.ID).RV, ", ") & "]"               & LF) ;
+      write(buf, Prefix & "  CountMode: """        & to_upper(to_string(CovStructPtr(ID.ID).CountMode))          & '"' & LF) ;
+      write(buf, Prefix & "  IllegalMode: """      & to_upper(to_string(CovStructPtr(ID.ID).IllegalMode))        & '"' & LF) ;
+      write(buf, Prefix & "  Threshold: "          & to_string(CovStructPtr(ID.ID).CovThreshold, 1)              & LF) ;
+      write(buf, Prefix & "  ThresholdEnable: """  & to_upper(to_string(CovStructPtr(ID.ID).ThresholdingEnable)) & '"' & LF) ;
       GetTotalCovCountAndGoal (ID, TotalCovCount, TotalCovGoal) ;
-      write(buf, Prefix & "  TotalCovCount: "      & to_string(TotalCovCount)                                    & LF) ; 
-      write(buf, Prefix & "  TotalCovGoal: "       & to_string(TotalCovGoal)                                     & LF) ; 
+      write(buf, Prefix & "  TotalCovCount: "      & to_string(TotalCovCount)                                    & LF) ;
+      write(buf, Prefix & "  TotalCovGoal: "       & to_string(TotalCovGoal)                                     & LF) ;
     end procedure WriteCovSettingsYaml ;
-    
+
     ------------------------------------------------------------
     --  pt local
     procedure WriteCovFieldNameYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
     ------------------------------------------------------------
       variable Dimensions : integer ;
-      variable FieldWidth : integer ; 
+      variable FieldWidth : integer ;
       variable FieldName  : FieldNameArrayPtrType ;
     begin
-      FieldName  := CovStructPtr(ID.ID).FieldName ; 
+      FieldName  := CovStructPtr(ID.ID).FieldName ;
       Dimensions := CovStructPtr(ID.ID).BinValLength ;
-      if FieldName = NULL then 
-        FieldWidth := 0 ; 
-      else 
-        FieldWidth := FieldName'length; 
-      end if; 
-      
-      write(buf, Prefix & "  FieldNames: " & LF) ; 
-      for i in 1 to Dimensions loop 
-        if i > FieldWidth then 
-          write(buf, Prefix & "    - ""Bin" & to_string(i)  & '"' & LF) ; 
-        else 
-          write(buf, Prefix & "    - """ & FieldName(i).all & '"' & LF) ; 
-        end if ; 
-      end loop ; 
+      if FieldName = NULL then
+        FieldWidth := 0 ;
+      else
+        FieldWidth := FieldName'length;
+      end if;
+
+      write(buf, Prefix & "  FieldNames: " & LF) ;
+      for i in 1 to Dimensions loop
+        if i > FieldWidth then
+          write(buf, Prefix & "    - ""Bin" & to_string(i)  & '"' & LF) ;
+        else
+          write(buf, Prefix & "    - """ & FieldName(i).all & '"' & LF) ;
+        end if ;
+      end loop ;
     end procedure WriteCovFieldNameYaml ;
-    
+
     ------------------------------------------------------------
     --  pt local
     procedure WriteCovBinInfoYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
     ------------------------------------------------------------
     begin
       -- write bins to YAML file
-      write(buf, Prefix & "BinInfo: " & LF) ; 
-      write(buf, Prefix & "  Dimensions: " & to_string(CovStructPtr(ID.ID).BinValLength) & LF) ; 
-      WriteCovFieldNameYaml(ID, buf, Prefix) ; 
-      write(buf, Prefix & "  NumBins: " & to_string(CovStructPtr(ID.ID).NumBins) & LF) ; 
+      write(buf, Prefix & "BinInfo: " & LF) ;
+      write(buf, Prefix & "  Dimensions: " & to_string(CovStructPtr(ID.ID).BinValLength) & LF) ;
+      WriteCovFieldNameYaml(ID, buf, Prefix) ;
+      write(buf, Prefix & "  NumBins: " & to_string(CovStructPtr(ID.ID).NumBins) & LF) ;
     end procedure WriteCovBinInfoYaml ;
-    
+
     ------------------------------------------------------------
     procedure WriteBinValYaml (
     -- package local for now
@@ -5040,9 +5040,9 @@ package body CoveragePkg is
     ) is
     begin
       for i in BinVal'range loop
-        write(buf, Prefix & 
-            "- {Min: " & to_string(BinVal(i).min) & 
-            ", Max: "  & to_string(BinVal(i).max) & "}" & LF) ; 
+        write(buf, Prefix &
+            "- {Min: " & to_string(BinVal(i).min) &
+            ", Max: "  & to_string(BinVal(i).max) & "}" & LF) ;
       end loop ;
     end procedure WriteBinValYaml ;
 
@@ -5050,46 +5050,46 @@ package body CoveragePkg is
     --  pt local
     procedure WriteCovBinsYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
     ------------------------------------------------------------
-      variable Action : integer ; 
+      variable Action : integer ;
       variable CovBin : CovBinInternalBaseType ;
     begin
       -- write bins to YAML file
-      write(buf, Prefix & "Bins: " & LF) ; 
-      
+      write(buf, Prefix & "Bins: " & LF) ;
+
       writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
         CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
         write(buf, Prefix & "  - Name: """ & CovBin.Name.all             & '"' & LF) ;
         write(buf, Prefix & "    Type: """ & ActionToName(CovBin.Action) & '"' & LF ) ;
         write(buf, Prefix & "    Range: " & LF) ;
-        WriteBinValYaml(buf, CovBin.BinVal.all, Prefix & "      ") ; 
+        WriteBinValYaml(buf, CovBin.BinVal.all, Prefix & "      ") ;
         write(buf, Prefix & "    Count: "      & to_string(CovBin.Count) & LF) ;
         write(buf, Prefix & "    AtLeast: "    & to_string(CovBin.AtLeast) & LF) ;
         write(buf, Prefix & "    PercentCov: " & to_string(CovBin.PercentCov, 4) & LF) ;
-      end loop writeloop ; 
+      end loop writeloop ;
     end procedure WriteCovBinsYaml ;
-    
+
     ------------------------------------------------------------
     --  pt local
     procedure WriteCovYaml (ID : CoverageIDType; file CovYamlFile : text; TestCaseName : string ) is
     ------------------------------------------------------------
       variable buf       : line ;
-      constant NAME_PREFIX : string := "  " ; 
+      constant NAME_PREFIX : string := "  " ;
     begin
       -- If no bins, FAIL and return (if resumed)
       if CovStructPtr(ID.ID).NumBins < 1 then
         Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
                        "CoveragePkg.WriteCovYaml: no bins defined ", FAILURE) ;
-        return ; 
-      end if ; 
-      
-      write(buf, NAME_PREFIX & "- Name: "     & '"' & GetName(ID) & '"' & LF) ; 
+        return ;
+      end if ;
+
+      write(buf, NAME_PREFIX & "- Name: "     & '"' & GetName(ID) & '"' & LF) ;
 --!! TODO: Add Writing for ParentName, ReportMode, Search, PrintParent
-      write(buf, NAME_PREFIX & "  TestCases: " & LF) ; 
-      write(buf, NAME_PREFIX & "    - " & '"' & TestCaseName & '"' & LF) ; 
---!! Add code to list out merged tests      
-      write(buf, NAME_PREFIX & "  Coverage: " & to_string(GetCov(ID), 2) & LF) ; 
-      WriteCovSettingsYaml(ID, buf, NAME_PREFIX &  "  ") ; 
-      WriteCovBinInfoYaml (ID, buf, NAME_PREFIX &  "  ") ; 
+      write(buf, NAME_PREFIX & "  TestCases: " & LF) ;
+      write(buf, NAME_PREFIX & "    - " & '"' & TestCaseName & '"' & LF) ;
+--!! Add code to list out merged tests
+      write(buf, NAME_PREFIX & "  Coverage: " & to_string(GetCov(ID), 2) & LF) ;
+      WriteCovSettingsYaml(ID, buf, NAME_PREFIX &  "  ") ;
+      WriteCovBinInfoYaml (ID, buf, NAME_PREFIX &  "  ") ;
       WriteCovBinsYaml    (ID, buf, NAME_PREFIX &  "  ") ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteCovYaml ;
@@ -5099,34 +5099,34 @@ package body CoveragePkg is
 --     ------------------------------------------------------------
 --       file CovYamlFile : text open OpenKind is FileName ;
 --     begin
---       WriteCovYaml(ID, CovYamlFile) ; 
+--       WriteCovYaml(ID, CovYamlFile) ;
 --       file_close(CovYamlFile) ;
 --     end procedure WriteCovYaml ;
 
     ------------------------------------------------------------
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ; 
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin
-      swrite(buf, "Version: 1.0" & LF) ; 
-      swrite(buf, "Coverage: " & to_string(Coverage, 2) & LF) ; 
-      swrite(buf, "Models: ") ; 
-      writeline(CovYamlFile, buf) ; 
+      swrite(buf, "Version: 1.0" & LF) ;
+      swrite(buf, "Coverage: " & to_string(Coverage, 2) & LF) ;
+      swrite(buf, "Models: ") ;
+      writeline(CovYamlFile, buf) ;
       for i in 1 to NumItems loop
-        if CovStructPtr(i).NumBins >= 1 then 
-          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ; 
-        end if ; 
-      end loop ; 
+        if CovStructPtr(i).NumBins >= 1 then
+          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+        end if ;
+      end loop ;
       file_close(CovYamlFile) ;
     end procedure WriteCovYaml ;
-    
+
     ------------------------------------------------------------
     --  pt local.  Find a specific token potentially split across lines
     procedure ReadFindToken (
     ------------------------------------------------------------
-      file     ReadFile :       text ; 
+      file     ReadFile :       text ;
       constant Token    : in    string ;
       variable buf      : inout line ;
       variable Found    : out   boolean
@@ -5134,26 +5134,26 @@ package body CoveragePkg is
       variable Empty, MultiLineComment, ReadValid  : boolean ;
       variable vToken     : string(1 to Token'length) ;
     begin
-      Found := FALSE ; 
-      
-      ReadLoop : loop   
-        if buf = NULL or buf.all'length = 0  then 
+      Found := FALSE ;
+
+      ReadLoop : loop
+        if buf = NULL or buf.all'length = 0  then
           -- return Good FALSE when file empty
           exit ReadLoop when EndFile(ReadFile) ;
           -- Get Next Line
           ReadLine(ReadFile, buf) ;
-        end if ; 
+        end if ;
         -- Skip blank and multi-line comment lines
-        EmptyOrCommentLine(buf, Empty, MultiLineComment) ; 
+        EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
         next ReadLoop when Empty;
 
         read(buf, vToken, ReadValid) ;
-        if not ReadValid then 
-          deallocate(buf) ; 
-          next ReadLoop ; 
-        end if ; 
+        if not ReadValid then
+          deallocate(buf) ;
+          next ReadLoop ;
+        end if ;
         next ReadLoop when vToken /= Token ;
-        Found := TRUE ; 
+        Found := TRUE ;
         exit ReadLoop ;
       end loop ReadLoop ;
     end procedure ReadFindToken ;
@@ -5163,357 +5163,357 @@ package body CoveragePkg is
     procedure ReadQuotedString (
     ------------------------------------------------------------
       variable buf      : inout line ;
-      variable Name     : inout line 
+      variable Name     : inout line
     ) is
-      variable char    : character ; 
-      variable vString : string(1 to buf'length) ; 
-      variable Index   : integer := 1 ; 
-      variable Found, Empty, ReadValid : boolean ; 
+      variable char    : character ;
+      variable vString : string(1 to buf'length) ;
+      variable Index   : integer := 1 ;
+      variable Found, Empty, ReadValid : boolean ;
     begin
-      Found := FALSE ; 
-      if Name /= NULL then 
-        deallocate(Name) ; 
-      end if ; 
-      
-      ReadLoop : loop   
+      Found := FALSE ;
+      if Name /= NULL then
+        deallocate(Name) ;
+      end if ;
+
+      ReadLoop : loop
         SkipWhiteSpace(buf, Empty) ;  -- Skips white space at beginning of line
         exit ReadLoop when Empty ;
-        
+
         exit ReadLoop when buf.all(buf'left) /= '"' ;
         Read(buf, Char, ReadValid) ;
         exit ReadLoop when not ReadValid ;
-        
+
         for i in vString'range loop
           Read(buf, vString(i), ReadValid) ;
           exit ReadLoop when not ReadValid ;
-          if vString(i) = '"' then 
-            Index := i - 1 ; 
-            Found := TRUE ; 
-            exit ; 
-          end if ; 
+          if vString(i) = '"' then
+            Index := i - 1 ;
+            Found := TRUE ;
+            exit ;
+          end if ;
           exit ReadLoop when buf.all'length = 0 ;
-        end loop ; 
+        end loop ;
       end loop ReadLoop ;
-        
-      if Found then 
-        Name := new string'(vString(1 to Index)) ; 
-      end if ; 
+
+      if Found then
+        Name := new string'(vString(1 to Index)) ;
+      end if ;
     end procedure ReadQuotedString ;
-    
+
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovModelNameYaml (
     ------------------------------------------------------------
       variable ID          : out CoverageIDType ;
-      file     CovYamlFile :     text ; 
+      file     CovYamlFile :     text ;
       variable Found       : out boolean
     ) is
       variable buf  : line ;
-      variable sName : line ; 
+      variable sName : line ;
     begin
-      Found := FALSE ; 
+      Found := FALSE ;
       ReadLoop: loop
-        ReadFindToken (CovYamlFile, "- Name:", buf, Found) ; 
-        exit ReadLoop when not Found ; 
+        ReadFindToken (CovYamlFile, "- Name:", buf, Found) ;
+        exit ReadLoop when not Found ;
         -- Get the Name
         ReadQuotedString(buf, sName) ;
-        exit when AlertIf(OSVVM_COV_ALERTLOG_ID, sName = NULL, 
+        exit when AlertIf(OSVVM_COV_ALERTLOG_ID, sName = NULL,
             "CoveragePkg.ReadCovYaml: Unnamed Coverage Model.", COV_READ_YAML_ALERT_LEVEL);
-            
+
 --!! TODO: Add reading for ParentName, ReportMode, Search, PrintParent
-        ID := NewID(sName.all, ReportMode => ENABLED, Search => NAME_AND_PARENT, PrintParent => PRINT_NAME_AND_PARENT) ; 
-        deallocate(sName) ; 
-        Found := TRUE ; 
-        exit ; 
-      end loop ReadLoop ; 
-    end procedure ReadCovModelNameYaml ; 
+        ID := NewID(sName.all, ReportMode => ENABLED, Search => NAME_AND_PARENT, PrintParent => PRINT_NAME_AND_PARENT) ;
+        deallocate(sName) ;
+        Found := TRUE ;
+        exit ;
+      end loop ReadLoop ;
+    end procedure ReadCovModelNameYaml ;
 
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovSettingsYaml (
     ------------------------------------------------------------
       constant CovID       : in  CoverageIDType ;
-      file     CovYamlFile :     text ; 
+      file     CovYamlFile :     text ;
       variable Found       : out boolean
     ) is
       variable buf          : line ;
-      variable Name         : line ; 
-      constant ID           : integer := CovID.ID ; 
+      variable Name         : line ;
+      constant ID           : integer := CovID.ID ;
       constant AlertLogID   : AlertLogIDType := CovStructPtr(ID).AlertLogID ;
-      variable vInteger     : integer ; 
-      variable vReal        : real ; 
-      variable Seed1, Seed2 : integer ; 
-      variable ReadValid    : boolean ; 
+      variable vInteger     : integer ;
+      variable vReal        : real ;
+      variable Seed1, Seed2 : integer ;
+      variable ReadValid    : boolean ;
     begin
-      Found := FALSE ; 
+      Found := FALSE ;
       ReadLoop: loop
-        ReadFindToken (CovYamlFile, "Settings:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Settings:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Settings:""", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- CovWeight
-        ReadFindToken (CovYamlFile, "CovWeight:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "CovWeight:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Settings:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, vInteger, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, vInteger, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading CovWeight value.", COV_READ_YAML_ALERT_LEVEL) ;
-        CovStructPtr(ID).CovWeight := vInteger ; 
+        CovStructPtr(ID).CovWeight := vInteger ;
 
         -- Goal / CovTarget
-        ReadFindToken (CovYamlFile, "Goal:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Goal:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Goal:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, vReal, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, vReal, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading CovTarget value.", COV_READ_YAML_ALERT_LEVEL) ;
-        CovStructPtr(ID).CovTarget := vReal ; 
+        CovStructPtr(ID).CovTarget := vReal ;
 
        -- WeightMode
-        ReadFindToken (CovYamlFile, "WeightMode:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "WeightMode:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""WeightMode:""", COV_READ_YAML_ALERT_LEVEL) ;
-        ReadQuotedString(buf, Name) ; 
-        exit ReadLoop when AlertIf(AlertLogID, Name = NULL, 
+        ReadQuotedString(buf, Name) ;
+        exit ReadLoop when AlertIf(AlertLogID, Name = NULL,
             "CoveragePkg.ReadCovYaml Error while reading WeightMode value.", COV_READ_YAML_ALERT_LEVEL) ;
         if Name.all = "REMAIN" then
-          CovStructPtr(ID).WeightMode := REMAIN ; 
+          CovStructPtr(ID).WeightMode := REMAIN ;
         else -- at_least
-          CovStructPtr(ID).WeightMode := AT_LEAST ; 
-        end if ; 
-        
+          CovStructPtr(ID).WeightMode := AT_LEAST ;
+        end if ;
+
        -- Seeds
-        ReadFindToken (CovYamlFile, "Seeds:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Seeds:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Seeds:""", COV_READ_YAML_ALERT_LEVEL) ;
-            
+
         -- [
-        ReadFindToken (CovYamlFile, "[", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "[", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find Seeds ""[""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, Seed1, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, Seed1, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading Seed1 value.", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- ,
-        ReadFindToken (CovYamlFile, ",", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, ",", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find Seed #2 "",""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, Seed2, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, Seed2, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading Seed2 value.", COV_READ_YAML_ALERT_LEVEL) ;
 
-        CovStructPtr(ID).RV := (Seed1, Seed2) ; 
-            
+        CovStructPtr(ID).RV := (Seed1, Seed2) ;
+
        -- CountMode
-        ReadFindToken (CovYamlFile, "CountMode:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "CountMode:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""CountMode:""", COV_READ_YAML_ALERT_LEVEL) ;
-        ReadQuotedString(buf, Name) ; 
-        exit ReadLoop when AlertIf(AlertLogID, Name = NULL, 
+        ReadQuotedString(buf, Name) ;
+        exit ReadLoop when AlertIf(AlertLogID, Name = NULL,
             "CoveragePkg.ReadCovYaml Error while reading CountMode value.", COV_READ_YAML_ALERT_LEVEL) ;
         if Name.all = "COUNT_ALL" then
-          CovStructPtr(ID).CountMode := COUNT_ALL ; 
+          CovStructPtr(ID).CountMode := COUNT_ALL ;
         else
-          CovStructPtr(ID).CountMode := COUNT_FIRST ; 
-        end if ; 
+          CovStructPtr(ID).CountMode := COUNT_FIRST ;
+        end if ;
 
        -- IllegalMode
-        ReadFindToken (CovYamlFile, "IllegalMode:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "IllegalMode:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""IllegalMode:""", COV_READ_YAML_ALERT_LEVEL) ;
-        ReadQuotedString(buf, Name) ; 
-        exit ReadLoop when AlertIf(AlertLogID, Name = NULL, 
+        ReadQuotedString(buf, Name) ;
+        exit ReadLoop when AlertIf(AlertLogID, Name = NULL,
             "CoveragePkg.ReadCovYaml Error while reading IllegalMode value.", COV_READ_YAML_ALERT_LEVEL) ;
         if Name.all = "ILLEGAL_OFF" then
-          CovStructPtr(ID).IllegalMode := ILLEGAL_OFF ; 
+          CovStructPtr(ID).IllegalMode := ILLEGAL_OFF ;
         elsif Name.all = "ILLEGAL_FAILURE" then
-          CovStructPtr(ID).IllegalMode := ILLEGAL_FAILURE ; 
+          CovStructPtr(ID).IllegalMode := ILLEGAL_FAILURE ;
         else
-          CovStructPtr(ID).IllegalMode := ILLEGAL_ON ; 
-        end if ; 
+          CovStructPtr(ID).IllegalMode := ILLEGAL_ON ;
+        end if ;
 
        -- Threshold
-        ReadFindToken (CovYamlFile, "Threshold:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Threshold:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Threshold:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, vReal, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, vReal, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading Threshold value.", COV_READ_YAML_ALERT_LEVEL) ;
-        CovStructPtr(ID).CovThreshold := vReal ; 
+        CovStructPtr(ID).CovThreshold := vReal ;
 
        -- ThresholdEnable
-        ReadFindToken (CovYamlFile, "ThresholdEnable:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "ThresholdEnable:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""ThresholdEnable:""", COV_READ_YAML_ALERT_LEVEL) ;
-        ReadQuotedString(buf, Name) ; 
-        exit ReadLoop when AlertIf(AlertLogID, Name = NULL, 
+        ReadQuotedString(buf, Name) ;
+        exit ReadLoop when AlertIf(AlertLogID, Name = NULL,
             "CoveragePkg.ReadCovYaml Error while reading IllegalMode value.", COV_READ_YAML_ALERT_LEVEL) ;
         if Name.all = "TRUE" then
-          CovStructPtr(ID).ThresholdingEnable := TRUE ; 
+          CovStructPtr(ID).ThresholdingEnable := TRUE ;
         else
-          CovStructPtr(ID).ThresholdingEnable := FALSE ; 
-        end if ; 
+          CovStructPtr(ID).ThresholdingEnable := FALSE ;
+        end if ;
 
        -- TotalCovCount - read and toss
-        ReadFindToken (CovYamlFile, "TotalCovCount:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "TotalCovCount:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""TotalCovCount:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, vInteger, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, vInteger, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading TotalCovCount value.", COV_READ_YAML_ALERT_LEVEL) ;
         -- Value not used
 
        -- TotalCovGoal - read and toss
-        ReadFindToken (CovYamlFile, "TotalCovGoal:", buf, Found) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "TotalCovGoal:", buf, Found) ;
+        exit ReadLoop when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""TotalCovGoal:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, vInteger, ReadValid) ; 
-        exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, vInteger, ReadValid) ;
+        exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading TotalCovGoal value.", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- End
-        Found := TRUE ; 
-        exit ReadLoop ; 
-      end loop ReadLoop ; 
-      deallocate(Name) ; 
-    end procedure ReadCovSettingsYaml ; 
-    
+        Found := TRUE ;
+        exit ReadLoop ;
+      end loop ReadLoop ;
+      deallocate(Name) ;
+    end procedure ReadCovSettingsYaml ;
+
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovBinInfoYaml (
     ------------------------------------------------------------
       constant CovID       : in  CoverageIDType ;
-      file     CovYamlFile :     text ; 
-      variable Dimensions  : out integer ; 
-      variable NumBins     : out integer ; 
+      file     CovYamlFile :     text ;
+      variable Dimensions  : out integer ;
+      variable NumBins     : out integer ;
       variable Found       : out boolean
     ) is
       variable buf            : line ;
       variable FieldNameArray : FieldNameArrayType(1 to 20) ;
-      constant ID             : integer := CovID.ID ; 
+      constant ID             : integer := CovID.ID ;
       constant AlertLogID     : AlertLogIDType := CovStructPtr(ID).AlertLogID ;
-      variable ReadValid      : boolean ; 
-      variable FoundFieldName : boolean ; 
+      variable ReadValid      : boolean ;
+      variable FoundFieldName : boolean ;
     begin
-      Found := FALSE ; 
-      Dimensions := 0 ; 
-      NumBins := 0 ; 
+      Found := FALSE ;
+      Dimensions := 0 ;
+      NumBins := 0 ;
       ReadLoop: loop
-        ReadFindToken (CovYamlFile, "BinInfo:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "BinInfo:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""BinInfo:""", COV_READ_YAML_ALERT_LEVEL) ;
-        
+
         -- Dimensions
-        ReadFindToken (CovYamlFile, "Dimensions:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Dimensions:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Dimensions:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, Dimensions, ReadValid) ; 
-        exit when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, Dimensions, ReadValid) ;
+        exit when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading Dimensions value.", COV_READ_YAML_ALERT_LEVEL) ;
-        CovStructPtr(ID).BinValLength := Dimensions ;  
-        
+        CovStructPtr(ID).BinValLength := Dimensions ;
+
         -- FieldNames
-        ReadFindToken (CovYamlFile, "FieldNames:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "FieldNames:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""FieldNames:""", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- FieldNames Values
-        FoundFieldName := FALSE ; 
-        for i in 1 to Dimensions loop 
-          ReadFindToken (CovYamlFile, "-", buf, Found) ; 
-          exit when AlertIf(AlertLogID, not Found, 
+        FoundFieldName := FALSE ;
+        for i in 1 to Dimensions loop
+          ReadFindToken (CovYamlFile, "-", buf, Found) ;
+          exit when AlertIf(AlertLogID, not Found,
               "CoveragePkg.ReadCovYaml did not find Field Name deliminter '-'.", COV_READ_YAML_ALERT_LEVEL) ;
-          ReadQuotedString(buf, FieldNameArray(i)) ; 
-          exit ReadLoop when AlertIf(AlertLogID, FieldNameArray(i) = NULL, 
+          ReadQuotedString(buf, FieldNameArray(i)) ;
+          exit ReadLoop when AlertIf(AlertLogID, FieldNameArray(i) = NULL,
               "CoveragePkg.ReadCovYaml Error while reading Field Name value # " & to_string(i), COV_READ_YAML_ALERT_LEVEL) ;
-          if FieldNameArray(i).all /= ("Bin" & to_string(i)) then 
-            FoundFieldName := TRUE ; 
+          if FieldNameArray(i).all /= ("Bin" & to_string(i)) then
+            FoundFieldName := TRUE ;
           end if ;
-        end loop ; 
+        end loop ;
         if FoundFieldName then
           CovStructPtr(ID).FieldName := new FieldNameArrayType'(FieldNameArray(1 to Dimensions)) ;
         end if ;
-        
+
         -- NumBins
-        ReadFindToken (CovYamlFile, "NumBins:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "NumBins:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""NumBins:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, NumBins, ReadValid) ; 
-        exit when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, NumBins, ReadValid) ;
+        exit when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading NumBins value.", COV_READ_YAML_ALERT_LEVEL) ;
-        
-        -- End 
-        Found := TRUE ; 
-        exit ; 
+
+        -- End
+        Found := TRUE ;
+        exit ;
       end loop ReadLoop ;
-      if not Found or not FoundFieldName then 
+      if not Found or not FoundFieldName then
         -- clean up pointers
         for i in 1 to Dimensions loop
-          deallocate(FieldNameArray(i)) ; 
+          deallocate(FieldNameArray(i)) ;
         end loop ;
-      end if ; 
-    end procedure ReadCovBinInfoYaml ; 
+      end if ;
+    end procedure ReadCovBinInfoYaml ;
 
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovBinValYaml (
     ------------------------------------------------------------
-      file     CovYamlFile :     text ; 
+      file     CovYamlFile :     text ;
       constant AlertLogID  : in  AlertLogIDType ;
-      variable BinVal      : out RangeArrayType ; 
+      variable BinVal      : out RangeArrayType ;
       variable Found       : out boolean
     ) is
       variable buf         : line ;
-      variable Min, Max    : integer ; 
+      variable Min, Max    : integer ;
       variable ReadValid   : boolean ;
     begin
-      Found := FALSE ; 
+      Found := FALSE ;
       ReadLoop: loop
         -- Range:
-        ReadFindToken (CovYamlFile, "Range:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Range:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Range:""", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- RangeArrayType
         for i in BinVal'range loop
           -- - {Min:
-          ReadFindToken (CovYamlFile, "- {Min:", buf, Found) ; 
-          exit ReadLoop when AlertIf(AlertLogID, not Found, 
+          ReadFindToken (CovYamlFile, "- {Min:", buf, Found) ;
+          exit ReadLoop when AlertIf(AlertLogID, not Found,
               "CoveragePkg.ReadCovYaml did not find Bins ""Min:""", COV_READ_YAML_ALERT_LEVEL) ;
-          Read(buf, Min, ReadValid) ; 
-          exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+          Read(buf, Min, ReadValid) ;
+          exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
               "CoveragePkg.ReadCovYaml Error while reading Min value.", COV_READ_YAML_ALERT_LEVEL) ;
 
           -- , Max:
-          ReadFindToken (CovYamlFile, ", Max:", buf, Found) ; 
-          exit ReadLoop  when AlertIf(AlertLogID, not Found, 
+          ReadFindToken (CovYamlFile, ", Max:", buf, Found) ;
+          exit ReadLoop  when AlertIf(AlertLogID, not Found,
               "CoveragePkg.ReadCovYaml did not find Bins ""Max:""", COV_READ_YAML_ALERT_LEVEL) ;
-          Read(buf, Max, ReadValid) ; 
-          exit ReadLoop when AlertIf(AlertLogID, not ReadValid, 
+          Read(buf, Max, ReadValid) ;
+          exit ReadLoop when AlertIf(AlertLogID, not ReadValid,
               "CoveragePkg.ReadCovYaml Error while reading Max value.", COV_READ_YAML_ALERT_LEVEL) ;
 
-          BinVal(i) := (Min => Min, Max => Max) ; 
-        end loop ; 
-        
-        Found := TRUE ; 
+          BinVal(i) := (Min => Min, Max => Max) ;
+        end loop ;
+
+        Found := TRUE ;
         exit ReadLoop ;
-      end loop ; 
+      end loop ;
     end procedure ReadCovBinValYaml ;
 
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovOneBinYaml (
     ------------------------------------------------------------
-      file     CovYamlFile :     text ; 
+      file     CovYamlFile :     text ;
       constant CovID       : in  CoverageIDType ;
-      constant Merge       : in  boolean ; 
-      constant Dimensions  : in  integer ; 
+      constant Merge       : in  boolean ;
+      constant Dimensions  : in  integer ;
       variable Found       : out boolean
     ) is
       variable buf         : line ;
-      variable Name        : line ; 
-      constant ID          : integer := CovID.ID ; 
+      variable Name        : line ;
+      constant ID          : integer := CovID.ID ;
       constant AlertLogID  : AlertLogIDType := CovStructPtr(ID).AlertLogID ;
       variable NamePtr     : line ;
       variable Action      : integer ;
@@ -5522,62 +5522,62 @@ package body CoveragePkg is
       variable AtLeast     : integer ;
       variable Weight      : integer ;
       variable PercentCov  : real ;
-      variable Index       : integer ; 
-      variable ReadValid   : boolean ; 
+      variable Index       : integer ;
+      variable ReadValid   : boolean ;
     begin
-      Found := FALSE ; 
+      Found := FALSE ;
       ReadLoop: loop
         -- - Name:
-        ReadFindToken (CovYamlFile, "- Name:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "- Name:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find Bins ""Name:""", COV_READ_YAML_ALERT_LEVEL) ;
         ReadQuotedString(buf, NamePtr) ;
-        exit ReadLoop when AlertIf(AlertLogID, NamePtr = NULL, 
+        exit ReadLoop when AlertIf(AlertLogID, NamePtr = NULL,
             "CoveragePkg.ReadCovYaml Error while reading Name value.", COV_READ_YAML_ALERT_LEVEL) ;
-            
+
         -- Type:
-        ReadFindToken (CovYamlFile, "Type:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Type:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Type:""", COV_READ_YAML_ALERT_LEVEL) ;
-        ReadQuotedString(buf, Name) ; 
-        exit ReadLoop when AlertIf(AlertLogID, Name = NULL, 
+        ReadQuotedString(buf, Name) ;
+        exit ReadLoop when AlertIf(AlertLogID, Name = NULL,
             "CoveragePkg.ReadCovYaml Error while reading Type value.", COV_READ_YAML_ALERT_LEVEL) ;
         if Name.all = "COUNT" then
-          Action := 1 ; 
+          Action := 1 ;
         elsif Name.all = "IGNORE" then
-          Action := 0 ; 
+          Action := 0 ;
         else -- Illegal
-          Action := -1 ; 
-        end if ; 
-        deallocate(Name) ; 
+          Action := -1 ;
+        end if ;
+        deallocate(Name) ;
 
         -- BinVal
         ReadCovBinValYaml(CovYamlFile, AlertLogID, BinVal, Found) ;
-        exit when not Found ; 
-        
-        -- Count: 
-        ReadFindToken (CovYamlFile, "Count:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
-            "CoveragePkg.ReadCovYaml did not find ""Count:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, Count, ReadValid) ; 
-        exit when AlertIf(AlertLogID, not ReadValid, 
-            "CoveragePkg.ReadCovYaml Error while reading Count value.", COV_READ_YAML_ALERT_LEVEL) ;
-        
-        -- AtLeast: 
-        ReadFindToken (CovYamlFile, "AtLeast:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
-            "CoveragePkg.ReadCovYaml did not find ""AtLeast:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, AtLeast, ReadValid) ; 
-        exit when AlertIf(AlertLogID, not ReadValid, 
-            "CoveragePkg.ReadCovYaml Error while reading AtLeast value.", COV_READ_YAML_ALERT_LEVEL) ;
-        Weight  := AtLeast ; 
+        exit when not Found ;
 
-        -- PercentCov: 
-        ReadFindToken (CovYamlFile, "PercentCov:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        -- Count:
+        ReadFindToken (CovYamlFile, "Count:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
+            "CoveragePkg.ReadCovYaml did not find ""Count:""", COV_READ_YAML_ALERT_LEVEL) ;
+        Read(buf, Count, ReadValid) ;
+        exit when AlertIf(AlertLogID, not ReadValid,
+            "CoveragePkg.ReadCovYaml Error while reading Count value.", COV_READ_YAML_ALERT_LEVEL) ;
+
+        -- AtLeast:
+        ReadFindToken (CovYamlFile, "AtLeast:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
+            "CoveragePkg.ReadCovYaml did not find ""AtLeast:""", COV_READ_YAML_ALERT_LEVEL) ;
+        Read(buf, AtLeast, ReadValid) ;
+        exit when AlertIf(AlertLogID, not ReadValid,
+            "CoveragePkg.ReadCovYaml Error while reading AtLeast value.", COV_READ_YAML_ALERT_LEVEL) ;
+        Weight  := AtLeast ;
+
+        -- PercentCov:
+        ReadFindToken (CovYamlFile, "PercentCov:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""PercentCov:""", COV_READ_YAML_ALERT_LEVEL) ;
-        Read(buf, PercentCov, ReadValid) ; 
-        exit when AlertIf(AlertLogID, not ReadValid, 
+        Read(buf, PercentCov, ReadValid) ;
+        exit when AlertIf(AlertLogID, not ReadValid,
             "CoveragePkg.ReadCovYaml Error while reading PercentCov value.", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- Insert the Bin
@@ -5593,80 +5593,80 @@ package body CoveragePkg is
         end if ;
         deallocate(NamePtr) ;
 
-        -- End 
-        Found := TRUE ; 
-        exit ; 
+        -- End
+        Found := TRUE ;
+        exit ;
       end loop ReadLoop ;
-    end procedure ReadCovOneBinYaml ;     
-        
+    end procedure ReadCovOneBinYaml ;
+
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovBinsYaml (
     ------------------------------------------------------------
       constant CovID       : in  CoverageIDType ;
-      file     CovYamlFile :     text ; 
-      constant Dimensions  : in  integer ; 
-      constant NumBins     : in  integer ; 
+      file     CovYamlFile :     text ;
+      constant Dimensions  : in  integer ;
+      constant NumBins     : in  integer ;
       variable Found       : out boolean ;
-      constant Merge       : in  boolean := FALSE 
+      constant Merge       : in  boolean := FALSE
     ) is
       variable buf            : line ;
       variable FieldNameArray : FieldNameArrayType(1 to 20) ;
-      constant ID             : integer := CovID.ID ; 
+      constant ID             : integer := CovID.ID ;
       constant AlertLogID     : AlertLogIDType := CovStructPtr(ID).AlertLogID ;
     begin
-      Found := FALSE ; 
+      Found := FALSE ;
       ReadLoop: loop
-        ReadFindToken (CovYamlFile, "Bins:", buf, Found) ; 
-        exit when AlertIf(AlertLogID, not Found, 
+        ReadFindToken (CovYamlFile, "Bins:", buf, Found) ;
+        exit when AlertIf(AlertLogID, not Found,
             "CoveragePkg.ReadCovYaml did not find ""Bins:""", COV_READ_YAML_ALERT_LEVEL) ;
-        
+
         GrowBins(CovID, NumBins) ;
-        
+
         for i in 1 to NumBins loop
-          ReadCovOneBinYaml(CovYamlFile, CovID, Merge, Dimensions, Found) ; 
+          ReadCovOneBinYaml(CovYamlFile, CovID, Merge, Dimensions, Found) ;
           exit ReadLoop when not Found ;
         end loop ;
 
-        -- End 
-        Found := TRUE ; 
-        exit ; 
+        -- End
+        Found := TRUE ;
+        exit ;
       end loop ReadLoop ;
-    end procedure ReadCovBinsYaml ; 
-    
+    end procedure ReadCovBinsYaml ;
+
     ------------------------------------------------------------
     --  pt local
     procedure ReadCovModelYaml (
     ------------------------------------------------------------
-      file     CovYamlFile :     text ; 
+      file     CovYamlFile :     text ;
       variable Found       : out boolean ;
-      constant Merge       : in  boolean := FALSE 
+      constant Merge       : in  boolean := FALSE
     ) is
-      variable CovID      : CoverageIDType ; 
-      variable Dimensions : integer ; 
-      variable NumBins    : integer ; 
-      variable FoundModelName : boolean ; 
+      variable CovID      : CoverageIDType ;
+      variable Dimensions : integer ;
+      variable NumBins    : integer ;
+      variable FoundModelName : boolean ;
     begin
       Found          := FALSE ;
       FoundModelName := FALSE ;
-      
+
       ReadLoop: loop
         ReadCovModelNameYaml(CovID, CovYamlFile, Found) ;
         exit when not Found ;
         FoundModelName := TRUE ;
 
         if not Merge then  -- remove any old bins
-          DeallocateBins(CovID) ;  
+          DeallocateBins(CovID) ;
         end if ;
 
--- Nothing to do with this for now        
+-- Nothing to do with this for now
 --        ReadCovTestCasesYaml(CovID, CovYamlFile, Found) ;
 --        exit when not Found ;
-      
+
 -- On merge, new settings apply
         ReadCovSettingsYaml(CovID, CovYamlFile, Found) ;
         exit when not Found ;
-        
+
 -- On merge, new settings apply
         ReadCovBinInfoYaml(CovID, CovYamlFile, Dimensions, NumBins, Found) ;
         exit when not Found ;
@@ -5675,16 +5675,16 @@ package body CoveragePkg is
         ReadCovBinsYaml(CovID, CovYamlFile, Dimensions, NumBins, Found, Merge) ;
         exit when not Found ;
 
-        -- End 
-        Found := TRUE ; 
-        exit ; 
-      end loop ReadLoop ; 
-      
+        -- End
+        Found := TRUE ;
+        exit ;
+      end loop ReadLoop ;
+
       if FoundModelName and not Found then
         -- remove partially constructed model
-        Deallocate(CovID) ; 
-      end if ; 
-    end procedure ReadCovModelYaml ; 
+        Deallocate(CovID) ;
+      end if ;
+    end procedure ReadCovModelYaml ;
 
 --     ------------------------------------------------------------
 --     procedure ReadCovYaml (ModelName : string; FileName : string) is
@@ -5692,42 +5692,42 @@ package body CoveragePkg is
 --       file CovYamlFile : text open READ_MODE is FileName ;
 --     begin
 --       ID := NewID("ModelName"
---       ReadCovYaml(ID, CovYamlFile) ; 
+--       ReadCovYaml(ID, CovYamlFile) ;
 --       file_close(CovYamlFile) ;
 --     end procedure ReadCovYaml ;
 
     ------------------------------------------------------------
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ; 
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open READ_MODE is RESOLVED_FILE_NAME ;
       variable buf     : line ;
-      variable Found   : boolean ; 
+      variable Found   : boolean ;
     begin
-      ReadFindToken (CovYamlFile, "Models:", buf, Found) ; 
-      if not Found then 
-        Alert(OSVVM_COV_ALERTLOG_ID, 
-            "No Coverage Models found in " & RESOLVED_FILE_NAME, COV_READ_YAML_ALERT_LEVEL) ; 
-        return ; 
+      ReadFindToken (CovYamlFile, "Models:", buf, Found) ;
+      if not Found then
+        Alert(OSVVM_COV_ALERTLOG_ID,
+            "No Coverage Models found in " & RESOLVED_FILE_NAME, COV_READ_YAML_ALERT_LEVEL) ;
+        return ;
       end if;
-      
+
       loop
-        ReadCovModelYaml(CovYamlFile, Found, Merge) ; 
-        exit when not Found ; 
+        ReadCovModelYaml(CovYamlFile, Found, Merge) ;
+        exit when not Found ;
       end loop ;
       file_close(CovYamlFile) ;
     end procedure ReadCovYaml ;
-    
+
     ------------------------------------------------------------
     impure function GotCoverage return boolean is
     ------------------------------------------------------------
     begin
-      for i in 1 to NumItems loop 
-        if CovStructPtr(i).NumBins >= 1 then 
-          return TRUE ; 
-        end if; 
-      end loop ; 
-      return FALSE ;     
+      for i in 1 to NumItems loop
+        if CovStructPtr(i).NumBins >= 1 then
+          return TRUE ;
+        end if;
+      end loop ;
+      return FALSE ;
     end function GotCoverage ;
 
     ------------------------------------------------------------
@@ -5780,7 +5780,7 @@ package body CoveragePkg is
         Name     => Name
       ) ;
     end procedure AdjustedInsertBin ;
-      
+
     ------------------------------------------------------------
     -- These support usage of cross coverage constants
     -- Also support the older AddCross(GenCross(...)) methodology
@@ -5789,9 +5789,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix2Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 2) then 
+      if BinValLengthNotEqual(ID, 2) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5806,9 +5806,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix3Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 3) then 
+      if BinValLengthNotEqual(ID, 3) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5823,9 +5823,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix4Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 4) then 
+      if BinValLengthNotEqual(ID, 4) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5840,9 +5840,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix5Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 5) then 
+      if BinValLengthNotEqual(ID, 5) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5857,9 +5857,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix6Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 6) then 
+      if BinValLengthNotEqual(ID, 6) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5874,9 +5874,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix7Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 7) then 
+      if BinValLengthNotEqual(ID, 7) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5891,9 +5891,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix8Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 8) then 
+      if BinValLengthNotEqual(ID, 8) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -5908,9 +5908,9 @@ package body CoveragePkg is
     procedure AddCross (ID : CoverageIDType; CovBin : CovMatrix9Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      if BinValLengthNotEqual(ID, 9) then 
+      if BinValLengthNotEqual(ID, 9) then
         Alert(CovStructPtr(ID.ID).AlertLogID, "CoveragePkg.AddCross: Cross coverage bins of different dimensions prohibited", FAILURE) ;
-        return ; 
+        return ;
       end if ;
       GrowBins(ID, CovBin'length) ;
       for i in CovBin'range loop
@@ -6564,7 +6564,7 @@ package body CoveragePkg is
     begin
       ICover(COV_STRUCT_ID_DEFAULT, CovPoint) ;
      end procedure ICover ;
-     
+
     ------------------------------------------------------------
     procedure TCover ( A : integer) is
     ------------------------------------------------------------
@@ -7633,7 +7633,7 @@ package body CoveragePkg is
   impure function NewID (
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ; 
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType is
@@ -7656,7 +7656,7 @@ package body CoveragePkg is
   begin
     CoverageStore.FileCloseWriteBin ;
   end procedure FileCloseWriteBin ;
-  
+
 --  procedure WriteToCovFile (variable buf : inout line) is
 --  begin
 --    CoverageStore.WriteToCovFile (buf) ;
@@ -7689,7 +7689,7 @@ package body CoveragePkg is
   begin
     CoverageStore.ResetReportOptions ;
   end procedure ResetReportOptions ;
-  
+
 
   ------------------------------------------------------------
   -- /////////////////////////////////////////
@@ -7728,18 +7728,18 @@ package body CoveragePkg is
 
   procedure SetItemBinNames (
     ID         : CoverageIDType ;
-    Name1      : String ; 
-            Name2,  Name3,  Name4,  Name5, 
-    Name6,  Name7,  Name8,  Name9,  Name10, 
-    Name11, Name12, Name13, Name14, Name15, 
+    Name1      : String ;
+            Name2,  Name3,  Name4,  Name5,
+    Name6,  Name7,  Name8,  Name9,  Name10,
+    Name11, Name12, Name13, Name14, Name15,
     Name16, Name17, Name18, Name19, Name20 : string := ""
   ) is
   begin
     CoverageStore.SetItemBinNames (
       ID,
-      Name1,  Name2,  Name3,  Name4,  Name5, 
-      Name6,  Name7,  Name8,  Name9,  Name10, 
-      Name11, Name12, Name13, Name14, Name15, 
+      Name1,  Name2,  Name3,  Name4,  Name5,
+      Name6,  Name7,  Name8,  Name9,  Name10,
+      Name11, Name12, Name13, Name14, Name15,
       Name16, Name17, Name18, Name19, Name20
     ) ;
   end procedure SetItemBinNames ;
@@ -8616,7 +8616,7 @@ package body CoveragePkg is
   end procedure WriteCovDb ;
 
   --     procedure WriteCovDb (ID : CoverageIDType) is
-  
+
 --  ------------------------------------------------------------
 --  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
 --  ------------------------------------------------------------
@@ -8631,7 +8631,7 @@ package body CoveragePkg is
   begin
     CoverageStore.WriteCovYaml(FileName, GetCov, OpenKind) ;
   end procedure WriteCovYaml ;
-  
+
   ------------------------------------------------------------
   procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
   ------------------------------------------------------------
@@ -8643,35 +8643,35 @@ package body CoveragePkg is
   impure function GotCoverage return boolean is
   ------------------------------------------------------------
   begin
-    return CoverageStore.GotCoverage ; 
+    return CoverageStore.GotCoverage ;
   end function GotCoverage ;
 
   ------------------------------------------------------------
   impure function GetCov (PercentCov : real ) return real is
   ------------------------------------------------------------
-    variable ID : CoverageIDType ; 
-    variable ItemCovCount, ItemCovGoal   : integer ; 
-    variable TotalCovCount, TotalCovGoal : integer := 0; 
-    variable CovWeight : integer ; 
-    variable ScaledCovGoal, rTotalCovCount : real ; 
+    variable ID : CoverageIDType ;
+    variable ItemCovCount, ItemCovGoal   : integer ;
+    variable TotalCovCount, TotalCovGoal : integer := 0;
+    variable CovWeight : integer ;
+    variable ScaledCovGoal, rTotalCovCount : real ;
   begin
-    for i in 1 to CoverageStore.GetNumIDs loop 
-      ID := (ID => i) ; 
-      CoverageStore.GetTotalCovCountAndGoal(ID, ItemCovCount, ItemCovGoal) ; 
-      CovWeight     := GetCovWeight(ID) ;    
+    for i in 1 to CoverageStore.GetNumIDs loop
+      ID := (ID => i) ;
+      CoverageStore.GetTotalCovCountAndGoal(ID, ItemCovCount, ItemCovGoal) ;
+      CovWeight     := GetCovWeight(ID) ;
       TotalCovCount := TotalCovCount + (ItemCovCount * CovWeight) ;
       TotalCovGoal  := TotalCovGoal  + (ItemCovGoal  * CovWeight) ;
     end loop ;
     ScaledCovGoal  := PercentCov * real(TotalCovGoal) / 100.0 ;
     rTotalCovCount := real(TotalCovCount) ;
-    
-    if rTotalCovCount >= ScaledCovGoal then 
+
+    if rTotalCovCount >= ScaledCovGoal then
       return 100.0 ;
-    elsif ScaledCovGoal > 0.0 then 
+    elsif ScaledCovGoal > 0.0 then
       return (100.0 * rTotalCovCount) / ScaledCovGoal ;
     else
       return 0.0 ;
-    end if; 
+    end if;
   end function GetCov ;
 
   ------------------------------------------------------------
@@ -8773,7 +8773,7 @@ package body CoveragePkg is
 
     NumBins1 := GetNumBins(Bin1) ;
     NumBins2 := GetNumBins(Bin2) ;
-    
+
     Valid := TRUE ;
 
     if (NumBins1 /= NumBins2) then
@@ -8803,7 +8803,7 @@ package body CoveragePkg is
         write(buf, "   Action = " &  to_string(BinInfo2.action)) ;
         write(buf, "   Count = " &   to_string(BinInfo2.count)) ;
         write(buf, "   AtLeast = " & to_string(BinInfo2.AtLeast)) ;
-        write(buf, "   Weight = " &  to_string(BinInfo2.Weight) ) ;  -- & LF 
+        write(buf, "   Weight = " &  to_string(BinInfo2.Weight) ) ;  -- & LF
         -- writeline(OUTPUT, buf) ;
         Valid := FALSE ;
         writeline(buf) ;
@@ -8819,7 +8819,7 @@ package body CoveragePkg is
   procedure CompareBins (
   ------------------------------------------------------------
     constant Bin1       : in    CoverageIDType ;
-    constant Bin2       : in    CoverageIDType 
+    constant Bin2       : in    CoverageIDType
   ) is
     variable Valid : boolean ;
     variable iAlertLogID : AlertLogIDType ;

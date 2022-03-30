@@ -117,9 +117,9 @@ package AlertLogPkg is
   type     LogEnableType        is array (LogIndexType) of boolean ;
   type     AlertLogReportModeType  is (DISABLED, ENABLED, NONZERO) ;
   type     AlertLogPrintParentType is (PRINT_NAME, PRINT_NAME_AND_PARENT) ;
-  
-  constant REPORTS_DIRECTORY : string := "" ; 
---  constant REPORTS_DIRECTORY : string := "./reports/" ; 
+
+  constant REPORTS_DIRECTORY : string := "" ;
+--  constant REPORTS_DIRECTORY : string := "./reports/" ;
 
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := ALERTLOG_BASE_ID + 1 ;
@@ -318,7 +318,7 @@ package AlertLogPkg is
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0)
   ) ;
-  
+
   procedure WriteAlertYaml (
     FileName       : string ;
     ExternalErrors : AlertCountType := (0,0,0) ;
@@ -768,7 +768,7 @@ package body AlertLogPkg is
 
     procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
     impure function GetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
-    
+
     procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Count : AlertCountType) ;
     impure function GetAlertPrintCount(AlertLogID : AlertLogIDType) return AlertCountType ;
 
@@ -776,7 +776,7 @@ package body AlertLogPkg is
     impure function GetAlertLogPrintParent(AlertLogID : AlertLogIDType) return AlertLogPrintParentType ;
 
     procedure SetAlertLogReportMode(AlertLogID : AlertLogIDType ;  ReportMode : AlertLogReportModeType) ;
-    impure function GetAlertLogReportMode(AlertLogID : AlertLogIDType) return AlertLogReportModeType ;  
+    impure function GetAlertLogReportMode(AlertLogID : AlertLogIDType) return AlertLogReportModeType ;
 
     procedure SetAlertEnable(Level : AlertType ;  Enable : boolean) ;
     procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
@@ -1092,15 +1092,15 @@ package body AlertLogPkg is
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
           ReportAlerts(ReportWhenZero => TRUE) ;
-          if FileExists("OsvvmRun.yml") then 
+          if FileExists("OsvvmRun.yml") then
 --          work.ReportPkg.EndOfTestReports ;  -- creates circular package issues
             WriteAlertSummaryYaml(
               FileName        => "OsvvmRun.yml"
-            ) ; 
+            ) ;
             WriteAlertYaml (
               FileName        => REPORTS_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
-            ) ; 
-          end if ; 
+            ) ;
+          end if ;
           std.env.stop(ErrorCount) ;
         end if ;
       end if ;
@@ -1146,12 +1146,12 @@ package body AlertLogPkg is
     begin
       ResultValues(1) := CurrentLength + 1 ;            -- AlertLogJustifyAmountVar
       ResultValues(2) := CurrentLength + IndentAmount ; -- ReportJustifyAmountVar
-      if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME_AND_PARENT then 
-        ParentID := AlertLogPtr(AlertLogID).ParentID ; 
+      if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME_AND_PARENT then
+        ParentID := AlertLogPtr(AlertLogID).ParentID ;
         ParentNameLen := AlertLogPtr(ParentID).Name'length ;
         ResultValues(1) := IdSeparatorLength + ParentNameLen + ResultValues(1) ;  -- AlertLogJustifyAmountVar
 --        ResultValues(2) := IdSeparatorLength + ParentNameLen + ResultValues(2) ;  -- ReportJustifyAmountVar
-      end if ; 
+      end if ;
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
         if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
@@ -1874,12 +1874,12 @@ package body AlertLogPkg is
       variable status : file_open_status ;
     begin
       file_open(status, FileID, FileName, OpenKind) ;
-      if status = OPEN_OK then       
+      if status = OPEN_OK then
         WriteAlertYaml(FileID, ExternalErrors, Prefix, PrintSettings, PrintChildren) ;
         file_close(FileID) ;
       else
-        Alert("WriteAlertYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ; 
-      end if ; 
+        Alert("WriteAlertYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ;
+      end if ;
     end procedure WriteAlertYaml ;
 
     ------------------------------------------------------------
@@ -6217,27 +6217,27 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogFailName ;
   end function GetAlertLogFailName ;
-  
+
   ------------------------------------------------------------
   -- Package Local
   procedure ToLogLevel(LogLevel : out LogType; Name : in String; LogValid : out boolean) is
   ------------------------------------------------------------
   -- type LogType is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER
   begin
-    if    Name = "PASSED" then 
-      LogLevel := PASSED ; 
+    if    Name = "PASSED" then
+      LogLevel := PASSED ;
       LogValid := TRUE ;
-    elsif Name = "DEBUG" then 
-      LogLevel := DEBUG ; 
+    elsif Name = "DEBUG" then
+      LogLevel := DEBUG ;
       LogValid := TRUE ;
-    elsif Name = "FINAL" then 
-      LogLevel := FINAL ; 
+    elsif Name = "FINAL" then
+      LogLevel := FINAL ;
       LogValid := TRUE ;
-    elsif Name = "INFO"  then 
-      LogLevel := INFO ; 
+    elsif Name = "INFO"  then
+      LogLevel := INFO ;
       LogValid := TRUE ;
     else
-      LogLevel := ALWAYS ; 
+      LogLevel := ALWAYS ;
       LogValid := FALSE ;
     end if ;
   end procedure ToLogLevel ;
@@ -6313,8 +6313,8 @@ package body AlertLogPkg is
 --            end if ;
 ----            Log(OSVVM_ALERTLOG_ID, "SetLogEnable(OSVVM_ALERTLOG_ID, " & Name(1 to NameLen) & ", TRUE) ;", DEBUG) ;
 --            LogLevel := LogType'value("" & Name(1 to NameLen)) ;  -- "" & added for RivieraPro 2020.10
-            ToLogLevel(LogLevel, Name(1 to NameLen), LogValid) ; 
-            exit ReadNameLoop when not LogValid ; 
+            ToLogLevel(LogLevel, Name(1 to NameLen), LogValid) ;
+            exit ReadNameLoop when not LogValid ;
             SetLogEnable(AlertLogID, LogLevel, TRUE) ;
         end case ;
       end loop ReadNameLoop ;
