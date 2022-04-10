@@ -19,11 +19,12 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    08/2012   2012.08    Generic Instance of ScoreboardGenericPkg
---    08/2014   2013.08    Updated interface for Match and to_string
---    11/2016   2016.11    Released as part of OSVVM library
---    01/2020   2020.01    Updated Licenses to Apache
+--    04/2022   2022.04    Replaced to_hstring with to_hxstring
 --    10/2020   2020.10    Replaced STD_MATCH for std_logic family with AlertLogPkg.MetaMatch
+--    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Released as part of OSVVM library
+--    08/2014   2013.08    Updated interface for Match and to_string
+--    08/2012   2012.08    Generic Instance of ScoreboardGenericPkg
 --
 --
 --  This file is part of OSVVM.
@@ -57,6 +58,6 @@ package ScoreBoardPkg_slv is new work.ScoreboardGenericPkg
     ActualType          => std_logic_vector,  
 --    Match               => std_match,  -- "=", [std_logic_vector, std_logic_vector return boolean]
     Match               => work.AlertLogPkg.MetaMatch,  -- "=", [std_logic_vector, std_logic_vector return boolean]
-    expected_to_string  => to_hstring, --      [std_logic_vector return string] 
-    actual_to_string    => to_hstring  --      [std_logic_vector return string]  
+    expected_to_string  => to_hxstring,  --      [std_logic_vector return string] 
+    actual_to_string    => to_hxstring   --      [std_logic_vector return string]  
   ) ;  
