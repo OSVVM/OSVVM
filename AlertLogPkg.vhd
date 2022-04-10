@@ -2967,7 +2967,7 @@ package body AlertLogPkg is
         ResultID := GetNextAlertLogID ;
         NewAlertLogRec(ResultID, Name, localParentID, ReportMode, PrintParent) ;
         FoundAlertHierVar := TRUE ;
-        if CreateHierarchy then
+        if CreateHierarchy and ReportMode /= DISABLED then
           FoundReportHierVar := TRUE ;
         end if ;
         AlertLogPtr(ResultID).PassedGoal := 0 ;
