@@ -1,19 +1,17 @@
 # The OSVVM Utility Library 
-The [OSVVM utility library](https://github.com/OSVVM/OSVVM) offers
-the same capabilities as those provided by other verification
-languages (such as SystemVerilog and UVM):
+The [OSVVM utility library](https://github.com/osvvm/osvvm) implements advanced verification capabilities that are simple to use and feel like built-in language features.  These include:   
 
- - Transaction-Level Modeling and verification components
- - Constrained Random test generation
- - Functional Coverage with hooks for UCIS coverage database integration
- - Intelligent Coverage Random test generation
- - Utilities for testbench process synchronization generation
- - Utilities for clock and reset generation
- - Transcript files
- - Error logging and reporting - Alerts and Affirmations
- - Message filtering - Logs
- - Scoreboards and FIFOs (data structures for verification)
- - Memory models
+  - Transaction-Level Modeling (TbUtilPkg, ResolutionPkg)
+  - Constrained Random test generation (RandomPkg)
+  - Functional Coverage with hooks for UCIS coverage database integration (CoveragePkg)
+  - Intelligent Coverage Random test generation  (CoveragePkg)
+  - Utilities for testbench process synchronization generation (TbUtilPkg)
+  - Utilities for clock and reset generation (TbUtilPkg)
+  - Transcript files (TranscriptPkg)
+  - Error logging and reporting - Alerts and Affirmations (AlertLogPkg)
+  - Message filtering - Logs (AlertLogPkg)
+  - Scoreboards and FIFOs (data structures for verification) (ScoreboardGenericPkg)
+  - Memory models (MemoryPkg)
  
  [Documentation for the Utility library can be found here](https://github.com/OSVVM/Documentation)
  
