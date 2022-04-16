@@ -1,5 +1,5 @@
-# The OSVVM Verification Utility Library 
-The [OSVVM verification utility library](https://github.com/osvvm/osvvm) implements advanced verification capabilities that are simple to use and feel like built-in language features.  These include:   
+# The OSVVM VHDL Verification Utility Library 
+The [OSVVM VHDL verification utility library](https://github.com/osvvm/osvvm) implements advanced verification capabilities that are simple to use and feel like built-in language features.  These include:   
 
   - Transaction-Level Modeling (TbUtilPkg, ResolutionPkg)
   - Constrained Random test generation (RandomPkg)
