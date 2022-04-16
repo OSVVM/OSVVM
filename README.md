@@ -1,5 +1,5 @@
-# The OSVVM Utility Library 
-The [OSVVM utility library](https://github.com/osvvm/osvvm) implements advanced verification capabilities that are simple to use and feel like built-in language features.  These include:   
+# The OSVVM Verification Utility Library 
+The [OSVVM verification utility library](https://github.com/osvvm/osvvm) implements advanced verification capabilities that are simple to use and feel like built-in language features.  These include:   
 
   - Transaction-Level Modeling (TbUtilPkg, ResolutionPkg)
   - Constrained Random test generation (RandomPkg)
@@ -35,7 +35,7 @@ On GitHub, all OSVVM libraries are a submodule of the repository OsvvmLibraries.
   $ git clone --recursive https://github.com/osvvm/OsvvmLibraries
 ```
         
-Alternately just the OSVVM library can be downloaded using:  
+Alternately to get just the OSVVM verification utility library use:  
         `$ git clone https://github.com/OSVVM/OSVVM`
 
 ## Run The Demos
@@ -52,7 +52,7 @@ You can find the project [Authors here](AUTHORS.md) and
 ## The OSVVM Family of libraries
 The OSVVM family of libraries includes the VHDL Verification Utility library (this one)
 as well as verification components and scripting.  These are all kept
-as submodules of [OSVVM-Libraries](https://github.com/osvvm/OsvvmLibraries).
+as submodules of [OsvvmLibraries](https://github.com/osvvm/OsvvmLibraries).
 
 ## More Information on OSVVM
 
