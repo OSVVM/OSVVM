@@ -58,8 +58,8 @@ as submodules of [OsvvmLibraries](https://github.com/osvvm/OsvvmLibraries).
 
 **OSVVM Forums and Blog:**     [http://www.osvvm.org/](http://www.osvvm.org/)   
 **Gitter:** [https://gitter.im/OSVVM/Lobby](https://gitter.im/OSVVM/Lobby)  
-**Documentation:** [osvvm.github.io](https://osvvm.github.io)
-**Documentation:** [PDF Documentation](https://github.com/OSVVM/Documentation)
+**Documentation:** [osvvm.github.io](https://osvvm.github.io)    
+**Documentation:** [PDF Documentation](https://github.com/OSVVM/Documentation)  
 
 ## Copyright and License
 Copyright (C) 2006-2022 by [SynthWorks Design Inc.](http://www.synthworks.com/)  
