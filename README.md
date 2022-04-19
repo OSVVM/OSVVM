@@ -28,7 +28,7 @@ You can also learn OSVVM by taking the class, [Advanced VHDL Verification and Te
 ## Download OSVVM Libraries
 OSVVM is available as either a git repository 
 [OsvvmLibraries](https://github.com/osvvm/OsvvmLibraries) 
-or zip file from [osvvm.org Downloads Page](https://osvvm.org/downloads).
+or a zip file from [osvvm.org Downloads Page](https://osvvm.org/downloads).
 
 On GitHub, all OSVVM libraries are a submodule of the repository OsvvmLibraries. Download all OSVVM libraries using git clone with the “–recursive” flag:
 ```    
