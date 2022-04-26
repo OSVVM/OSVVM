@@ -1078,6 +1078,7 @@ package body AlertLogPkg is
              write(buf, " at " & to_string(NOW, 1 ns)) ;
           end if ;
           writeline(buf) ;
+          deallocate(buf);
         end if ;
         -- Always Count
         IncrementAlertCount(localAlertLogID, Level, StopDueToCount) ;
@@ -1085,7 +1086,7 @@ package body AlertLogPkg is
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & LINE_PREFIX & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -1124,7 +1125,7 @@ package body AlertLogPkg is
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & LINE_PREFIX & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -1456,7 +1457,7 @@ package body AlertLogPkg is
       if (HasDisabledAlerts and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then  -- print if enabled
         write(buf, "  Failures: "  & to_string(DisabledAlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "    & to_string(DisabledAlertCount(ERROR) ) ) ;
-        write(buf, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) ) ;
+        write(buf, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) & " " ) ;
       end if ;
       if PrintPassedVar or (AffirmCheckCount /= 0) or PrintAffirmationsVar then -- Print if passed or printing affirmations
         write(buf, "  Passed: " & to_string(PassedCount)) ;
@@ -1473,6 +1474,7 @@ package body AlertLogPkg is
       end if ;
       write(buf, "  at "  & to_string(NOW, 1 ns)) ;
       WriteLine(buf) ;
+      deallocate(buf);
     end procedure PrintTopAlerts ;
 
     ------------------------------------------------------------
@@ -1509,6 +1511,7 @@ package body AlertLogPkg is
           write(buf, "  Affirmations: "  & to_string(AlertLogPtr(CurID).AffirmCount ) ) ;
         end if ;
         WriteLine(buf) ;
+        deallocate(buf);
       end if ;
     end procedure PrintOneChild ;
 
@@ -1666,6 +1669,7 @@ package body AlertLogPkg is
         -- Passed
         -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
         write(buf,
+          LINE_PREFIX & " " &
           ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
           ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
@@ -1677,6 +1681,7 @@ package body AlertLogPkg is
         -- Failed
         -- write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
         write(buf,
+          LINE_PREFIX & " " &
           ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
           ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
@@ -2602,6 +2607,7 @@ package body AlertLogPkg is
          write(buf, " at " & to_string(NOW, 1 ns)) ;
       end if ;
       writeline(buf) ;
+      deallocate(buf);
     end procedure LocalLog ;
 
     ------------------------------------------------------------
