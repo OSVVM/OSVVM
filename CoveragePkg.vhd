@@ -5106,7 +5106,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & "./reports/" & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin
@@ -5699,7 +5699,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & "./reports/" & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open READ_MODE is RESOLVED_FILE_NAME ;
       variable buf     : line ;
       variable Found   : boolean ;

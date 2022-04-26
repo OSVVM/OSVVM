@@ -98,11 +98,11 @@ package body ReportPkg is
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
     
     WriteAlertSummaryYaml(
-      FileName        => "OsvvmRun.yml", 
+      FileName        => REPORTS_DIRECTORY & "OsvvmRun.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
     WriteCovSummaryYaml (
-      FileName        => "OsvvmRun.yml"
+      FileName        => REPORTS_DIRECTORY & "OsvvmRun.yml"
     ) ;
     WriteAlertYaml (
       FileName        => REPORTS_DIRECTORY &  GetAlertLogName & "_alerts.yml", 

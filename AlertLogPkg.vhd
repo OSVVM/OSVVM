@@ -1092,10 +1092,10 @@ package body AlertLogPkg is
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
           ReportAlerts(ReportWhenZero => TRUE) ;
-          if FileExists("OsvvmRun.yml") then
+          if FileExists(REPORTS_DIRECTORY & "OsvvmRun.yml") then
 --          work.ReportPkg.EndOfTestReports ;  -- creates circular package issues
             WriteAlertSummaryYaml(
-              FileName        => "OsvvmRun.yml"
+              FileName        => REPORTS_DIRECTORY & "OsvvmRun.yml"
             ) ;
             WriteAlertYaml (
               FileName        => REPORTS_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
@@ -5103,7 +5103,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) is
   ------------------------------------------------------------
-    constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "OsvvmRun.yml", FileName) ;
+    constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & "OsvvmRun.yml", FileName) ;
   begin
     -- synthesis translate_off
     WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "      ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
