@@ -98,6 +98,7 @@ use std.textio.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
+use work.FormattingPkg.all;
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -1042,7 +1043,24 @@ package body AlertLogPkg is
         localAlertLogID := VerifyID(AlertLogID) ;
          -- Write when Alert is Enabled
         if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) < AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
-          -- Print  %% Alert (nominally)
+          FormatOutput(
+            buf,
+            LINE_PREFIX,
+            LogPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX), 
+            ALERT_NAME(Level), 
+            GetAlertLogName(localAlertLogID),
+            Message, 
+            AlertLogPtr(localAlertLogID).Prefix, 
+            AlertLogPtr(localAlertLogID).Suffix,
+            ErrorCount + 1,
+            ( LogErrorCnt => ToColumnVisibility(WriteLogErrorCountVar and WriteAlertErrorCountVar),
+              LogKind => ToColumnVisibility(true),
+              LogLevel => ToColumnVisibility(WriteLogLevelVar),
+              LogIdName => ToColumnVisibility(FoundAlertHierVar and WriteLogNameVar),
+              LogMessage => ToColumnVisibility(true),
+              LogTime => ToColumnVisibility(WriteLogTimeVar))
+          );
+          /*-- Print  %% Alert (nominally)
 --          write(buf, AlertPrefix) ;
           write(buf, AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ) ;
           -- Debug Mode
@@ -1076,8 +1094,9 @@ package body AlertLogPkg is
           -- Time
           if WriteAlertTimeVar then
              write(buf, " at " & to_string(NOW, 1 ns)) ;
-          end if ;
+          end if ;*/
           writeline(buf) ;
+          deallocate(buf);
         end if ;
         -- Always Count
         IncrementAlertCount(localAlertLogID, Level, StopDueToCount) ;
@@ -1394,12 +1413,13 @@ package body AlertLogPkg is
 --      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
 --      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
 --      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
-      variable buf : line ;
+      variable buf, msg: line ;
       variable TotalErrors : integer ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
       variable TotalRequirementsPassed, TotalRequirementsGoal, TotalRequirementErrors : integer ;
       variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       variable PassedCount, AffirmCheckCount : integer ;
+      variable tmp: line := null;
     begin
 --!!
 --!! Update to use CalcTopTotalErrors
@@ -1426,7 +1446,7 @@ package body AlertLogPkg is
 
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCheckCount) ;
 
-      if not TestFailed then
+      /*if not TestFailed then
         -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ; -- PASSED
         write(buf,
           ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
@@ -1442,37 +1462,55 @@ package body AlertLogPkg is
           ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
           Name
         ) ;
-      end if ;
+      end if ;*/
 --?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
       if TestFailed then
-        write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
-        write(buf, "  Failures: "        & to_string(AlertCountVar(FAILURE)) ) ;
-        write(buf, "  Errors: "          & to_string(AlertCountVar(ERROR) ) ) ;
-        write(buf, "  Warnings: "        & to_string(AlertCountVar(WARNING) ) ) ;
+        write(msg, "Total Error(s) = " & to_string(TotalErrors) ) ;
+        write(msg, "  Failures: "        & to_string(AlertCountVar(FAILURE)) ) ;
+        write(msg, "  Errors: "          & to_string(AlertCountVar(ERROR) ) ) ;
+        write(msg, "  Warnings: "        & to_string(AlertCountVar(WARNING) ) ) ;
       end if ;
       if HasDisabledAlerts or PrintDisabledAlertsVar then   -- print if exist or enabled
-          write(buf, "   Total Disabled Error(s) = " & to_string(TotalDisabledAlertErrors)) ;
+          write(msg, "   Total Disabled Error(s) = " & to_string(TotalDisabledAlertErrors)) ;
       end if ;
       if (HasDisabledAlerts and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then  -- print if enabled
-        write(buf, "  Failures: "  & to_string(DisabledAlertCount(FAILURE)) ) ;
-        write(buf, "  Errors: "    & to_string(DisabledAlertCount(ERROR) ) ) ;
-        write(buf, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) ) ;
+        write(msg, "  Failures: "  & to_string(DisabledAlertCount(FAILURE)) ) ;
+        write(msg, "  Errors: "    & to_string(DisabledAlertCount(ERROR) ) ) ;
+        write(msg, "  Warnings: "  & to_string(DisabledAlertCount(WARNING) ) & " " ) ;
       end if ;
       if PrintPassedVar or (AffirmCheckCount /= 0) or PrintAffirmationsVar then -- Print if passed or printing affirmations
-        write(buf, "  Passed: " & to_string(PassedCount)) ;
+        write(msg, "Passed: " & to_string(PassedCount)) ;
       end if;
       if (AffirmCheckCount /= 0) or PrintAffirmationsVar then
-        write(buf, "  Affirmations Checked: " & to_string(AffirmCheckCount)) ;
+        write(msg, "  Affirmations Checked: " & to_string(AffirmCheckCount)) ;
       end if ;
       if  PrintRequirementsVar or
           (PrintIfHaveRequirementsVar and HasRequirementsVar) or
           (FailOnRequirementErrorsVar and TotalRequirementErrors /= 0)
       then
-        write(buf, "  Requirements Passed: " & to_string(TotalRequirementsPassed) &
+        write(msg, "  Requirements Passed: " & to_string(TotalRequirementsPassed) &
                    " of " & to_string(TotalRequirementsGoal) ) ;
       end if ;
-      write(buf, "  at "  & to_string(NOW, 1 ns)) ;
-      WriteLine(buf) ;
+      FormatOutput(
+        buf, 
+        LINE_PREFIX,
+        ResolveOsvvmDoneName(DoneNameVar.GetOpt), 
+        IfElse(TestFailed, ResolveOsvvmFailName(FailNameVar.GetOpt), ResolveOsvvmPassName(PassNameVar.GetOpt)), 
+        Name,
+        msg.all, 
+        tmp, 
+        tmp,
+        0,
+        ( LogErrorCnt => ToColumnVisibility(WriteLogErrorCountVar and WriteAlertErrorCountVar),
+          LogKind => ToColumnVisibility(true),
+          LogLevel => ToColumnVisibility(WriteLogLevelVar),
+          LogIdName => ToColumnVisibility(FoundAlertHierVar and WriteLogNameVar),
+          LogMessage => ToColumnVisibility(true),
+          LogTime => ToColumnVisibility(WriteLogTimeVar))
+      );
+      WriteLine(buf);
+      deallocate(msg);
+      deallocate(buf);
     end procedure PrintTopAlerts ;
 
     ------------------------------------------------------------
@@ -1486,29 +1524,50 @@ package body AlertLogPkg is
       HasErrors         : boolean ;
       HasDisabledErrors : boolean
     ) is
-      variable buf : line ;
+      variable buf, msg, tmp : line ;
       alias CurID  : AlertLogIDType is AlertLogID ;
     begin
       if ReportWhenZero or HasErrors then
-        write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(CurID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
-        write(buf, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
-        write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
-        write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).AlertCount(WARNING) ) ) ;
+        write(msg, Prefix &  " "   & LeftJustify(AlertLogPtr(CurID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
+        write(msg, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
+        write(msg, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
+        write(msg, "  Warnings: "  & to_string(AlertLogPtr(CurID).AlertCount(WARNING) ) ) ;
         if (HasDisabledErrors and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
-          write(buf, "  Disabled Failures: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(FAILURE) ) ) ;
-          write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).DisabledAlertCount(ERROR) ) ) ;
-          write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(WARNING) ) ) ;
+          write(msg, "  Disabled Failures: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(FAILURE) ) ) ;
+          write(msg, "  Errors: "    & to_string(AlertLogPtr(CurID).DisabledAlertCount(ERROR) ) ) ;
+          write(msg, "  Warnings: "  & to_string(AlertLogPtr(CurID).DisabledAlertCount(WARNING) ) ) ;
         end if ;
         if PrintPassedVar or PrintRequirementsVar then
-          write(buf, "  Passed: " & to_string(AlertLogPtr(CurID).PassedCount)) ;
+          write(msg, "  Passed: " & to_string(AlertLogPtr(CurID).PassedCount)) ;
         end if;
         if PrintRequirementsVar then
-          write(buf, " of " & to_string(AlertLogPtr(CurID).PassedGoal) ) ;
+          write(msg, " of " & to_string(AlertLogPtr(CurID).PassedGoal) ) ;
         end if ;
         if PrintAffirmationsVar then
-          write(buf, "  Affirmations: "  & to_string(AlertLogPtr(CurID).AffirmCount ) ) ;
+          write(msg, "  Affirmations: "  & to_string(AlertLogPtr(CurID).AffirmCount ) ) ;
         end if ;
+        tmp := null;
+        FormatOutput(
+          buf,
+          LINE_PREFIX,
+          "",
+          "",
+          "",
+          msg.all,
+          tmp,
+          tmp,
+          0,
+          ( LogErrorCnt => ToColumnVisibility(WriteLogErrorCountVar and WriteAlertErrorCountVar, WhitespaceOnly),
+            LogKind => ToColumnVisibility(true, WhitespaceOnly),
+            LogLevel => ToColumnVisibility(WriteLogLevelVar, WhitespaceOnly),
+            LogIdName => ToColumnVisibility(FoundAlertHierVar and WriteLogNameVar, WhitespaceOnly),
+            LogMessage => ToColumnVisibility(true),
+            LogTime => ToColumnVisibility(WriteLogTimeVar, WhitespaceOnly)
+          )
+        );
         WriteLine(buf) ;
+        deallocate(msg);
+        deallocate(buf);
       end if ;
     end procedure PrintOneChild ;
 
@@ -2560,9 +2619,26 @@ package body AlertLogPkg is
       variable ParentID : AlertLogIDType ;
       -- constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
     begin
+      FormatOutput(
+        buf, 
+        LINE_PREFIX,
+        LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX), 
+        LOG_NAME(Level), 
+        GetAlertLogName(AlertLogID),
+        Message, 
+        AlertLogPtr(AlertLogID).Prefix, 
+        AlertLogPtr(AlertLogID).Suffix,
+        ErrorCount,
+        ( LogErrorCnt => ToColumnVisibility(WriteLogErrorCountVar and WriteAlertErrorCountVar),
+          LogKind => ToColumnVisibility(true),
+          LogLevel => ToColumnVisibility(WriteLogLevelVar),
+          LogIdName => ToColumnVisibility(FoundAlertHierVar and WriteLogNameVar),
+          LogMessage => ToColumnVisibility(true),
+          LogTime => ToColumnVisibility(WriteLogTimeVar))
+      );
       -- Print  %% log (nominally)
 --      write(buf, LogPrefix) ;
-      write(buf,  LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX)) ;
+      /*write(buf,  LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX)) ;
       -- Debug Mode
       if WriteLogErrorCountVar then
           if WriteAlertErrorCountVar then
@@ -2600,8 +2676,9 @@ package body AlertLogPkg is
       -- Time
       if WriteLogTimeVar then
          write(buf, " at " & to_string(NOW, 1 ns)) ;
-      end if ;
+      end if ;*/
       writeline(buf) ;
+      deallocate(buf);
     end procedure LocalLog ;
 
     ------------------------------------------------------------
