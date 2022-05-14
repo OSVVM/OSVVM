@@ -2701,7 +2701,7 @@ package body ScoreBoardPkg_int is
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "./reports/" & GetAlertLogName & "_sb.yml", FileName) ; 
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & GetAlertLogName & "_sb.yml", FileName) ; 
       file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin
