@@ -1086,7 +1086,7 @@ package body AlertLogPkg is
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          write(buf, LF & LINE_PREFIX & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & OSVVM_DEFAULT_WRITE_PREFIX & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -1125,7 +1125,7 @@ package body AlertLogPkg is
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          write(buf, LF & LINE_PREFIX & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & OSVVM_DEFAULT_WRITE_PREFIX & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -1669,7 +1669,7 @@ package body AlertLogPkg is
         -- Passed
         -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
         write(buf,
-          LINE_PREFIX & " " &
+          OSVVM_DEFAULT_WRITE_PREFIX &
           ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
           ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
@@ -1681,7 +1681,7 @@ package body AlertLogPkg is
         -- Failed
         -- write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
         write(buf,
-          LINE_PREFIX & " " &
+          OSVVM_DEFAULT_WRITE_PREFIX &
           ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
           ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
