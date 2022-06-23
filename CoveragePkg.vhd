@@ -464,7 +464,7 @@ package CoveragePkg is
   procedure ICoverLast (ID : CoverageIDType) ;
   procedure ICover     (ID : CoverageIDType; CovPoint : integer_vector) ;
   procedure ICover     (ID : CoverageIDType; CovPoint : integer) ;
-  procedure TCover     (CoverID : CoverageIDType; A : integer) ;
+  procedure TCover     (ID : CoverageIDType; A : integer) ;
 
   procedure ClearCov (ID : CoverageIDType) ;
 
@@ -994,7 +994,7 @@ package CoveragePkg is
     procedure ICoverLast (ID : CoverageIDType) ;
     procedure ICover     (ID : CoverageIDType; CovPoint : integer_vector) ;
     procedure ICover     (ID : CoverageIDType; CovPoint : integer) ;
-    procedure TCover     (CoverID : CoverageIDType; A : integer) ;
+    procedure TCover     (ID : CoverageIDType; A : integer) ;
 
     procedure ClearCov (ID : CoverageIDType) ;
 
@@ -3386,14 +3386,14 @@ package body CoveragePkg is
     end procedure ICover ;
 
     ------------------------------------------------------------
-    procedure TCover (CoverID : CoverageIDType; A : integer) is
+    procedure TCover (ID : CoverageIDType; A : integer) is
     ------------------------------------------------------------
-      constant ID : integer := CoverID.ID ;
+      constant CoverID : integer := ID.ID ;
     begin
-      CovStructPtr(ID).TCoverCount        := CovStructPtr(ID).TCoverCount + 1 ;
-      CovStructPtr(ID).TCoverValuePtr.all := CovStructPtr(ID).TCoverValuePtr.all(2 to CovStructPtr(ID).BinValLength) & A ;
-      if (CovStructPtr(ID).TCoverCount >= CovStructPtr(ID).BinValLength) then
-        ICover(CoverID, CovStructPtr(ID).TCoverValuePtr.all) ;
+      CovStructPtr(CoverID).TCoverCount        := CovStructPtr(CoverID).TCoverCount + 1 ;
+      CovStructPtr(CoverID).TCoverValuePtr.all := CovStructPtr(CoverID).TCoverValuePtr.all(2 to CovStructPtr(CoverID).BinValLength) & A ;
+      if (CovStructPtr(CoverID).TCoverCount >= CovStructPtr(CoverID).BinValLength) then
+        ICover(ID, CovStructPtr(CoverID).TCoverValuePtr.all) ;
       end if ;
     end procedure TCover ;
 
@@ -8087,9 +8087,9 @@ package body CoveragePkg is
     CoverageStore.ICover (ID, CovPoint) ;
   end procedure ICover ;
 
-  procedure TCover (CoverID : CoverageIDType; A : integer) is
+  procedure TCover (ID : CoverageIDType; A : integer) is
   begin
-    CoverageStore.TCover (CoverID, A) ;
+    CoverageStore.TCover (ID, A) ;
   end procedure TCover ;
 
   procedure ClearCov (ID : CoverageIDType) is
