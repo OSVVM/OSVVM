@@ -505,7 +505,9 @@ package AlertLogPkg is
     DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT
+    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    TimeJustifyAmount        : integer             := integer'left 
   ) ;
 
   procedure ReportAlertLogOptions ;
@@ -541,6 +543,8 @@ package AlertLogPkg is
   impure function GetAlertLogDoneName                 return string ;
   impure function GetAlertLogPassName                 return string ;
   impure function GetAlertLogFailName                 return string ;
+
+  impure function GetAlertLogWriteTimeLast            return OsvvmOptionsType ;
 
   -- File Reading Utilities
   function IsLogEnableType (Name : String) return boolean ;
@@ -815,7 +819,9 @@ package body AlertLogPkg is
       DoneName                 : string ;
       PassName                 : string ;
       FailName                 : string ;
-      IdSeparator              : string
+      IdSeparator              : string ;
+      WriteTimeLast            : OsvvmOptionsType ;
+      TimeJustifyAmount        : integer 
     ) ;
     procedure ReportAlertLogOptions ;
 
@@ -848,6 +854,8 @@ package body AlertLogPkg is
     impure function GetAlertLogPassName return string ;
     impure function GetAlertLogFailName return string ;
 
+    impure function GetAlertLogWriteTimeLast        return OsvvmOptionsType ;
+
   end  protected AlertLogStructPType ;
 
   --- ///////////////////////////////////////////////////////////////////////////
@@ -859,9 +867,9 @@ package body AlertLogPkg is
     variable AffirmCheckCountVar       : natural := 0 ;
     variable PassedCountVar            : natural := 0 ;
 
-    variable ErrorCount : integer := 0 ;
-    variable AlertCount : AlertCountType := (0, 0, 0) ;
-
+    variable ErrorCount                : integer := 0 ;
+    variable AlertCount                : AlertCountType := (0, 0, 0) ;
+    
     ------------------------------------------------------------
     type AlertLogRecType is record
     ------------------------------------------------------------
@@ -940,6 +948,9 @@ package body AlertLogPkg is
 
     variable AlertLogJustifyAmountVar    : integer := 0 ;
     variable ReportJustifyAmountVar      : integer := 0 ;
+    variable TimeJustifyAmountVar        : integer := 0 ;
+    
+    variable WriteTimeLastVar            : boolean := TRUE ;
 
     ------------------------------------------------------------
     -- PT Local
@@ -1040,10 +1051,12 @@ package body AlertLogPkg is
       variable buf : line ;
       variable ParentID : AlertLogIDType ;
     begin
-      -- Print  %% log (nominally)
-      write(buf,
-        ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
-        AlertLogName ) ;
+      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ) ; -- Print  
+      -- Time Last
+      if WriteTime and not WriteTimeLastVar then
+        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  ") ;
+      end if ;
+      write(buf, AlertLogName ) ;
       -- Debug Mode
       if WriteErrorCount then
         if ErrorCount > 0 then
@@ -1076,9 +1089,9 @@ package body AlertLogPkg is
       if AlertLogPtr(AlertLogID).Suffix /= NULL then
         write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
       end if ;
-      -- Time
-      if WriteTime then
-         write(buf, " at " & to_string(NOW, 1 ns)) ;
+      -- Time Last
+      if WriteTime and WriteTimeLastVar then
+        write(buf, " at " & to_string(NOW, 1 ns)) ;
       end if ;
       writeline(buf) ;
     end procedure LocalPrint ;
@@ -1463,18 +1476,19 @@ package body AlertLogPkg is
 
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCheckCount) ;
 
+      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt)) ;
+      if not WriteTimeLastVar then
+        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  ") ;
+      end if ;
+
       if not TestFailed then
-        -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ; -- PASSED
-        write(buf,
-          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
+        write(buf, 
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
           ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
           Name
         ) ;
       else
-        -- write(buf, ReportPrefix & DoneName & "  " & FailName & "  " & Name) ; -- FAILED
         write(buf,
-          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
           ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
           Name
@@ -1508,7 +1522,9 @@ package body AlertLogPkg is
         write(buf, "  Requirements Passed: " & to_string(TotalRequirementsPassed) &
                    " of " & to_string(TotalRequirementsGoal) ) ;
       end if ;
-      write(buf, "  at "  & to_string(NOW, 1 ns)) ;
+      if WriteTimeLastVar then
+        write(buf, " at " & to_string(NOW, 1 ns)) ;
+      end if ;
       WriteLine(buf) ;
     end procedure PrintTopAlerts ;
 
@@ -2844,6 +2860,10 @@ package body AlertLogPkg is
       WriteLogLevelVar            := TRUE ;
       WriteLogNameVar             := TRUE ;
       WriteLogTimeVar             := TRUE ;
+      WriteTimeLastVar            := TRUE ;
+      AlertLogJustifyAmountVar    := 0 ;
+      ReportJustifyAmountVar      := 0 ;
+      TimeJustifyAmountVar        := 0 ;
     end procedure DeallocateAlertLogStruct ;
 
     ------------------------------------------------------------
@@ -3449,7 +3469,9 @@ package body AlertLogPkg is
       DoneName                 : string ;
       PassName                 : string ;
       FailName                 : string ;
-      IdSeparator              : string
+      IdSeparator              : string ;
+      WriteTimeLast            : OsvvmOptionsType ;
+      TimeJustifyAmount        : integer 
     ) is
     begin
       if FailOnWarning /= OPT_INIT_PARM_DETECT then
@@ -3527,6 +3549,12 @@ package body AlertLogPkg is
       if IdSeparator /= OSVVM_STRING_INIT_PARM_DETECT then
         IdSeparatorVar.Set(FailName) ;
       end if ;
+      if WriteTimeLast /= OPT_INIT_PARM_DETECT then
+        WriteTimeLastVar := IsEnabled(WriteTimeLast) ;
+      end if ;
+      if TimeJustifyAmount >= 0 then
+        TimeJustifyAmountVar := TimeJustifyAmount ;
+      end if ;
     end procedure SetAlertLogOptions ;
 
     ------------------------------------------------------------
@@ -3565,6 +3593,8 @@ package body AlertLogPkg is
       swrite(buf, "DoneNameVar:                " & ResolveOsvvmDoneName(DoneNameVar.GetOpt)        & LF ) ;
       swrite(buf, "PassNameVar:                " & ResolveOsvvmPassName(PassNameVar.GetOpt)        & LF ) ;
       swrite(buf, "FailNameVar:                " & ResolveOsvvmFailName(FailNameVar.GetOpt)        & LF ) ;
+      swrite(buf, "WriteTimeLastVar:           " & to_string(WriteTimeLastVar         ) & LF ) ;
+      swrite(buf, "TimeJustifyAmountVar:       " & to_string(TimeJustifyAmountVar     ) & LF ) ;
       writeline(buf) ;
     end procedure ReportAlertLogOptions ;
 
@@ -3749,6 +3779,14 @@ package body AlertLogPkg is
     begin
       return ResolveOsvvmFailName(FailNameVar.GetOpt) ;
     end function GetAlertLogFailName ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogWriteTimeLast        return OsvvmOptionsType is
+    ------------------------------------------------------------
+    begin
+      return to_OsvvmOptionsType(WriteTimeLastVar) ;
+    end function GetAlertLogWriteTimeLast ;
+
 
   end protected body AlertLogStructPType ;
 
@@ -5987,14 +6025,16 @@ package body AlertLogPkg is
     PrintDisabledAlerts      : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     PrintRequirements        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     PrintIfHaveRequirements  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    DefaultPassedGoal        : integer             := integer'left ;
+    DefaultPassedGoal        : integer          := integer'left ;
     AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
     ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
     DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
-    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT
+    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
+    TimeJustifyAmount        : integer          := integer'left 
   ) is
   begin
     -- synthesis translate_off
@@ -6023,7 +6063,9 @@ package body AlertLogPkg is
       DoneName                 => DoneName,
       PassName                 => PassName,
       FailName                 => FailName,
-      IdSeparator              => IdSeparator
+      IdSeparator              => IdSeparator,
+      WriteTimeLast            => WriteTimeLast, 
+      TimeJustifyAmount        => TimeJustifyAmount 
     );
     -- synthesis translate_on
   end procedure SetAlertLogOptions ;
@@ -6222,6 +6264,14 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogFailName ;
   end function GetAlertLogFailName ;
+
+  ------------------------------------------------------------
+  impure function GetAlertLogWriteTimeLast        return OsvvmOptionsType is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetAlertLogWriteTimeLast ;
+  end function GetAlertLogWriteTimeLast ;
+
 
   ------------------------------------------------------------
   -- Package Local
