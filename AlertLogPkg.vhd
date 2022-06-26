@@ -1023,7 +1023,66 @@ package body AlertLogPkg is
         AlertLogPtr(AlertLogID).DisabledAlertCount(Level) := AlertLogPtr(AlertLogID).DisabledAlertCount(Level) + IncrementByAmount ;
       end if ;
     end procedure IncrementAlertCount ;
-
+    
+    ------------------------------------------------------------
+    -- PT Local
+    procedure LocalPrint (
+    ------------------------------------------------------------
+      AlertLogID      : AlertLogIDType ;
+      AlertLogName    : string ; 
+      WriteErrorCount : boolean ; 
+      WriteLevel      : boolean ; 
+      LevelName       : string ; 
+      WriteName       : boolean ; 
+      Message         : string ;
+      WriteTime       : boolean
+    ) is
+      variable buf : line ;
+      variable ParentID : AlertLogIDType ;
+    begin
+      -- Print  %% log (nominally)
+      write(buf,
+        ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  -- ReportPrefix
+        AlertLogName ) ;
+      -- Debug Mode
+      if WriteErrorCount then
+        if ErrorCount > 0 then
+          write(buf, ' ' & justify(to_string(ErrorCount), RIGHT, 2)) ;
+        else
+          swrite(buf, "   ") ;
+        end if ;
+      end if ;
+      -- Level Name, when enabled (default)
+      if WriteLevel then
+        write(buf, " " & LevelName ) ;
+      end if ;
+      -- AlertLog Name
+      if FoundAlertHierVar and WriteName then
+        if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
+          write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        else
+          ParentID := AlertLogPtr(AlertLogID).ParentID ;
+          write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
+            AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        end if ;
+      end if ;
+      -- Prefix
+      if AlertLogPtr(AlertLogID).Prefix /= NULL then
+        write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all) ;
+      end if ;
+      -- Message
+      write(buf, " " & Message) ;
+      -- Suffix
+      if AlertLogPtr(AlertLogID).Suffix /= NULL then
+        write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
+      end if ;
+      -- Time
+      if WriteTime then
+         write(buf, " at " & to_string(NOW, 1 ns)) ;
+      end if ;
+      writeline(buf) ;
+    end procedure LocalPrint ;
+    
     ------------------------------------------------------------
     procedure alert (
     ------------------------------------------------------------
@@ -1035,57 +1094,35 @@ package body AlertLogPkg is
       -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount  : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
-      variable ParentID        : AlertLogIDType ;
     begin
       -- Only write and count when GlobalAlertEnabledVar is enabled
       if GlobalAlertEnabledVar then
         localAlertLogID := VerifyID(AlertLogID) ;
-         -- Write when Alert is Enabled
-        if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) < AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
-          -- Print  %% Alert (nominally)
---          write(buf, AlertPrefix) ;
-          write(buf, AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ) ;
-          -- Debug Mode
-          if WriteAlertErrorCountVar then
-            write(buf, ' ' & justify(to_string(ErrorCount + 1), RIGHT, 2));
-          end if ;
-          -- Level Name, when enabled (default)
-          if WriteAlertLevelVar then
-            write(buf, " " & ALERT_NAME(Level)) ; -- uses constant lookup
-          end if ;
-          -- AlertLog Name
-          if FoundAlertHierVar and WriteAlertNameVar then
-            if AlertLogPtr(localAlertLogID).PrintParent = PRINT_NAME then
-              write(buf, " in " & LeftJustify(AlertLogPtr(localAlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
-            else
-              ParentID := AlertLogPtr(localAlertLogID).ParentID ;
-              write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
-                AlertLogPtr(localAlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
-            end if ;
-          end if ;
-          -- Prefix
-          if AlertLogPtr(localAlertLogID).Prefix /= NULL then
-            write(buf, ' ' & AlertLogPtr(localAlertLogID).Prefix.all) ;
-          end if ;
-          -- Message
-          write(buf, " " & Message) ;
-          -- Suffix
-          if AlertLogPtr(localAlertLogID).Suffix /= NULL then
-            write(buf, ' ' & AlertLogPtr(localAlertLogID).Suffix.all) ;
-          end if ;
-          -- Time
-          if WriteAlertTimeVar then
-             write(buf, " at " & to_string(NOW, 1 ns)) ;
-          end if ;
-          writeline(buf) ;
-        end if ;
-        -- Always Count
+        
+        -- Always Count (before printing so have current ErrorCount
         IncrementAlertCount(localAlertLogID, Level, StopDueToCount) ;
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
+        
+         -- Write when Alert is Enabled
+        if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) <= AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
+          LocalPrint(
+            AlertLogID       => localAlertLogID,
+            AlertLogName     => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),  
+            WriteErrorCount  => WriteAlertErrorCountVar,
+            WriteLevel       => WriteAlertLevelVar,
+            LevelName        => ALERT_NAME(Level),
+            WriteName        => WriteAlertNameVar,
+            Message          => Message,
+            WriteTime        => WriteAlertTimeVar 
+          ) ;
+        end if ;
+        
         if StopDueToCount then
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+          write(buf, LF & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & 
+            AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & 
+            ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
           end if ;
@@ -2556,52 +2593,17 @@ package body AlertLogPkg is
       Message      : string ;
       Level        : LogType
     ) is
-      variable buf : line ;
-      variable ParentID : AlertLogIDType ;
-      -- constant LogPrefix : string := LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
     begin
-      -- Print  %% log (nominally)
---      write(buf, LogPrefix) ;
-      write(buf,  LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX)) ;
-      -- Debug Mode
-      if WriteLogErrorCountVar then
-          if WriteAlertErrorCountVar then
-            if ErrorCount > 0 then
-              write(buf, ' ' & justify(to_string(ErrorCount), RIGHT, 2)) ;
-            else
-              swrite(buf, "   ") ;
-            end if ;
-          end if ;
-      end if ;
-      -- Level Name, when enabled (default)
-      if WriteLogLevelVar then
-        write(buf, " " & LOG_NAME(Level) ) ;
-      end if ;
-      -- AlertLog Name
-      if FoundAlertHierVar and WriteLogNameVar then
-        if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
-          write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
-        else
-          ParentID := AlertLogPtr(AlertLogID).ParentID ;
-          write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
-            AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
-        end if ;
-      end if ;
-      -- Prefix
-      if AlertLogPtr(AlertLogID).Prefix /= NULL then
-        write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all) ;
-      end if ;
-      -- Message
-      write(buf, " " & Message) ;
-      -- Suffix
-      if AlertLogPtr(AlertLogID).Suffix /= NULL then
-        write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
-      end if ;
-      -- Time
-      if WriteLogTimeVar then
-         write(buf, " at " & to_string(NOW, 1 ns)) ;
-      end if ;
-      writeline(buf) ;
+      LocalPrint(
+        AlertLogID       => AlertLogID,
+        AlertLogName     => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),  
+        WriteErrorCount  => WriteLogErrorCountVar,
+        WriteLevel       => WriteLogLevelVar,
+        LevelName        => LOG_NAME(Level),
+        WriteName        => WriteLogNameVar,
+        Message          => Message,
+        WriteTime        => WriteLogTimeVar
+      ) ;
     end procedure LocalLog ;
 
     ------------------------------------------------------------
@@ -4386,6 +4388,9 @@ package body AlertLogPkg is
     file_open(status1, FileID1, Name1, READ_MODE) ;
     file_open(status2, FileID2, Name2, READ_MODE) ;
     if status1 = OPEN_OK and status2 = OPEN_OK then
+--!! next
+--      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " diff" & Name1 & Name2 & ", ", Level, Valid) ;
+
       LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " " & Name1 & " /= " & Name2 & ", ", Level, Valid) ;
     else
       if status1 /= OPEN_OK then

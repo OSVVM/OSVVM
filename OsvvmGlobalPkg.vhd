@@ -58,8 +58,8 @@ package OsvvmGlobalPkg is
   function to_OsvvmOptionsType (A : boolean) return OsvvmOptionsType ;
 
   -- Defaults for String values
-  constant OSVVM_DEFAULT_ALERT_PREFIX     : string := "%% Alert" ;
-  constant OSVVM_DEFAULT_LOG_PREFIX       : string := "%% Log  " ;
+  constant OSVVM_DEFAULT_ALERT_PREFIX     : string := "Alert" ;
+  constant OSVVM_DEFAULT_LOG_PREFIX       : string := "Log  " ;
   constant OSVVM_DEFAULT_WRITE_PREFIX     : string := "%% " ;
   constant OSVVM_DEFAULT_DONE_NAME        : string := "DONE" ;
   constant OSVVM_DEFAULT_PASS_NAME        : string := "PASSED" ;
