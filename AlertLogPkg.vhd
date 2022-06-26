@@ -1523,7 +1523,7 @@ package body AlertLogPkg is
                    " of " & to_string(TotalRequirementsGoal) ) ;
       end if ;
       if WriteTimeLastVar then
-        write(buf, " at " & to_string(NOW, 1 ns)) ;
+        write(buf, "  at " & to_string(NOW, 1 ns)) ;
       end if ;
       WriteLine(buf) ;
     end procedure PrintTopAlerts ;
