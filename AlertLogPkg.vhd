@@ -3547,7 +3547,7 @@ package body AlertLogPkg is
         FailNameVar.Set(FailName) ;
       end if ;
       if IdSeparator /= OSVVM_STRING_INIT_PARM_DETECT then
-        IdSeparatorVar.Set(FailName) ;
+        IdSeparatorVar.Set(IdSeparator) ;
       end if ;
       if WriteTimeLast /= OPT_INIT_PARM_DETECT then
         WriteTimeLastVar := IsEnabled(WriteTimeLast) ;
@@ -4426,10 +4426,9 @@ package body AlertLogPkg is
     file_open(status1, FileID1, Name1, READ_MODE) ;
     file_open(status2, FileID2, Name2, READ_MODE) ;
     if status1 = OPEN_OK and status2 = OPEN_OK then
---!! next
---      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " diff" & Name1 & Name2 & ", ", Level, Valid) ;
+--      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " " & Name1 & " /= " & Name2 & ", ", Level, Valid) ;
+      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
 
-      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " " & Name1 & " /= " & Name2 & ", ", Level, Valid) ;
     else
       if status1 /= OPEN_OK then
         AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name1 & ", did not open", Level) ;
@@ -4952,7 +4951,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
     if Valid then
-      AlertLogStruct.Log(AlertLogID, Message & " " & Name1 & " = " & Name2, PASSED, Enable) ;
+      AlertLogStruct.Log(AlertLogID, Message & " " & Name1 & "  " & Name2, PASSED, Enable) ;
     else
       AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
       -- Alert already signaled by LocalAlertIfDiff
@@ -5149,7 +5148,7 @@ package body AlertLogPkg is
     constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "OsvvmRun.yml", FileName) ;
   begin
     -- synthesis translate_off
-    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "      ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
+    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
     -- WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ;
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;
