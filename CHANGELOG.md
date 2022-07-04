@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2022.06  | June 2022       |  Added AffirmIfCovered, minor updates to yaml output 
 | 2022.03  | March 2022      |  Added EdgeRose, ..., FindRisingEdge, ..., ScoreboardPkg Updates 
 | 2022.02  | February 2022   |  Added Transition Coverage. 
 | 2022.01  | January 2022    |  Added Transition Coverage. 

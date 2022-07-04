@@ -26,6 +26,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    06/2022   2022.06    Added Output Formatting - WriteTimeLast (vs First)
+--                         Minor printing updates to AffirmIfDiff and AlertIfDiff
 --    02/2022   2022.02    SetAlertPrintCount and GetAlertPrintCount
 --                         Added NewID with ReportMode, PrintParent
 --                         Updated Alert s.t. on StopCount prints WriteAlertSummaryYaml and WriteAlertYaml

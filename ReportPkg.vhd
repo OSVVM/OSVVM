@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    06/2022   2022.06    Minor reordering of EndOfTestReports
 --    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
 --    10/2021   2021.10    Initial revision
 --

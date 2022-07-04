@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    06/2022   2022.06    Minor reordering of constants
 --    02/2022   2022.02    Added support for IdSeparator.  
 --                         Supports PrintParent mode PRINT_NAME_AND_PARENT.  <Parent Name> <IdSeparator> <AlertLogID Name>.   
 --    01/2020   2020.01    Updated Licenses to Apache
