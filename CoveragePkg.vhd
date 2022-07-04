@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    06/2022   2022.06    Add AlertIfNotCovered.  Settings for YAML output.
 --    02/2022   2022.02    Updated NewID with ParentID, ReportMode, Search, PrintParent.
 --                         Supports searching for coverage models.
 --    01/2022   2022.01    Added DeallocateBins and TCover
@@ -643,7 +644,8 @@ package CoveragePkg is
   impure function GotCoverage return boolean ;
   impure function GetCov (PercentCov : real ) return real ;
   impure function GetCov return real ;
-
+  procedure AffirmIfCovered ; 
+  procedure AlertIfNotCovered (Level : AlertType := ERROR) ; 
 
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
@@ -1170,6 +1172,7 @@ package CoveragePkg is
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) ;
     impure function GotCoverage return boolean ;
+    procedure SetErrorIfNotCovered(Checked : boolean := FALSE) ; 
 
 
   ------------------------------------------------------------
@@ -2140,6 +2143,8 @@ package body CoveragePkg is
     variable WritePrefixVar     : NamePType ;
     variable PassNameVar        : NamePType ;
     variable FailNameVar        : NamePType ;
+    variable ErrorIfNotCoveredVar           : boolean := FALSE ;
+    variable CheckedForErrorIfNotCoveredVar : boolean := FALSE ;
 
     file WriteBinFile : text ;
     variable WriteBinFileInit : boolean := FALSE ;
@@ -5093,6 +5098,20 @@ package body CoveragePkg is
       WriteCovBinsYaml    (ID, buf, NAME_PREFIX &  "  ") ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteCovYaml ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteSettingsYaml (file CovYamlFile : text) is
+    ------------------------------------------------------------
+      variable buf            : line ;
+      constant NAME_PREFIX    : string := "" ;
+      constant rWritePassFail : boolean := IsEnabled(ResolveCovWritePassFail(WritePassFailVar)) ;
+    begin
+      write(buf, NAME_PREFIX & "Settings: " & LF) ;
+      -- write(buf, NAME_PREFIX & "  AlertIfNotCovered: " & ifelse(AlertIfNotCoveredVar, "1", "0") & LF) ;
+      write(buf, NAME_PREFIX & "  WritePassFail: "     & ifelse(rWritePassFail or ErrorIfNotCoveredVar, "1", "0")) ;
+      writeline(CovYamlFile, buf) ;
+    end procedure WriteSettingsYaml ;
 
 --     ------------------------------------------------------------
 --     procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
@@ -5111,7 +5130,9 @@ package body CoveragePkg is
       variable buf : line ;
     begin
       swrite(buf, "Version: 1.0" & LF) ;
-      swrite(buf, "Coverage: " & to_string(Coverage, 2) & LF) ;
+      swrite(buf, "Coverage: " & to_string(Coverage, 2) ) ;
+      writeline(CovYamlFile, buf) ;
+      WriteSettingsYaml(CovYamlFile) ;
       swrite(buf, "Models: ") ;
       writeline(CovYamlFile, buf) ;
       for i in 1 to NumItems loop
@@ -5729,6 +5750,16 @@ package body CoveragePkg is
       end loop ;
       return FALSE ;
     end function GotCoverage ;
+    
+    ------------------------------------------------------------
+    procedure SetErrorIfNotCovered(Checked : boolean := FALSE) is 
+    ------------------------------------------------------------
+    begin
+      ErrorIfNotCoveredVar             := TRUE ;
+      if Checked then 
+        CheckedForErrorIfNotCoveredVar := TRUE ;
+      end if ; 
+    end procedure SetErrorIfNotCovered ;
 
     ------------------------------------------------------------
     impure function GetErrorCount (ID : CoverageIDType) return integer is
@@ -8681,6 +8712,25 @@ package body CoveragePkg is
     return GetCov (100.0) ;
   end function GetCov ;
 
+  ------------------------------------------------------------
+  procedure AffirmIfCovered is 
+  ------------------------------------------------------------
+    constant TotalCov : real := GetCov(100.0) ; 
+  begin
+    CoverageStore.SetErrorIfNotCovered(Checked => TRUE) ; 
+    AffirmIf(OSVVM_COVERAGE_ALERTLOG_ID, 
+             TotalCov >= 100.0, "TotalCov = " & to_string(TotalCov, 2), "") ; 
+  end procedure AffirmIfCovered ; 
+  
+  ------------------------------------------------------------
+  procedure AlertIfNotCovered (Level : AlertType := ERROR) is 
+  ------------------------------------------------------------
+    constant TotalCov : real := GetCov(100.0) ; 
+  begin
+    CoverageStore.SetErrorIfNotCovered(Checked => TRUE) ; 
+    AlertIf(OSVVM_COVERAGE_ALERTLOG_ID, 
+            TotalCov < 100.0, "TotalCov = " & to_string(TotalCov, 2), Level) ; 
+  end procedure AlertIfNotCovered ; 
 
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
