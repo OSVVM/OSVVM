@@ -80,9 +80,9 @@ package body ReportPkg is
     variable buf : line ;
   begin
     if GotCoverage then 
-      swrite(buf, "      FunctionalCoverage: " & to_string(GetCov, 2)) ; 
+      swrite(buf, "        FunctionalCoverage: " & to_string(GetCov, 2)) ; 
     else
-      swrite(buf, "      FunctionalCoverage:  ") ; 
+      swrite(buf, "        FunctionalCoverage:  ") ; 
     end if ; 
     writeline(OsvvmYamlFile, buf) ; 
     file_close(OsvvmYamlFile) ;
@@ -97,18 +97,6 @@ package body ReportPkg is
   begin
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
     
-    WriteAlertSummaryYaml(
-      FileName        => "OsvvmRun.yml", 
-      ExternalErrors  => ExternalErrors
-    ) ; 
-    WriteCovSummaryYaml (
-      FileName        => "OsvvmRun.yml"
-    ) ;
-    WriteAlertYaml (
-      FileName        => REPORTS_DIRECTORY &  GetAlertLogName & "_alerts.yml", 
-      ExternalErrors  => ExternalErrors
-    ) ; 
-        
     if GotCoverage then 
       WriteCovYaml (
         FileName      => REPORTS_DIRECTORY &  GetAlertLogName & "_cov.yml"
@@ -126,6 +114,19 @@ package body ReportPkg is
         FileName     => REPORTS_DIRECTORY &  GetAlertLogName & "_sb_int.yml"
       ) ;
     end if ; 
+    
+    -- Summarize Alerts Last to allow previous steps to update Alerts
+    WriteAlertSummaryYaml(
+      FileName        => "OsvvmRun.yml", 
+      ExternalErrors  => ExternalErrors
+    ) ; 
+    WriteCovSummaryYaml (
+      FileName        => "OsvvmRun.yml"
+    ) ;
+    WriteAlertYaml (
+      FileName        => REPORTS_DIRECTORY &  GetAlertLogName & "_alerts.yml", 
+      ExternalErrors  => ExternalErrors
+    ) ; 
 
     return SumAlertCount(GetAlertCount + ExternalErrors) ;
   end function EndOfTestReports ;
