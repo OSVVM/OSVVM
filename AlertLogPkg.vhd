@@ -28,6 +28,7 @@
 --    Date      Version    Description
 --    06/2022   2022.06    Added Output Formatting - WriteTimeLast (vs First)
 --                         Minor printing updates to AffirmIfDiff and AlertIfDiff
+--                         Added SetTestName in preference of now deprecated SetAlertLogName
 --    02/2022   2022.02    SetAlertPrintCount and GetAlertPrintCount
 --                         Added NewID with ReportMode, PrintParent
 --                         Updated Alert s.t. on StopCount prints WriteAlertSummaryYaml and WriteAlertYaml
@@ -418,7 +419,9 @@ package AlertLogPkg is
 
   procedure ReportLogEnables ;
 
-  procedure SetAlertLogName(Name : string ) ;
+  procedure SetTestName(Name : string ) ;
+  alias SetAlertLogName is SetTestName [string] ;
+
   -- synthesis translate_off
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string ;
   -- synthesis translate_on
@@ -733,7 +736,7 @@ package body AlertLogPkg is
     -- AlertLog Structure Creation and Interaction Methods
 
     ------------------------------------------------------------
-    procedure SetAlertLogName(Name : string ) ;
+    procedure SetTestName(Name : string ) ;
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindAlertLogID(Name : string ) return AlertLogIDType ;
     impure function FindAlertLogID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
@@ -1054,33 +1057,36 @@ package body AlertLogPkg is
       variable ParentID : AlertLogIDType ;
     begin
       write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ) ; -- Print  
-      -- Time Last
-      if WriteTime and not WriteTimeLastVar then
-        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  ") ;
-      end if ;
-      write(buf, AlertLogName ) ;
       -- Debug Mode
       if WriteErrorCount then
         if ErrorCount > 0 then
-          write(buf, ' ' & justify(to_string(ErrorCount), RIGHT, 2)) ;
+          write(buf, ' ' & justify(to_string(ErrorCount), RIGHT, 2) & "  ") ;
         else
-          swrite(buf, "   ") ;
+          swrite(buf, "     ") ;
         end if ;
       end if ;
+      -- Write Time
+      if WriteTime and not WriteTimeLastVar then
+        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
+      end if ;
+      -- Alert or Log
+      write(buf, AlertLogName & "  " ) ;
       -- Level Name, when enabled (default)
       if WriteLevel then
-        write(buf, " " & LevelName ) ;
+        write(buf, LevelName & "  " ) ;
       end if ;
       -- AlertLog Name
       if FoundAlertHierVar and WriteName then
         if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
-          write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+          write(buf, "  in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
         else
           ParentID := AlertLogPtr(AlertLogID).ParentID ;
-          write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
+          write(buf, "  in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
             AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
         end if ;
       end if ;
+      -- Spacing before message
+      swrite(buf, "   ") ;
       -- Prefix
       if AlertLogPtr(AlertLogID).Prefix /= NULL then
         write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all) ;
@@ -1480,19 +1486,19 @@ package body AlertLogPkg is
 
       write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt)) ;
       if not WriteTimeLastVar then
-        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  ") ;
+        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
       end if ;
 
       if not TestFailed then
         write(buf, 
-          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
-          ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
+          ResolveOsvvmPassName(PassNameVar.GetOpt) & "     " &  -- PassName
           Name
         ) ;
       else
         write(buf,
-          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
-          ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
+          ResolveOsvvmFailName(FailNameVar.GetOpt) & "     " &  -- FailName
           Name
         ) ;
       end if ;
@@ -2650,13 +2656,13 @@ package body AlertLogPkg is
     -- AlertLog Structure Creation and Interaction Methods
 
     ------------------------------------------------------------
-    procedure SetAlertLogName(Name : string ) is
+    procedure SetTestName(Name : string ) is
     ------------------------------------------------------------
     begin
       Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).Name) ;
       AlertLogPtr(ALERTLOG_BASE_ID).Name := new string'(Name) ;
       AlertLogPtr(ALERTLOG_BASE_ID).NameLower  := new string'(to_lower(NAME)) ;
-    end procedure SetAlertLogName ;
+    end procedure SetTestName ;
 
     ------------------------------------------------------------
     impure function GetAlertLogName(AlertLogID : AlertLogIDType) return string is
@@ -5559,13 +5565,13 @@ package body AlertLogPkg is
   end ReportLogEnables ;
 
  ------------------------------------------------------------
-  procedure SetAlertLogName(Name : string ) is
+  procedure SetTestName(Name : string ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetAlertLogName(Name) ;
+    AlertLogStruct.SetTestName(Name) ;
     -- synthesis translate_on
-  end procedure SetAlertLogName ;
+  end procedure SetTestName ;
 
   -- synthesis translate_off
   ------------------------------------------------------------
