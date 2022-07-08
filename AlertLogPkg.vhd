@@ -7,6 +7,7 @@
 --  Contributor(s):
 --     Jim Lewis      jim@synthworks.com
 --     Rob Gaddi      Highland Technology.    Inspired SetAlertLogPrefix / Suffix
+--     Markus Ferringer                       Proposed printing time first with output formatter 
 --
 --
 --  Description:
