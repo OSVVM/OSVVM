@@ -2595,7 +2595,6 @@ package body AlertLogPkg is
         AlertLogPtr(i).DisabledAlertCount   := (0, 0, 0) ;
         AlertLogPtr(i).AffirmCount          := 0 ;
         AlertLogPtr(i).PassedCount          := 0 ;
-        AlertLogPtr(i).PassedGoal           := 0 ;
       end loop ;
     end procedure ClearAlerts ;
 
