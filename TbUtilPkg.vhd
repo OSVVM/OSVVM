@@ -515,6 +515,8 @@ package body TbUtilPkg is
     wait for 0 ns ; -- Allow Rdy from previous cycle to clear
     if Rdy /= '1' then                --   #2
       wait until Rdy = '1' ;
+    else
+      wait for 0 ns ; -- allow Ack to update
     end if ;
     -- align to clock if needed (not back-to-back transactions)
     if NOW /= AckTime then
