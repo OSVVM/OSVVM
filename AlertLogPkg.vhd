@@ -1061,7 +1061,7 @@ package body AlertLogPkg is
       -- Debug Mode
       if WriteErrorCount then
         if ErrorCount > 0 then
-          write(buf, ' ' & justify(to_string(ErrorCount), RIGHT, 2) & "  ") ;
+          write(buf, justify(to_string(ErrorCount), RIGHT, 3) & "  ") ;
         else
           swrite(buf, "     ") ;
         end if ;
@@ -1071,23 +1071,23 @@ package body AlertLogPkg is
         write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
       end if ;
       -- Alert or Log
-      write(buf, AlertLogName & "  " ) ;
+      write(buf, AlertLogName) ;
       -- Level Name, when enabled (default)
       if WriteLevel then
-        write(buf, LevelName & "  " ) ;
+        write(buf, "  " & LevelName) ;
       end if ;
       -- AlertLog Name
       if FoundAlertHierVar and WriteName then
         if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
-          write(buf, "  in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+          write(buf, "   in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
         else
           ParentID := AlertLogPtr(AlertLogID).ParentID ;
-          write(buf, "  in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
+          write(buf, "   in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
             AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
         end if ;
       end if ;
       -- Spacing before message
-      swrite(buf, "   ") ;
+      swrite(buf, "  ") ;
       -- Prefix
       if AlertLogPtr(AlertLogID).Prefix /= NULL then
         write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all) ;
@@ -1493,13 +1493,13 @@ package body AlertLogPkg is
       if not TestFailed then
         write(buf, 
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
-          ResolveOsvvmPassName(PassNameVar.GetOpt) & "     " &  -- PassName
+          ResolveOsvvmPassName(PassNameVar.GetOpt) & "   " &  -- PassName
           Name
         ) ;
       else
         write(buf,
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
-          ResolveOsvvmFailName(FailNameVar.GetOpt) & "     " &  -- FailName
+          ResolveOsvvmFailName(FailNameVar.GetOpt) & "   " &  -- FailName
           Name
         ) ;
       end if ;
@@ -4428,21 +4428,21 @@ package body AlertLogPkg is
   ------------------------------------------------------------
     file FileID1, FileID2 : text ;
     variable status1, status2 : file_open_status ;
+    constant RESOLVED_MESSAGE : string := IfElse(Message = "", "", Message & " ") ;
   begin
     -- synthesis translate_off
     Valid := FALSE ;
     file_open(status1, FileID1, Name1, READ_MODE) ;
     file_open(status2, FileID2, Name2, READ_MODE) ;
     if status1 = OPEN_OK and status2 = OPEN_OK then
---      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " " & Name1 & " /= " & Name2 & ", ", Level, Valid) ;
-      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, Message & " diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
+      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, RESOLVED_MESSAGE & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
 
     else
       if status1 /= OPEN_OK then
-        AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name1 & ", did not open", Level) ;
+        AlertLogStruct.Alert(AlertLogID , RESOLVED_MESSAGE & "File, " & Name1 & ", did not open", Level) ;
       end if ;
       if status2 /= OPEN_OK then
-        AlertLogStruct.Alert(AlertLogID , Message & " File, " & Name2 & ", did not open", Level) ;
+        AlertLogStruct.Alert(AlertLogID , RESOLVED_MESSAGE & "File, " & Name2 & ", did not open", Level) ;
       end if ;
     end if;
     -- synthesis translate_on
