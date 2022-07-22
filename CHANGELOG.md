@@ -2,7 +2,8 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
-| 2022.06  | June 2022       |  Added AffirmIfCovered, minor updates to yaml output 
+| 2022.06  | June 2022       |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
+|          |                 |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
 | 2022.03  | March 2022      |  Added EdgeRose, ..., FindRisingEdge, ..., ScoreboardPkg Updates 
 | 2022.02  | February 2022   |  Added Transition Coverage. 
 | 2022.01  | January 2022    |  Added Transition Coverage. 
@@ -60,7 +61,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2022.03 March 2022
+## Revision 2022.06 June 2022
 
 ### Current Revision and Compile Order
 
@@ -78,25 +79,35 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
-  | AlertLogPkg.vhd                                    | 2022.02  | 
+  | AlertLogPkg.vhd                                    | **2022.06**  | 
   | NameStorePkg.vhd                                   | 2022.02  |  
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | 2022.02  |
+  | CoveragePkg.vhd                                    | **2022.06**  |
   | MemoryPkg.vhd                                      | 2022.02  |
-  | ScoreboardGenericPkg.vhd                           | **2022.03**  |
+  | ScoreboardGenericPkg.vhd                           | 2022.03  |
   | ScoreboardPkg_slv.vhd                              | 2020.10  |
   | ScoreboardPkg_int.vhd                              | 2020.01  |
   | ScoreboardPkg_slv_c.vhd                            | 2022.01  | 
   | ScoreboardPkg_int_c.vhd                            | 2022.01  | 
   | ResizePkg.vhd                                      | 2021.06  |
-  | TbUtilPkg.vhd                                      | **2022.03**  |
+  | TbUtilPkg.vhd                                      | 2022.03  |
   | ReportPkg.vhd                                      | 2022.02  | 
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmContext.vhd                                   | 2022.01  |
+
+### AlertLogPkg.vhd  2022.06 
+Added Output formatter that allows adjustments to output.
+Updated output of AlertIfDiff / AffirmIfNotDiff.
+
+### CoveragePkg.vhd  2022.06 
+Updated CoveragePkg for putting coverage pass/fail into YAML and reports.
+Added AffirmIfCovered.  
+
+## Revision 2022.03 March 2022
 
 ### TbUtilPkg.vhd  2022.03 
 Added EdgeRose, EdgeFell, EdgeActive, FindRisingEdge, FindFallingEdge, FindActiveEdge
