@@ -43,27 +43,39 @@ use work.MemorySupportPkg.all ;
 
 package MemoryPkg is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_X    
+    MemoryBaseType      => MemoryBaseType_X,
+    ToMemoryBaseType    => ToMemoryBaseType,
+    FromMemoryBaseType  => FromMemoryBaseType,
+    InitMemoryBaseType  => InitMemoryBaseType
   ) ;  
   
 use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_X is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_X    
+    MemoryBaseType      => MemoryBaseType_X,
+    ToMemoryBaseType    => ToMemoryBaseType,
+    FromMemoryBaseType  => FromMemoryBaseType,
+    InitMemoryBaseType  => InitMemoryBaseType
   ) ;  
   
 use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_NoX is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_NoX    
+    MemoryBaseType      => MemoryBaseType_NoX,
+    ToMemoryBaseType    => ToMemoryBaseType,
+    FromMemoryBaseType  => FromMemoryBaseType,
+    InitMemoryBaseType  => InitMemoryBaseType
   ) ;  
   
 use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_orig is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_Original    
+    MemoryBaseType      => MemoryBaseType_Original,
+    ToMemoryBaseType    => ToMemoryBaseType,
+    FromMemoryBaseType  => FromMemoryBaseType,
+    InitMemoryBaseType  => InitMemoryBaseType
   ) ;  
 
