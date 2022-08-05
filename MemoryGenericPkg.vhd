@@ -570,8 +570,11 @@ package body MemoryGenericPkg is
       -- If empty, allocate a memory block
       if (MemStructPtr(ID).MemArrayPtr(BlockAddr) = NULL) then 
 --        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType'(0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
-        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseTypeWidth downto 1) ; -- => InitMemoryBaseType(Data'length)) ;
-        MemStructPtr(ID).MemArrayPtr(BlockAddr)(0 to 2**BlockWidth-1) := (0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseTypeWidth downto 1) ; 
+--        MemStructPtr(ID).MemArrayPtr(BlockAddr)(0 to 2**BlockWidth-1) := (0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+        for i in 0 to 2**BlockWidth-1 loop
+          MemStructPtr(ID).MemArrayPtr(BlockAddr)(i) := InitMemoryBaseType(Data'length) ;
+        end loop ; 
 
       end if ; 
 

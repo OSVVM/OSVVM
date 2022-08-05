@@ -164,11 +164,10 @@ package body MemorySupportPkg is
     variable Bits16        : std_logic_vector(15 downto 0) ;
     variable BitIsX        : std_logic_vector(15 downto 0) ; 
     variable BitVal        : std_logic_vector(15 downto 0) ;
-
   begin
-    if Mem'length /= NumIntegers then 
-      AlertIfNotEqual(Mem'length, NumIntegers, "MemoryPkg.FromMemoryBaseType Size: " & to_string(Size) & " does not match MemBaseType length") ; 
-    end if ; 
+--    if Mem'length /= NumIntegers then 
+--      AlertIfNotEqual(Mem'length, NumIntegers, "MemoryPkg.FromMemoryBaseType Size: " & to_string(Size) & " does not match MemBaseType length") ; 
+--    end if ; 
     for MemIndex in NormalizedMem'reverse_range loop 
       (BitIsX, BitVal) := std_logic_vector(to_signed(NormalizedMem(MemIndex), 32)) ;
       for BitIndex in 0 to 15 loop
@@ -232,11 +231,10 @@ package body MemorySupportPkg is
     variable NormalizedSlv : std_logic_vector(NumIntegers*32-1 downto 0) ;
     variable Bits32        : std_logic_vector(31 downto 0) ;
     variable BitVal        : std_logic_vector(31 downto 0) ;
-
   begin
-    if Mem'length /= NumIntegers then 
-      AlertIfNotEqual(Mem'length, NumIntegers, "MemoryPkg.FromMemoryBaseType Size: " & to_string(Size) & " does not match MemBaseType length") ; 
-    end if ; 
+ --   if Mem'length /= NumIntegers then 
+ --     AlertIfNotEqual(Mem'length, NumIntegers, "MemoryPkg.FromMemoryBaseType Size: " & to_string(Size) & " does not match MemBaseType length") ; 
+ --   end if ; 
     for MemIndex in NormalizedMem'reverse_range loop 
       Bits32 := std_logic_vector(to_signed(NormalizedMem(MemIndex), 32)) ;
       NormalizedSlv(32*MemIndex-1 downto 32*MemIndex-32) := Bits32 ;
