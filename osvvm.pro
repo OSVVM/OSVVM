@@ -79,6 +79,8 @@ if {$::osvvm::ToolVendor ne "Cadence"}  {
   analyze ScoreboardPkg_int_c.vhd
 }
 analyze ResizePkg.vhd
+analyze MemorySupportPkg.vhd
+analyze MemoryGenericPkg.vhd
 analyze MemoryPkg.vhd
 
 analyze TbUtilPkg.vhd
