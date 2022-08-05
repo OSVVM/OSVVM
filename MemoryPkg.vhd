@@ -43,39 +43,43 @@ use work.MemorySupportPkg.all ;
 
 package MemoryPkg is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_X,
-    ToMemoryBaseType    => ToMemoryBaseType,
-    FromMemoryBaseType  => FromMemoryBaseType,
-    InitMemoryBaseType  => InitMemoryBaseType
+--    MemoryBaseType      => MemoryBaseType_X,
+    SizeMemoryBaseType  => SizeMemoryBaseType_X,
+    ToMemoryBaseType    => ToMemoryBaseType_X,
+    FromMemoryBaseType  => FromMemoryBaseType_X,
+    InitMemoryBaseType  => InitMemoryBaseType_X
   ) ;  
   
 use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_X is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_X,
-    ToMemoryBaseType    => ToMemoryBaseType,
-    FromMemoryBaseType  => FromMemoryBaseType,
-    InitMemoryBaseType  => InitMemoryBaseType
+--    MemoryBaseType      => MemoryBaseType_X,
+    SizeMemoryBaseType  => SizeMemoryBaseType_X,
+    ToMemoryBaseType    => ToMemoryBaseType_X,
+    FromMemoryBaseType  => FromMemoryBaseType_X,
+    InitMemoryBaseType  => InitMemoryBaseType_X
   ) ;  
   
 use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_NoX is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_NoX,
-    ToMemoryBaseType    => ToMemoryBaseType,
-    FromMemoryBaseType  => FromMemoryBaseType,
-    InitMemoryBaseType  => InitMemoryBaseType
+--    MemoryBaseType      => MemoryBaseType_NoX,
+    SizeMemoryBaseType  => SizeMemoryBaseType_NoX,
+    ToMemoryBaseType    => ToMemoryBaseType_NoX,
+    FromMemoryBaseType  => FromMemoryBaseType_NoX,
+    InitMemoryBaseType  => InitMemoryBaseType_NoX
   ) ;  
   
 use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_orig is new work.MemoryGenericPkg
   generic map (
-    MemoryBaseType      => MemoryBaseType_Original,
-    ToMemoryBaseType    => ToMemoryBaseType,
-    FromMemoryBaseType  => FromMemoryBaseType,
-    InitMemoryBaseType  => InitMemoryBaseType
+--    MemoryBaseType      => MemoryBaseType_Original,
+    SizeMemoryBaseType  => SizeMemoryBaseType_orig,
+    ToMemoryBaseType    => ToMemoryBaseType_orig,
+    FromMemoryBaseType  => FromMemoryBaseType_orig,
+    InitMemoryBaseType  => InitMemoryBaseType_orig
   ) ;  
 

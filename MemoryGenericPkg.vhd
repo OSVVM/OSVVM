@@ -62,10 +62,11 @@ library IEEE ;
 
 package MemoryGenericPkg is
   generic (
-    type MemoryBaseType ;
-    function ToMemoryBaseType(A : std_logic_vector) return MemoryBaseType ; -- is <> ;
-    function FromMemoryBaseType(A : MemoryBaseType ; Size : integer) return std_logic_vector ; -- is <> ;
-    function InitMemoryBaseType(Size : integer) return MemoryBaseType -- is <> 
+--    type integer_vector ;
+    function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
+    function ToMemoryBaseType  (A : std_logic_vector) return integer_vector ; -- is <> ;
+    function FromMemoryBaseType(A : integer_vector ; Size : integer) return std_logic_vector ; -- is <> ;
+    function InitMemoryBaseType(Size : integer) return integer_vector -- is <> 
   ) ;
   
   type MemoryIDType is record
@@ -358,27 +359,28 @@ package body MemoryGenericPkg is
 
   type MemoryPType is protected body
 
-    type MemBlockType    is array (integer range <>) of MemoryBaseType ;
-    type MemBlockPtrType is access MemBlockType ;
-    type MemArrayType    is array (integer range <>) of MemBlockPtrType ;
-    type MemArrayPtrType is access MemArrayType ; 
+    subtype MemoryBaseType is integer_vector ; 
+    type MemBlockType      is array (integer range <>) of MemoryBaseType ;
+    type MemBlockPtrType   is access MemBlockType ;
+    type MemArrayType      is array (integer range <>) of MemBlockPtrType ;
+    type MemArrayPtrType   is access MemArrayType ; 
     
     type FileFormatType is (BINARY, HEX) ; 
         
     type MemStructType is record
-      MemArrayPtr : MemArrayPtrType ; 
-      AddrWidth   : integer ;
-      DataWidth   : natural ;
-      BlockWidth  : natural ; 
-      AlertLogID  : AlertLogIDType ; 
---! removed      Name        : Line ;  -- only in NameStorePType
+      MemArrayPtr         : MemArrayPtrType ; 
+      AddrWidth           : integer ;
+      DataWidth           : natural ;
+      BlockWidth          : natural ; 
+      MemoryBaseTypeWidth : natural ; 
+      AlertLogID          : AlertLogIDType ; 
     end record MemStructType ; 
     
     -- New Structure
     type     ItemArrayType    is array (integer range <>) of MemStructType ; 
     type     ItemArrayPtrType is access ItemArrayType ;
     
-    variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, OSVVM_MEMORY_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
+    variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, 0, OSVVM_MEMORY_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
     constant MEM_STRUCT_PTR_LEFT : integer := Template'left ; 
     variable MemStructPtr     : ItemArrayPtrType := new ItemArrayType'(Template) ;   
     variable NumItems         : integer := 0 ; 
@@ -445,10 +447,11 @@ package body MemoryGenericPkg is
         return ; 
       end if ; 
 
-      MemStructPtr(ID).AddrWidth   := AddrWidth ; 
-      MemStructPtr(ID).DataWidth   := DataWidth ; 
-      MemStructPtr(ID).BlockWidth  := ADJ_BLOCK_WIDTH ;
-      MemStructPtr(ID).MemArrayPtr := new MemArrayType(0 to 2**(AddrWidth-ADJ_BLOCK_WIDTH)-1) ;  
+      MemStructPtr(ID).AddrWidth           := AddrWidth ; 
+      MemStructPtr(ID).DataWidth           := DataWidth ; 
+      MemStructPtr(ID).MemoryBaseTypeWidth := SizeMemoryBaseType(DataWidth) ; 
+      MemStructPtr(ID).BlockWidth          := ADJ_BLOCK_WIDTH ;
+      MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to 2**(AddrWidth-ADJ_BLOCK_WIDTH)-1) ;  
     end procedure MemInit ;
     
     ------------------------------------------------------------
@@ -524,14 +527,18 @@ package body MemoryGenericPkg is
       Data  : std_logic_vector 
     ) is 
       variable BlockWidth : integer ;
+      variable MemoryBaseTypeWidth : integer ;
+--      constant BlockWidth : integer := MemStructPtr(ID).BlockWidth;
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
+--      subtype MemBlockSubType is MemBlockType(0 to 2**BlockWidth-1) ;
     begin
       if IdOutOfRange(ID, "MemWrite") then 
         return ;
       end if ; 
       BlockWidth := MemStructPtr(ID).BlockWidth ; 
-      
+      MemoryBaseTypeWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
+
       -- Check Bounds of Address and if memory is initialized
       if Addr'length /= MemStructPtr(ID).AddrWidth then
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
@@ -541,7 +548,7 @@ package body MemoryGenericPkg is
         end if ; 
         return ; 
       end if ; 
-      
+
       -- Check Bounds on Data
       if Data'length /= MemStructPtr(ID).DataWidth then
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Data'length: " & to_string(Data'length) & " /= Memory Data Width: " & to_string(MemStructPtr(ID).DataWidth), FAILURE) ; 
@@ -562,7 +569,10 @@ package body MemoryGenericPkg is
 
       -- If empty, allocate a memory block
       if (MemStructPtr(ID).MemArrayPtr(BlockAddr) = NULL) then 
-        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType'(0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+--        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType'(0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseTypeWidth downto 1) ; -- => InitMemoryBaseType(Data'length)) ;
+        MemStructPtr(ID).MemArrayPtr(BlockAddr)(0 to 2**BlockWidth-1) := (0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+
       end if ; 
 
       -- Address of a word within a block
