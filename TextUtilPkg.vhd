@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    08/2022   2022.08    Updated IsHex to support std_logic characters for reading
 --    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
 --                         Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
 --    01/2022   2022.01    Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
@@ -61,6 +62,7 @@ package TextUtilPkg is
   function to_upper (constant Char : character ) return character ;
   function to_upper (constant Str : string ) return string ;
   function IsHex (constant Char : character ) return boolean ; 
+  function IsHexOrStdLogic (constant Char : character ) return boolean ;
   function IsNumber (constant Char : character ) return boolean ; 
   function IsNumber (Name : string ) return boolean ; 
 
@@ -252,16 +254,26 @@ package body TextUtilPkg is
   function IsHex (constant Char : character ) return boolean is
   ------------------------------------------------------------
   begin
-    if Char >= '0' and Char <= '9' then 
-      return TRUE ; 
-    elsif Char >= 'a' and Char <= 'f' then 
-      return TRUE ; 
-    elsif Char >= 'A' and Char <= 'F' then 
-      return TRUE ; 
-    else
-      return FALSE ; 
-    end if ; 
+    case Char is 
+      when '0' to '9' =>   return TRUE ; 
+      when 'a' to 'f' =>   return TRUE ;
+      when 'A' to 'F' =>   return TRUE ;
+      when others     =>   return FALSE ;
+    end case ; 
   end function IsHex ; 
+
+  ------------------------------------------------------------
+  function IsHexOrStdLogic (constant Char : character ) return boolean is
+  ------------------------------------------------------------
+  begin
+    case Char is 
+      when '0' to '9' =>   return TRUE ; 
+      when 'a' to 'f' =>   return TRUE ;
+      when 'A' to 'F' =>   return TRUE ;
+      when 'U' | 'X' | 'Z' | 'W' | 'L' | 'H' | '-' => return TRUE ; 
+      when others     =>   return FALSE ;
+    end case ; 
+  end function IsHexOrStdLogic ; 
   
   ------------------------------------------------------------
   function IsNumber (constant Char : character ) return boolean is 
@@ -490,7 +502,8 @@ package body TextUtilPkg is
     
     ReadLoop : while L /= null and L.all'length > 0 loop
       NextChar := L.all(L'left) ; 
-      if ishex(NextChar) or NextChar = 'X' or NextChar = 'Z' then 
+--      if ishex(NextChar) or NextChar = 'X' or NextChar = 'Z' then 
+      if IsHexOrStdLogic(NextChar) then 
         hread(L, ReadVal, ReadValid) ; 
         ReturnVal := ReturnVal(ResultNormLen-5 downto 0) & ReadVal ; 
         CharCount := CharCount + 1 ; 

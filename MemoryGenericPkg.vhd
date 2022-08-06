@@ -766,7 +766,7 @@ package body MemoryGenericPkg is
                                            "MemoryPkg.FileReadX: Address in file: " & to_hxstring(Addr) & 
                                            " > EndAddr: " & to_hxstring(BigAddr) & " on line: " & to_string(LineNum)) ; 
           
-          elsif DataFormat = HEX and ishex(NextChar) then 
+          elsif DataFormat = HEX and IsHexOrStdLogic(NextChar) then 
           -- Get Hex Data
             ReadHexToken(buf, data, StrLen) ;
             exit ReadLineLoop when AlertIfNot(MemStructPtr(ID).AlertLogID, StrLen > 0, 

@@ -76,6 +76,8 @@ package body MemorySupportPkg is
   function SizeMemoryBaseType_orig(Size : integer) return integer is  
   ------------------------------------------------------------
   begin
+    -- would be better as an alert, but not worth the pain since this is deprecated
+    assert Size < 32 report "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(Size) & " must be < 32 " severity FAILURE ; 
     return 1 ; 
   end function SizeMemoryBaseType_orig ; 
 
@@ -218,7 +220,7 @@ package body MemorySupportPkg is
           BitVal(BitIndex) := Bits32(BitIndex) ;
         end if ; 
       end loop ; 
-      result(MemIndex) := to_integer(signed(Bits32)) ; 
+      result(MemIndex) := to_integer(signed(BitVal)) ; 
     end loop ;
     return result ; 
   end function ToMemoryBaseType_NoX ; 
