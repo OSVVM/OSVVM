@@ -495,6 +495,7 @@ package body TextUtilPkg is
     variable CharCount     : integer ; 
     variable ReturnVal     : std_logic_vector(ResultNormLen-1 downto 0) ;
     variable ReadVal       : std_logic_vector(3 downto 0) ; 
+    variable ReadValSl     : std_logic ; 
     variable ReadValid     : boolean ; 
   begin
     ReturnVal := (others => '0') ;
@@ -504,7 +505,13 @@ package body TextUtilPkg is
       NextChar := L.all(L'left) ; 
 --      if ishex(NextChar) or NextChar = 'X' or NextChar = 'Z' then 
       if IsHexOrStdLogic(NextChar) then 
-        hread(L, ReadVal, ReadValid) ; 
+        -- Currently hread only handles X or Z
+        if IsHex(NextChar) then
+          hread(L, ReadVal, ReadValid) ; 
+        else
+          read(L, ReadValSl, ReadValid) ; 
+          ReadVal := ReadValSl & ReadValSl & ReadValSl & ReadValSl ; 
+        end if ; 
         ReturnVal := ReturnVal(ResultNormLen-5 downto 0) & ReadVal ; 
         CharCount := CharCount + 1 ; 
         exit ReadLoop when CharCount >= NumHexChars ; 
