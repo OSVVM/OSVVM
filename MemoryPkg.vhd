@@ -19,7 +19,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    08/2022   2022.08    INitial
+--    08/2022   2022.08    Initial.  
+--    -- ----              See MemoryGenericPkg for older MemoryPkg lineage
 --
 --
 --  This file is part of OSVVM.
@@ -39,8 +40,13 @@
 --  limitations under the License.
 --  
 
+-- -----------------------------------------------
+-- MemoryPkg, extablishes storage policy X as the default 
+--   Keeps the fidelity of U and X in the memory
+--   Bit size unlimited
+--   Each 16 bits of data stored in a 32 bit integer
+--
 use work.MemorySupportPkg.all ; 
-
 package MemoryPkg is new work.MemoryGenericPkg
   generic map (
 --    MemoryBaseType      => MemoryBaseType_X,
@@ -49,9 +55,15 @@ package MemoryPkg is new work.MemoryGenericPkg
     FromMemoryBaseType  => FromMemoryBaseType_X,
     InitMemoryBaseType  => InitMemoryBaseType_X
   ) ;  
-  
-use work.MemorySupportPkg.all ; 
 
+
+-- -----------------------------------------------
+-- MemoryPkg_X implements storage policy X
+--   Keeps the fidelity of U and X in the memory
+--   Bit size unlimited
+--   Each 16 bits of data stored in a 32 bit integer
+-- 
+use work.MemorySupportPkg.all ; 
 package MemoryPkg_X is new work.MemoryGenericPkg
   generic map (
 --    MemoryBaseType      => MemoryBaseType_X,
@@ -60,9 +72,16 @@ package MemoryPkg_X is new work.MemoryGenericPkg
     FromMemoryBaseType  => FromMemoryBaseType_X,
     InitMemoryBaseType  => InitMemoryBaseType_X
   ) ;  
-  
-use work.MemorySupportPkg.all ; 
 
+
+-- -----------------------------------------------
+-- MemoryPkg_NoX implements storage policy NoX
+--   any Bit with an X becomes 0
+--   Bit size unlimited
+--   Each 32 bits of data stored in a 32 bit integer
+--   For larger word widths, uses half storage as X
+-- 
+use work.MemorySupportPkg.all ; 
 package MemoryPkg_NoX is new work.MemoryGenericPkg
   generic map (
 --    MemoryBaseType      => MemoryBaseType_NoX,
@@ -71,9 +90,14 @@ package MemoryPkg_NoX is new work.MemoryGenericPkg
     FromMemoryBaseType  => FromMemoryBaseType_NoX,
     InitMemoryBaseType  => InitMemoryBaseType_NoX
   ) ;  
-  
-use work.MemorySupportPkg.all ; 
 
+
+-- -----------------------------------------------
+-- MemoryPkg_orig implements storage policy orig
+--   upto 31 bits of data
+--   X in any bit and the word becomes X
+-- 
+use work.MemorySupportPkg.all ; 
 package MemoryPkg_orig is new work.MemoryGenericPkg
   generic map (
 --    MemoryBaseType      => MemoryBaseType_Original,

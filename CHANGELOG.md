@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2022.08  | August 2022     |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
 | 2022.06  | June 2022       |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
 |          |                 |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
 | 2022.03  | March 2022      |  Added EdgeRose, ..., FindRisingEdge, ..., ScoreboardPkg Updates 
@@ -61,7 +62,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2022.06 June 2022
+## Revision 2022.08 August 2022
 
 ### Current Revision and Compile Order
 
@@ -72,32 +73,49 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |  
   -----------------------------------------------------|----------
-  | TextUtilPkg.vhd                                    | 2022.02  | 
+  | TextUtilPkg.vhd                                    | **2022.08**  | 
   | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2022.02  |  
   | OsvvmGlobalPkg.vhd                                 | 2022.02  |  
   | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
-  | AlertLogPkg.vhd                                    | **2022.06**  | 
+  | AlertLogPkg.vhd                                    | 2022.06  | 
   | NameStorePkg.vhd                                   | 2022.02  |  
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | **2022.06**  |
-  | MemoryPkg.vhd                                      | 2022.02  |
-  | ScoreboardGenericPkg.vhd                           | 2022.03  |
-  | ScoreboardPkg_slv.vhd                              | 2020.10  |
-  | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ScoreboardPkg_slv_c.vhd                            | 2022.01  | 
-  | ScoreboardPkg_int_c.vhd                            | 2022.01  | 
+  | CoveragePkg.vhd                                    | 2022.06  |
   | ResizePkg.vhd                                      | 2021.06  |
+  | If Support Generic Packages                        |          |
+  |     ScoreboardGenericPkg.vhd                       | 2022.03  |
+  |     ScoreboardPkg_slv.vhd                          | 2020.10  |
+  |     ScoreboardPkg_int.vhd                          | 2020.01  |
+  | If Not Support Generic Packages                    |          |
+  |     ScoreboardPkg_slv_c.vhd                        | 2022.01  | 
+  |     ScoreboardPkg_int_c.vhd                        | 2022.01  | 
+  | MemorySupportPkg.vhd                               | **2022.08**  |
+  | If Support Generic Packages                        |          |
+  |     MemoryGenericPkg.vhd                           | **2022.08**  |
+  |     MemoryPkg.vhd                                  | **2022.08**  |
+  | If Not Support Generic Packages                    |          |
+  |     MemoryPkg_c.vhd                                | **2022.08**  |
   | TbUtilPkg.vhd                                      | 2022.03  |
   | ReportPkg.vhd                                      | 2022.02  | 
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmContext.vhd                                   | 2022.01  |
+
+### TbUtilPkg.vhd  2022.08 
+Added IsHexOrStdLogic.  Updated ReadHexToken to support reading "UWLH-"
+
+### MemorySupportPkg.vhd, MemoryGenericPkg.vhd, MemoryPkg.vhd, MemoryPkg_c.vhd  2022.08 
+New.  Implements storage policies for MemoryGenericPkg/MemoryPkg
+Supports any bit length of memory.  
+
+
+## Revision 2022.06 June 2022
 
 ### AlertLogPkg.vhd  2022.06 
 Added Output formatter that allows adjustments to output.

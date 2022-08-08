@@ -155,10 +155,11 @@ package body OsvvmGlobalPkg is
   end protected body OptionsPType ; 
 
   type OsvvmDefaultTimeUnitsPType is protected body
-    variable GlobalVar : time := std.env.resolution_limit ;  -- VHDL-2008
+--    variable GlobalVar : time := std.env.resolution_limit ;  -- VHDL-2008
+    variable GlobalVar : time := 1 ns ;  -- compatibility with LocalPrint in AlertLogPkg
     procedure Set (A : time) is
     begin
-      if A > std.env.resolution_limit then
+      if A >= std.env.resolution_limit then
         GlobalVar := A ; 
       elsif A < std.env.resolution_limit then 
         report "SetOsvvmDefaultTimeUnits:  time unit parameter too small" severity warning ;

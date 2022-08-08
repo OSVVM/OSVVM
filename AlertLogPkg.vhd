@@ -1068,7 +1068,8 @@ package body AlertLogPkg is
       end if ;
       -- Write Time
       if WriteTime and not WriteTimeLastVar then
-        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
+--        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
+        write(buf, justify(to_string(NOW, GetOsvvmDefaultTimeUnits), TimeJustifyAmountVar, RIGHT) & "    ") ;
       end if ;
       -- Alert or Log
       write(buf, AlertLogName) ;
@@ -1100,7 +1101,8 @@ package body AlertLogPkg is
       end if ;
       -- Time Last
       if WriteTime and WriteTimeLastVar then
-        write(buf, " at " & to_string(NOW, 1 ns)) ;
+--        write(buf, " at " & to_string(NOW, 1 ns)) ;
+        write(buf, " at " & to_string(NOW, GetOsvvmDefaultTimeUnits)) ;
       end if ;
       writeline(buf) ;
     end procedure LocalPrint ;

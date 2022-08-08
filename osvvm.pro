@@ -17,6 +17,7 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#     8/2022   2022.08    Added MemorySupportPkg and MemoryGenericPkg
 #    10/2021   2021.10    Added ReportPkg
 #     6/2021   2021.06    Updated for release
 #     1/2020   2020.01    Updated Licenses to Apache
@@ -70,7 +71,9 @@ analyze CoveragePkg.vhd
 # analyze CoveragePkg_new.vhd
 
 
-if {$::osvvm::ToolVendor ne "Cadence"}  {
+analyze ResizePkg.vhd
+
+if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze ScoreboardGenericPkg.vhd
   analyze ScoreboardPkg_slv.vhd
   analyze ScoreboardPkg_int.vhd
@@ -78,10 +81,14 @@ if {$::osvvm::ToolVendor ne "Cadence"}  {
   analyze ScoreboardPkg_slv_c.vhd
   analyze ScoreboardPkg_int_c.vhd
 }
-analyze ResizePkg.vhd
+
 analyze MemorySupportPkg.vhd
-analyze MemoryGenericPkg.vhd
-analyze MemoryPkg.vhd
+if {$::osvvm::ToolSupportsGenericPackages}  {
+  analyze MemoryGenericPkg.vhd
+  analyze MemoryPkg.vhd
+} else {
+  analyze MemoryPkg_c.vhd
+}
 
 analyze TbUtilPkg.vhd
 

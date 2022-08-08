@@ -20,7 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    08/2022   2022.08    Updated IsHex to support std_logic characters for reading
+--    08/2022   2022.08    Added IsHexOrStdLogic.  Updated ReadHexToken to support reading "UWLH-"
 --    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
 --                         Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
 --    01/2022   2022.01    Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)

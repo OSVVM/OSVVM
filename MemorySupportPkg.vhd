@@ -5,11 +5,12 @@
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com 
 --  Contributor(s):            
---     Jim Lewis      email:  jim@synthworks.com   
+--    Jim Lewis      email:  jim@synthworks.com   
 --
 --  Description
---      Package defines a protected type, MemoryPType, and methods  
---      for efficiently implementing memory data structures
+--    Defines the storage policies: X, NoX, and orig 
+--    Supports MemoryGenericPkg
+--    Policies are implemented in instances in MemoryPkg
 --    
 --  Developed for: 
 --        SynthWorks Design Inc. 
@@ -49,79 +50,46 @@ library IEEE ;
   
 package MemorySupportPkg is
 
---  subtype integer_vector is integer ; 
-  function SizeMemoryBaseType_orig(Size : integer) return integer ;  
-  function ToMemoryBaseType_orig  (Slv  : std_logic_vector) return integer_vector ;
-  function FromMemoryBaseType_orig(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
-  function InitMemoryBaseType_orig(Size : integer) return integer_vector ; 
-
---  type integer_vector is array (integer range <>) of integer ;
+  -- -----------------------------------------------
+  -- Storage policy X
+  --   Keeps the fidelity of U and X in the memory
+  --   Bit size unlimited
+  --   Each 16 bits of data stored in a 32 bit integer
+  -- 
+--  type MemoryBaseType_X is array (integer range <>) of integer ;
   function SizeMemoryBaseType_X(Size : integer) return integer ;  
   function ToMemoryBaseType_X  (Slv  : std_logic_vector) return integer_vector ;
   function FromMemoryBaseType_X(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
   function InitMemoryBaseType_X(Size : integer) return integer_vector ; 
 
---  type integer_vector is array (integer range <>) of integer ;
+  -- -----------------------------------------------
+  -- Storage policy NoX
+  --   any Bit with an X becomes 0
+  --   Bit size unlimited
+  --   Each 32 bits of data stored in a 32 bit integer
+  --   For larger word widths, uses half storage as X
+  -- 
+--  type MemoryBaseType_NoX is array (integer range <>) of integer ;
   function SizeMemoryBaseType_NoX(Size : integer) return integer ;  
   function ToMemoryBaseType_NoX  (Slv  : std_logic_vector) return integer_vector ;
   function FromMemoryBaseType_NoX(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
   function InitMemoryBaseType_NoX(Size : integer) return integer_vector ; 
 
+  -- -----------------------------------------------
+  -- Storage policy orig 
+  --   upto 31 bits of data
+  --   X in any bit and the word becomes X
+  -- 
+--  subtype MemoryBaseType_orig is integer ; 
+  function SizeMemoryBaseType_orig(Size : integer) return integer ;  
+  function ToMemoryBaseType_orig  (Slv  : std_logic_vector) return integer_vector ;
+  function FromMemoryBaseType_orig(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
+  function InitMemoryBaseType_orig(Size : integer) return integer_vector ; 
+
 end MemorySupportPkg ;
 
 package body MemorySupportPkg is 
 
-  
-  ------------------------------------------------------------
-  function SizeMemoryBaseType_orig(Size : integer) return integer is  
-  ------------------------------------------------------------
-  begin
-    -- would be better as an alert, but not worth the pain since this is deprecated
-    assert Size < 32 report "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(Size) & " must be < 32 " severity FAILURE ; 
-    return 1 ; 
-  end function SizeMemoryBaseType_orig ; 
-
-  ------------------------------------------------------------
-  function ToMemoryBaseType_orig(Slv : std_logic_vector) return integer_vector is 
-  ------------------------------------------------------------
-    variable result : integer ; 
-  begin
-    if (Is_X(Slv)) then 
-      result := -1 ;
-    else
-      result := to_integer( Slv ) ;
-    end if ;
-    return (1 => result) ; 
-  end function ToMemoryBaseType_orig ; 
-  
-  ------------------------------------------------------------
-  function FromMemoryBaseType_orig(Mem : integer_vector ; Size : integer) return std_logic_vector is 
-  ------------------------------------------------------------
-    variable Data : std_logic_vector(Size-1 downto 0) ; 
-  begin
-    if Mem(Mem'left) >= 0 then 
-      -- Get the Word from the Array
-      Data := to_slv(Mem(Mem'left), Size) ;
-    elsif Mem(Mem'left) = -1 then 
-     -- X in Word, return all X
-      Data := (Data'range => 'X') ;
-    else 
-     -- Location Uninitialized, return all X
-      Data := (Data'range => 'U') ;
-    end if ;
-    return Data ; 
-  end function FromMemoryBaseType_orig ; 
-  
-  ------------------------------------------------------------
-  function InitMemoryBaseType_orig(Size : integer) return integer_vector is  
-  ------------------------------------------------------------
---    constant Result : std_logic_vector := (Size-1 downto 0 => 'U') ; 
-  begin
---    return ToMemoryBaseType(Result) ; 
-    return (1 => integer'left) ; 
-  end function InitMemoryBaseType_orig ; 
-  
-  
   ------------------------------------------------------------
   function SizeMemoryBaseType_X(Size : integer) return integer is  
   ------------------------------------------------------------
@@ -252,4 +220,54 @@ package body MemorySupportPkg is
     return ToMemoryBaseType_NoX(Result) ; 
   end function InitMemoryBaseType_NoX ; 
 
+
+  ------------------------------------------------------------
+  function SizeMemoryBaseType_orig(Size : integer) return integer is  
+  ------------------------------------------------------------
+  begin
+    -- would be better as an alert, but not worth the pain since this is deprecated
+    assert Size < 32 report "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(Size) & " must be < 32 " severity FAILURE ; 
+    return 1 ; 
+  end function SizeMemoryBaseType_orig ; 
+
+  ------------------------------------------------------------
+  function ToMemoryBaseType_orig(Slv : std_logic_vector) return integer_vector is 
+  ------------------------------------------------------------
+    variable result : integer ; 
+  begin
+    if (Is_X(Slv)) then 
+      result := -1 ;
+    else
+      result := to_integer( Slv ) ;
+    end if ;
+    return (1 => result) ; 
+  end function ToMemoryBaseType_orig ; 
+  
+  ------------------------------------------------------------
+  function FromMemoryBaseType_orig(Mem : integer_vector ; Size : integer) return std_logic_vector is 
+  ------------------------------------------------------------
+    variable Data : std_logic_vector(Size-1 downto 0) ; 
+  begin
+    if Mem(Mem'left) >= 0 then 
+      -- Get the Word from the Array
+      Data := to_slv(Mem(Mem'left), Size) ;
+    elsif Mem(Mem'left) = -1 then 
+     -- X in Word, return all X
+      Data := (Data'range => 'X') ;
+    else 
+     -- Location Uninitialized, return all X
+      Data := (Data'range => 'U') ;
+    end if ;
+    return Data ; 
+  end function FromMemoryBaseType_orig ; 
+  
+  ------------------------------------------------------------
+  function InitMemoryBaseType_orig(Size : integer) return integer_vector is  
+  ------------------------------------------------------------
+--    constant Result : std_logic_vector := (Size-1 downto 0 => 'U') ; 
+  begin
+--    return ToMemoryBaseType(Result) ; 
+    return (1 => integer'left) ; 
+  end function InitMemoryBaseType_orig ; 
+ 
 end MemorySupportPkg ;
