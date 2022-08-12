@@ -2574,7 +2574,7 @@ package body ScoreboardGenericPkg is
     ) is
       variable CurPtr, RemovePtr, LastPtr : ListPointerType ;
     begin
-      if LocalOutOfRange(Index, "Find") then
+      if LocalOutOfRange(Index, "Flush") then
         return ; -- error reporting in LocalOutOfRange
       end if ;
       CurPtr  := HeadPointer(Index) ;
@@ -2694,7 +2694,7 @@ package body ScoreboardGenericPkg is
       write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(PopCountVar(Index))         & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(DropCountVar(Index))        & '"' & LF) ;
-
+      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteScoreboardYaml ;
 
@@ -2710,7 +2710,7 @@ package body ScoreboardGenericPkg is
         return ;
       end if ;
 
-      swrite(buf, "Version: 1.0" & LF) ;
+      swrite(buf, "Version: 1.1" & LF) ;
       swrite(buf, "TestCase: " & '"' & GetAlertLogName & '"' & LF) ;
       swrite(buf, "Scoreboards: ") ;
       writeline(SbYamlFile, buf) ;
