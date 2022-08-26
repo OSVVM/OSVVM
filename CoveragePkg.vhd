@@ -8715,8 +8715,10 @@ package body CoveragePkg is
   ------------------------------------------------------------
   procedure AffirmIfCovered is 
   ------------------------------------------------------------
-    constant TotalCov : real := GetCov(100.0) ; 
+--    constant TotalCov : real := GetCov(100.0) ; 
+    variable TotalCov : real ; 
   begin
+    TotalCov := GetCov(100.0) ; 
     CoverageStore.SetErrorIfNotCovered(Checked => TRUE) ; 
     AffirmIf(OSVVM_COVERAGE_ALERTLOG_ID, 
              TotalCov >= 100.0, "TotalCov = " & to_string(TotalCov, 2), "") ; 
@@ -8725,8 +8727,10 @@ package body CoveragePkg is
   ------------------------------------------------------------
   procedure AlertIfNotCovered (Level : AlertType := ERROR) is 
   ------------------------------------------------------------
-    constant TotalCov : real := GetCov(100.0) ; 
+--    constant TotalCov : real := GetCov(100.0) ; 
+    variable TotalCov : real ; 
   begin
+    TotalCov := GetCov(100.0) ; 
     CoverageStore.SetErrorIfNotCovered(Checked => TRUE) ; 
     AlertIf(OSVVM_COVERAGE_ALERTLOG_ID, 
             TotalCov < 100.0, "TotalCov = " & to_string(TotalCov, 2), Level) ; 
