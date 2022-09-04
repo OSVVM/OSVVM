@@ -143,7 +143,7 @@ package body ReportPkg is
   begin
     ErrorCount := EndOfTestReports(ReportAll, ExternalErrors) ;
     if Stop then 
-      std.env.stop(ErrorCount) ; 
+      std.env.stop ; 
     end if ;
   end procedure EndOfTestReports ;
 
