@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2022   2022.09    Added WaitForTransactionOrIrq, FinishTransaction, and TransactionPending for AckType/RdyType
 --    03/2022   2022.03    Added EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge.
 --    01/2022   2022.01    Added MetaTo01.  Added WaitForTransaction without clock for RdyType/AckType and bit.
 --    02/2021   2021.02    Added AckType, RdyType, RequestTransaction, WaitForTransaction for AckType/RdyType
@@ -118,6 +119,12 @@ package TbUtilPkg is
     signal Ack  : Out std_logic
   ) ;
 
+  -- Only for clockless models
+  procedure WaitForTransaction (
+    signal Rdy : In  std_logic ;
+    signal Ack : Out std_logic
+  ) ;
+
   ------------------------------------------------------------
   -- RequestTransaction - WaitForTransaction
   --   bit
@@ -131,6 +138,12 @@ package TbUtilPkg is
     signal Clk  : In  std_logic ;
     signal Rdy  : In  bit ;
     signal Ack  : Out bit
+  ) ;
+  
+  -- Only for clockless models
+  procedure WaitForTransaction (
+    signal Rdy : in  bit ;
+    signal Ack : out bit
   ) ;
 
   ------------------------------------------------------------
@@ -151,10 +164,16 @@ package TbUtilPkg is
     signal Ack      : InOut AckType
   ) ;
 
+  -- Only for clockless models
+  procedure WaitForTransaction (
+    signal Rdy      : In    RdyType ;
+    signal Ack      : InOut AckType
+  );
+
+
   ------------------------------------------------------------
-  -- WaitForTransaction
-  --   Specializations for interrupt handling
-  --   Currently only std_logic based
+  -- Interrupt handling variations of WaitForTransaction 
+  --   std_logic / std_logic 
   ------------------------------------------------------------
   procedure WaitForTransaction (
     signal   Clk       : In  std_logic ;
@@ -164,7 +183,6 @@ package TbUtilPkg is
     constant Polarity  : In  std_logic := '1'
   ) ;
 
-  -- Variation for model that stops waiting when IntReq is asserted
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
   procedure WaitForTransactionOrIrq (
@@ -180,23 +198,33 @@ package TbUtilPkg is
   -- If a transaction is pending, return true
   function TransactionPending ( signal Rdy : In  std_logic ) return boolean ;
 
-  -- Variation for clockless models
-  procedure WaitForTransaction (
-    signal Rdy : In  std_logic ;
-    signal Ack : Out std_logic
+  ------------------------------------------------------------
+  -- Interrupt handling variations of WaitForTransaction 
+  --   RdyType/AckType 
+  ------------------------------------------------------------
+  -- Intended for models that need to switch between instruction streams
+  -- such as a CPU when interrupt is pending
+  procedure WaitForTransactionOrIrq (
+    signal   Clk      : In  std_logic ;
+    signal   Rdy      : In  RdyType ;
+    signal   Ack      : In  AckType ;
+    signal   IntReq   : In  std_logic ;
+    constant POLARITY : In  std_logic := '1' 
   ) ;
 
-  -- Variation for clockless models
-  procedure WaitForTransaction (
-    signal Rdy      : In    RdyType ;
-    signal Ack      : InOut AckType
-  );
+  -- StartTransaction not used, Ack is incremented at transaction completion
+--  procedure StartTransaction  ( signal Ack : Out AckType ) ; 
 
-  -- Variation for clockless models
-  procedure WaitForTransaction (
-    signal Rdy : in  bit ;
-    signal Ack : out bit
-  ) ;
+  -- Increment Ack
+  procedure FinishTransaction ( signal Ack : InOut AckType ) ;
+
+  -- If a transaction is pending, return true
+  --   Used to detect presence of transaction stream,
+  --   such as an interrupt handler
+  function TransactionPending (
+    signal Rdy     : In  RdyType ;
+    signal Ack     : In  AckType
+  ) return boolean ;
 
 
   ------------------------------------------------------------
@@ -527,6 +555,24 @@ package body TbUtilPkg is
     wait for 0 ns ; -- Allow transactions without time passing
   end procedure WaitForTransaction ;
 
+  -- Only for clockless models 
+  procedure WaitForTransaction (
+    signal Rdy  : In  std_logic ;
+    signal Ack  : Out std_logic
+  ) is
+  begin
+    -- End of Previous Cycle.  Signal Done
+    Ack        <= '1' ;               --  #6
+    -- Find Start of Transaction
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
+    if Rdy /= '1' then                --   #2
+      wait until Rdy = '1' ;
+    end if ;
+    -- Model active and owns the record
+    Ack        <= '0' ;               --  #3
+    wait for 0 ns ; -- allow 0 time transactions
+  end procedure WaitForTransaction ;
+
   ------------------------------------------------------------
   -- RequestTransaction - WaitForTransaction
   --   bit
@@ -572,6 +618,24 @@ package body TbUtilPkg is
     wait for 0 ns ; -- Allow transactions without time passing
   end procedure WaitForTransaction ;
 
+  -- Only for clockless models 
+  procedure WaitForTransaction (
+    signal Rdy  : in  bit ;
+    signal Ack  : out bit
+  ) is
+  begin
+    -- End of Previous Cycle.  Signal Done
+    Ack        <= '1' ;               --  #6
+    -- Find Start of Transaction
+    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
+    if Rdy /= '1' then                --   #2
+      wait until Rdy = '1' ;
+    end if ;
+    -- Model active and owns the record
+    Ack        <= '0' ;               --  #3
+    wait for 0 ns ; -- allow 0 time transactions
+  end procedure WaitForTransaction ;
+
   ------------------------------------------------------------
   -- RequestTransaction - WaitForTransaction
   --   integer
@@ -607,6 +671,7 @@ package body TbUtilPkg is
     end if ;
   end procedure WaitForTransaction ;
 
+  -- Only for clockless models 
   procedure WaitForTransaction (
     signal Rdy      : In    RdyType ;
     signal Ack      : InOut AckType
@@ -620,9 +685,8 @@ package body TbUtilPkg is
   end procedure WaitForTransaction ;
 
   ------------------------------------------------------------
-  -- WaitForTransaction
+  -- WaitForTransaction 
   --   Specializations for interrupt handling
-  --   Currently only std_logic based
   ------------------------------------------------------------
   procedure WaitForTransaction (
     signal   Clk       : In  std_logic ;
@@ -706,40 +770,56 @@ package body TbUtilPkg is
     return Rdy = '1' ;
   end function TransactionPending ;
 
-  -- Variation for clockless models
-  procedure WaitForTransaction (
-    signal Rdy  : In  std_logic ;
-    signal Ack  : Out std_logic
+  ------------------------------------------------------------
+  -- WaitForTransaction - RdyType/AckType 
+  --   Specializations for interrupt handling
+  ------------------------------------------------------------
+  -- Intended for models that need to switch between instruction streams
+  -- such as a CPU when interrupt is pending
+  procedure WaitForTransactionOrIrq (
+    signal   Clk      : In  std_logic ;
+    signal   Rdy      : In  RdyType ;
+    signal   Ack      : In  AckType ;
+    signal   IntReq   : In  std_logic ;
+    constant POLARITY : In  std_logic := '1' 
   ) is
   begin
-    -- End of Previous Cycle.  Signal Done
-    Ack        <= '1' ;               --  #6
-    -- Find Start of Transaction
-    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
-    if Rdy /= '1' then                --   #2
-      wait until Rdy = '1' ;
+    if (Ack = Rdy and IntReq /= POLARITY) then
+      wait until Ack /= Rdy or IntReq = POLARITY ;
+   end if ;
+    -- Align to clock if needed (not back-to-back transactions)
+    if not EdgeActive(Clk, CLK_ACTIVE) then
+      wait until Clk = CLK_ACTIVE ;
     end if ;
-    -- Model active and owns the record
-    Ack        <= '0' ;               --  #3
-    wait for 0 ns ; -- allow 0 time transactions
-  end procedure WaitForTransaction ;
+  end procedure ;
 
-  procedure WaitForTransaction (
-    signal Rdy  : in  bit ;
-    signal Ack  : out bit
-  ) is
+  -- Set Ack to Model starting value
+  -- Pairs with WaitForTransactionOrIrq above
+--  procedure StartTransaction  ( signal Ack : Out AckType ) is
+--  begin
+--    Null ; -- Do nothing
+--  end procedure StartTransaction ;
+
+  -- Set Ack to Model finishing value
+  -- Pairs with WaitForTransactionOrIrq above
+  procedure FinishTransaction ( signal Ack : InOut AckType ) is
   begin
-    -- End of Previous Cycle.  Signal Done
-    Ack        <= '1' ;               --  #6
-    -- Find Start of Transaction
-    wait for 0 ns ; -- Allow Rdy from previous cycle to clear
-    if Rdy /= '1' then                --   #2
-      wait until Rdy = '1' ;
-    end if ;
-    -- Model active and owns the record
-    Ack        <= '0' ;               --  #3
-    wait for 0 ns ; -- allow 0 time transactions
-  end procedure WaitForTransaction ;
+    -- End of Cycle
+    Ack <= Increment(Ack) ;
+    wait for 0 ns ; -- allow Ack to update - required for WaitForTransactionOrIrq
+  end procedure FinishTransaction ;
+
+  -- If a transaction is pending, return true
+  --   Used to detect presence of transaction stream,
+  --   such as an interrupt handler
+  function TransactionPending (
+    signal Rdy     : In  RdyType ;
+    signal Ack     : In  AckType
+  ) return boolean is
+  begin
+    return Rdy /= Ack ;
+  end function TransactionPending ;
+
 
   ------------------------------------------------------------
   -- Toggle, WaitForToggle
