@@ -1115,6 +1115,11 @@ package body TbUtilPkg is
     constant LOW_TIME  : time := Period - HIGH_TIME ;
   begin
     if HIGH_TIME = LOW_TIME then
+      -- Set a 1 if not initialized, otherwise use initialized value.
+      if Clk = 'U' then 
+        Clk <= '1' ; 
+        wait for 0 ns ; 
+      end if  ;
       loop
         Clk <= toggle_sl_table(Clk) after HIGH_TIME ;
         wait on Clk ;

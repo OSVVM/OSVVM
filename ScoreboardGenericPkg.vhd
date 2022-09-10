@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description
+--    09/2022   2022.09     Added FifoCount to YAML output.
 --    03/2022   2022.03     Removed deprecated SetAlertLogID in Singleton API
 --    02/2022   2022.02     Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID,
 --                          ReportMode, Search, PrintParent.   Supports searching for Scoreboard models..
