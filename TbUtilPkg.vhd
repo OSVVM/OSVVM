@@ -1115,11 +1115,11 @@ package body TbUtilPkg is
     constant LOW_TIME  : time := Period - HIGH_TIME ;
   begin
     if HIGH_TIME = LOW_TIME then
-      -- Set a 1 if not initialized, otherwise use initialized value.
-      if Clk = 'U' then 
-        Clk <= '1' ; 
-        wait for 0 ns ; 
-      end if  ;
+ --     -- Set a 1 if not initialized, otherwise use initialized value.
+ --     if Clk = 'U' then 
+ --       Clk <= '1' ; 
+ --       wait for 0 ns ; 
+ --     end if  ;
       loop
         Clk <= toggle_sl_table(Clk) after HIGH_TIME ;
         wait on Clk ;
@@ -1144,7 +1144,7 @@ package body TbUtilPkg is
   ) is
     variable LastLogTime, ObservedPeriod : time ;
   begin
-    wait until Clk = CLK_ACTIVE ;
+    wait until EdgeActive(Clk, CLK_ACTIVE) ;
     LastLogTime := now ;
     -- Check First HowMany clocks
     for i in 1 to HowMany loop
@@ -1182,7 +1182,7 @@ package body TbUtilPkg is
     constant tpd         :     time := 0 ns
   ) is
   begin
-    wait until Clk = CLK_ACTIVE ;
+    wait until EdgeActive(Clk, CLK_ACTIVE) ;
     Reset <= ResetActive after tpd ;
     wait for Period - t_sim_resolution ;
     wait until Clk = CLK_ACTIVE ;
