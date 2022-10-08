@@ -29,6 +29,8 @@
 --
 --  Revision History:
 --    Date       Version    Description
+--    10/2022    2022.10    Added SetRandomSalt(string or integer), GetRandomSalt (integer), 
+--                          RandomSalt is added to all versions of GenRandSeed
 --    06/2021    2021.06    Updated GenRandSeed hash to DJBX33A 
 --    01/2020    2020.01    Updated Licenses to Apache
 --    6/2015     2015.06    Changed GenRandSeed to impure
@@ -111,6 +113,9 @@ package RandomBasePkg is
   impure function  OldGenRandSeed(I  : integer) return RandomSeedType ;
   impure function  GenRandSeed   (S  : string)  return RandomSeedType ;
   impure function  OldGenRandSeed(S  : string)  return RandomSeedType ;
+  procedure SetRandomSalt (I : integer) ; 
+  procedure SetRandomSalt (S : string) ; 
+  impure function GetRandomSalt return integer ; 
   
   -----------------------------------------------------------------
   --- RandomSeedType IO
@@ -165,7 +170,6 @@ end RandomBasePkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body RandomBasePkg is
-
   -----------------------------------------------------------------
   -- Uniform
   --   Generate a random number with a Uniform distribution
@@ -207,7 +211,7 @@ package body RandomBasePkg is
   begin
     if iIV'Length <= 0 then  -- no seed
       Alert(OSVVM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ; 
-      return (3, 17) ;  -- if continue seed = (3, 17)
+      return GenRandSeed(integer_vector'(3, 17)) ;  -- if continue seed = (3, 17)
 
     elsif iIV'Length = 1 then  -- one seed value
       -- inefficient handling, but condition is unlikely
@@ -216,7 +220,7 @@ package body RandomBasePkg is
     else  -- only use the left two values
       -- mod returns 0 to MAX-1, the -1 adjusts legal values, +1 adjusts them back
       -- 1 <= SEED1 <= 2147483562
-      Seed1 := ((iIV(1)-1) mod SEED1_MAX) + 1 ;
+      Seed1 := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
      -- 1 <= SEED2 <= 2147483398
       Seed2 := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
       return (Seed1, Seed2) ;
@@ -234,7 +238,7 @@ package body RandomBasePkg is
   begin
     if iIV'Length <= 0 then  -- no seed
       Alert(OSVVM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ; 
-      return (3, 17) ;  -- if continue seed = (3, 17)
+      return OldGenRandSeed(integer_vector'(3, 17)) ;  -- if continue seed = (3, 17)
 
     elsif iIV'Length = 1 then  -- one seed value
       -- inefficient handling, but condition is unlikely
@@ -243,8 +247,8 @@ package body RandomBasePkg is
     else  -- only use the left two values
       -- mod returns 0 to MAX-1, the -1 adjusts legal values, +1 adjusts them back
       -- 1 <= SEED1 <= 2147483562
-      Seed1 := ((iIV(1)-1) mod SEED1_MAX) + 1 ;
-     -- 1 <= SEED2 <= 2147483398
+      Seed1 := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
+      -- 1 <= SEED2 <= 2147483398
       Seed2 := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
       return (Seed1, Seed2) ;
     end if ;
@@ -257,7 +261,7 @@ package body RandomBasePkg is
   -----------------------------------------------------------------
     variable result : RandomSeedType ;
   begin
-    result(1) := integer((real(I) * 5381.0 + 313.0) mod 2.0 ** 30) ;
+    result(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0) mod 2.0 ** 30) ;
     result(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
     return result ; -- make value ranges legal
   end function GenRandSeed ;
@@ -271,7 +275,6 @@ package body RandomBasePkg is
     result(2) := I/3 + 1 ;
     return OldGenRandSeed(result) ; -- make value ranges legal
   end function OldGenRandSeed ;
-
 
   -----------------------------------------------------------------
   --  GenRandSeed - String
@@ -288,7 +291,7 @@ package body RandomBasePkg is
     for i in 1 to HALF_LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(1) := integer(temp) ;
+    result(1) := (integer(temp) + GetRandomSalt) mod (2**30) ;
     for i in HALF_LEN + 1 to LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
@@ -308,7 +311,7 @@ package body RandomBasePkg is
     for i in 1 to HALF_LEN loop
       temp := (temp + character'pos(revS(i))) mod (integer'right - 2**8) ;
     end loop ;
-    result(1) := temp ;
+    result(1) := (temp + GetRandomSalt) mod (integer'right - 2**8)  ;
     for i in HALF_LEN + 1 to LEN loop
       temp := (temp + character'pos(revS(i))) mod (integer'right - 2**8) ;
     end loop ;
@@ -316,6 +319,50 @@ package body RandomBasePkg is
     return OldGenRandSeed(result) ;  -- make value ranges legal
   end function OldGenRandSeed ;
 
+  -----------------------------------------------------------------
+  type LocalIntegerPType is protected 
+  -----------------------------------------------------------------
+    procedure Set (A : Integer) ; 
+    impure function get return Integer ; 
+  end protected LocalIntegerPType ; 
+  type LocalIntegerPType is protected body
+    variable SettingsVar : Integer := 0 ; 
+    procedure Set (A : Integer) is
+    begin
+       SettingsVar := A ; 
+    end procedure Set ; 
+    impure function get return Integer is
+    begin
+      return SettingsVar ; 
+    end function get ; 
+  end protected body LocalIntegerPType ; 
+  
+  shared variable RandomSalt : LocalIntegerPType ; 
+
+  -----------------------------------------------------------------
+  procedure SetRandomSalt (I : integer) is
+  -----------------------------------------------------------------
+  begin 
+    RandomSalt.Set(I) ; 
+  end procedure SetRandomSalt ; 
+  
+  -----------------------------------------------------------------
+  procedure SetRandomSalt (S : string) is
+  -----------------------------------------------------------------
+    variable temp : real := 5381.0 ;
+  begin
+    for i in S'reverse_range loop
+      temp := (temp*33.0 + real(character'pos(S(i)))) mod (2.0**31 - 2.0**8 - 1.0) ;
+    end loop ;
+    RandomSalt.Set(integer(temp)) ; 
+  end procedure SetRandomSalt ; 
+  
+  -----------------------------------------------------------------
+  impure function GetRandomSalt return integer is 
+  -----------------------------------------------------------------
+  begin 
+    return RandomSalt.Get ; 
+  end function GetRandomSalt ; 
 
   -----------------------------------------------------------------
   --  RandomSeedType IO
