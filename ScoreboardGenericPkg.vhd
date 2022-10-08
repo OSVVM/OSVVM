@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description
+--    10/2022   2022.10     Added Parent Name to YAML output.
 --    09/2022   2022.09     Added FifoCount to YAML output.
 --    03/2022   2022.03     Removed deprecated SetAlertLogID in Singleton API
 --    02/2022   2022.02     Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID,
@@ -2690,6 +2691,7 @@ package body ScoreboardGenericPkg is
       constant NAME_PREFIX : string := "  " ;
     begin
       write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(AlertLogIDVar(Index))) & '"' & LF) ;
+      write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(AlertLogIDVar(Index)))) & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ;
