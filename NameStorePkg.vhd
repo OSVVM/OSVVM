@@ -52,7 +52,7 @@ package NameStorePkg is
   end record NameIDType ; 
   alias NameStoreIDType is NameIDType ; 
   type NameIDArrayType is array (integer range <>) of NameIDType ;  
-  type NameSearchType is (PRIVATE, NAME, NAME_AND_PARENT, NAME_AND_PARENT_ELSE_PRIVATE) ; 
+  type NameSearchType is (PRIVATE_NAME, NAME, NAME_AND_PARENT, NAME_AND_PARENT_ELSE_PRIVATE) ; 
   constant ID_NOT_FOUND : NameIDType := (ID => -1) ; 
   
   ------------------------------------------------------------
@@ -238,7 +238,7 @@ package body NameStorePkg is
     begin
       for ID in 1 to NumItems loop 
         -- skip if private
-        next when NameArrayPtr(ID).Search = PRIVATE ; 
+        next when NameArrayPtr(ID).Search = PRIVATE_NAME ; 
         -- find Name
         if iName = NameArrayPtr(ID).Name.all then 
           return ID ;
@@ -254,7 +254,7 @@ package body NameStorePkg is
     begin
       for ID in 1 to NumItems loop 
         -- skip if private
-        next when NameArrayPtr(ID).Search = PRIVATE ; 
+        next when NameArrayPtr(ID).Search = PRIVATE_NAME ; 
         -- find Name and Parent
         if iName = NameArrayPtr(ID).Name.all and (ParentID = NameArrayPtr(ID).ParentID or NameArrayPtr(ID).Search = NAME) then 
           return ID ;
@@ -272,7 +272,7 @@ package body NameStorePkg is
     ) return integer is
     begin
       case Search is
-        when PRIVATE =>       return ID_NOT_FOUND.ID ;
+        when PRIVATE_NAME =>       return ID_NOT_FOUND.ID ;
         when NAME    =>       return FindName(iName) ;
         when others  =>       return FindNameAndParent(iName, ParentID) ; 
       end case ; 
@@ -400,7 +400,7 @@ package body NameStorePkg is
     variable result : NameSearchType ; 
   begin
     if search = NAME_AND_PARENT_ELSE_PRIVATE then 
-      result := NAME_AND_PARENT when UniqueParent else PRIVATE ;
+      result := NAME_AND_PARENT when UniqueParent else PRIVATE_NAME ;
     else 
       result := Search ; 
     end if ; 
