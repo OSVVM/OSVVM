@@ -59,16 +59,19 @@ library IEEE ;
   use work.AlertLogPkg.all ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ; 
+  use work.MemorySupportPkg.all ;
 
 package MemoryGenericPkg is
   generic (
---    type integer_vector ;
+--    type MemoryBaseType ;
     function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
-    function ToMemoryBaseType  (A : std_logic_vector) return integer_vector ; -- is <> ;
-    function FromMemoryBaseType(A : integer_vector ; Size : integer) return std_logic_vector ; -- is <> ;
+    function ToMemoryBaseType  (A : std_logic_vector ; Size : integer) return integer_vector ; -- is <> ;
+    function FromMemoryBaseType(A : integer_vector   ; Size : integer) return std_logic_vector ; -- is <> ;
     function InitMemoryBaseType(Size : integer) return integer_vector -- is <> 
   ) ;
   
+  subtype MemoryBaseType is integer_vector ; 
+
   type MemoryIDType is record
     ID : integer_max ;
   end record MemoryIDType ; 
@@ -359,7 +362,6 @@ package body MemoryGenericPkg is
 
   type MemoryPType is protected body
 
-    subtype MemoryBaseType is integer_vector ; 
     type MemBlockType      is array (integer range <>) of MemoryBaseType ;
     type MemBlockPtrType   is access MemBlockType ;
     type MemArrayType      is array (integer range <>) of MemBlockPtrType ;
@@ -520,14 +522,26 @@ package body MemoryGenericPkg is
     end function IdOutOfRange ; 
 
     ------------------------------------------------------------
+    -- Local
+    -- This is a temporary solution that works around GHDL issues
+    function InitMemoryBlockType(BlockWidth, BaseWidth : integer) return MemBlockType is  
+    ------------------------------------------------------------
+-- This keeps MemoryBaseType from being a generic type
+      constant BaseU : MemoryBaseType(BaseWidth-1 downto 0) := InitMemoryBaseType(BaseWidth) ;
+--!! GHDL Bug     constant BaseU : MemoryBaseType := InitMemoryBaseType(BaseWidth) ;
+    begin
+      return MemBlockType'(0 to 2**BlockWidth-1 => BaseU) ;
+    end function InitMemoryBlockType ; 
+
+    ------------------------------------------------------------
     procedure MemWrite ( 
     ------------------------------------------------------------
       ID    : integer ; 
       Addr  : std_logic_vector ;
       Data  : std_logic_vector 
     ) is 
-      variable BlockWidth : integer ;
-      variable MemoryBaseTypeWidth : integer ;
+      variable BlockWidth, AddrWidth : integer ;
+      variable MemoryBaseWidth : integer ;
 --      constant BlockWidth : integer := MemStructPtr(ID).BlockWidth;
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
@@ -536,15 +550,15 @@ package body MemoryGenericPkg is
       if IdOutOfRange(ID, "MemWrite") then 
         return ;
       end if ; 
-      BlockWidth := MemStructPtr(ID).BlockWidth ; 
-      MemoryBaseTypeWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
-
+      
+      AddrWidth  := MemStructPtr(ID).AddrWidth  ;
+      
       -- Check Bounds of Address and if memory is initialized
-      if Addr'length /= MemStructPtr(ID).AddrWidth then
+      if Addr'length > AddrWidth then
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Memory not initialized, Write Ignored.", FAILURE) ; 
-        else
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+        elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
+            Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
         end if ; 
         return ; 
       end if ; 
@@ -560,6 +574,8 @@ package body MemoryGenericPkg is
         return ;
       end if ; 
 
+      BlockWidth := MemStructPtr(ID).BlockWidth ; 
+
       -- Slice out upper address to form block address
       if aAddr'high >= BlockWidth then
         BlockAddr := to_integer(aAddr(aAddr'high downto BlockWidth)) ;
@@ -567,22 +583,26 @@ package body MemoryGenericPkg is
         BlockAddr  := 0 ; 
       end if ; 
 
+      MemoryBaseWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
+
       -- If empty, allocate a memory block
       if (MemStructPtr(ID).MemArrayPtr(BlockAddr) = NULL) then 
---        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType'(0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
-        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseTypeWidth downto 1) ; 
---        MemStructPtr(ID).MemArrayPtr(BlockAddr)(0 to 2**BlockWidth-1) := (0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
-        for i in 0 to 2**BlockWidth-1 loop
-          MemStructPtr(ID).MemArrayPtr(BlockAddr)(i) := InitMemoryBaseType(Data'length) ;
-        end loop ; 
+        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+            MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
 
+-- Long term, we need the first one to allow transition of MemoryBaseType to a generic.
+--!! GHDL Bug        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+--!! GHDL Bug            MemBlockType'(0 to 2**BlockWidth-1 =>  InitMemoryBaseType(MemoryBaseWidth) ) ;
+--        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+--          MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseWidth-1 downto 0) ;
+--!! GHDL Bug        MemStructPtr(ID).MemArrayPtr(BlockAddr).all := (0 to 2**BlockWidth-1 => InitMemoryBaseType(MemoryBaseWidth));
       end if ; 
 
       -- Address of a word within a block
       WordAddr  := to_integer(aAddr(BlockWidth -1 downto 0)) ;
 
       -- Write to BlockAddr, WordAddr
-      MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data) ;
+      MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data, MemoryBaseWidth) ;
     end procedure MemWrite ; 
 
     ------------------------------------------------------------
@@ -592,20 +612,21 @@ package body MemoryGenericPkg is
       Addr  : in  std_logic_vector ;
       Data  : out std_logic_vector 
     ) is
-      variable BlockWidth : integer ;
+      variable BlockWidth, AddrWidth : integer ;
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
     begin
       if IdOutOfRange(ID, "MemRead") then 
         return ;
       end if ; 
-      BlockWidth := MemStructPtr(ID).BlockWidth ;
+      
+      AddrWidth := MemStructPtr(ID).AddrWidth ;
 
       -- Check Bounds of Address and if memory is initialized
-      if Addr'length /= MemStructPtr(ID).AddrWidth then
+      if Addr'length > AddrWidth then
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
-        else
+        elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
         end if ; 
         Data := (Data'range => 'U') ; 
@@ -624,6 +645,8 @@ package body MemoryGenericPkg is
         Data := (Data'range => 'X') ; 
         return ; 
       end if ; 
+
+      BlockWidth := MemStructPtr(ID).BlockWidth ;
 
       -- Slice out upper address to form block address
       if aAddr'high >= BlockWidth then

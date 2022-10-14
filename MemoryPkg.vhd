@@ -100,7 +100,7 @@ package MemoryPkg_NoX is new work.MemoryGenericPkg
 use work.MemorySupportPkg.all ; 
 package MemoryPkg_orig is new work.MemoryGenericPkg
   generic map (
---    MemoryBaseType      => MemoryBaseType_Original,
+--    MemoryBaseType      => MemoryBaseType_orig,
     SizeMemoryBaseType  => SizeMemoryBaseType_orig,
     ToMemoryBaseType    => ToMemoryBaseType_orig,
     FromMemoryBaseType  => FromMemoryBaseType_orig,

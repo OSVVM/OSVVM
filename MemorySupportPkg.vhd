@@ -51,45 +51,51 @@ library IEEE ;
 package MemorySupportPkg is
 
   -- -----------------------------------------------
-  -- Storage policy X
-  --   Keeps the fidelity of U and X in the memory
+  -- Memory Policy X
+  --   Maintains fidelity of X and U
+  --   Each integer value stores 16 bits of data and 16 bits o X and U
   --   Bit size unlimited
-  --   Each 16 bits of data stored in a 32 bit integer
   -- 
---  type MemoryBaseType_X is array (integer range <>) of integer ;
+  subtype  MemoryBaseType_X is integer_vector ;
   function SizeMemoryBaseType_X(Size : integer) return integer ;  
-  function ToMemoryBaseType_X  (Slv  : std_logic_vector) return integer_vector ;
-  function FromMemoryBaseType_X(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
+  function ToMemoryBaseType_X  (Slv  : std_logic_vector ; Size : integer) return integer_vector ;
+  function FromMemoryBaseType_X(Mem  : integer_vector   ; Size : integer) return std_logic_vector ;
   function InitMemoryBaseType_X(Size : integer) return integer_vector ; 
 
   -- -----------------------------------------------
-  -- Storage policy NoX
-  --   any Bit with an X becomes 0
+  -- Memory Policy NoX
+  --   X and U are stored as a 0
+  --   Each integer value stores 32 bits of data
   --   Bit size unlimited
-  --   Each 32 bits of data stored in a 32 bit integer
   --   For larger word widths, uses half storage as X
   -- 
---  type MemoryBaseType_NoX is array (integer range <>) of integer ;
+  subtype  MemoryBaseType_NoX is integer_vector ;
   function SizeMemoryBaseType_NoX(Size : integer) return integer ;  
-  function ToMemoryBaseType_NoX  (Slv  : std_logic_vector) return integer_vector ;
-  function FromMemoryBaseType_NoX(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
+  function ToMemoryBaseType_NoX  (Slv  : std_logic_vector ; Size : integer) return integer_vector ;
+  function FromMemoryBaseType_NoX(Mem  : integer_vector   ; Size : integer) return std_logic_vector ;
   function InitMemoryBaseType_NoX(Size : integer) return integer_vector ; 
 
   -- -----------------------------------------------
-  -- Storage policy orig 
+  -- Memory policy orig 
+  --   For backward compatibility only
   --   upto 31 bits of data
-  --   X in any bit and the word becomes X
+  --   X or U in any bit and the word becomes X
   -- 
---  subtype MemoryBaseType_orig is integer ; 
+  subtype  MemoryBaseType_orig is integer_vector ; 
   function SizeMemoryBaseType_orig(Size : integer) return integer ;  
-  function ToMemoryBaseType_orig  (Slv  : std_logic_vector) return integer_vector ;
-  function FromMemoryBaseType_orig(Mem  : integer_vector ; Size : integer) return std_logic_vector ;
+  function ToMemoryBaseType_orig  (Slv  : std_logic_vector ; Size : integer) return integer_vector ;
+  function FromMemoryBaseType_orig(Mem  : integer_vector   ; Size : integer) return std_logic_vector ;
   function InitMemoryBaseType_orig(Size : integer) return integer_vector ; 
 
 end MemorySupportPkg ;
 
 package body MemorySupportPkg is 
 
+  ------------------------------------------------------------
+  -- Memory Policy X
+  --   Maintains fidelity of X and U
+  --   Each integer value stores 16 bits of data and 16 bits o X and U
+  ------------------------------------------------------------
   ------------------------------------------------------------
   function SizeMemoryBaseType_X(Size : integer) return integer is  
   ------------------------------------------------------------
@@ -98,17 +104,15 @@ package body MemorySupportPkg is
   end function SizeMemoryBaseType_X ; 
   
   ------------------------------------------------------------
-  function ToMemoryBaseType_X(Slv : std_logic_vector) return integer_vector is 
+  function ToMemoryBaseType_X(Slv : std_logic_vector ; Size : integer) return integer_vector is 
   ------------------------------------------------------------
-    constant Size          : integer := Slv'length ;
-    constant NumIntegers   : integer := SizeMemoryBaseType_X(Size) ; 
-    variable NormalizedSlv : std_logic_vector(NumIntegers*16-1 downto 0) ;
+    variable NormalizedSlv : std_logic_vector(Size*16-1 downto 0) ;
     variable Bits16        : std_logic_vector(15 downto 0) ;
     variable BitIsX        : std_logic_vector(15 downto 0) ; 
     variable BitVal        : std_logic_vector(15 downto 0) ;
-    variable result        : integer_vector (NumIntegers downto 1) ; 
+    variable result        : integer_vector (Size downto 1) ; 
   begin
-    NormalizedSlv := Resize(Slv, NumIntegers*16) ; 
+    NormalizedSlv := Resize(Slv, Size*16) ; 
     for MemIndex in result'reverse_range loop 
       Bits16 := NormalizedSlv(16*MemIndex - 1 downto 16*MemIndex - 16) ;
       for BitIndex in 0 to 15 loop
@@ -128,16 +132,13 @@ package body MemorySupportPkg is
   ------------------------------------------------------------
   function FromMemoryBaseType_X(Mem : integer_vector ; Size : integer) return std_logic_vector is 
   ------------------------------------------------------------
-    constant NumIntegers   : integer := SizeMemoryBaseType_X(Size) ; 
-    alias    NormalizedMem : integer_vector(NumIntegers downto 1) is Mem ; 
+    constant NumIntegers   : integer := Mem'length ; 
+    alias    NormalizedMem : integer_vector(NumIntegers-1 downto 0) is Mem ; 
     variable NormalizedSlv : std_logic_vector(NumIntegers*16-1 downto 0) ;
     variable Bits16        : std_logic_vector(15 downto 0) ;
     variable BitIsX        : std_logic_vector(15 downto 0) ; 
     variable BitVal        : std_logic_vector(15 downto 0) ;
   begin
---    if Mem'length /= NumIntegers then 
---      AlertIfNotEqual(Mem'length, NumIntegers, "MemoryPkg.FromMemoryBaseType Size: " & to_string(Size) & " does not match MemBaseType length") ; 
---    end if ; 
     for MemIndex in NormalizedMem'reverse_range loop 
       (BitIsX, BitVal) := std_logic_vector(to_signed(NormalizedMem(MemIndex), 32)) ;
       for BitIndex in 0 to 15 loop
@@ -147,7 +148,7 @@ package body MemorySupportPkg is
           Bits16(BitIndex) := BitVal(BitIndex) ; 
         end if ;      
       end loop ;
-      NormalizedSlv(16*MemIndex -1 downto 16*MemIndex -16) := Bits16 ;
+      NormalizedSlv(16*MemIndex+15 downto 16*MemIndex) := Bits16 ;
     end loop ; 
     return NormalizedSlv(Size-1 downto 0) ; 
   end function FromMemoryBaseType_X ; 
@@ -155,12 +156,17 @@ package body MemorySupportPkg is
   ------------------------------------------------------------
   function InitMemoryBaseType_X(Size : integer) return integer_vector is  
   ------------------------------------------------------------
-    constant Result : std_logic_vector := (Size-1 downto 0 => 'U') ; 
+    constant BaseU : integer_vector(0 to Size-1)  := (others => -1) ;
   begin
-    return ToMemoryBaseType_X(Result) ; 
+    return BaseU ; 
   end function InitMemoryBaseType_X ; 
+  
 
-
+  ------------------------------------------------------------
+  -- Memory Policy NoX
+  --   X and U are stored as a 0
+  --   Each integer value stores 32 bits of data
+  ------------------------------------------------------------
   ------------------------------------------------------------
   function SizeMemoryBaseType_NoX(Size : integer) return integer is  
   ------------------------------------------------------------
@@ -169,16 +175,14 @@ package body MemorySupportPkg is
   end function SizeMemoryBaseType_NoX ; 
   
   ------------------------------------------------------------
-  function ToMemoryBaseType_NoX(Slv : std_logic_vector) return integer_vector is 
+  function ToMemoryBaseType_NoX(Slv : std_logic_vector ; Size : integer) return integer_vector is 
   ------------------------------------------------------------
-    constant Size          : integer := Slv'length ;
-    constant NumIntegers   : integer := SizeMemoryBaseType_NoX(Size) ; 
-    variable NormalizedSlv : std_logic_vector(NumIntegers*32-1 downto 0) ;
+    variable NormalizedSlv : std_logic_vector(Size*32-1 downto 0) ;
     variable Bits32        : std_logic_vector(31 downto 0) ;
     variable BitVal        : std_logic_vector(31 downto 0) ;
-    variable result        : integer_vector (NumIntegers downto 1) ; 
+    variable result        : integer_vector (Size downto 1) ; 
   begin
-    NormalizedSlv := Resize(Slv, NumIntegers*32) ; 
+    NormalizedSlv := Resize(Slv, Size*32) ; 
     for MemIndex in result'reverse_range loop 
       Bits32 := NormalizedSlv(32*MemIndex -1 downto 32*MemIndex-32) ;
       for BitIndex in 0 to 31 loop
@@ -215,12 +219,18 @@ package body MemorySupportPkg is
   ------------------------------------------------------------
   function InitMemoryBaseType_NoX(Size : integer) return integer_vector is  
   ------------------------------------------------------------
-    constant Result : std_logic_vector := (Size-1 downto 0 => 'U') ; 
+    constant BaseU : integer_vector(0 to Size-1)  := (others => 0) ;
   begin
-    return ToMemoryBaseType_NoX(Result) ; 
+    return BaseU ; 
   end function InitMemoryBaseType_NoX ; 
 
 
+  ------------------------------------------------------------
+  -- Memory policy orig 
+  --   For backward compatibility only
+  --   upto 31 bits of data
+  --   X or U in any bit and the word becomes X
+  ------------------------------------------------------------
   ------------------------------------------------------------
   function SizeMemoryBaseType_orig(Size : integer) return integer is  
   ------------------------------------------------------------
@@ -231,7 +241,7 @@ package body MemorySupportPkg is
   end function SizeMemoryBaseType_orig ; 
 
   ------------------------------------------------------------
-  function ToMemoryBaseType_orig(Slv : std_logic_vector) return integer_vector is 
+  function ToMemoryBaseType_orig(Slv : std_logic_vector ; Size : integer) return integer_vector is 
   ------------------------------------------------------------
     variable result : integer ; 
   begin
@@ -264,9 +274,7 @@ package body MemorySupportPkg is
   ------------------------------------------------------------
   function InitMemoryBaseType_orig(Size : integer) return integer_vector is  
   ------------------------------------------------------------
---    constant Result : std_logic_vector := (Size-1 downto 0 => 'U') ; 
   begin
---    return ToMemoryBaseType(Result) ; 
     return (1 => integer'left) ; 
   end function InitMemoryBaseType_orig ; 
  
