@@ -50,6 +50,8 @@ library IEEE ;
   
 package MemorySupportPkg is
 
+  subtype MemoryBaseType is integer_vector ; 
+
   -- -----------------------------------------------
   -- Memory Policy X
   --   Maintains fidelity of X and U
@@ -110,11 +112,11 @@ package body MemorySupportPkg is
     variable Bits16        : std_logic_vector(15 downto 0) ;
     variable BitIsX        : std_logic_vector(15 downto 0) ; 
     variable BitVal        : std_logic_vector(15 downto 0) ;
-    variable result        : integer_vector (Size downto 1) ; 
+    variable result        : integer_vector (Size-1 downto 0) ; 
   begin
     NormalizedSlv := Resize(Slv, Size*16) ; 
     for MemIndex in result'reverse_range loop 
-      Bits16 := NormalizedSlv(16*MemIndex - 1 downto 16*MemIndex - 16) ;
+      Bits16 := NormalizedSlv(16*MemIndex+15 downto 16*MemIndex) ;
       for BitIndex in 0 to 15 loop
         if Is_X(Bits16(BitIndex)) then 
           BitIsX(BitIndex) := '1' ; 
@@ -180,11 +182,11 @@ package body MemorySupportPkg is
     variable NormalizedSlv : std_logic_vector(Size*32-1 downto 0) ;
     variable Bits32        : std_logic_vector(31 downto 0) ;
     variable BitVal        : std_logic_vector(31 downto 0) ;
-    variable result        : integer_vector (Size downto 1) ; 
+    variable result        : integer_vector (Size-1 downto 0) ; 
   begin
     NormalizedSlv := Resize(Slv, Size*32) ; 
     for MemIndex in result'reverse_range loop 
-      Bits32 := NormalizedSlv(32*MemIndex -1 downto 32*MemIndex-32) ;
+      Bits32 := NormalizedSlv(32*MemIndex+31 downto 32*MemIndex) ;
       for BitIndex in 0 to 31 loop
         if Is_X(Bits32(BitIndex)) then 
           BitVal(BitIndex) := '0' ;
@@ -200,18 +202,15 @@ package body MemorySupportPkg is
   ------------------------------------------------------------
   function FromMemoryBaseType_NoX(Mem : integer_vector ; Size : integer) return std_logic_vector is 
   ------------------------------------------------------------
-    constant NumIntegers   : integer := SizeMemoryBaseType_NoX(Size) ; 
-    alias    NormalizedMem : integer_vector(NumIntegers downto 1) is Mem ; 
+    constant NumIntegers   : integer := Mem'length ; 
+    alias    NormalizedMem : integer_vector(NumIntegers-1 downto 0) is Mem ; 
     variable NormalizedSlv : std_logic_vector(NumIntegers*32-1 downto 0) ;
     variable Bits32        : std_logic_vector(31 downto 0) ;
     variable BitVal        : std_logic_vector(31 downto 0) ;
   begin
- --   if Mem'length /= NumIntegers then 
- --     AlertIfNotEqual(Mem'length, NumIntegers, "MemoryPkg.FromMemoryBaseType Size: " & to_string(Size) & " does not match MemBaseType length") ; 
- --   end if ; 
     for MemIndex in NormalizedMem'reverse_range loop 
       Bits32 := std_logic_vector(to_signed(NormalizedMem(MemIndex), 32)) ;
-      NormalizedSlv(32*MemIndex-1 downto 32*MemIndex-32) := Bits32 ;
+      NormalizedSlv(32*MemIndex+31 downto 32*MemIndex) := Bits32 ;
     end loop ; 
     return NormalizedSlv(Size-1 downto 0) ; 
   end function FromMemoryBaseType_NoX ; 

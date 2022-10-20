@@ -59,19 +59,19 @@ library IEEE ;
   use work.AlertLogPkg.all ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ; 
-  use work.MemorySupportPkg.all ;
+  
+-- Temporary workaround for MemoryBaseType 
+  use work.MemorySupportPkg.MemoryBaseType ;
 
 package MemoryGenericPkg is
   generic (
 --    type MemoryBaseType ;
     function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
-    function ToMemoryBaseType  (A : std_logic_vector ; Size : integer) return integer_vector ; -- is <> ;
-    function FromMemoryBaseType(A : integer_vector   ; Size : integer) return std_logic_vector ; -- is <> ;
-    function InitMemoryBaseType(Size : integer) return integer_vector -- is <> 
+    function ToMemoryBaseType  (A : std_logic_vector ; Size : integer) return MemoryBaseType ; -- is <> ;
+    function FromMemoryBaseType(A : MemoryBaseType   ; Size : integer) return std_logic_vector ; -- is <> ;
+    function InitMemoryBaseType(Size : integer) return MemoryBaseType -- is <> 
   ) ;
   
-  subtype MemoryBaseType is integer_vector ; 
-
   type MemoryIDType is record
     ID : integer_max ;
   end record MemoryIDType ; 
