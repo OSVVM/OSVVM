@@ -2,6 +2,7 @@
 
 | Revision name | Revision  Date |  Summary |
 ----------------|----------------|----------- 
+| 2022.10  | October 2022    |  NameStorePkg:  Changed PRIVATE to PRIVATE_NAME
 | 2022.08  | August 2022     |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
 | 2022.06  | June 2022       |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
 |          |                 |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
@@ -62,7 +63,7 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2022.09 September 2022
+## Revision 2022.10 September 2022
 
 ### Current Revision and Compile Order
 
@@ -81,32 +82,41 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
   | TranscriptPkg.vhd                                  | 2020.12  |  
   | AlertLogPkg.vhd                                    | 2022.06  | 
-  | NameStorePkg.vhd                                   | 2022.02  |  
+  | NameStorePkg.vhd                                   | ** 2022.10 **  |  
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2021.06  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
-  | CoveragePkg.vhd                                    | ** 2022.09 **  |
+  | CoveragePkg.vhd                                    | 2022.09  |
   | ResizePkg.vhd                                      | 2021.06  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | ** 2022.09 **  |
+  |     ScoreboardGenericPkg.vhd                       | 2022.09  |
   |     ScoreboardPkg_slv.vhd                          | 2020.10  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   | If Not Support Generic Packages                    |          |
-  |     ScoreboardPkg_slv_c.vhd                        | ** 2022.09 **  | 
-  |     ScoreboardPkg_int_c.vhd                        | ** 2022.09 **  | 
-  | MemorySupportPkg.vhd                               | 2022.08  |
+  |     ScoreboardPkg_slv_c.vhd                        | 2022.09  | 
+  |     ScoreboardPkg_int_c.vhd                        | 2022.09  | 
+  | MemorySupportPkg.vhd                               | ** 2022.10 **  |
   | If Support Generic Packages                        |          |
-  |     MemoryGenericPkg.vhd                           | 2022.08  |
-  |     MemoryPkg.vhd                                  | 2022.08  |
+  |     MemoryGenericPkg.vhd                           | ** 2022.10 **  |
+  |     MemoryPkg.vhd                                  | ** 2022.10 **  |
   | If Not Support Generic Packages                    |          |
   |     MemoryPkg_c.vhd                                | 2022.08  |
-  | TbUtilPkg.vhd                                      | ** 2022.09 **  |
+  | TbUtilPkg.vhd                                      | 2022.09  |
   | ReportPkg.vhd                                      | 2022.02  | 
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmContext.vhd                                   | 2022.01  |
 
+### NameStorePkg.vhd  2022.10 
+Changed PRIVATE to PRIVATE_NAME to avoid VHDL-2019 issue.
+
+### MemorySupportPkg.vhd, MemoryGenericPkg.vhd, MemoryPkg.vhd, MemoryPkg_c.vhd  2022.10 
+Minor teaks for code quality improvement.  
+Working toward MemoryBaseType being a generic. Waiting on GHDL release update.
+
+
+## Revision 2022.09 September 2022
 
 ### ScoreboardGenericPkg.vhd, ScoreboardPkg_slv_c.vhd, ScoreboardPkg_int_c.vhd  2022.09 
 Added FifoCount to YAML output.
