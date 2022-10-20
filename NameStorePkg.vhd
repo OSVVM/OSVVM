@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    10/2022   2022.10    Changed enum value PRIVATE to PRIVATE_NAME due to VHDL-2019 keyword conflict.   
 --    02/2022   2022.02    Updated NewID for Updated NewID and Find with ParentID and Search.   
 --                         Supports searching in CoveragePkg, ScoreboardGenericPkg, and MemoryPkg.
 --    06/2021   2021.06    Initial revision.  Derrived from NamePkg.vhd
