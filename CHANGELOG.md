@@ -2,8 +2,8 @@
 
 | Revision  |  Summary |
 ------------|----------- 
-| 2022.10   |  NameStorePkg:  Changed PRIVATE to PRIVATE_NAME
-|           |
+| 2022.10   |  RandomBasePkg: Added SetRandomSalt  
+|           |  Minor updates to NameStorePkg, MemoryGenericPkg, ScoreboardGenericPkg
 | 2022.08   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
 | 2022.06   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
 |           |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
