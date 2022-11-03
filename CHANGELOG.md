@@ -1,47 +1,48 @@
 # OSVVM Utility Library (aka OSVVM) Change Log 
 
-| Revision name | Revision  Date |  Summary |
-----------------|----------------|----------- 
-| 2022.10  | October 2022    |  NameStorePkg:  Changed PRIVATE to PRIVATE_NAME
-| 2022.08  | August 2022     |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
-| 2022.06  | June 2022       |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
-|          |                 |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
-| 2022.03  | March 2022      |  Added EdgeRose, ..., FindRisingEdge, ..., ScoreboardPkg Updates 
-| 2022.02  | February 2022   |  Added Transition Coverage. 
-| 2022.01  | January 2022    |  Added Transition Coverage. 
-| 2021.12  | December 2021   |  Added ReadCovYaml. 
-| 2021.11  | November 2021   |  Minor updates.  Print CovWeight first in WriteCovYaml. 
-|          |                 |     Update to usage of PercentCov in GetCov. 
-| 2021.10  | October 2021    |  Updates to generate HTML and JUnit XML for test suite information
-|          |                 |     Generate YAML and HTML for reporting Alert and Coverag information
-|          |                 |     Added ReportPkg. Uupdated CoveragePkg and AlertLogPkg 
-| 2021.09  | September 2021  |  Minor updates to support Synopsys and Cadence
-| 2021.08  | August 2021     |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
-| 2021.07  | July 2021       |  Updated Data Structure of CoveragePkg
-| 2021.06  | June 2021       |  Updated Data Structures
-| 2020.12  | December 2020   |  Minor Updates
-| 2020.10  | October 2020    |  Minor Updates
-| 2020.08  | August 2020     |  Specification Tracking
-| 2020.05  | May 2020        |  PASSED Counting
-| 2020.01  | January 2020    |  Apache Licensing
-| 2018.04  | April 2018      | 
-| 2017.05  | May 2017        | 
-| 2016.11  | November 2016   | 
-| 2016.01  | January 2016    | 
-| 2015.06  | June 2015       | 
-| 2015.03  | March 2015      | 
-| 2015.01  | January 2015    | 
-| 2014.07a | December 2014   | 
-| 2014.07  | July 2014       | 
-| 2014.01  | January 2014    | 
-| 2013.05  | May 2013        | 
-| 2013.04  | April 2013      | 
-| 2.4      | January 2012    | 
-| 2.3      | January 2012    | 
-| 2.2      | July 2011       | 
-| 2.1      | June 2011       | 
-| 2.0      | April 2011      | 
-| 1.X      | June 2010       | 
+| Revision  |  Summary |
+------------|----------- 
+| 2022.10   |  NameStorePkg:  Changed PRIVATE to PRIVATE_NAME
+|           |
+| 2022.08   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
+| 2022.06   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
+|           |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
+| 2022.03   |  Added EdgeRose, ..., FindRisingEdge, ..., ScoreboardPkg Updates 
+| 2022.02   |  Added Transition Coverage. 
+| 2022.01   |  Added Transition Coverage. 
+| 2021.12   |  Added ReadCovYaml. 
+| 2021.11   |  Minor updates.  Print CovWeight first in WriteCovYaml. 
+|           |     Update to usage of PercentCov in GetCov. 
+| 2021.10   |  Updates to generate HTML and JUnit XML for test suite information
+|           |     Generate YAML and HTML for reporting Alert and Coverag information
+|           |     Added ReportPkg. Uupdated CoveragePkg and AlertLogPkg 
+| 2021.09   |  Minor updates to support Synopsys and Cadence
+| 2021.08   |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
+| 2021.07   |  Updated Data Structure of CoveragePkg
+| 2021.06   |  Updated Data Structures
+| 2020.12   |  Minor Updates
+| 2020.10   |  Minor Updates
+| 2020.08   |  Specification Tracking
+| 2020.05   |  PASSED Counting
+| 2020.01   |  Apache Licensing
+| 2018.04   | 
+| 2017.05   | 
+| 2016.11   | 
+| 2016.01   | 
+| 2015.06   | 
+| 2015.03   | 
+| 2015.01   | 
+| 2014.07a  | 
+| 2014.07   | 
+| 2014.01   | 
+| 2013.05   | 
+| 2013.04   | 
+| 2.4       | 
+| 2.3       | 
+| 2.2       | 
+| 2.1       | 
+| 2.0       | 
+| 1.X       | 
 
 
 ## Copyright and License
@@ -85,13 +86,13 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | NameStorePkg.vhd                                   | ** 2022.10 **  |  
   | MessageListPkg.vhd                                 | 2021.07  | 
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | 2021.06  |
+  | RandomBasePkg.vhd                                  | ** 2022.10 **  |
   | RandomPkg.vhd                                      | 2021.06  |
   | RandomProcedurePkg.vhd                             | 2021.06  |
   | CoveragePkg.vhd                                    | 2022.09  |
   | ResizePkg.vhd                                      | 2021.06  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | 2022.09  |
+  |     ScoreboardGenericPkg.vhd                       | ** 2022.10 **  |
   |     ScoreboardPkg_slv.vhd                          | 2020.10  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   | If Not Support Generic Packages                    |          |
@@ -108,12 +109,21 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmContext.vhd                                   | 2022.01  |
 
+### RandomBasePkg.vhd  2022.10 
+Added SetRandomSalt(string or integer), GetRandomSalt (integer).
+
+### ScoreboardGenericPkg.vhd  2022.10 
+Added Parent Name to YAML output.
+
 ### NameStorePkg.vhd  2022.10 
 Changed PRIVATE to PRIVATE_NAME to avoid VHDL-2019 issue.
 
 ### MemorySupportPkg.vhd, MemoryGenericPkg.vhd, MemoryPkg.vhd, MemoryPkg_c.vhd  2022.10 
 Minor teaks for code quality improvement.  
 Working toward MemoryBaseType being a generic. Waiting on GHDL release update.
+
+### ScoreboardGenericPkg.vhd  2022.10 
+Changed PRIVATE to PRIVATE_NAME to avoid VHDL-2019 issue.
 
 
 ## Revision 2022.09 September 2022
