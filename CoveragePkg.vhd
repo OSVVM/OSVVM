@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    06/2022   2022.06    Add AlertIfNotCovered.  Settings for YAML output.
 --    02/2022   2022.02    Updated NewID with ParentID, ReportMode, Search, PrintParent.
 --                         Supports searching for coverage models.
@@ -302,7 +303,7 @@ package CoveragePkg is
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ;
-    Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType ;
 
@@ -807,7 +808,7 @@ package CoveragePkg is
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
       ReportMode          : AlertLogReportModeType  := ENABLED ;
-      Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return CoverageIDType ;
     impure function GetNumIDs return integer ;
@@ -2323,7 +2324,7 @@ package body CoveragePkg is
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
       ReportMode          : AlertLogReportModeType  := ENABLED ;
-      Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return CoverageIDType is
       variable NewCoverageID       : CoverageIDType ;
@@ -7665,7 +7666,7 @@ package body CoveragePkg is
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ;
-    Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType is
   begin

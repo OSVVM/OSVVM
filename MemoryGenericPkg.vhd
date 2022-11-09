@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    08/2022   2022.08    Refactored and added generics for base type
 --    02/2022   2022.02    Updated NewID with ReportMode, Search, PrintParent.   Supports searching for Memory models.
 --    06/2021   2021.06    Updated Data Structure, IDs for new use model, and Wrapper Subprograms
@@ -85,7 +86,7 @@ package MemoryGenericPkg is
     DataWidth           : integer ; 
     ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ; 
-    Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType ;
 
@@ -188,7 +189,7 @@ package MemoryGenericPkg is
       DataWidth           : integer ; 
       ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
       ReportMode          : AlertLogReportModeType  := ENABLED ; 
-      Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return integer ;
 
@@ -464,7 +465,7 @@ package body MemoryGenericPkg is
       DataWidth           : integer ; 
       ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
       ReportMode          : AlertLogReportModeType  := ENABLED ; 
-      Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return integer is 
       variable NameID              : integer ; 
@@ -1346,7 +1347,7 @@ package body MemoryGenericPkg is
     DataWidth           : integer ; 
     ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ; 
-    Search              : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType is
     variable Result : MemoryIDType ; 
