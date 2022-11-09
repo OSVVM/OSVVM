@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2022   2022.11    Added GetTestName
 --    06/2022   2022.06    Added Output Formatting - WriteTimeLast (vs First)
 --                         Minor printing updates to AffirmIfDiff and AlertIfDiff
 --                         Added SetTestName in preference of now deprecated SetAlertLogName
@@ -424,6 +425,7 @@ package AlertLogPkg is
   alias SetAlertLogName is SetTestName [string] ;
 
   -- synthesis translate_off
+  impure function GetTestName return string ;
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string ;
   -- synthesis translate_on
   procedure DeallocateAlertLogStruct ;
@@ -5576,6 +5578,13 @@ package body AlertLogPkg is
   end procedure SetTestName ;
 
   -- synthesis translate_off
+  ------------------------------------------------------------
+  impure function GetTestName return string is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetAlertLogName(ALERTLOG_BASE_ID) ;
+  end GetTestName ;
+
   ------------------------------------------------------------
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string is
   ------------------------------------------------------------

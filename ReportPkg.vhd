@@ -100,19 +100,19 @@ package body ReportPkg is
     
     if GotCoverage then 
       WriteCovYaml (
-        FileName      => REPORTS_DIRECTORY &  GetAlertLogName & "_cov.yml"
+        FileName      => REPORTS_DIRECTORY &  GetTestName & "_cov.yml"
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_slv.GotScoreboards then 
       work.ScoreboardPkg_slv.WriteScoreboardYaml (
-        FileName     => REPORTS_DIRECTORY &  GetAlertLogName & "_sb_slv.yml"
+        FileName     => REPORTS_DIRECTORY &  GetTestName & "_sb_slv.yml"
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_int.GotScoreboards then 
       work.ScoreboardPkg_int.WriteScoreboardYaml (
-        FileName     => REPORTS_DIRECTORY &  GetAlertLogName & "_sb_int.yml"
+        FileName     => REPORTS_DIRECTORY &  GetTestName & "_sb_int.yml"
       ) ;
     end if ; 
     
@@ -125,7 +125,7 @@ package body ReportPkg is
       FileName        => "OsvvmRun.yml"
     ) ;
     WriteAlertYaml (
-      FileName        => REPORTS_DIRECTORY &  GetAlertLogName & "_alerts.yml", 
+      FileName        => REPORTS_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
 

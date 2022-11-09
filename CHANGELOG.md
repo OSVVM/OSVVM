@@ -2,6 +2,8 @@
 
 | Revision  |  Summary |
 ------------|----------- 
+| 2022.11   |  ScoreboardGenericPkg, CoveragePkg, MemoryGenericPkg - search default now PRIVATE_NAME  
+|           |  AlertLogPkg: Added GetTestName 
 | 2022.10   |  RandomBasePkg: Added SetRandomSalt  
 |           |  Minor updates to NameStorePkg, MemoryGenericPkg, ScoreboardGenericPkg
 | 2022.08   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
@@ -64,7 +66,64 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2022.10 September 2022
+## Revision 2022.11 November 2022
+
+### Current Revision and Compile Order
+
+The following table lists the files and revision, starting with the
+files that need to be compiled first. Be sure to turn on the VHDL-2008
+compile switch. You may also use the OSVVM script - osvvm.pro -- details 
+how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
+
+  | File Name                                          | Revision Date  |  
+  -----------------------------------------------------|----------
+  | TextUtilPkg.vhd                                    | 2022.08  | 
+  | ResolutionPkg.vhd                                  | 2021.06  |
+  | NamePkg.vhd                                        | 2022.02  |  
+  | OsvvmGlobalPkg.vhd                                 | 2022.02  |  
+  | VendorCovApiPkg_Aldec.vhd (Aldec only)             | 2020.01  |
+  | VendorCovApiPkg.vhd (All others)                   | 2020.01  |
+  | TranscriptPkg.vhd                                  | 2020.12  |  
+  | AlertLogPkg.vhd                                    | 2022.06  | 
+  | NameStorePkg.vhd                                   | 2022.10  |  
+  | MessageListPkg.vhd                                 | 2021.07  | 
+  | SortListPkg_int.vhd                                | 2020.01  |
+  | RandomBasePkg.vhd                                  | 2022.10  |
+  | RandomPkg.vhd                                      | 2021.06  |
+  | RandomProcedurePkg.vhd                             | 2021.06  |
+  | CoveragePkg.vhd                                    | ** 2022.11 **  |
+  | ResizePkg.vhd                                      | 2021.06  |
+  | If Support Generic Packages                        |          |
+  |     ScoreboardGenericPkg.vhd                       | ** 2022.11 **  |
+  |     ScoreboardPkg_slv.vhd                          | 2020.10  |
+  |     ScoreboardPkg_int.vhd                          | 2020.01  |
+  | If Not Support Generic Packages                    |          |
+  |     ScoreboardPkg_slv_c.vhd                        | ** 2022.11 **  | 
+  |     ScoreboardPkg_int_c.vhd                        | ** 2022.11 **  | 
+  | MemorySupportPkg.vhd                               | 2022.10  |
+  | If Support Generic Packages                        |          |
+  |     MemoryGenericPkg.vhd                           | ** 2022.11 **  |
+  |     MemoryPkg.vhd                                  | 2022.10  |
+  | If Not Support Generic Packages                    |          |
+  |     MemoryPkg_c.vhd                                | ** 2022.11 **  |
+  | TbUtilPkg.vhd                                      | 2022.09  |
+  | ReportPkg.vhd                                      | 2022.02  | 
+  | OsvvmTypesPkg.vhd                                  | 2022.01  |
+  | OsvvmContext.vhd                                   | 2022.01  |
+
+### ScoreboardGenericPkg, CoveragePkg, MemoryGenericPkg  2022.10 
+Changed the default of the search parameter to PRIVATE_NAME.  
+The original preference was NAME_AND_PARENT_ELSE_PRIVATE.
+
+When iterating across VC instances using `for generate`, 
+each instance ended up with the same name.  As a result, 
+all the FIFOs, Scoreboards, Coverage Models, and Memories
+in the multiple instances were shared by default, unless,
+more advanced methods for setting the AlertLogID for the VC.
+These methods require users to also set generics.  
+The result is a methodology that goes wrong for basic users.
+
+## Revision 2022.10 OCtober 2022
 
 ### Current Revision and Compile Order
 
