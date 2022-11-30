@@ -174,20 +174,22 @@ package body NameStorePkg is
       variable ItemArrayPtr     : InOut NameArrayPtrType ;
       variable NumItems         : InOut integer ;
       constant GrowAmount       : in integer ;
---      constant NewNumItems      : in integer ;
---      constant CurNumItems      : in integer ;
       constant MinNumItems      : in integer 
     ) is
       variable oldItemArrayPtr  : NameArrayPtrType ;
-      constant NewNumItems      : integer := NumItems + GrowAmount ; 
-      constant NewSize : integer := NormalizeArraySize(NewNumItems, MinNumItems) ;
+--!!Xc      constant NewNumItems      : integer := NumItems + GrowAmount ; 
+--!!Xc      constant NewSize : integer := NormalizeArraySize(NewNumItems, MinNumItems) ;
+      variable NewNumItems  : integer ;
+      variable NewSize      : integer ;
     begin
+      NewNumItems := NumItems + GrowAmount ; 
+      NewSize     := NormalizeArraySize(NewNumItems, MinNumItems) ;
       if ItemArrayPtr = NULL then
         ItemArrayPtr := new NameArrayType(1 to NewSize) ;
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new NameArrayType(1 to NewSize) ;
-        ItemArrayPtr(1 to NumItems) := oldItemArrayPtr(1 to NumItems) ;
+        ItemArrayPtr.all(1 to NumItems) := oldItemArrayPtr.all(1 to NumItems) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
       NumItems := NewNumItems ; 
