@@ -65,15 +65,15 @@ library IEEE ;
 
 package MemoryPkg is
 --!See alias    generic (
---!See alias  --    type integer_vector ;
---!See alias      function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
---!See alias      function ToMemoryBaseType  (A : std_logic_vector) return integer_vector ; -- is <> ;
---!See alias      function FromMemoryBaseType(A : integer_vector ; Size : integer) return std_logic_vector ; -- is <> ;
---!See alias      function InitMemoryBaseType(Size : integer) return integer_vector -- is <> 
+--!See alias--    type MemoryBaseType ;
+--!See alias    function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
+--!See alias    function ToMemoryBaseType  (A : std_logic_vector ; Size : integer) return integer_vector ; -- is <> ;
+--!See alias    function FromMemoryBaseType(A : integer_vector   ; Size : integer) return std_logic_vector ; -- is <> ;
+--!See alias    function InitMemoryBaseType(Size : integer) return integer_vector -- is <> 
 --!See alias    ) ;
 
    alias SizeMemoryBaseType is SizeMemoryBaseType_X [integer return integer];  
-   alias ToMemoryBaseType   is ToMemoryBaseType_X   [std_logic_vector return integer_vector];  
+   alias ToMemoryBaseType   is ToMemoryBaseType_X   [std_logic_vector, integer return integer_vector];  
    alias FromMemoryBaseType is FromMemoryBaseType_X [integer_vector, integer return std_logic_vector];  
    alias InitMemoryBaseType is InitMemoryBaseType_X [integer return integer_vector];  
 
@@ -529,6 +529,18 @@ package body MemoryPkg is
     end function IdOutOfRange ; 
 
     ------------------------------------------------------------
+    -- Local
+    -- This is a temporary solution that works around GHDL issues
+    function InitMemoryBlockType(BlockWidth, BaseWidth : integer) return MemBlockType is  
+    ------------------------------------------------------------
+-- This keeps MemoryBaseType from being a generic type
+      constant BaseU : MemoryBaseType(BaseWidth-1 downto 0) := InitMemoryBaseType(BaseWidth) ;
+--!! GHDL Bug     constant BaseU : MemoryBaseType := InitMemoryBaseType(BaseWidth) ;
+    begin
+      return MemBlockType'(0 to 2**BlockWidth-1 => BaseU) ;
+    end function InitMemoryBlockType ; 
+
+    ------------------------------------------------------------
     procedure MemWrite ( 
     ------------------------------------------------------------
       ID    : integer ; 
@@ -578,12 +590,15 @@ package body MemoryPkg is
 
       -- If empty, allocate a memory block
       if (MemStructPtr(ID).MemArrayPtr(BlockAddr) = NULL) then 
---        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType'(0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
-        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseTypeWidth downto 1) ; 
---        MemStructPtr(ID).MemArrayPtr(BlockAddr)(0 to 2**BlockWidth-1) := (0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
-        for i in 0 to 2**BlockWidth-1 loop
-          MemStructPtr(ID).MemArrayPtr(BlockAddr)(i) := InitMemoryBaseType(Data'length) ;
-        end loop ; 
+        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+            MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
+
+-- --        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType'(0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+--         MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseTypeWidth downto 1) ; 
+-- --        MemStructPtr(ID).MemArrayPtr(BlockAddr)(0 to 2**BlockWidth-1) := (0 to 2**BlockWidth-1 => InitMemoryBaseType(Data'length)) ;
+--         for i in 0 to 2**BlockWidth-1 loop
+--           MemStructPtr(ID).MemArrayPtr(BlockAddr)(i) := InitMemoryBaseType(Data'length) ;
+--         end loop ; 
 
       end if ; 
 
