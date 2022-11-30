@@ -587,7 +587,8 @@ package body TextUtilPkg is
   -- local
   function RemoveHL(A : std_ulogic_vector) return std_ulogic_vector is 
   ------------------------------------------------------------
-    variable result : A'subtype ;
+--    variable result : A'subtype ;
+    variable result : std_ulogic_vector(A'range) ;
   begin
     for i in result'range loop 
       result(i) := RemoveHLTable(A(i)) ;
