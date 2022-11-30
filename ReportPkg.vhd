@@ -43,6 +43,7 @@
 
 
   use work.AlertLogPkg.AlertCountType ;
+  use std.textio.all ;
 
 
 package ReportPkg is
