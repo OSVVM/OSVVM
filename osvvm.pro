@@ -88,6 +88,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze MemoryPkg.vhd
 } else {
   analyze MemoryPkg_c.vhd
+  analyze MemoryPkg_orig_c.vhd
 }
 
 analyze TbUtilPkg.vhd
