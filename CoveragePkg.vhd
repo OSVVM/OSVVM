@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    06/2022   2022.06    Add AlertIfNotCovered.  Settings for YAML output.
 --    02/2022   2022.02    Updated NewID with ParentID, ReportMode, Search, PrintParent.
@@ -90,7 +91,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2010 - 2022 by SynthWorks Design Inc.
+--  Copyright (c) 2010 - 2023 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -116,6 +117,7 @@ use std.textio.all ;
 -- library ieee_proposed ;						          -- remove with VHDL-2008
 -- use ieee_proposed.standard_additions.all ;   -- remove with VHDL-2008
 
+use work.OsvvmScriptSettingsPkg.all ;
 use work.TextUtilPkg.all ;
 use work.TranscriptPkg.all ;
 use work.AlertLogPkg.all ;
@@ -5126,7 +5128,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin
@@ -5721,7 +5723,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open READ_MODE is RESOLVED_FILE_NAME ;
       variable buf     : line ;
       variable Found   : boolean ;

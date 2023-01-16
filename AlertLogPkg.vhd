@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Added GetTestName
 --    06/2022   2022.06    Added Output Formatting - WriteTimeLast (vs First)
 --                         Minor printing updates to AffirmIfDiff and AlertIfDiff
@@ -83,7 +84,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2015 - 2022 by SynthWorks Design Inc.
+--  Copyright (c) 2015 - 2023 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -100,6 +101,8 @@
 
 
 use std.textio.all ;
+
+use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
@@ -122,9 +125,6 @@ package AlertLogPkg is
   type     LogEnableType        is array (LogIndexType) of boolean ;
   type     AlertLogReportModeType  is (DISABLED, ENABLED, NONZERO) ;
   type     AlertLogPrintParentType is (PRINT_NAME, PRINT_NAME_AND_PARENT) ;
-
-  constant REPORTS_DIRECTORY : string := "" ;
---  constant REPORTS_DIRECTORY : string := "./reports/" ;
 
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := ALERTLOG_BASE_ID + 1 ;
@@ -1155,13 +1155,13 @@ package body AlertLogPkg is
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
           ReportAlerts(ReportWhenZero => TRUE) ;
-          if FileExists("OsvvmRun.yml") then
+          if FileExists(OSVVM_BUILD_YAML_FILE) then
 --          work.ReportPkg.EndOfTestReports ;  -- creates circular package issues
             WriteAlertSummaryYaml(
-              FileName        => "OsvvmRun.yml"
+              FileName        => OSVVM_BUILD_YAML_FILE
             ) ;
             WriteAlertYaml (
-              FileName        => REPORTS_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
+              FileName        => OSVVM_OUTPUT_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
             ) ;
           end if ;
           std.env.stop(ErrorCount) ;
@@ -5157,11 +5157,11 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) is
   ------------------------------------------------------------
-    constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", "OsvvmRun.yml", FileName) ;
+    constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_BUILD_YAML_FILE, FileName) ;
   begin
     -- synthesis translate_off
     WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
-    -- WriteTestSummary(FileName => "OsvvmRun.yml", OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ;
+    -- WriteTestSummary(FileName => OSVVM_BUILD_YAML_FILE, OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ;
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;
 

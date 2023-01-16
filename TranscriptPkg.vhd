@@ -47,6 +47,7 @@
 --  
 
 use std.textio.all ;
+use work.OsvvmScriptSettingsPkg.all ;
 package TranscriptPkg is
 
   -- File Identifier to facilitate usage of one transcript file 
@@ -114,12 +115,12 @@ package body TranscriptPkg is
   begin
     -- Create Yaml file with list of files.
     if not TranscriptOpened.Get then
-      file_open(TranscriptYamlFile, "OSVVM_transcript.yml", WRITE_MODE) ;
+      file_open(TranscriptYamlFile, OSVVM_TRANSCRIPT_YAML_FILE, WRITE_MODE) ;
 --      swrite(buf, "Transcripts: ") ; 
 --      WriteLine(TranscriptYamlFile, buf) ; 
       TranscriptOpened.Set(TRUE) ;
     else
-      file_open(TranscriptYamlFile, "OSVVM_transcript.yml", APPEND_MODE) ;
+      file_open(TranscriptYamlFile, OSVVM_TRANSCRIPT_YAML_FILE, APPEND_MODE) ;
     end if ; 
     swrite(buf, "  - " & Name) ; 
     WriteLine(TranscriptYamlFile, buf) ; 
