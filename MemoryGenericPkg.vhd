@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2023   2023.01    Updated address checks in MemRead and MemWrite
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    08/2022   2022.08    Refactored and added generics for base type
 --    02/2022   2022.02    Updated NewID with ReportMode, Search, PrintParent.   Supports searching for Memory models.
@@ -558,10 +559,11 @@ package body MemoryGenericPkg is
       if Addr'length > AddrWidth then
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Memory not initialized, Write Ignored.", FAILURE) ; 
+          return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
-            Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          return ; 
         end if ; 
-        return ; 
       end if ; 
 
       -- Check Bounds on Data
@@ -625,13 +627,14 @@ package body MemoryGenericPkg is
 
       -- Check Bounds of Address and if memory is initialized
       if Addr'length > AddrWidth then
+        Data := (Data'range => 'U') ; 
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
+          return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          return ; 
         end if ; 
-        Data := (Data'range => 'U') ; 
-        return ; 
       end if ; 
       
       -- Check Bounds on Data
