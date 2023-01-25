@@ -5157,7 +5157,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) is
   ------------------------------------------------------------
-    constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_BUILD_YAML_FILE, FileName) ;
+    constant RESOLVED_FILE_NAME : string := IfElse(FileName'length = 0, OSVVM_BUILD_YAML_FILE, FileName) ;
   begin
     -- synthesis translate_off
     WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
