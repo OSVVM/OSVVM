@@ -21,6 +21,7 @@
 --  Revision History:
 --    Date      Version    Description
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--                         Added simple TranscriptOpen that uses GetTestName
 --    06/2022   2022.06    Minor reordering of EndOfTestReports
 --    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
 --    10/2021   2021.10    Initial revision
@@ -45,6 +46,7 @@
 use std.textio.all ;
 
 use work.OsvvmScriptSettingsPkg.all ;
+use work.TranscriptPkg.all ; 
 use work.AlertLogPkg.all ;
 use work.CoveragePkg.all ;
 use work.ScoreboardPkg_slv.all ;
@@ -64,6 +66,9 @@ package ReportPkg is
     Stop           : boolean        := FALSE
   ) ;
   
+  procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType return integer] ;
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean] ;
 
@@ -147,6 +152,22 @@ package body ReportPkg is
       std.env.stop ; 
     end if ;
   end procedure EndOfTestReports ;
+
+  ------------------------------------------------------------
+  procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
+  ------------------------------------------------------------
+    variable Status : FILE_OPEN_STATUS ; 
+  begin
+    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTestName & ".log", OpenKind) ;
+  end procedure TranscriptOpen ; 
+
+  ------------------------------------------------------------
+  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
+  ------------------------------------------------------------
+  begin
+    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTestName & ".log", OpenKind) ;
+  end procedure TranscriptOpen ; 
+  
 
 
 end package body ReportPkg ;

@@ -27,7 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY.
 --    11/2022   2022.11    Added GetTestName
 --    06/2022   2022.06    Added Output Formatting - WriteTimeLast (vs First)
 --                         Minor printing updates to AffirmIfDiff and AlertIfDiff
