@@ -20,13 +20,15 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--                         Added simple TranscriptOpen that uses GetTestName
 --    06/2022   2022.06    Minor reordering of EndOfTestReports
 --    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
 --    10/2021   2021.10    Initial revision
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2021-2022 by SynthWorks Design Inc.
+--  Copyright (c) 2021-2023 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -41,9 +43,14 @@
 --  limitations under the License.
 --
 
+use std.textio.all ;
 
-  use work.AlertLogPkg.AlertCountType ;
-  use std.textio.all ;
+use work.OsvvmScriptSettingsPkg.all ;
+use work.TranscriptPkg.all ; 
+use work.AlertLogPkg.all ;
+use work.CoveragePkg.all ;
+use work.ScoreboardPkg_slv.all ;
+use work.ScoreboardPkg_int.all ;
 
 
 package ReportPkg is
@@ -59,6 +66,9 @@ package ReportPkg is
     Stop           : boolean        := FALSE
   ) ;
   
+  procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType return integer] ;
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean] ;
 
@@ -69,11 +79,6 @@ end ReportPkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body ReportPkg is
-  use std.textio.all ;
-  use work.AlertLogPkg.all ;
-  use work.CoveragePkg.all ;
-  use work.ScoreboardPkg_slv.all ;
-  use work.ScoreboardPkg_int.all ;
 
   ------------------------------------------------------------
   procedure WriteCovSummaryYaml (FileName : string ) is
@@ -101,32 +106,32 @@ package body ReportPkg is
     
     if GotCoverage then 
       WriteCovYaml (
-        FileName      => REPORTS_DIRECTORY &  GetTestName & "_cov.yml"
+        FileName      => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_slv.GotScoreboards then 
       work.ScoreboardPkg_slv.WriteScoreboardYaml (
-        FileName     => REPORTS_DIRECTORY &  GetTestName & "_sb_slv.yml"
+        FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml"
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_int.GotScoreboards then 
       work.ScoreboardPkg_int.WriteScoreboardYaml (
-        FileName     => REPORTS_DIRECTORY &  GetTestName & "_sb_int.yml"
+        FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml"
       ) ;
     end if ; 
     
     -- Summarize Alerts Last to allow previous steps to update Alerts
     WriteAlertSummaryYaml(
-      FileName        => "OsvvmRun.yml", 
+      FileName        => OSVVM_BUILD_YAML_FILE, 
       ExternalErrors  => ExternalErrors
     ) ; 
     WriteCovSummaryYaml (
-      FileName        => "OsvvmRun.yml"
+      FileName        => OSVVM_BUILD_YAML_FILE
     ) ;
     WriteAlertYaml (
-      FileName        => REPORTS_DIRECTORY &  GetTestName & "_alerts.yml", 
+      FileName        => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
 
@@ -147,6 +152,22 @@ package body ReportPkg is
       std.env.stop ; 
     end if ;
   end procedure EndOfTestReports ;
+
+  ------------------------------------------------------------
+  procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
+  ------------------------------------------------------------
+    variable Status : FILE_OPEN_STATUS ; 
+  begin
+    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTestName & ".log", OpenKind) ;
+  end procedure TranscriptOpen ; 
+
+  ------------------------------------------------------------
+  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
+  ------------------------------------------------------------
+  begin
+    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTestName & ".log", OpenKind) ;
+  end procedure TranscriptOpen ; 
+  
 
 
 end package body ReportPkg ;

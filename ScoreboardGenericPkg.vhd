@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    10/2022   2022.10    Added Parent Name to YAML output.
 --    09/2022   2022.09    Added FifoCount to YAML output.
@@ -56,7 +57,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2006 - 2022 by SynthWorks Design Inc.
+--  Copyright (c) 2006 - 2023 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -78,6 +79,7 @@ library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
 
+  use work.OsvvmScriptSettingsPkg.all ;
   use work.TranscriptPkg.all ;
   use work.TextUtilPkg.all ;
   use work.AlertLogPkg.all ;
@@ -2705,7 +2707,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", REPORTS_DIRECTORY & GetTestName & "_sb.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", FileName) ;
       file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin

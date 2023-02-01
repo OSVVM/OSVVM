@@ -16,6 +16,7 @@
 --
 --  Revision History:      
 --    Date      Version    Description
+--    01/2023   2023.01    Added OsvvmScriptSettingsPkg
 --    01/2022   2022.01    Added OsvvmTypesPkg
 --    10/2021   2021.10    Added ReportPkg
 --    06/2021   2021.06    Updated for release
@@ -27,7 +28,7 @@
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2015 - 2021 by SynthWorks Design Inc.  
+--  Copyright (c) 2015 - 2023 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -45,6 +46,7 @@
 context OsvvmContext is
   library OSVVM ;  
 
+  use OSVVM.OsvvmScriptSettingsPkg.all ;
   use OSVVM.NamePkg.all ;
   use OSVVM.NameStorePkg.all ;
   use OSVVM.TranscriptPkg.all ; 

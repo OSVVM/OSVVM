@@ -114,7 +114,9 @@ package RandomBasePkg is
   impure function  GenRandSeed   (S  : string)  return RandomSeedType ;
   impure function  OldGenRandSeed(S  : string)  return RandomSeedType ;
   procedure SetRandomSalt (I : integer) ; 
+  impure function SetRandomSalt (I : integer) return boolean ; 
   procedure SetRandomSalt (S : string) ; 
+  impure function SetRandomSalt (S : string) return boolean ;
   impure function GetRandomSalt return integer ; 
   
   -----------------------------------------------------------------
@@ -347,6 +349,14 @@ package body RandomBasePkg is
   end procedure SetRandomSalt ; 
   
   -----------------------------------------------------------------
+  impure function  SetRandomSalt (I : integer) return boolean is
+  -----------------------------------------------------------------
+  begin 
+    SetRandomSalt(I) ; 
+    return TRUE ; 
+  end function SetRandomSalt ; 
+  
+  -----------------------------------------------------------------
   procedure SetRandomSalt (S : string) is
   -----------------------------------------------------------------
     variable temp : real := 5381.0 ;
@@ -356,6 +366,14 @@ package body RandomBasePkg is
     end loop ;
     RandomSalt.Set(integer(temp)) ; 
   end procedure SetRandomSalt ; 
+
+  -----------------------------------------------------------------
+  impure function  SetRandomSalt (S : string) return boolean is
+  -----------------------------------------------------------------
+  begin 
+    SetRandomSalt(S) ; 
+    return TRUE ; 
+  end function SetRandomSalt ; 
   
   -----------------------------------------------------------------
   impure function GetRandomSalt return integer is 

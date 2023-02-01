@@ -17,6 +17,7 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#     1/2023   2023.01    Added OsvvmScriptSettingsPkg and script to create it.
 #     8/2022   2022.08    Added MemorySupportPkg and MemoryGenericPkg
 #    10/2021   2021.10    Added ReportPkg
 #     6/2021   2021.06    Updated for release
@@ -26,7 +27,7 @@
 #
 #  This file is part of OSVVM.
 #  
-#  Copyright (c) 2016 - 2021 by SynthWorks Design Inc.  
+#  Copyright (c) 2016 - 2023 by SynthWorks Design Inc.  
 #  
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -41,6 +42,8 @@
 #  limitations under the License.
 #  
 library osvvm
+CreateOsvvmScriptSettingsPkg
+analyze OsvvmScriptSettingsPkg.vhd
 analyze TextUtilPkg.vhd
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
