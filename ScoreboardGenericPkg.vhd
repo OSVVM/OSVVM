@@ -2081,7 +2081,7 @@ package body ScoreboardGenericPkg is
             Alert(AlertLogIDVar(Index), GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
             return NULL ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
-            return CurPtr ;
+            return CurPtr.NextPtr ;
           else
             CurPtr := CurPtr.NextPtr ;
           end if ;
