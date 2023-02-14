@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2023   2023.02    Bug fix for Peek with a tag.
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    10/2022   2022.10    Added Parent Name to YAML output.
