@@ -42,7 +42,7 @@
 #  limitations under the License.
 #  
 library osvvm
-CreateOsvvmScriptSettingsPkg
+# CreateOsvvmScriptSettingsPkg
 analyze OsvvmScriptSettingsPkg.vhd
 analyze TextUtilPkg.vhd
 analyze ResolutionPkg.vhd
@@ -100,3 +100,8 @@ analyze ReportPkg.vhd
 analyze OsvvmTypesPkg.vhd
 
 analyze OsvvmContext.vhd 
+
+CreateOsvvmScriptSettingsPkg
+if {[file exists OsvvmScriptSettingsPkg_generated.vhd]} {
+  analyze OsvvmScriptSettingsPkg_generated.vhd
+}
