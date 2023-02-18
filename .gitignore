@@ -1,5 +1,1 @@
-docs/**/*.*
-!docs/**/*.rst
-!docs/conf.py
-!docs/requirements.txt
-!docs/make.bat
+OsvvmScriptSettingsPkg_generated.vhd
