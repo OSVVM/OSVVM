@@ -561,7 +561,7 @@ package body MemoryGenericPkg is
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Memory not initialized, Write Ignored.", FAILURE) ; 
           return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Address value " & to_string(Addr) & "goes beyond memory address width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Address value " & to_hxstring(Addr) & " goes beyond memory address width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
           return ; 
         end if ; 
       end if ; 
@@ -632,7 +632,7 @@ package body MemoryGenericPkg is
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
           return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Address value " & to_string(Addr) & "goes beyond memory address width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Address value " & to_hxstring(Addr) & " goes beyond memory address width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
           return ; 
         end if ; 
       end if ; 
