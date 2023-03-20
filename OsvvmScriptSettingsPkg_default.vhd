@@ -1,6 +1,6 @@
 --
---  File Name:         OsvvmScriptSettingsPkg.vhd
---  Design Unit Name:  OsvvmScriptSettingsPkg
+--  File Name:         OsvvmScriptSettingsPkg_default.vhd
+--  Design Unit Name:  OsvvmScriptSettingsPkg body
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -36,12 +36,9 @@
 --  limitations under the License.
 --
 
-package OsvvmScriptSettingsPkg is
-  constant OSVVM_HOME_DIRECTORY        : string ;
-  constant OSVVM_OUTPUT_DIRECTORY      : string ;
-  constant OSVVM_BUILD_YAML_FILE       : string ;
-  constant OSVVM_TRANSCRIPT_YAML_FILE  : string ;
-end package OsvvmScriptSettingsPkg ;
-
--- For the package body with the deferred constant values, see
--- OsvvmScriptSettingsPkg_generated.vhd and OsvvmScriptSettingsPkg_default.vhd 
+package body OsvvmScriptSettingsPkg is
+  constant OSVVM_HOME_DIRECTORY        : string := "../OsvvmLibraries" ;
+  constant OSVVM_OUTPUT_DIRECTORY      : string := "" ;
+  constant OSVVM_BUILD_YAML_FILE       : string := "OsvvmRun.yml" ;
+  constant OSVVM_TRANSCRIPT_YAML_FILE  : string := "OSVVM_transcript.yml" ;
+end package body OsvvmScriptSettingsPkg ;

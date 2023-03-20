@@ -102,6 +102,8 @@ analyze OsvvmTypesPkg.vhd
 analyze OsvvmContext.vhd 
 
 CreateOsvvmScriptSettingsPkg
-if {[file exists OsvvmScriptSettingsPkg_generated.vhd]} {
+if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
   analyze OsvvmScriptSettingsPkg_generated.vhd
+} else {
+  analyze OsvvmScriptSettingsPkg_default.vhd
 }
