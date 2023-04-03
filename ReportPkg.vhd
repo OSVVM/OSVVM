@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    04/2023   2023.04    Added TranscriptOpen without parameters 
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --                         Added simple TranscriptOpen that uses GetTestName
 --    06/2022   2022.06    Minor reordering of EndOfTestReports
@@ -158,14 +159,14 @@ package body ReportPkg is
   ------------------------------------------------------------
     variable Status : FILE_OPEN_STATUS ; 
   begin
-    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTestName & ".log", OpenKind) ;
+    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
   end procedure TranscriptOpen ; 
 
   ------------------------------------------------------------
   procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
   begin
-    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTestName & ".log", OpenKind) ;
+    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
   end procedure TranscriptOpen ; 
   
 

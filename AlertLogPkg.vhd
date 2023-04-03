@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    04/2023   2023.04    Added GetTranscriptName.
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY.
 --    11/2022   2022.11    Added GetTestName
 --    06/2022   2022.06    Added Output Formatting - WriteTimeLast (vs First)
@@ -335,6 +336,7 @@ package AlertLogPkg is
   procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) ;
   procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;  -- Deprecated.  Use WriteAlertSummaryYaml.
 
+-- These are in ReportPkg due to circular dependencies
 --  impure function EndOfTestReports (
 --    ReportAll      : boolean        := FALSE ;
 --    ExternalErrors : AlertCountType := (0,0,0)
@@ -426,6 +428,7 @@ package AlertLogPkg is
 
   -- synthesis translate_off
   impure function GetTestName return string ;
+  impure function GetTranscriptName return string ;
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string ;
   -- synthesis translate_on
   procedure DeallocateAlertLogStruct ;
@@ -5583,7 +5586,14 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   begin
     return AlertLogStruct.GetAlertLogName(ALERTLOG_BASE_ID) ;
-  end GetTestName ;
+  end function GetTestName ;
+
+  ------------------------------------------------------------
+  impure function GetTranscriptName return string is
+  ------------------------------------------------------------
+  begin
+    return GetTestName & ".log" ;
+  end function GetTranscriptName ;
 
   ------------------------------------------------------------
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string is
