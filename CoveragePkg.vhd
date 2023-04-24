@@ -4903,11 +4903,11 @@ package body CoveragePkg is
       write(buf, ' ') ;
       write(buf, CountModeType'pos(CovStructPtr(ID.ID).CountMode)) ;
       write(buf, ' ') ;
-      write(buf, CovStructPtr(ID.ID).ThresholdingEnable) ; -- boolean
+      write(buf, to_upper(boolean'image(CovStructPtr(ID.ID).ThresholdingEnable))) ; -- boolean
       write(buf, ' ') ;
       write(buf, CovStructPtr(ID.ID).CovTarget, RIGHT, 0, 6) ; -- Real
       write(buf, ' ') ;
-      write(buf, CovStructPtr(ID.ID).MergingEnable) ; -- boolean
+      write(buf, to_upper(boolean'image(CovStructPtr(ID.ID).MergingEnable))) ; -- boolean
       write(buf, ' ') ;
       writeline(CovDbFile, buf) ;
       GetMessageCount(CovStructPtr(ID.ID).CovMessage, CovMessageCount) ;
@@ -8981,7 +8981,8 @@ package body CoveragePkg is
     else
       for i in NewA'Range loop
         iCovBin(i) := (
-          BinVal   => (i => (NewA(i), NewA(i)) ),
+--          BinVal   => (i => (NewA(i), NewA(i)) ),
+          BinVal   => (1 => (NewA(i), NewA(i)) ),
           Action   => Action,
           Count    => 0,
           Weight   => Weight,
