@@ -1707,7 +1707,11 @@ package body ScoreboardGenericPkg is
       end if ;
       if HeadPointer(Index) = NULL then
         ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-        Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ;
+        if tag'length > 0 then 
+          Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
+        else
+          Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ;
+        end if ; 
         return ;
       end if ;
       PopCountVar(Index) := PopCountVar(Index) + 1 ;
