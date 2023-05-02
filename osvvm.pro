@@ -17,6 +17,9 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#     5/2023   2023.05    Added BurstCoveragePkg 
+#     4/2023   2023.04    Updated handling of OsvvmScriptSettingsPkg since it 
+#                         is now two pieces with deferred constants
 #     1/2023   2023.01    Added OsvvmScriptSettingsPkg and script to create it.
 #     8/2022   2022.08    Added MemorySupportPkg and MemoryGenericPkg
 #    10/2021   2021.10    Added ReportPkg
@@ -59,6 +62,8 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
 analyze TranscriptPkg.vhd
 analyze AlertLogPkg.vhd
 
+analyze TbUtilPkg.vhd
+
 analyze NameStorePkg.vhd
 
 analyze MessageListPkg.vhd
@@ -71,7 +76,7 @@ analyze RandomPkg.vhd
 # Likely will be replaced when VHDL-2019 support is good.
 analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
-# analyze CoveragePkg_new.vhd
+analyze BurstCoveragePkg.vhd
 
 
 analyze ResizePkg.vhd
@@ -93,8 +98,6 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze MemoryPkg_c.vhd
   analyze MemoryPkg_orig_c.vhd
 }
-
-analyze TbUtilPkg.vhd
 
 analyze ReportPkg.vhd
 analyze OsvvmTypesPkg.vhd
