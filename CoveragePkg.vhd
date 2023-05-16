@@ -481,6 +481,8 @@ package CoveragePkg is
   ------------------------------------------------------------
   impure function IsCovered     (ID : CoverageIDType; PercentCov : real ) return boolean ;
   impure function IsCovered     (ID : CoverageIDType) return boolean ;
+  impure function IsNotCovered  (ID : CoverageIDType; PercentCov : real ) return boolean ;
+  impure function IsNotCovered  (ID : CoverageIDType) return boolean ;
 
   impure function IsInitialized (ID : CoverageIDType) return boolean ;
 
@@ -8147,6 +8149,15 @@ package body CoveragePkg is
     return CoverageStore.IsCovered (ID) ;
   end function IsCovered ;
 
+  impure function IsNotCovered (ID : CoverageIDType; PercentCov : real ) return boolean is
+  begin
+    return not CoverageStore.IsCovered (ID, PercentCov) ;
+  end function IsNotCovered ;
+
+  impure function IsNotCovered (ID : CoverageIDType) return boolean is
+  begin
+    return not CoverageStore.IsCovered (ID) ;
+  end function IsNotCovered ;
 
   impure function IsInitialized (ID : CoverageIDType) return boolean is
   begin
