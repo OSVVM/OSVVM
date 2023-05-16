@@ -19,7 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    10/2022   2023.05    Initial revision. 
+--    05/2023   2023.05    Initial revision. 
 --
 --
 --  This file is part of OSVVM.
@@ -57,8 +57,12 @@ package BurstCoveragePkg is
       BeatDelayCov   : CoverageIDType ; 
   end record BurstCoverageIDType ; 
   
-  type BurstCoverageArrayType is array (integer range <>) of BurstCoverageIDType ;  
+  type BurstCoverageIDArrayType is array (integer range <>) of BurstCoverageIDType ;  
   
+  ------------------------------------------------------------
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  -- BurstCoverageIDType Overloading 
   ------------------------------------------------------------
   impure function NewID (
     Name                : String ;
@@ -87,6 +91,57 @@ package BurstCoveragePkg is
 
   ------------------------------------------------------------
   procedure DeallocateBins ( ID : BurstCoverageIDType ) ;
+  
+  ------------------------------------------------------------
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  -- BurstCoverageIDArrayType Overloading 
+  ------------------------------------------------------------
+  impure function NewID (
+    Name                : string ;
+    Size                : positive ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    Name1               : string                  := "" ;
+    Name2               : string                  := "" ;
+    Name3               : string                  := "" ;
+    Name4               : string                  := "" ;
+    Name5               : string                  := "" ;
+    Name6               : string                  := "" ;
+    Name7               : string                  := "" ;
+    Name8               : string                  := "" ;
+    Name9               : string                  := "" ;
+    Name10              : string                  := "" ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+  ) return BurstCoverageIDArrayType ;
+  
+  ------------------------------------------------------------
+  impure function NewBurstCoverage ( 
+    ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
+    Name                : String ;
+    Size                : positive ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    Name1               : string                  := "" ;
+    Name2               : string                  := "" ;
+    Name3               : string                  := "" ;
+    Name4               : string                  := "" ;
+    Name5               : string                  := "" ;
+    Name6               : string                  := "" ;
+    Name7               : string                  := "" ;
+    Name8               : string                  := "" ;
+    Name9               : string                  := "" ;
+    Name10              : string                  := "" ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+  ) return BurstCoverageIDArrayType ;
+
+  impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType ;
+  procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) ;
+  
+  ------------------------------------------------------------
+  procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) ;
     
 end package BurstCoveragePkg ;
 
@@ -98,6 +153,10 @@ package body BurstCoveragePkg is
 
   type BurstCoveragePType is protected
 
+    ------------------------------------------------------------
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    -- BurstCoverageIDType Overloading 
     ------------------------------------------------------------
     impure function NewID (
       Name                : String ;
@@ -127,6 +186,57 @@ package body BurstCoveragePkg is
     ------------------------------------------------------------
     procedure DeallocateBins ( ID : BurstCoverageIDType ) ;
     
+    ------------------------------------------------------------
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    -- BurstCoverageIDArrayType Overloading 
+    ------------------------------------------------------------
+    impure function NewID (
+      Name                : string ;
+      Size                : positive ;
+      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+      Name1               : string                  := "" ;
+      Name2               : string                  := "" ;
+      Name3               : string                  := "" ;
+      Name4               : string                  := "" ;
+      Name5               : string                  := "" ;
+      Name6               : string                  := "" ;
+      Name7               : string                  := "" ;
+      Name8               : string                  := "" ;
+      Name9               : string                  := "" ;
+      Name10              : string                  := "" ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+    ) return BurstCoverageIDArrayType ;
+    
+    ------------------------------------------------------------
+    impure function NewBurstCoverage ( 
+      ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
+      Name                : String ;
+      Size                : positive ;
+      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+      Name1               : string                  := "" ;
+      Name2               : string                  := "" ;
+      Name3               : string                  := "" ;
+      Name4               : string                  := "" ;
+      Name5               : string                  := "" ;
+      Name6               : string                  := "" ;
+      Name7               : string                  := "" ;
+      Name8               : string                  := "" ;
+      Name9               : string                  := "" ;
+      Name10              : string                  := "" ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+    ) return BurstCoverageIDArrayType ;
+
+    impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType ;
+    procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) ;
+    
+    ------------------------------------------------------------
+    procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) ;
+    
   end protected BurstCoveragePType ;
 
 
@@ -142,15 +252,6 @@ package body BurstCoveragePkg is
     type  SingletonArrayType    is array (integer range <>) of SingletonStructType ; 
     type  SingletonArrayPtrType is access SingletonArrayType ;
     
--- Only need when implementing a pt + singleton 
---    constant SINGLETON_STRUCT_INIT : SingletonStructType := (
---      BurstLengthCov  => (ID => -1),  
---      BurstDelayCov   => (ID => -1),  
---      BeatDelayCov    => (ID => -1),  
---      BurstLength     => -1
---    ) ;
---    variable SingletonTemplate : SingletonArrayType(1 to 1) := (1 => SINGLETON_STRUCT_INIT) ;
-
     variable SingletonArrayPtr : SingletonArrayPtrType ;   
     variable NumItems          : integer := 0 ; 
     constant MIN_NUM_ITEMS     : integer := 32 ; -- Min amount to resize array
@@ -218,6 +319,9 @@ package body BurstCoveragePkg is
 --    end function NewBurstCoverage ; 
 
     ------------------------------------------------------------
+    ------------------------------------------------------------
+    -- BurstCoverageIDType Overloading 
+    ------------------------------------------------------------
     impure function NewID (
     ------------------------------------------------------------
       Name                : String ;
@@ -247,10 +351,10 @@ package body BurstCoveragePkg is
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
         AlertIfNotEqual(ParentID, NameID, NumItems, "BurstCoveragePkg: in " & Name & ", Index of LocalNameStore /= CoverageID") ;
 
-        NewCoverageID := NewBurstCoverage( NumItems, Name, ParentID, ReportMode, Search, PrintParent ) ;
+        NewCoverageID := NewBurstCoverage( NumItems, Name, ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent ) ;
         SetBurstCoverage(NewCoverageID) ; 
         return NewCoverageID ; 
---        return NewBurstCoverage( NumItems, Name, ParentID, ReportMode, Search, PrintParent ) ;
+--        return NewBurstCoverage( NumItems, Name, ParentID, ReportMode, ResolveSearch, ResolvedPrintParent ) ;
       end if ;
     end function NewID ;
 
@@ -264,12 +368,20 @@ package body BurstCoveragePkg is
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return BurstCoverageIDType is
+      variable ResolvedSearch      : NameSearchType ;
+      variable ResolvedPrintParent : AlertLogPrintParentType ;
       variable NewCoverageID : BurstCoverageIDType ;
     begin
+      ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, Search) ;
+      ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, PrintParent) ;
+
       NewCoverageID.ID := ID ;
-      NewCoverageID.BurstLengthCov := NewID(Name & ifelse(Name'length > 0, " ", "") & "BurstLength", ParentID, ReportMode, Search, PrintParent) ; 
-      NewCoverageID.BurstDelayCov  := NewID(Name & ifelse(Name'length > 0, " ", "") & "BurstDelay",  ParentID, ReportMode, Search, PrintParent) ; 
-      NewCoverageID.BeatDelayCov   := NewID(Name & ifelse(Name'length > 0, " ", "") & "BeatDelay",   ParentID, ReportMode, Search, PrintParent) ; 
+      NewCoverageID.BurstLengthCov := NewID(Name & ifelse(Name'length > 0, " ", "") & "BurstLength", ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent) ; 
+      SetCovWeight(NewCoverageID.BurstLengthCov, 0) ; 
+      NewCoverageID.BurstDelayCov  := NewID(Name & ifelse(Name'length > 0, " ", "") & "BurstDelay",  ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent) ; 
+      SetCovWeight(NewCoverageID.BurstDelayCov, 0) ; 
+      NewCoverageID.BeatDelayCov   := NewID(Name & ifelse(Name'length > 0, " ", "") & "BeatDelay",   ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent) ; 
+      SetCovWeight(NewCoverageID.BeatDelayCov, 0) ; 
       return NewCoverageID ; 
     end function NewBurstCoverage ; 
 
@@ -327,7 +439,7 @@ package body BurstCoveragePkg is
       variable RandIndex : integer ; 
     begin 
       DelayCov  := GetRandBurstDelayCov( ID ) ;
-      RandIndex := GetRandIndex( DelayCov ) ; 
+      RandIndex := GetRandIndex( DelayCov, CovTargetPercent => 0.0 ) ;   -- CovTargetPercent = 0.0 selects constrained random 
       ICoverLast( DelayCov ) ;
       return GetPoint( DelayCov, RandIndex ) ; 
 --      return GetRandPoint( GetRandBurstDelayCov(ID), CoverLast => TRUE ) ; 
@@ -355,6 +467,131 @@ package body BurstCoveragePkg is
       DeallocateBins(SingletonArrayPtr(ID.ID).BurstDelayCov) ; 
       DeallocateBins(SingletonArrayPtr(ID.ID).BeatDelayCov) ; 
     end procedure DeallocateBins ;
+    
+    ------------------------------------------------------------
+    ------------------------------------------------------------
+    -- BurstCoverageIDArrayType Overloading 
+    ------------------------------------------------------------
+    impure function NewID (
+    ------------------------------------------------------------
+      Name                : string ;
+      Size                : positive ;
+      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+      Name1               : string                  := "" ;
+      Name2               : string                  := "" ;
+      Name3               : string                  := "" ;
+      Name4               : string                  := "" ;
+      Name5               : string                  := "" ;
+      Name6               : string                  := "" ;
+      Name7               : string                  := "" ;
+      Name8               : string                  := "" ;
+      Name9               : string                  := "" ;
+      Name10              : string                  := "" ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+    ) return BurstCoverageIDArrayType is
+      variable NewCoverageID : BurstCoverageIDArrayType(1 to Size) ;
+    begin
+      for i in NewCoverageID'range loop 
+        case i is 
+          when  1 => NewCoverageID(1)  := NewID(Name & ifelse(Name'length > 0 and Name1'length  > 0, " ", "") & Name1,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  2 => NewCoverageID(2)  := NewID(Name & ifelse(Name'length > 0 and Name2'length  > 0, " ", "") & Name2,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  3 => NewCoverageID(3)  := NewID(Name & ifelse(Name'length > 0 and Name3'length  > 0, " ", "") & Name3,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  4 => NewCoverageID(4)  := NewID(Name & ifelse(Name'length > 0 and Name4'length  > 0, " ", "") & Name4,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  5 => NewCoverageID(5)  := NewID(Name & ifelse(Name'length > 0 and Name5'length  > 0, " ", "") & Name5,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  6 => NewCoverageID(6)  := NewID(Name & ifelse(Name'length > 0 and Name6'length  > 0, " ", "") & Name6,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  7 => NewCoverageID(7)  := NewID(Name & ifelse(Name'length > 0 and Name7'length  > 0, " ", "") & Name7,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  8 => NewCoverageID(8)  := NewID(Name & ifelse(Name'length > 0 and Name8'length  > 0, " ", "") & Name8,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  9 => NewCoverageID(9)  := NewID(Name & ifelse(Name'length > 0 and Name9'length  > 0, " ", "") & Name9,  ParentID, ReportMode, Search, PrintParent) ; 
+          when 10 => NewCoverageID(10) := NewID(Name & ifelse(Name'length > 0 and Name10'length > 0, " ", "") & Name10, ParentID, ReportMode, Search, PrintParent) ; 
+          when others => NULL ; 
+        end case ; 
+      end loop ; 
+      return NewCoverageID ; 
+    end function NewID ;
+
+--!! todo
+--  --    -- insert an object into the data structure.   Updates the ID fields
+--      impure function NewID( ID : BurstCoverageIDArrayType ) return BurstCoverageIDArrayType is 
+--        variable NewCoverageID : BurstCoverageIDArrayType(ID'range) ;
+--      begin
+--        for i in ID'range loop 
+--          NewCoverageID(i) := NewID(ID(i)) ; 
+--        end loop ; 
+--        return NewCoverageID ; 
+--      end function NewID ; 
+
+
+    ------------------------------------------------------------
+    impure function NewBurstCoverage ( 
+    ------------------------------------------------------------
+      ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
+      Name                : String ;
+      Size                : positive ;
+      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+      Name1               : string                  := "" ;
+      Name2               : string                  := "" ;
+      Name3               : string                  := "" ;
+      Name4               : string                  := "" ;
+      Name5               : string                  := "" ;
+      Name6               : string                  := "" ;
+      Name7               : string                  := "" ;
+      Name8               : string                  := "" ;
+      Name9               : string                  := "" ;
+      Name10              : string                  := "" ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      Search              : NameSearchType          := PRIVATE_NAME ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+    ) return BurstCoverageIDArrayType is
+      variable NewCoverageID : BurstCoverageIDArrayType(1 to Size) ;
+    begin
+      for i in NewCoverageID'range loop 
+        case i is 
+          when  1 => NewCoverageID(1)  := NewBurstCoverage(ID,   Name & ifelse(Name'length > 0 and Name1'length  > 0, " ", "") & Name1,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  2 => NewCoverageID(2)  := NewBurstCoverage(ID+1, Name & ifelse(Name'length > 0 and Name2'length  > 0, " ", "") & Name2,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  3 => NewCoverageID(3)  := NewBurstCoverage(ID+2, Name & ifelse(Name'length > 0 and Name3'length  > 0, " ", "") & Name3,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  4 => NewCoverageID(4)  := NewBurstCoverage(ID+2, Name & ifelse(Name'length > 0 and Name4'length  > 0, " ", "") & Name4,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  5 => NewCoverageID(5)  := NewBurstCoverage(ID+4, Name & ifelse(Name'length > 0 and Name5'length  > 0, " ", "") & Name5,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  6 => NewCoverageID(6)  := NewBurstCoverage(ID+5, Name & ifelse(Name'length > 0 and Name6'length  > 0, " ", "") & Name6,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  7 => NewCoverageID(7)  := NewBurstCoverage(ID+6, Name & ifelse(Name'length > 0 and Name7'length  > 0, " ", "") & Name7,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  8 => NewCoverageID(8)  := NewBurstCoverage(ID+7, Name & ifelse(Name'length > 0 and Name8'length  > 0, " ", "") & Name8,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  9 => NewCoverageID(9)  := NewBurstCoverage(ID+8, Name & ifelse(Name'length > 0 and Name9'length  > 0, " ", "") & Name9,  ParentID, ReportMode, Search, PrintParent) ; 
+          when 10 => NewCoverageID(10) := NewBurstCoverage(ID+9, Name & ifelse(Name'length > 0 and Name10'length > 0, " ", "") & Name10, ParentID, ReportMode, Search, PrintParent) ; 
+          when others => NULL ; 
+        end case ; 
+      end loop ; 
+      return NewCoverageID ; 
+    end function NewBurstCoverage ; 
+
+    ------------------------------------------------------------
+    impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType is
+    ------------------------------------------------------------
+      variable NewCoverageID : BurstCoverageIDArrayType(0 to Size-1) ;
+    begin
+      for i in NewCoverageID'range loop 
+        NewCoverageID(i) := GetBurstCoverage(ID+i) ; 
+      end loop ; 
+      return NewCoverageID ; 
+    end function GetBurstCoverage ;
+    
+    ------------------------------------------------------------
+    procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) is
+    ------------------------------------------------------------
+    begin
+      for i in ID'range loop 
+        SetBurstCoverage(ID(i)) ; 
+      end loop ; 
+    end procedure SetBurstCoverage ;
+
+    ------------------------------------------------------------
+    procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) is
+    ------------------------------------------------------------
+    begin
+      for i in ID'range loop 
+        DeallocateBins(ID(i)) ; 
+      end loop ; 
+    end procedure DeallocateBins ;
   end protected body BurstCoveragePType ;
   
 
@@ -378,21 +615,21 @@ package body BurstCoveragePkg is
     return BurstCoverage.NewID (Name, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
-    ------------------------------------------------------------
-    impure function NewBurstCoverage ( 
-    ------------------------------------------------------------
-      ID                  : Integer ;
-      Name                : String ;
-      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
-      Search              : NameSearchType          := PRIVATE_NAME ;
-      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-    ) return BurstCoverageIDType is
-    begin
-      return BurstCoverage.NewBurstCoverage (ID, Name, ParentID, ReportMode, Search, PrintParent) ;
-    end function NewBurstCoverage ; 
+  ------------------------------------------------------------
+  impure function NewBurstCoverage ( 
+  ------------------------------------------------------------
+    ID                  : Integer ;
+    Name                : String ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+  ) return BurstCoverageIDType is
+  begin
+    return BurstCoverage.NewBurstCoverage (ID, Name, ParentID, ReportMode, Search, PrintParent) ;
+  end function NewBurstCoverage ; 
 
-    ------------------------------------------------------------
+  ------------------------------------------------------------
   impure function GetBurstCoverage ( ID : integer ) return BurstCoverageIDType is
   ------------------------------------------------------------
   begin
@@ -427,4 +664,85 @@ package body BurstCoveragePkg is
     BurstCoverage.DeallocateBins(ID) ;
   end procedure DeallocateBins ;
   
+  ------------------------------------------------------------
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  -- BurstCoverageIDArrayType Overloading 
+  ------------------------------------------------------------
+  impure function NewID (
+  ------------------------------------------------------------
+    Name                : string ;
+    Size                : positive ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    Name1               : string                  := "" ;
+    Name2               : string                  := "" ;
+    Name3               : string                  := "" ;
+    Name4               : string                  := "" ;
+    Name5               : string                  := "" ;
+    Name6               : string                  := "" ;
+    Name7               : string                  := "" ;
+    Name8               : string                  := "" ;
+    Name9               : string                  := "" ;
+    Name10              : string                  := "" ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+  ) return BurstCoverageIDArrayType is
+  begin
+    return BurstCoverage.NewID (
+      Name, Size, ParentID, 
+      Name1, Name2, Name3, Name4, Name5, Name6, Name7, Name8, Name9, Name10, 
+      ReportMode, Search, PrintParent) ;
+  end function NewID ;
+  
+  ------------------------------------------------------------
+  impure function NewBurstCoverage ( 
+  ------------------------------------------------------------
+    ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
+    Name                : String ;
+    Size                : positive ;
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    Name1               : string                  := "" ;
+    Name2               : string                  := "" ;
+    Name3               : string                  := "" ;
+    Name4               : string                  := "" ;
+    Name5               : string                  := "" ;
+    Name6               : string                  := "" ;
+    Name7               : string                  := "" ;
+    Name8               : string                  := "" ;
+    Name9               : string                  := "" ;
+    Name10              : string                  := "" ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+  ) return BurstCoverageIDArrayType is
+  begin
+    return BurstCoverage.NewBurstCoverage (
+      ID, Name, Size, ParentID, 
+      Name1, Name2, Name3, Name4, Name5, Name6, Name7, Name8, Name9, Name10, 
+      ReportMode, Search, PrintParent) ;
+  end function NewBurstCoverage ; 
+
+  ------------------------------------------------------------
+  impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType is
+  ------------------------------------------------------------
+  begin
+    return BurstCoverage.GetBurstCoverage ( ID, Size ) ;
+  end function GetBurstCoverage ;
+
+  ------------------------------------------------------------
+  procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) is
+  ------------------------------------------------------------
+  begin
+    BurstCoverage.SetBurstCoverage ( ID ) ;
+  end procedure SetBurstCoverage ;
+
+  ------------------------------------------------------------
+  procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) is
+  ------------------------------------------------------------
+  begin
+    BurstCoverage.DeallocateBins(ID) ;
+  end procedure DeallocateBins ;
+
+
 end package body BurstCoveragePkg ;
