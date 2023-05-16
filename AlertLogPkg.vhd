@@ -1829,7 +1829,7 @@ package body AlertLogPkg is
             RequirementsPassed := 0 ;
             RequirementsGoal   := 0 ;
           end if ;
-          if AlertLogPtr(AlertLogID).ReportMode /= DISABLED then
+          if AlertLogPtr(CurID).ReportMode /= DISABLED then
             WriteOneAlertYaml(
               TestFile             => TestFile,
               AlertLogID           => CurID,
