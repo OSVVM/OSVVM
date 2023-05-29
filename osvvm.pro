@@ -76,7 +76,7 @@ analyze RandomPkg.vhd
 # Likely will be replaced when VHDL-2019 support is good.
 analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
-analyze BurstCoveragePkg.vhd
+analyze DelayCoveragePkg.vhd
 
 
 analyze ResizePkg.vhd

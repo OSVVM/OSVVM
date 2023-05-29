@@ -1,6 +1,6 @@
 --
---  File Name:         BurstCoveragePkg.vhd
---  Design Unit Name:  BurstCoveragePkg
+--  File Name:         DelayCoveragePkg.vhd
+--  Design Unit Name:  DelayCoveragePkg
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -48,21 +48,21 @@ use work.CoveragePkg.all ;
 use work.NameStorePkg.all ;
 use work.OsvvmScriptSettingsPkg.all ;
 
-package BurstCoveragePkg is
+package DelayCoveragePkg is
  
-  type BurstCoverageIDType is record
+  type DelayCoverageIDType is record
       ID             : integer_max ;
       BurstLengthCov : CoverageIDType ; 
       BurstDelayCov  : CoverageIDType ; 
       BeatDelayCov   : CoverageIDType ; 
-  end record BurstCoverageIDType ; 
+  end record DelayCoverageIDType ; 
   
-  type BurstCoverageIDArrayType is array (integer range <>) of BurstCoverageIDType ;  
+  type DelayCoverageIDArrayType is array (integer range <>) of DelayCoverageIDType ;  
   
   ------------------------------------------------------------
   --- ///////////////////////////////////////////////////////////////////////////
   ------------------------------------------------------------
-  -- BurstCoverageIDType Overloading 
+  -- DelayCoverageIDType Overloading 
   ------------------------------------------------------------
   impure function NewID (
     Name                : String ;
@@ -70,32 +70,36 @@ package BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-  ) return BurstCoverageIDType ;
+  ) return DelayCoverageIDType ;
   
   ------------------------------------------------------------
-  impure function NewBurstCoverage ( 
+  impure function NewDelayCoverage ( 
     ID                  : Integer ;
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-  ) return BurstCoverageIDType ;
+  ) return DelayCoverageIDType ;
 
-  impure function GetBurstCoverage(ID : integer) return BurstCoverageIDType ;
-  procedure SetBurstCoverage ( ID : BurstCoverageIDType ) ;
+  impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
+  procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
   
   ------------------------------------------------------------
-  impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer ;
-  impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer_vector ;
+  impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer ;
+  impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer_vector ;
 
   ------------------------------------------------------------
-  procedure DeallocateBins ( ID : BurstCoverageIDType ) ;
+  procedure DeallocateBins ( ID : DelayCoverageIDType ) ;
   
   ------------------------------------------------------------
   --- ///////////////////////////////////////////////////////////////////////////
   ------------------------------------------------------------
-  -- BurstCoverageIDArrayType Overloading 
+------------------------------------------------------------
+-- The following items currently in ALPHA development mode
+-- They may be rejected for alternative methods
+------------------------------------------------------------
+  -- DelayCoverageIDArrayType Overloading 
   ------------------------------------------------------------
   impure function NewID (
     Name                : string ;
@@ -114,10 +118,10 @@ package BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-  ) return BurstCoverageIDArrayType ;
+  ) return DelayCoverageIDArrayType ;
   
   ------------------------------------------------------------
-  impure function NewBurstCoverage ( 
+  impure function NewDelayCoverage ( 
     ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
     Name                : String ;
     Size                : positive ;
@@ -135,28 +139,42 @@ package BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-  ) return BurstCoverageIDArrayType ;
+  ) return DelayCoverageIDArrayType ;
 
-  impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType ;
-  procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) ;
+  impure function GetDelayCoverage(ID : integer;  Size : positive ) return DelayCoverageIDArrayType ;
+  procedure SetDelayCoverage ( ID : DelayCoverageIDArrayType ) ;
   
   ------------------------------------------------------------
-  procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) ;
+  procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) ;
     
-end package BurstCoveragePkg ;
+    
+  -- Backward compatible with Beta Dev names
+  subtype BurstCoverageIDType is DelayCoverageIDType ; 
+  subtype BurstCoverageIDArrayType is DelayCoverageIDArrayType ; 
+
+  alias NewBurstCoverage is NewDelayCoverage [
+    Integer, String, AlertLogIDType, AlertLogReportModeType, NameSearchType, AlertLogPrintParentType return DelayCoverageIDType] ;
+
+  alias GetBurstCoverage is GetDelayCoverage[integer return DelayCoverageIDType] ;
+  alias SetBurstCoverage is SetDelayCoverage[DelayCoverageIDType] ;
+  
+  alias GetRandBurstDelay is GetRandDelay [DelayCoverageIDType return integer] ;
+  alias GetRandBurstDelay is GetRandDelay [DelayCoverageIDType return integer_vector] ;
+
+end package DelayCoveragePkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 
-package body BurstCoveragePkg is
+package body DelayCoveragePkg is
 
-  type BurstCoveragePType is protected
+  type DelayCoveragePType is protected
 
     ------------------------------------------------------------
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    -- BurstCoverageIDType Overloading 
+    -- DelayCoverageIDType Overloading 
     ------------------------------------------------------------
     impure function NewID (
       Name                : String ;
@@ -164,32 +182,32 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-    ) return BurstCoverageIDType ;
+    ) return DelayCoverageIDType ;
 
     ------------------------------------------------------------
-    impure function NewBurstCoverage ( 
+    impure function NewDelayCoverage ( 
       ID                  : Integer ;
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-    ) return BurstCoverageIDType ;
+    ) return DelayCoverageIDType ;
 
-    impure function GetBurstCoverage(ID : integer) return BurstCoverageIDType ;
-    procedure SetBurstCoverage ( ID : BurstCoverageIDType ) ;
+    impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
+    procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
     
     ------------------------------------------------------------
-    impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer ;
-    impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer_vector ;
+    impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer ;
+    impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer_vector ;
     
     ------------------------------------------------------------
-    procedure DeallocateBins ( ID : BurstCoverageIDType ) ;
+    procedure DeallocateBins ( ID : DelayCoverageIDType ) ;
     
     ------------------------------------------------------------
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    -- BurstCoverageIDArrayType Overloading 
+    -- DelayCoverageIDArrayType Overloading 
     ------------------------------------------------------------
     impure function NewID (
       Name                : string ;
@@ -208,10 +226,10 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-    ) return BurstCoverageIDArrayType ;
+    ) return DelayCoverageIDArrayType ;
     
     ------------------------------------------------------------
-    impure function NewBurstCoverage ( 
+    impure function NewDelayCoverage ( 
       ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
       Name                : String ;
       Size                : positive ;
@@ -229,18 +247,18 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-    ) return BurstCoverageIDArrayType ;
+    ) return DelayCoverageIDArrayType ;
 
-    impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType ;
-    procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) ;
+    impure function GetDelayCoverage(ID : integer;  Size : positive ) return DelayCoverageIDArrayType ;
+    procedure SetDelayCoverage ( ID : DelayCoverageIDArrayType ) ;
     
     ------------------------------------------------------------
-    procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) ;
+    procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) ;
     
-  end protected BurstCoveragePType ;
+  end protected DelayCoveragePType ;
 
 
-  type BurstCoveragePType is protected body
+  type DelayCoveragePType is protected body
   
     type SingletonStructType is record
       BurstLengthCov    : CoverageIDType ; 
@@ -300,7 +318,7 @@ package body BurstCoveragePkg is
 
 --    ------------------------------------------------------------
 --    -- PT Local
---    impure function NewBurstCoverage ( 
+--    impure function NewDelayCoverage ( 
 --    ------------------------------------------------------------
 --      ID                  : Integer ;
 --      Name                : String ;
@@ -308,19 +326,19 @@ package body BurstCoveragePkg is
 --      ReportMode          : AlertLogReportModeType  := ENABLED ;
 --      Search              : NameSearchType          := PRIVATE_NAME ;
 --      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
---    ) return BurstCoverageIDType is
---      variable NewCoverageID : BurstCoverageIDType ;
+--    ) return DelayCoverageIDType is
+--      variable NewCoverageID : DelayCoverageIDType ;
 --    begin
 --      SingletonArrayPtr(ID).BurstLengthCov := NewID(Name & ifelse(Name'length > 0, " ", "") & "BurstLength", ParentID, ReportMode, Search, PrintParent) ; 
 --      SingletonArrayPtr(ID).BurstDelayCov  := NewID(Name & ifelse(Name'length > 0, " ", "") & "BurstDelay",  ParentID, ReportMode, Search, PrintParent) ; 
 --      SingletonArrayPtr(ID).BeatDelayCov   := NewID(Name & ifelse(Name'length > 0, " ", "") & "BeatDelay",   ParentID, ReportMode, Search, PrintParent) ; 
 --      SingletonArrayPtr(ID).BurstLength    := 0 ; 
---      return GetBurstCoverage( ID ) ; 
---    end function NewBurstCoverage ; 
+--      return GetDelayCoverage( ID ) ; 
+--    end function NewDelayCoverage ; 
 
     ------------------------------------------------------------
     ------------------------------------------------------------
-    -- BurstCoverageIDType Overloading 
+    -- DelayCoverageIDType Overloading 
     ------------------------------------------------------------
     impure function NewID (
     ------------------------------------------------------------
@@ -329,11 +347,11 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-    ) return BurstCoverageIDType is
+    ) return DelayCoverageIDType is
       variable NameID              : integer ;
       variable ResolvedSearch      : NameSearchType ;
       variable ResolvedPrintParent : AlertLogPrintParentType ;
-      variable NewCoverageID : BurstCoverageIDType ;
+      variable NewCoverageID : DelayCoverageIDType ;
     begin
       ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, Search) ;
       ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, PrintParent) ;
@@ -342,24 +360,24 @@ package body BurstCoveragePkg is
 
       if NameID /= ID_NOT_FOUND.ID then
         -- Get the current existing information
-        return GetBurstCoverage( NameID ) ;
+        return GetDelayCoverage( NameID ) ;
       else
         -- Add New Coverage Model to Structure
         GrowNumberItems(SingletonArrayPtr, NumItems, 1, MIN_NUM_ITEMS) ;
 
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
-        AlertIfNotEqual(ParentID, NameID, NumItems, "BurstCoveragePkg: in " & Name & ", Index of LocalNameStore /= CoverageID") ;
+        AlertIfNotEqual(ParentID, NameID, NumItems, "DelayCoveragePkg: in " & Name & ", Index of LocalNameStore /= CoverageID") ;
 
-        NewCoverageID := NewBurstCoverage( NumItems, Name, ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent ) ;
-        SetBurstCoverage(NewCoverageID) ; 
+        NewCoverageID := NewDelayCoverage( NumItems, Name, ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent ) ;
+        SetDelayCoverage(NewCoverageID) ; 
         return NewCoverageID ; 
---        return NewBurstCoverage( NumItems, Name, ParentID, ReportMode, ResolveSearch, ResolvedPrintParent ) ;
+--        return NewDelayCoverage( NumItems, Name, ParentID, ReportMode, ResolveSearch, ResolvedPrintParent ) ;
       end if ;
     end function NewID ;
 
     ------------------------------------------------------------
-    impure function NewBurstCoverage ( 
+    impure function NewDelayCoverage ( 
     ------------------------------------------------------------
       ID                  : Integer ;
       Name                : String ;
@@ -367,10 +385,10 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-    ) return BurstCoverageIDType is
+    ) return DelayCoverageIDType is
       variable ResolvedSearch      : NameSearchType ;
       variable ResolvedPrintParent : AlertLogPrintParentType ;
-      variable NewCoverageID : BurstCoverageIDType ;
+      variable NewCoverageID : DelayCoverageIDType ;
     begin
       ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, Search) ;
       ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_COVERAGE_ALERTLOG_ID, PrintParent) ;
@@ -383,41 +401,41 @@ package body BurstCoveragePkg is
       NewCoverageID.BeatDelayCov   := NewID(Name & ifelse(Name'length > 0, " ", "") & "BeatDelay",   ParentID, ReportMode, ResolvedSearch, ResolvedPrintParent) ; 
       SetCovWeight(NewCoverageID.BeatDelayCov, 0) ; 
       return NewCoverageID ; 
-    end function NewBurstCoverage ; 
+    end function NewDelayCoverage ; 
 
     ------------------------------------------------------------
-    impure function GetBurstCoverage ( ID : integer ) return BurstCoverageIDType is
+    impure function GetDelayCoverage ( ID : integer ) return DelayCoverageIDType is
     ------------------------------------------------------------
-      variable NewCoverageID : BurstCoverageIDType ;
+      variable NewCoverageID : DelayCoverageIDType ;
     begin
       NewCoverageID.ID             := ID ; 
       NewCoverageID.BurstLengthCov := SingletonArrayPtr(ID).BurstLengthCov ; 
       NewCoverageID.BurstDelayCov  := SingletonArrayPtr(ID).BurstDelayCov  ; 
       NewCoverageID.BeatDelayCov   := SingletonArrayPtr(ID).BeatDelayCov   ; 
       return NewCoverageID ; 
-    end function GetBurstCoverage ;
+    end function GetDelayCoverage ;
     
     ------------------------------------------------------------
-    procedure SetBurstCoverage ( ID : BurstCoverageIDType ) is
+    procedure SetDelayCoverage ( ID : DelayCoverageIDType ) is
     ------------------------------------------------------------
     begin
       SingletonArrayPtr(ID.ID).BurstLengthCov := ID.BurstLengthCov ; 
       SingletonArrayPtr(ID.ID).BurstDelayCov  := ID.BurstDelayCov  ; 
       SingletonArrayPtr(ID.ID).BeatDelayCov   := ID.BeatDelayCov   ; 
       SingletonArrayPtr(ID.ID).BurstLength    := 0 ; 
-    end procedure SetBurstCoverage ;
+    end procedure SetDelayCoverage ;
 
 
 --    ------------------------------------------------------------
---    impure function GetBurstCoverage ( ID : BurstCoverageIDType ) return BurstCoverageIDType is
+--    impure function GetDelayCoverage ( ID : DelayCoverageIDType ) return DelayCoverageIDType is
 --    ------------------------------------------------------------
 --    begin
---      return GetBurstCoverage(ID.ID) ; 
---    end function GetBurstCoverage ;
+--      return GetDelayCoverage(ID.ID) ; 
+--    end function GetDelayCoverage ;
 
     ------------------------------------------------------------
     -- PT Local
-    impure function GetRandBurstDelayCov ( ID : BurstCoverageIDType ) return CoverageIDType is
+    impure function GetRandDelayCov ( ID : DelayCoverageIDType ) return CoverageIDType is
     ------------------------------------------------------------
       variable DelayCov : CoverageIDType ; 
     begin 
@@ -430,36 +448,36 @@ package body BurstCoveragePkg is
       end if ; 
       SingletonArrayPtr(ID.ID).BurstLength := SingletonArrayPtr(ID.ID).BurstLength - 1; 
       return DelayCov ; 
-    end function GetRandBurstDelayCov ; 
+    end function GetRandDelayCov ; 
 
     ------------------------------------------------------------
-    impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer is
+    impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer is
     ------------------------------------------------------------
       variable DelayCov  : CoverageIDType ;
       variable RandIndex : integer ; 
     begin 
-      DelayCov  := GetRandBurstDelayCov( ID ) ;
+      DelayCov  := GetRandDelayCov( ID ) ;
       RandIndex := GetRandIndex( DelayCov, CovTargetPercent => 0.0 ) ;   -- CovTargetPercent = 0.0 selects constrained random 
       ICoverLast( DelayCov ) ;
       return GetPoint( DelayCov, RandIndex ) ; 
---      return GetRandPoint( GetRandBurstDelayCov(ID), CoverLast => TRUE ) ; 
-    end function GetRandBurstDelay ; 
+--      return GetRandPoint( GetRandDelayCov(ID), CoverLast => TRUE ) ; 
+    end function GetRandDelay ; 
     
     ------------------------------------------------------------
-    impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer_vector is
+    impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer_vector is
     ------------------------------------------------------------
       variable DelayCov  : CoverageIDType ;
       variable RandIndex : integer ; 
     begin 
-      DelayCov  := GetRandBurstDelayCov( ID ) ;
+      DelayCov  := GetRandDelayCov( ID ) ;
       RandIndex := GetRandIndex( DelayCov ) ; 
       ICoverLast( DelayCov ) ;
       return GetPoint( DelayCov, RandIndex ) ; 
---      return GetRandPoint( GetRandBurstDelayCov(ID), CoverLast => TRUE ) ; 
-    end function GetRandBurstDelay ; 
+--      return GetRandPoint( GetRandDelayCov(ID), CoverLast => TRUE ) ; 
+    end function GetRandDelay ; 
 
     ------------------------------------------------------------
-    procedure DeallocateBins ( ID : BurstCoverageIDType ) is
+    procedure DeallocateBins ( ID : DelayCoverageIDType ) is
     ------------------------------------------------------------
     begin
       SingletonArrayPtr(ID.ID).BurstLength := 0 ; 
@@ -470,7 +488,7 @@ package body BurstCoveragePkg is
     
     ------------------------------------------------------------
     ------------------------------------------------------------
-    -- BurstCoverageIDArrayType Overloading 
+    -- DelayCoverageIDArrayType Overloading 
     ------------------------------------------------------------
     impure function NewID (
     ------------------------------------------------------------
@@ -490,8 +508,8 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-    ) return BurstCoverageIDArrayType is
-      variable NewCoverageID : BurstCoverageIDArrayType(1 to Size) ;
+    ) return DelayCoverageIDArrayType is
+      variable NewCoverageID : DelayCoverageIDArrayType(1 to Size) ;
     begin
       for i in NewCoverageID'range loop 
         case i is 
@@ -513,8 +531,8 @@ package body BurstCoveragePkg is
 
 --!! todo
 --  --    -- insert an object into the data structure.   Updates the ID fields
---      impure function NewID( ID : BurstCoverageIDArrayType ) return BurstCoverageIDArrayType is 
---        variable NewCoverageID : BurstCoverageIDArrayType(ID'range) ;
+--      impure function NewID( ID : DelayCoverageIDArrayType ) return DelayCoverageIDArrayType is 
+--        variable NewCoverageID : DelayCoverageIDArrayType(ID'range) ;
 --      begin
 --        for i in ID'range loop 
 --          NewCoverageID(i) := NewID(ID(i)) ; 
@@ -524,7 +542,7 @@ package body BurstCoveragePkg is
 
 
     ------------------------------------------------------------
-    impure function NewBurstCoverage ( 
+    impure function NewDelayCoverage ( 
     ------------------------------------------------------------
       ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
       Name                : String ;
@@ -543,56 +561,56 @@ package body BurstCoveragePkg is
       ReportMode          : AlertLogReportModeType  := ENABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-    ) return BurstCoverageIDArrayType is
-      variable NewCoverageID : BurstCoverageIDArrayType(1 to Size) ;
+    ) return DelayCoverageIDArrayType is
+      variable NewCoverageID : DelayCoverageIDArrayType(1 to Size) ;
     begin
       for i in NewCoverageID'range loop 
         case i is 
-          when  1 => NewCoverageID(1)  := NewBurstCoverage(ID,   Name & ifelse(Name'length > 0 and Name1'length  > 0, " ", "") & Name1,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  2 => NewCoverageID(2)  := NewBurstCoverage(ID+1, Name & ifelse(Name'length > 0 and Name2'length  > 0, " ", "") & Name2,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  3 => NewCoverageID(3)  := NewBurstCoverage(ID+2, Name & ifelse(Name'length > 0 and Name3'length  > 0, " ", "") & Name3,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  4 => NewCoverageID(4)  := NewBurstCoverage(ID+2, Name & ifelse(Name'length > 0 and Name4'length  > 0, " ", "") & Name4,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  5 => NewCoverageID(5)  := NewBurstCoverage(ID+4, Name & ifelse(Name'length > 0 and Name5'length  > 0, " ", "") & Name5,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  6 => NewCoverageID(6)  := NewBurstCoverage(ID+5, Name & ifelse(Name'length > 0 and Name6'length  > 0, " ", "") & Name6,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  7 => NewCoverageID(7)  := NewBurstCoverage(ID+6, Name & ifelse(Name'length > 0 and Name7'length  > 0, " ", "") & Name7,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  8 => NewCoverageID(8)  := NewBurstCoverage(ID+7, Name & ifelse(Name'length > 0 and Name8'length  > 0, " ", "") & Name8,  ParentID, ReportMode, Search, PrintParent) ; 
-          when  9 => NewCoverageID(9)  := NewBurstCoverage(ID+8, Name & ifelse(Name'length > 0 and Name9'length  > 0, " ", "") & Name9,  ParentID, ReportMode, Search, PrintParent) ; 
-          when 10 => NewCoverageID(10) := NewBurstCoverage(ID+9, Name & ifelse(Name'length > 0 and Name10'length > 0, " ", "") & Name10, ParentID, ReportMode, Search, PrintParent) ; 
+          when  1 => NewCoverageID(1)  := NewDelayCoverage(ID,   Name & ifelse(Name'length > 0 and Name1'length  > 0, " ", "") & Name1,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  2 => NewCoverageID(2)  := NewDelayCoverage(ID+1, Name & ifelse(Name'length > 0 and Name2'length  > 0, " ", "") & Name2,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  3 => NewCoverageID(3)  := NewDelayCoverage(ID+2, Name & ifelse(Name'length > 0 and Name3'length  > 0, " ", "") & Name3,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  4 => NewCoverageID(4)  := NewDelayCoverage(ID+2, Name & ifelse(Name'length > 0 and Name4'length  > 0, " ", "") & Name4,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  5 => NewCoverageID(5)  := NewDelayCoverage(ID+4, Name & ifelse(Name'length > 0 and Name5'length  > 0, " ", "") & Name5,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  6 => NewCoverageID(6)  := NewDelayCoverage(ID+5, Name & ifelse(Name'length > 0 and Name6'length  > 0, " ", "") & Name6,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  7 => NewCoverageID(7)  := NewDelayCoverage(ID+6, Name & ifelse(Name'length > 0 and Name7'length  > 0, " ", "") & Name7,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  8 => NewCoverageID(8)  := NewDelayCoverage(ID+7, Name & ifelse(Name'length > 0 and Name8'length  > 0, " ", "") & Name8,  ParentID, ReportMode, Search, PrintParent) ; 
+          when  9 => NewCoverageID(9)  := NewDelayCoverage(ID+8, Name & ifelse(Name'length > 0 and Name9'length  > 0, " ", "") & Name9,  ParentID, ReportMode, Search, PrintParent) ; 
+          when 10 => NewCoverageID(10) := NewDelayCoverage(ID+9, Name & ifelse(Name'length > 0 and Name10'length > 0, " ", "") & Name10, ParentID, ReportMode, Search, PrintParent) ; 
           when others => NULL ; 
         end case ; 
       end loop ; 
       return NewCoverageID ; 
-    end function NewBurstCoverage ; 
+    end function NewDelayCoverage ; 
 
     ------------------------------------------------------------
-    impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType is
+    impure function GetDelayCoverage(ID : integer;  Size : positive ) return DelayCoverageIDArrayType is
     ------------------------------------------------------------
-      variable NewCoverageID : BurstCoverageIDArrayType(0 to Size-1) ;
+      variable NewCoverageID : DelayCoverageIDArrayType(0 to Size-1) ;
     begin
       for i in NewCoverageID'range loop 
-        NewCoverageID(i) := GetBurstCoverage(ID+i) ; 
+        NewCoverageID(i) := GetDelayCoverage(ID+i) ; 
       end loop ; 
       return NewCoverageID ; 
-    end function GetBurstCoverage ;
+    end function GetDelayCoverage ;
     
     ------------------------------------------------------------
-    procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) is
+    procedure SetDelayCoverage ( ID : DelayCoverageIDArrayType ) is
     ------------------------------------------------------------
     begin
       for i in ID'range loop 
-        SetBurstCoverage(ID(i)) ; 
+        SetDelayCoverage(ID(i)) ; 
       end loop ; 
-    end procedure SetBurstCoverage ;
+    end procedure SetDelayCoverage ;
 
     ------------------------------------------------------------
-    procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) is
+    procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) is
     ------------------------------------------------------------
     begin
       for i in ID'range loop 
         DeallocateBins(ID(i)) ; 
       end loop ; 
     end procedure DeallocateBins ;
-  end protected body BurstCoveragePType ;
+  end protected body DelayCoveragePType ;
   
 
 -- /////////////////////////////////////////
@@ -600,7 +618,7 @@ package body BurstCoveragePkg is
 -- Singleton Data Structure
 -- /////////////////////////////////////////
 -- /////////////////////////////////////////
-  shared variable BurstCoverage : BurstCoveragePType ; 
+  shared variable DelayCoverage : DelayCoveragePType ; 
   
   ------------------------------------------------------------
   impure function NewID (
@@ -610,13 +628,13 @@ package body BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-  ) return BurstCoverageIDType is
+  ) return DelayCoverageIDType is
   begin
-    return BurstCoverage.NewID (Name, ParentID, ReportMode, Search, PrintParent) ;
+    return DelayCoverage.NewID (Name, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
   ------------------------------------------------------------
-  impure function NewBurstCoverage ( 
+  impure function NewDelayCoverage ( 
   ------------------------------------------------------------
     ID                  : Integer ;
     Name                : String ;
@@ -624,50 +642,50 @@ package body BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-  ) return BurstCoverageIDType is
+  ) return DelayCoverageIDType is
   begin
-    return BurstCoverage.NewBurstCoverage (ID, Name, ParentID, ReportMode, Search, PrintParent) ;
-  end function NewBurstCoverage ; 
+    return DelayCoverage.NewDelayCoverage (ID, Name, ParentID, ReportMode, Search, PrintParent) ;
+  end function NewDelayCoverage ; 
 
   ------------------------------------------------------------
-  impure function GetBurstCoverage ( ID : integer ) return BurstCoverageIDType is
+  impure function GetDelayCoverage ( ID : integer ) return DelayCoverageIDType is
   ------------------------------------------------------------
   begin
-    return BurstCoverage.GetBurstCoverage ( ID ) ;
-  end function GetBurstCoverage ;
+    return DelayCoverage.GetDelayCoverage ( ID ) ;
+  end function GetDelayCoverage ;
 
   ------------------------------------------------------------
-  procedure SetBurstCoverage ( ID : BurstCoverageIDType ) is
+  procedure SetDelayCoverage ( ID : DelayCoverageIDType ) is
   ------------------------------------------------------------
   begin
-    BurstCoverage.SetBurstCoverage ( ID ) ;
-  end procedure SetBurstCoverage ;
+    DelayCoverage.SetDelayCoverage ( ID ) ;
+  end procedure SetDelayCoverage ;
 
   ------------------------------------------------------------
-  impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer is
+  impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer is
   ------------------------------------------------------------
   begin
-    return BurstCoverage.GetRandBurstDelay(ID) ;
-  end function GetRandBurstDelay ;
+    return DelayCoverage.GetRandDelay(ID) ;
+  end function GetRandDelay ;
 
   ------------------------------------------------------------
-  impure function GetRandBurstDelay ( ID : BurstCoverageIDType ) return integer_vector is
+  impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer_vector is
   ------------------------------------------------------------
   begin
-    return BurstCoverage.GetRandBurstDelay(ID) ;
-  end function GetRandBurstDelay ;
+    return DelayCoverage.GetRandDelay(ID) ;
+  end function GetRandDelay ;
 
   ------------------------------------------------------------
-  procedure DeallocateBins(ID : BurstCoverageIDType) is
+  procedure DeallocateBins(ID : DelayCoverageIDType) is
   ------------------------------------------------------------
   begin
-    BurstCoverage.DeallocateBins(ID) ;
+    DelayCoverage.DeallocateBins(ID) ;
   end procedure DeallocateBins ;
   
   ------------------------------------------------------------
   --- ///////////////////////////////////////////////////////////////////////////
   ------------------------------------------------------------
-  -- BurstCoverageIDArrayType Overloading 
+  -- DelayCoverageIDArrayType Overloading 
   ------------------------------------------------------------
   impure function NewID (
   ------------------------------------------------------------
@@ -687,16 +705,16 @@ package body BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-  ) return BurstCoverageIDArrayType is
+  ) return DelayCoverageIDArrayType is
   begin
-    return BurstCoverage.NewID (
+    return DelayCoverage.NewID (
       Name, Size, ParentID, 
       Name1, Name2, Name3, Name4, Name5, Name6, Name7, Name8, Name9, Name10, 
       ReportMode, Search, PrintParent) ;
   end function NewID ;
   
   ------------------------------------------------------------
-  impure function NewBurstCoverage ( 
+  impure function NewDelayCoverage ( 
   ------------------------------------------------------------
     ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
     Name                : String ;
@@ -715,34 +733,34 @@ package body BurstCoveragePkg is
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-  ) return BurstCoverageIDArrayType is
+  ) return DelayCoverageIDArrayType is
   begin
-    return BurstCoverage.NewBurstCoverage (
+    return DelayCoverage.NewDelayCoverage (
       ID, Name, Size, ParentID, 
       Name1, Name2, Name3, Name4, Name5, Name6, Name7, Name8, Name9, Name10, 
       ReportMode, Search, PrintParent) ;
-  end function NewBurstCoverage ; 
+  end function NewDelayCoverage ; 
 
   ------------------------------------------------------------
-  impure function GetBurstCoverage(ID : integer;  Size : positive ) return BurstCoverageIDArrayType is
+  impure function GetDelayCoverage(ID : integer;  Size : positive ) return DelayCoverageIDArrayType is
   ------------------------------------------------------------
   begin
-    return BurstCoverage.GetBurstCoverage ( ID, Size ) ;
-  end function GetBurstCoverage ;
+    return DelayCoverage.GetDelayCoverage ( ID, Size ) ;
+  end function GetDelayCoverage ;
 
   ------------------------------------------------------------
-  procedure SetBurstCoverage ( ID : BurstCoverageIDArrayType ) is
+  procedure SetDelayCoverage ( ID : DelayCoverageIDArrayType ) is
   ------------------------------------------------------------
   begin
-    BurstCoverage.SetBurstCoverage ( ID ) ;
-  end procedure SetBurstCoverage ;
+    DelayCoverage.SetDelayCoverage ( ID ) ;
+  end procedure SetDelayCoverage ;
 
   ------------------------------------------------------------
-  procedure DeallocateBins ( ID : BurstCoverageIDArrayType ) is
+  procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) is
   ------------------------------------------------------------
   begin
-    BurstCoverage.DeallocateBins(ID) ;
+    DelayCoverage.DeallocateBins(ID) ;
   end procedure DeallocateBins ;
 
 
-end package body BurstCoveragePkg ;
+end package body DelayCoveragePkg ;
