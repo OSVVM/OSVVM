@@ -67,7 +67,7 @@ package DelayCoveragePkg is
   impure function NewID (
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return DelayCoverageIDType ;
@@ -77,7 +77,7 @@ package DelayCoveragePkg is
     ID                  : Integer ;
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return DelayCoverageIDType ;
@@ -115,7 +115,7 @@ package DelayCoveragePkg is
     Name8               : string                  := "" ;
     Name9               : string                  := "" ;
     Name10              : string                  := "" ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
   ) return DelayCoverageIDArrayType ;
@@ -136,7 +136,7 @@ package DelayCoveragePkg is
     Name8               : string                  := "" ;
     Name9               : string                  := "" ;
     Name10              : string                  := "" ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
   ) return DelayCoverageIDArrayType ;
@@ -179,7 +179,7 @@ package body DelayCoveragePkg is
     impure function NewID (
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return DelayCoverageIDType ;
@@ -189,7 +189,7 @@ package body DelayCoveragePkg is
       ID                  : Integer ;
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return DelayCoverageIDType ;
@@ -223,7 +223,7 @@ package body DelayCoveragePkg is
       Name8               : string                  := "" ;
       Name9               : string                  := "" ;
       Name10              : string                  := "" ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
     ) return DelayCoverageIDArrayType ;
@@ -244,7 +244,7 @@ package body DelayCoveragePkg is
       Name8               : string                  := "" ;
       Name9               : string                  := "" ;
       Name10              : string                  := "" ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
     ) return DelayCoverageIDArrayType ;
@@ -323,7 +323,7 @@ package body DelayCoveragePkg is
 --      ID                  : Integer ;
 --      Name                : String ;
 --      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
---      ReportMode          : AlertLogReportModeType  := ENABLED ;
+--      ReportMode          : AlertLogReportModeType  := DISABLED ;
 --      Search              : NameSearchType          := PRIVATE_NAME ;
 --      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
 --    ) return DelayCoverageIDType is
@@ -344,7 +344,7 @@ package body DelayCoveragePkg is
     ------------------------------------------------------------
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return DelayCoverageIDType is
@@ -382,7 +382,7 @@ package body DelayCoveragePkg is
       ID                  : Integer ;
       Name                : String ;
       ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return DelayCoverageIDType is
@@ -505,7 +505,7 @@ package body DelayCoveragePkg is
       Name8               : string                  := "" ;
       Name9               : string                  := "" ;
       Name10              : string                  := "" ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
     ) return DelayCoverageIDArrayType is
@@ -558,7 +558,7 @@ package body DelayCoveragePkg is
       Name8               : string                  := "" ;
       Name9               : string                  := "" ;
       Name10              : string                  := "" ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
+      ReportMode          : AlertLogReportModeType  := DISABLED ;
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
     ) return DelayCoverageIDArrayType is
@@ -625,7 +625,7 @@ package body DelayCoveragePkg is
   ------------------------------------------------------------
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return DelayCoverageIDType is
@@ -639,7 +639,7 @@ package body DelayCoveragePkg is
     ID                  : Integer ;
     Name                : String ;
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return DelayCoverageIDType is
@@ -702,7 +702,7 @@ package body DelayCoveragePkg is
     Name8               : string                  := "" ;
     Name9               : string                  := "" ;
     Name10              : string                  := "" ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
   ) return DelayCoverageIDArrayType is
@@ -730,7 +730,7 @@ package body DelayCoveragePkg is
     Name8               : string                  := "" ;
     Name9               : string                  := "" ;
     Name10              : string                  := "" ;
-    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    ReportMode          : AlertLogReportModeType  := DISABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
   ) return DelayCoverageIDArrayType is
