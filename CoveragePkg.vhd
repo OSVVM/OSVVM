@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    05/2023   2023.05    Updated InitSeed call in NewID to ensure a unique seed 
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    06/2022   2022.06    Add AlertIfNotCovered.  Settings for YAML output.
@@ -2354,7 +2355,9 @@ package body CoveragePkg is
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
         AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;
-        InitSeed( NewCoverageID, Name) ;
+--         InitSeed( NewCoverageID, Name) ; -- Replaced in 2023.05
+        -- Endure that name to generate the seed is unique by using ParentID and NewCoverageID.ID
+        InitSeed( NewCoverageID, Name & GetAlertLogName(ParentID) & to_string(NewCoverageID.ID) ) ;
         SetName( NewCoverageID, Name) ; -- redundant - refactor after diverge
         return NewCoverageID ;
       end if ;
