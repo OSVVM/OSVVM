@@ -2357,7 +2357,7 @@ package body CoveragePkg is
         AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;
 --         InitSeed( NewCoverageID, Name) ; -- Replaced in 2023.05
         -- Endure that name to generate the seed is unique by using ParentID and NewCoverageID.ID
-        InitSeed( NewCoverageID, Name & GetAlertLogName(ParentID) & to_string(NewCoverageID.ID) ) ;
+        InitSeed( NewCoverageID, Name & string'(GetAlertLogName(ParentID)) & to_string(NewCoverageID.ID) ) ;
         SetName( NewCoverageID, Name) ; -- redundant - refactor after diverge
         return NewCoverageID ;
       end if ;
