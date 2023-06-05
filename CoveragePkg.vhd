@@ -2356,8 +2356,10 @@ package body CoveragePkg is
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
         AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;
 --         InitSeed( NewCoverageID, Name) ; -- Replaced in 2023.05
-        -- Endure that name to generate the seed is unique by using ParentID and NewCoverageID.ID
-        InitSeed( NewCoverageID, Name & string'(GetAlertLogName(ParentID)) & to_string(NewCoverageID.ID) ) ;
+        -- Ensure that name to generate the seed is unique by using ParentID 
+        --   Note that ParentID must be unique for each VC (take care with for generate).  
+        --   Considered adding NewCoverageID.ID, but that will result in construction order dependencies
+        InitSeed( NewCoverageID, Name & string'(GetAlertLogName(ParentID))) ;   -- & to_string(NewCoverageID.ID) 
         SetName( NewCoverageID, Name) ; -- redundant - refactor after diverge
         return NewCoverageID ;
       end if ;
