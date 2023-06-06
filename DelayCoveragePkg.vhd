@@ -97,55 +97,61 @@ package DelayCoveragePkg is
   ------------------------------------------------------------
 ------------------------------------------------------------
 -- The following items currently in ALPHA development mode
--- They may be rejected for alternative methods
+-- They may be part of a future implementation, but they also may be removed.
+-- They were anticipated as needed for Axi4 VC, but an alternate path was used.
+-- They were removed for the official release.
 ------------------------------------------------------------
-  -- DelayCoverageIDArrayType Overloading 
-  ------------------------------------------------------------
-  impure function NewID (
-    Name                : string ;
-    Size                : positive ;
-    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    Name1               : string                  := "" ;
-    Name2               : string                  := "" ;
-    Name3               : string                  := "" ;
-    Name4               : string                  := "" ;
-    Name5               : string                  := "" ;
-    Name6               : string                  := "" ;
-    Name7               : string                  := "" ;
-    Name8               : string                  := "" ;
-    Name9               : string                  := "" ;
-    Name10              : string                  := "" ;
-    ReportMode          : AlertLogReportModeType  := DISABLED ;
-    Search              : NameSearchType          := PRIVATE_NAME ;
-    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-  ) return DelayCoverageIDArrayType ;
-  
-  ------------------------------------------------------------
-  impure function NewDelayCoverage ( 
-    ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
-    Name                : String ;
-    Size                : positive ;
-    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-    Name1               : string                  := "" ;
-    Name2               : string                  := "" ;
-    Name3               : string                  := "" ;
-    Name4               : string                  := "" ;
-    Name5               : string                  := "" ;
-    Name6               : string                  := "" ;
-    Name7               : string                  := "" ;
-    Name8               : string                  := "" ;
-    Name9               : string                  := "" ;
-    Name10              : string                  := "" ;
-    ReportMode          : AlertLogReportModeType  := DISABLED ;
-    Search              : NameSearchType          := PRIVATE_NAME ;
-    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
-  ) return DelayCoverageIDArrayType ;
-
-  impure function GetDelayCoverage(ID : integer;  Size : positive ) return DelayCoverageIDArrayType ;
-  procedure SetDelayCoverage ( ID : DelayCoverageIDArrayType ) ;
-  
-  ------------------------------------------------------------
-  procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) ;
+--!    -- DelayCoverageIDArrayType Overloading 
+--!    ------------------------------------------------------------
+--!  -- experimental
+--!    impure function NewID (
+--!      Name                : string ;
+--!      Size                : positive ;
+--!      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+--!      Name1               : string                  := "" ;
+--!      Name2               : string                  := "" ;
+--!      Name3               : string                  := "" ;
+--!      Name4               : string                  := "" ;
+--!      Name5               : string                  := "" ;
+--!      Name6               : string                  := "" ;
+--!      Name7               : string                  := "" ;
+--!      Name8               : string                  := "" ;
+--!      Name9               : string                  := "" ;
+--!      Name10              : string                  := "" ;
+--!      ReportMode          : AlertLogReportModeType  := DISABLED ;
+--!      Search              : NameSearchType          := PRIVATE_NAME ;
+--!      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+--!    ) return DelayCoverageIDArrayType ;
+--!    
+--!    ------------------------------------------------------------
+--!  -- experimental
+--!    impure function NewDelayCoverage ( 
+--!      ID                  : Integer ;               -- Starting ID, and the ID's are consecutive
+--!      Name                : String ;
+--!      Size                : positive ;
+--!      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+--!      Name1               : string                  := "" ;
+--!      Name2               : string                  := "" ;
+--!      Name3               : string                  := "" ;
+--!      Name4               : string                  := "" ;
+--!      Name5               : string                  := "" ;
+--!      Name6               : string                  := "" ;
+--!      Name7               : string                  := "" ;
+--!      Name8               : string                  := "" ;
+--!      Name9               : string                  := "" ;
+--!      Name10              : string                  := "" ;
+--!      ReportMode          : AlertLogReportModeType  := DISABLED ;
+--!      Search              : NameSearchType          := PRIVATE_NAME ;
+--!      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT 
+--!    ) return DelayCoverageIDArrayType ;
+--!  
+--!  -- experimental, Removed during dev as it assumes the IDs are consecutive - which they may or may not be.
+--!  --   impure function GetDelayCoverage(ID : integer;  Size : positive ) return DelayCoverageIDArrayType ; 
+--!  -- experimental
+--!    procedure SetDelayCoverage ( ID : DelayCoverageIDArrayType ) ; 
+--!    
+--!    ------------------------------------------------------------
+--!    procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) ;
     
     
   -- Backward compatible with Beta Dev names
