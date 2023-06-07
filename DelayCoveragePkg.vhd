@@ -463,7 +463,7 @@ package body DelayCoveragePkg is
       variable RandIndex : integer ; 
     begin 
       DelayCov  := GetRandDelayCov( ID ) ;
-      RandIndex := GetRandIndex( DelayCov, CovTargetPercent => 0.0 ) ;   -- CovTargetPercent = 0.0 selects constrained random 
+      RandIndex := GetRandIndex( DelayCov ) ; 
       ICoverLast( DelayCov ) ;
       return GetPoint( DelayCov, RandIndex ) ; 
 --      return GetRandPoint( GetRandDelayCov(ID), CoverLast => TRUE ) ; 
@@ -482,14 +482,24 @@ package body DelayCoveragePkg is
 --      return GetRandPoint( GetRandDelayCov(ID), CoverLast => TRUE ) ; 
     end function GetRandDelay ; 
 
+--    ------------------------------------------------------------
+--    procedure DeallocateBins ( ID : DelayCoverageIDType ) is
+--    ------------------------------------------------------------
+--    begin
+--      SingletonArrayPtr(ID.ID).BurstLength := 0 ; 
+--      DeallocateBins(SingletonArrayPtr(ID.ID).BurstLengthCov) ; 
+--      DeallocateBins(SingletonArrayPtr(ID.ID).BurstDelayCov) ; 
+--      DeallocateBins(SingletonArrayPtr(ID.ID).BeatDelayCov) ; 
+--    end procedure DeallocateBins ;
+
     ------------------------------------------------------------
     procedure DeallocateBins ( ID : DelayCoverageIDType ) is
     ------------------------------------------------------------
     begin
-      SingletonArrayPtr(ID.ID).BurstLength := 0 ; 
-      DeallocateBins(SingletonArrayPtr(ID.ID).BurstLengthCov) ; 
-      DeallocateBins(SingletonArrayPtr(ID.ID).BurstDelayCov) ; 
-      DeallocateBins(SingletonArrayPtr(ID.ID).BeatDelayCov) ; 
+      SingletonArrayPtr(ID.ID).BurstLength := 0 ;  -- Changing the coverage models, so initialize the length to 0
+      DeallocateBins(ID.BurstLengthCov) ; 
+      DeallocateBins(ID.BurstDelayCov) ; 
+      DeallocateBins(ID.BeatDelayCov) ; 
     end procedure DeallocateBins ;
     
     ------------------------------------------------------------
