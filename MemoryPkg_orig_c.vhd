@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2022   2022.11    Rolled back updates to 2021.06 due to support issues
 --    06/2021   2021.06    Updated Data Structure, IDs for new use model, and Wrapper Subprograms
 --    01/2020   2020.01    Updated Licenses to Apache
 --    11/2016   2016.11    Refinement to MemRead to return value, X (if X), U (if not initialized)

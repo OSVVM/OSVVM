@@ -29,6 +29,7 @@
 --
 --  Revision History:
 --    Date       Version    Description
+--    01/2023    2023.01    Added functions for SetRandomSalt to support setting in declaration regions
 --    10/2022    2022.10    Added SetRandomSalt(string or integer), GetRandomSalt (integer), 
 --                          RandomSalt is added to all versions of GenRandSeed
 --    06/2021    2021.06    Updated GenRandSeed hash to DJBX33A 
@@ -48,7 +49,7 @@
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2008 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2008 - 2023 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.

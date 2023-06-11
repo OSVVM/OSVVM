@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2023   2023.01    Uses OSVVM_TRANSCRIPT_YAML_FILE from OsvvmScriptSettingsPkg
 --    02/2022   2022.03    Create YAML with files opened during test
 --    12/2020   2020.12    Updated TranscriptOpen parameter Status to InOut to work around simulator bug.
 --    01/2020   2020.01    Updated Licenses to Apache

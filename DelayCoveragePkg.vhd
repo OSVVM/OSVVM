@@ -8,8 +8,9 @@
 --     Jim Lewis          SynthWorks
 --
 --
---  Package Defines
---      Data structure for name. 
+--  Description:
+--     Implements a pattern for randomizing cycle based delays such as AXI's Valid and Ready 
+--       
 --
 --  Developed for:
 --        SynthWorks Design Inc.
@@ -82,6 +83,7 @@ package DelayCoveragePkg is
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return DelayCoverageIDType ;
 
+  ------------------------------------------------------------
   impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
   procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
   

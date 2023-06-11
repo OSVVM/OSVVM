@@ -78,7 +78,6 @@ analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 analyze DelayCoveragePkg.vhd
 
-
 analyze ResizePkg.vhd
 
 if {$::osvvm::ToolSupportsGenericPackages}  {
