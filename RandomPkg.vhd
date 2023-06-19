@@ -28,6 +28,7 @@
 --
 --  Revision History :
 --    Date       Version    Description
+--    06/2023    2023.06    Updated InitSeed for type time to do (T mod 2**30*std.env.resolution_limit)
 --    06/2021    2021.06    Updated InitSeed, moved shared stuff to RandomBasePkg
 --    08/2020    2020.08    RandBool, RandSl, RandBit, DistBool, DistSl, DistBit (from Lars)
 --    01/2020    2020.01    Updated Licenses to Apache
@@ -470,13 +471,11 @@ package body RandomPkg is
     begin
       -- Allow specification of UseNewSeedMethods 
       -- but ignore it as this is a new method and will churn the seed.
-      -- Let integer values roll over - is well supported, infact, 
-      -- math_real.uniform depends on it being supported.
-      -- Also considered:
-      --      RandomSeed := GenRandSeed((T REM (2**30 * std.env.resolution_limit))/std.env.resolution_limit) ;
+      -- NVC fatals on the integer conversion time values >= 2**31, hence, the following was removed
+      --      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
+      -- Also consider:
       --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
-      -- However, GHDL does not support REM and the calculation is not warrented.
-      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
+      RandomSeed := GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit) ;
       Uniform(ChurnSeed, RandomSeed) ;
     end procedure InitSeed ;
 
