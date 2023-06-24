@@ -1800,6 +1800,24 @@ package body CoveragePkg is
   end procedure write ;
 
   ------------------------------------------------------------
+  impure function to_string ( BinVal : RangeArrayType ) return string is
+  -- error handling in InsertBin
+  ------------------------------------------------------------
+    variable buf : line ; 
+    impure function buf_to_string return string is
+      variable s : string(buf'range) ; 
+    begin
+      s := buf.all ; 
+      deallocate(buf) ;
+      return s ;
+    end function buf_to_string ; 
+  begin
+    write(buf, BinVal) ; 
+    return buf_to_string ; 
+  end function to_string ; 
+
+
+  ------------------------------------------------------------
   procedure WriteBinVal (
   -- package local for now
   ------------------------------------------------------------
@@ -3054,21 +3072,23 @@ package body CoveragePkg is
           end if;
 
         elsif Action = COV_IGNORE then
--- when check only ignore and illegal bins, only action is to report error
+-- when check only ignore and illegal bins, only action is to log
           if CovStructPtr(ID.ID).CovBinPtr.all(Position).Action = COV_COUNT then
             InsertNewBin(ID, BinVal, Action, Count, AtLeast, Weight, Name, PercentCov) ;
           else
-            Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.InsertBin (AddBins/AddCross):" &
-                          " ignore bin dropped.  It is a subset of prior bin", ERROR) ;
+            -- Drop the ignore bin it is redundant
+            log(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.InsertBin (AddBins/AddCross):" &
+                          " ignore bin " & to_string(BinVal) & " dropped.  It is a subset of prior bin", DEBUG) ;
           end if;
 
         elsif Action = COV_ILLEGAL then
--- when check only ignore and illegal bins, only action is to report error
+-- when check only ignore and illegal bins, only action is to log 
           if CovStructPtr(ID.ID).CovBinPtr.all(Position).Action = COV_COUNT then
             InsertNewBin(ID, BinVal, Action, Count, AtLeast, Weight, Name, PercentCov) ;
           else
-            Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.InsertBin (AddBins/AddCross):" &
-                          " illegal bin dropped.  It is a subset of prior bin", ERROR) ;
+            -- Drop the illegal bin it is redundant
+            log(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.InsertBin (AddBins/AddCross):" &
+                          " illegal bin " & to_string(BinVal) & " dropped.  It is a subset of prior bin", DEBUG) ;
           end if;
         end if ;
       end if ; -- merging enabled
