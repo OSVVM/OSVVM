@@ -1047,15 +1047,6 @@ package body AlertLogPkg is
       end if ;
     end procedure IncrementAlertCount ;
 
-    function ToInt(Bool : boolean) return integer is
-    begin
-      if Bool then
-        return 1;
-      else
-        return 0;
-      end if;
-    end;
-
     impure function GetWriteErrorCount(WriteErrorCount : boolean) return string is
     begin
       if WriteErrorCount then
@@ -1131,11 +1122,11 @@ package body AlertLogPkg is
               Str3 => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
               Str4 => GetPrefix(AlertLogID),
               Str5 => GetSuffix(AlertLogID),
-              Val1 => AlertLogJustifyAmountVar,
-              Val2 => ToInt(WriteAlertLevelVar),
-              Val3 => ToInt(WriteAlertTimeVar and not WriteTimeLastVar),
-              Val4 => ToInt(WriteAlertTimeVar and WriteTimeLastVar),
-              Val5 => TimeJustifyAmountVar
+              Int1 => AlertLogJustifyAmountVar,
+              Int2 => TimeJustifyAmountVar,
+              Bool1 => WriteAlertLevelVar,
+              Bool2 => WriteAlertTimeVar and not WriteTimeLastVar,
+              Bool3 => WriteAlertTimeVar and WriteTimeLastVar
             );
           end if;
 
@@ -1152,11 +1143,11 @@ package body AlertLogPkg is
               Str3 => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
               Str4 => GetPrefix(AlertLogID),
               Str5 => GetSuffix(AlertLogID),
-              Val1 => AlertLogJustifyAmountVar,
-              Val2 => ToInt(WriteAlertLevelVar),
-              Val3 => ToInt(WriteAlertTimeVar and not WriteTimeLastVar),
-              Val4 => ToInt(WriteAlertTimeVar and WriteTimeLastVar),
-              Val5 => TimeJustifyAmountVar
+              Int1 => AlertLogJustifyAmountVar,
+              Int2 => TimeJustifyAmountVar,
+              Bool1 => WriteAlertLevelVar,
+              Bool2 => WriteAlertTimeVar and not WriteTimeLastVar,
+              Bool3 => WriteAlertTimeVar and WriteTimeLastVar
             );
           end if;
         end if ;
@@ -2651,11 +2642,11 @@ package body AlertLogPkg is
           Str3 => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
           Str4 => GetPrefix(AlertLogID),
           Str5 => GetSuffix(AlertLogID),
-          Val1 => AlertLogJustifyAmountVar,
-          Val2 => ToInt(WriteLogLevelVar),
-          Val3 => ToInt(WriteLogTimeVar and not WriteTimeLastVar),
-          Val4 => ToInt(WriteLogTimeVar and WriteTimeLastVar),
-          Val5 => TimeJustifyAmountVar
+          Int1 => AlertLogJustifyAmountVar,
+          Int2 => TimeJustifyAmountVar,
+          Bool1 => WriteLogLevelVar,
+          Bool2 => WriteLogTimeVar and not WriteTimeLastVar,
+          Bool3 => WriteLogTimeVar and WriteTimeLastVar
         );
       end if;
 
@@ -2672,11 +2663,11 @@ package body AlertLogPkg is
           Str3 => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
           Str4 => GetPrefix(AlertLogID),
           Str5 => GetSuffix(AlertLogID),
-          Val1 => AlertLogJustifyAmountVar,
-          Val2 => ToInt(WriteLogLevelVar),
-          Val3 => ToInt(WriteLogTimeVar and not WriteTimeLastVar),
-          Val4 => ToInt(WriteLogTimeVar and WriteTimeLastVar),
-          Val5 => TimeJustifyAmountVar
+          Int1 => AlertLogJustifyAmountVar,
+          Int2 => TimeJustifyAmountVar,
+          Bool1 => WriteLogLevelVar,
+          Bool2 => WriteLogTimeVar and not WriteTimeLastVar,
+          Bool3 => WriteLogTimeVar and WriteTimeLastVar
         );
       end if;
     end procedure LocalLog ;

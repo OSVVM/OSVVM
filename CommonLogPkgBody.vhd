@@ -7,23 +7,28 @@ package body CommonLogPkg is
 
   procedure WriteToLog(
     file LogDestination : text;
-    Msg : string := "";
+    LogDestinationPath : string := NoString;
+    Msg : string := NoString;
     LogTime : time := NoTime;
-    LogLevel : string := "";
-    LogSourceName : string := "";
+    LogLevel : string := NoString;
+    LogSourceName : string := NoString;
+
     Str1, Str2, Str3, Str4, Str5, Str6, Str7, Str8, Str9, Str10 : string := "";
-    Val1, Val2, Val3, Val4, Val5, Val6, Val7, Val8, Val9, Val10 : integer := NoVal) is
+    Int1, Int2, Int3, Int4, Int5, Int6, Int7, Int8, Int9, Int10 : integer := 0;
+    Bool1, Bool2, Bool3, Bool4, Bool5, Bool6, Bool7, Bool8, Bool9, Bool10 : boolean := false
+  ) is
       alias WritePrefix is Str1;
       alias WriteErrorCount is Str2;
       alias LogOrAlert is Str3;
       alias Prefix is Str4;
       alias Suffix is Str5;
 
-      alias AlertLogJustifyAmount is Val1;
-      constant WriteLevel : boolean := Val2 = 1;
-      constant WriteTimeFirst : boolean := Val3 = 1;
-      constant WriteTimeLast : boolean := Val4 = 1;
-      alias TimeJustifyAmount is Val5;
+      alias AlertLogJustifyAmount is Int1;
+      alias TimeJustifyAmount is Int2;
+
+      alias WriteLevel is Bool1;
+      alias WriteTimeFirst is Bool2;
+      alias WriteTimeLast is Bool3;
 
       variable buf : line ;
       ------------------------------------------------------------
@@ -53,7 +58,7 @@ package body CommonLogPkg is
         write(buf, "  " & LogLevel) ;
       end if ;
       -- AlertLog Name
-      if LogSourceName /= "" then
+      if LogSourceName /= NoString then
         write(buf, "   in " & LeftJustify(LogSourceName & ',', AlertLogJustifyAmount) ) ;
       end if ;
       -- Spacing before message
