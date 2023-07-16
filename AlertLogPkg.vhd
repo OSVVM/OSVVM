@@ -1047,17 +1047,71 @@ package body AlertLogPkg is
       end if ;
     end procedure IncrementAlertCount ;
 
-    impure function GetWriteErrorCount(WriteErrorCount : boolean) return string is
+    ------------------------------------------------------------
+    -- PT Local
+    procedure LocalPrint (
+    ------------------------------------------------------------
+      AlertLogID      : AlertLogIDType ;
+      AlertLogName    : string ;
+      WriteErrorCount : boolean ;
+      WriteLevel      : boolean ;
+      LevelName       : string ;
+      WriteName       : boolean ;
+      Message         : string ;
+      WriteTime       : boolean
+    ) is
+      variable buf : line ;
+      variable ParentID : AlertLogIDType ;
     begin
+      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ) ; -- Print
+      -- Debug Mode
       if WriteErrorCount then
         if ErrorCount > 0 then
-          return justify(to_string(ErrorCount), RIGHT, 3) & "  " ;
+          write(buf, justify(to_string(ErrorCount), RIGHT, 3) & "  ") ;
         else
-          return "     " ;
+          swrite(buf, "     ") ;
         end if ;
       end if ;
-      return "" ;
-    end;
+      -- Write Time
+      if WriteTime and not WriteTimeLastVar then
+--        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
+        write(buf, justify(to_string(NOW, GetOsvvmDefaultTimeUnits), TimeJustifyAmountVar, RIGHT) & "    ") ;
+      end if ;
+      -- Alert or Log
+      write(buf, AlertLogName) ;
+      -- Level Name, when enabled (default)
+      if WriteLevel then
+        write(buf, "  " & LevelName) ;
+      end if ;
+      -- AlertLog Name
+      if FoundAlertHierVar and WriteName then
+        if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
+          write(buf, "   in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        else
+          ParentID := AlertLogPtr(AlertLogID).ParentID ;
+          write(buf, "   in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
+            AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+        end if ;
+      end if ;
+      -- Spacing before message
+      swrite(buf, "  ") ;
+      -- Prefix
+      if AlertLogPtr(AlertLogID).Prefix /= NULL then
+        write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all) ;
+      end if ;
+      -- Message
+      write(buf, " " & Message) ;
+      -- Suffix
+      if AlertLogPtr(AlertLogID).Suffix /= NULL then
+        write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
+      end if ;
+      -- Time Last
+      if WriteTime and WriteTimeLastVar then
+--        write(buf, " at " & to_string(NOW, 1 ns)) ;
+        write(buf, " at " & to_string(NOW, GetOsvvmDefaultTimeUnits)) ;
+      end if ;
+      writeline(buf) ;
+    end procedure LocalPrint ;
 
     impure function GetAlertLogName(AlertLogID : AlertLogIDType; FoundAlertHier, WriteName : boolean; Name, ParentName : string) return string is
     begin
@@ -1069,22 +1123,6 @@ package body AlertLogPkg is
         end if ;
       end if ;
       return "" ;
-    end;
-
-    impure function GetPrefix(AlertLogID : AlertLogIDType) return string is
-    begin
-      if AlertLogPtr(AlertLogID).Prefix /= NULL then
-        return AlertLogPtr(AlertLogID).Prefix.all ;
-      end if ;
-      return "";
-    end;
-
-    impure function GetSuffix(AlertLogID : AlertLogIDType) return string is
-    begin
-      if AlertLogPtr(AlertLogID).Suffix /= NULL then
-        return AlertLogPtr(AlertLogID).Suffix.all ;
-      end if ;
-      return "";
     end;
 
     ------------------------------------------------------------
@@ -1110,45 +1148,38 @@ package body AlertLogPkg is
 
          -- Write when Alert is Enabled
         if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) <= AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
-          if IsOriginalPkg or (not IsTranscriptOpen) or (IsTranscriptMirrored) then
-            WriteToLog(
-              LogDestination => output,
-              Msg => Message,
-              LogTime => now,
-              LogLevel => ALERT_NAME(Level),
-              LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all),
-              Str1 => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt),
-              Str2 => GetWriteErrorCount(WriteAlertErrorCountVar),
-              Str3 => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
-              Str4 => GetPrefix(AlertLogID),
-              Str5 => GetSuffix(AlertLogID),
-              Int1 => AlertLogJustifyAmountVar,
-              Int2 => TimeJustifyAmountVar,
-              Bool1 => WriteAlertLevelVar,
-              Bool2 => WriteAlertTimeVar and not WriteTimeLastVar,
-              Bool3 => WriteAlertTimeVar and WriteTimeLastVar
-            );
-          end if;
+          if IsOriginalPkg then
+            LocalPrint(
+              AlertLogID       => localAlertLogID,
+              AlertLogName     => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
+              WriteErrorCount  => WriteAlertErrorCountVar,
+              WriteLevel       => WriteAlertLevelVar,
+              LevelName        => ALERT_NAME(Level),
+              WriteName        => WriteAlertNameVar,
+              Message          => Message,
+              WriteTime        => WriteAlertTimeVar
+            ) ;
+          else
+            if (not IsTranscriptOpen) or (IsTranscriptMirrored) then
+              WriteToLog(
+                LogDestination => output,
+                Msg => Message,
+                LogTime => now,
+                LogLevel => ALERT_NAME(Level),
+                LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+              );
+            end if;
 
-          if (not IsOriginalPkg) and IsTranscriptOpen then
-            WriteToLog(
-              LogDestination => TranscriptFile,
-              LogDestinationPath => "TODO: Provide path to transcriptfile",
-              Msg => Message,
-              LogTime => now,
-              LogLevel => ALERT_NAME(Level),
-              LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all),
-              Str1 => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt),
-              Str2 => GetWriteErrorCount(WriteAlertErrorCountVar),
-              Str3 => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
-              Str4 => GetPrefix(AlertLogID),
-              Str5 => GetSuffix(AlertLogID),
-              Int1 => AlertLogJustifyAmountVar,
-              Int2 => TimeJustifyAmountVar,
-              Bool1 => WriteAlertLevelVar,
-              Bool2 => WriteAlertTimeVar and not WriteTimeLastVar,
-              Bool3 => WriteAlertTimeVar and WriteTimeLastVar
-            );
+            if IsTranscriptOpen then
+              WriteToLog(
+                LogDestination => TranscriptFile,
+                LogDestinationPath => "TODO: Provide path to transcriptfile",
+                Msg => Message,
+                LogTime => now,
+                LogLevel => ALERT_NAME(Level),
+                LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+              );
+            end if;
           end if;
         end if ;
 
@@ -2630,45 +2661,38 @@ package body AlertLogPkg is
       Level        : LogType
     ) is
     begin
-      if IsOriginalPkg or (not IsTranscriptOpen) or (IsTranscriptMirrored) then
-        WriteToLog(
-          LogDestination => output,
-          Msg => Message,
-          LogTime => now,
-          LogLevel => LOG_NAME(Level),
-          LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all),
-          Str1 => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt),
-          Str2 => GetWriteErrorCount(WriteLogErrorCountVar),
-          Str3 => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
-          Str4 => GetPrefix(AlertLogID),
-          Str5 => GetSuffix(AlertLogID),
-          Int1 => AlertLogJustifyAmountVar,
-          Int2 => TimeJustifyAmountVar,
-          Bool1 => WriteLogLevelVar,
-          Bool2 => WriteLogTimeVar and not WriteTimeLastVar,
-          Bool3 => WriteLogTimeVar and WriteTimeLastVar
-        );
-      end if;
+      if IsOriginalPkg then
+        LocalPrint(
+          AlertLogID       => AlertLogID,
+          AlertLogName     => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
+          WriteErrorCount  => WriteLogErrorCountVar,
+          WriteLevel       => WriteLogLevelVar,
+          LevelName        => LOG_NAME(Level),
+          WriteName        => WriteLogNameVar,
+          Message          => Message,
+          WriteTime        => WriteLogTimeVar
+        ) ;
+      else
+        if (not IsTranscriptOpen) or (IsTranscriptMirrored) then
+          WriteToLog(
+            LogDestination => output,
+            Msg => Message,
+            LogTime => now,
+            LogLevel => LOG_NAME(Level),
+            LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+          );
+        end if;
 
-      if (not IsOriginalPkg) and IsTranscriptOpen then
-        WriteToLog(
-          LogDestination => TranscriptFile,
-          LogDestinationPath => "TODO: Provide path to transcriptfile",
-          Msg => Message,
-          LogTime => now,
-          LogLevel => LOG_NAME(Level),
-          LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all),
-          Str1 => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt),
-          Str2 => GetWriteErrorCount(WriteLogErrorCountVar),
-          Str3 => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
-          Str4 => GetPrefix(AlertLogID),
-          Str5 => GetSuffix(AlertLogID),
-          Int1 => AlertLogJustifyAmountVar,
-          Int2 => TimeJustifyAmountVar,
-          Bool1 => WriteLogLevelVar,
-          Bool2 => WriteLogTimeVar and not WriteTimeLastVar,
-          Bool3 => WriteLogTimeVar and WriteTimeLastVar
-        );
+        if IsTranscriptOpen then
+          WriteToLog(
+            LogDestination => TranscriptFile,
+            LogDestinationPath => "TODO: Provide path to transcriptfile",
+            Msg => Message,
+            LogTime => now,
+            LogLevel => LOG_NAME(Level),
+            LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+          );
+        end if;
       end if;
     end procedure LocalLog ;
 

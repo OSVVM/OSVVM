@@ -28,22 +28,11 @@ package CommonLogPkg is
 
     ----------------------------------------------------------------------------------------------------------------------------
     -- Log entry items less commonly used are passed to the procedure with no-name string, integer and boolean parameters which
-    -- meaning is specific to an implementation of the procedure. The documentation below is valid for OSVVM only
+    -- meaning is specific to an implementation of the procedure. These are not used by OSVVM.
     ----------------------------------------------------------------------------------------------------------------------------
 
-    Str1, -- WritePrefix
-    Str2, -- Write error counter
-    Str3, -- Log or alert
-    Str4, -- Prefix
-    Str5, -- Suffix
-    Str6, Str7, Str8, Str9, Str10 : string := "";
-
-    Int1, -- AlertLogJustifyAmount
-    Int2, -- TimeJustifyAmount
-    Int3, Int4, Int5, Int6, Int7, Int8, Int9, Int10 : integer := 0;
-
-    Bool1, -- Write level
-    Bool2, -- Write time first
-    Bool3, -- Write time last
-    Bool4, Bool5, Bool6, Bool7, Bool8, Bool9, Bool10 : boolean := false);
+    Str1, Str2, Str3, Str4, Str5, Str6, Str7, Str8, Str9, Str10 : string := "";
+    Int1, Int2, Int3, Int4, Int5, Int6, Int7, Int8, Int9, Int10 : integer := 0;
+    Bool1, Bool2, Bool3, Bool4, Bool5, Bool6, Bool7, Bool8, Bool9, Bool10 : boolean := false
+  );
 end package;
