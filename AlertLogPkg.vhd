@@ -1136,6 +1136,7 @@ package body AlertLogPkg is
       -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount  : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
+      constant LogSourceName : string := GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all);
     begin
       -- Only write and count when GlobalAlertEnabledVar is enabled
       if GlobalAlertEnabledVar then
@@ -1166,18 +1167,18 @@ package body AlertLogPkg is
                 Msg => Message,
                 LogTime => now,
                 LogLevel => ALERT_NAME(Level),
-                LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+                LogSourceName => LogSourceName
               );
             end if;
 
             if IsTranscriptOpen then
               WriteToLog(
                 LogDestination => TranscriptFile,
-                LogDestinationPath => "TODO: Provide path to transcriptfile",
+                LogDestinationPath => GetTranscriptFilePath,
                 Msg => Message,
                 LogTime => now,
                 LogLevel => ALERT_NAME(Level),
-                LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+                LogSourceName => LogSourceName
               );
             end if;
           end if;
@@ -2660,6 +2661,7 @@ package body AlertLogPkg is
       Message      : string ;
       Level        : LogType
     ) is
+      constant LogSourceName : string := GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all);
     begin
       if IsOriginalPkg then
         LocalPrint(
@@ -2679,18 +2681,18 @@ package body AlertLogPkg is
             Msg => Message,
             LogTime => now,
             LogLevel => LOG_NAME(Level),
-            LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+            LogSourceName => LogSourceName
           );
         end if;
 
         if IsTranscriptOpen then
           WriteToLog(
             LogDestination => TranscriptFile,
-            LogDestinationPath => "TODO: Provide path to transcriptfile",
+            LogDestinationPath => GetTranscriptFilePath,
             Msg => Message,
             LogTime => now,
             LogLevel => LOG_NAME(Level),
-            LogSourceName => GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all)
+            LogSourceName => LogSourceName
           );
         end if;
       end if;
