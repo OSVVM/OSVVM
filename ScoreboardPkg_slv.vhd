@@ -29,7 +29,7 @@
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2006 - 2022 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.

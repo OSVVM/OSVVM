@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2023   2023.07    Added WriteRequirementsYaml.
 --    04/2023   2023.04    Added GetTranscriptName.
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY.
 --    11/2022   2022.11    Added GetTestName
@@ -335,6 +336,15 @@ package AlertLogPkg is
   ) ;
   procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) ;
   procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;  -- Deprecated.  Use WriteAlertSummaryYaml.
+
+  ------------------------------------------------------------
+  procedure WriteRequirementsYaml (
+    FileName    : string ;
+    AlertLogID  : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ;
+    OpenKind    : File_Open_Kind := WRITE_MODE
+  ) ;
+
+  impure function GotRequirements return boolean ;
 
 -- These are in ReportPkg due to circular dependencies
 --  impure function EndOfTestReports (
@@ -688,6 +698,13 @@ package body AlertLogPkg is
       PrintChildren  : boolean := TRUE ;
       OpenKind       : File_Open_Kind := WRITE_MODE
     ) ;
+    procedure WriteRequirementsYaml (
+      FileName    : string ;
+      AlertLogID  : AlertLogIDType ;
+      OpenKind    : File_Open_Kind
+    ) ;
+    impure function GotRequirements return boolean ;
+
     procedure WriteTestSummary (
       FileName       : string ;
       OpenKind       : File_Open_Kind ;
@@ -1950,6 +1967,125 @@ package body AlertLogPkg is
         Alert("WriteAlertYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ;
       end if ;
     end procedure WriteAlertYaml ;
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteOneRequirementYaml (
+    ------------------------------------------------------------
+      file TestFile : text ;
+      AlertLogID           : AlertLogIDType 
+    ) is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+      constant FIRST_PREFIX : string := "- " ;
+      constant PREFIX       : string := "  " ;
+      variable RequirementsGoal, RequirementsPassed, TotalErrors : integer ; 
+    begin
+      RequirementsGoal   := AlertLogPtr(AlertLogID).PassedGoal ;
+      RequirementsPassed := AlertLogPtr(AlertLogID).PassedCount ;
+      -- Requirements count any error as an error and a failure of the requirement
+      TotalErrors := SumAlertCount(AlertLogPtr(AlertLogID).AlertCount + AlertLogPtr(AlertLogID).DisabledAlertCount) ;
+      Write(buf,
+        FIRST_PREFIX & "Requirement: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
+        PREFIX & "TestCases: " &  LF  &
+        "  " & FIRST_PREFIX & "TestName: " & '"' & GetTestName & '"'  & LF  &
+--        "  " & PREFIX & "Status: " & IfElse(TotalErrors>0, "FAILED", IfElse(RequirementsPassed >= RequirementsGoal, "PASSED", "TBD"))  & LF  &
+        "  " & PREFIX & "Status: " & IfElse(TotalErrors>0, "FAILED", "PASSED")  & LF  &
+        "  " & PREFIX & "Results: {" &
+          "Goal: "               & to_string( RequirementsGoal )     & DELIMITER &
+          "Passed: "             & to_string( RequirementsPassed )   & DELIMITER &
+          "Errors: "             & to_string( TotalErrors )          & DELIMITER &
+          "Checked: "            & to_string( AlertLogPtr(AlertLogID).AffirmCount )            & DELIMITER &
+          "AlertCount: {" &
+            "Failure: "            & to_string( AlertLogPtr(AlertLogID).AlertCount(FAILURE) )  & DELIMITER &
+            "Error: "              & to_string( AlertLogPtr(AlertLogID).AlertCount(ERROR) )    & DELIMITER &
+            "Warning: "            & to_string( AlertLogPtr(AlertLogID).AlertCount(WARNING) )  &
+          "}" & DELIMITER &
+          "DisabledAlertCount: {" &
+            "Failure: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(FAILURE) )  & DELIMITER &
+            "Error: "              & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(ERROR) )    & DELIMITER &
+            "Warning: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(WARNING) )  &
+          "}" &
+        "}"
+      ) ;
+      WriteLine(TestFile, buf) ;
+    end procedure WriteOneRequirementYaml ;
+    
+    ------------------------------------------------------------
+    -- PT Local
+    procedure IterateAndWriteRequirementsYaml(
+    ------------------------------------------------------------
+      file TestFile     : text ;
+      AlertLogID        : AlertLogIDType 
+    ) is
+      variable buf : line ;
+      variable CurID : AlertLogIDType ;
+      variable RequirementsPassed, RequirementsGoal : integer ;
+    begin
+      CurID := AlertLogPtr(AlertLogID).ChildID ;
+      while CurID > ALERTLOG_BASE_ID loop
+        -- Don't print requirements if there no requirements
+        if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+          CurID := AlertLogPtr(CurID).SiblingID ;
+          next ;
+        end if ;
+        WriteOneRequirementYaml(
+          TestFile             => TestFile,
+          AlertLogID           => CurID
+        ) ;
+        -- Requirements generally do not have children, so it is unlikely more will be found
+        IterateAndWriteRequirementsYaml(
+          TestFile             => TestFile,
+          AlertLogID           => CurID
+        ) ;
+        CurID := AlertLogPtr(CurID).SiblingID ;
+      end loop ;
+    end procedure IterateAndWriteRequirementsYaml ;
+
+--     ------------------------------------------------------------
+--     --  pt local
+--     procedure WriteRequirementsYaml (
+--     ------------------------------------------------------------
+--       file TestFile  : text ;
+--       AlertLogID     : AlertLogIDType 
+--     ) is
+--       variable buf : line ;
+--     begin
+-- --      swrite(buf, "Requirements: " ) ;
+-- --      WriteLine(TestFile, buf) ;
+-- 
+--       IterateAndWriteRequirementsYaml(
+--         TestFile             => TestFile,
+--         AlertLogID           => AlertLogID
+--       ) ;
+--     end procedure WriteRequirementsYaml ;
+
+    ------------------------------------------------------------
+    procedure WriteRequirementsYaml (
+    ------------------------------------------------------------
+      FileName    : string ;
+      AlertLogID  : AlertLogIDType ;
+      OpenKind    : File_Open_Kind
+    ) is
+      file     FileID : text ;
+      variable status : file_open_status ;
+    begin
+      file_open(status, FileID, FileName, OpenKind) ;
+      if status = OPEN_OK then
+--        WriteRequirementsYaml(FileID, AlertLogID) ;
+        IterateAndWriteRequirementsYaml(FileID, AlertLogID) ;
+        file_close(FileID) ;
+      else
+        Alert("WriteRequirementsYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ;
+      end if ;
+    end procedure WriteRequirementsYaml ;
+
+    ------------------------------------------------------------
+    impure function GotRequirements return boolean is
+    ------------------------------------------------------------
+    begin
+      return HasRequirementsVar ;
+    end function GotRequirements ;
 
     ------------------------------------------------------------
     -- PT Local
@@ -5167,6 +5303,30 @@ package body AlertLogPkg is
     -- WriteTestSummary(FileName => OSVVM_BUILD_YAML_FILE, OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ;
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;
+
+  ------------------------------------------------------------
+  procedure WriteRequirementsYaml (
+  ------------------------------------------------------------
+    FileName    : string ;
+    AlertLogID  : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ;
+    OpenKind    : File_Open_Kind := WRITE_MODE
+  ) is
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.WriteRequirementsYaml(FileName, AlertLogID, OpenKind) ;
+    -- synthesis translate_on
+  end procedure WriteRequirementsYaml ;
+
+  ------------------------------------------------------------
+  impure function GotRequirements return boolean is
+  ------------------------------------------------------------
+    variable result : boolean ; 
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GotRequirements ;
+    -- synthesis translate_on
+    return result ; 
+  end function GotRequirements ;
 
   ------------------------------------------------------------
   -- Deprecated.  Use WriteAlertSummaryYaml Instead.

@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2023   2023.07    Added call to WriteRequirementsYaml.
 --    04/2023   2023.04    Added TranscriptOpen without parameters 
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --                         Added simple TranscriptOpen that uses GetTestName
@@ -120,6 +121,12 @@ package body ReportPkg is
     if work.ScoreboardPkg_int.GotScoreboards then 
       work.ScoreboardPkg_int.WriteScoreboardYaml (
         FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml"
+      ) ;
+    end if ; 
+
+    if GotRequirements then 
+      WriteRequirementsYaml (
+        FileName      => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_req.yml"
       ) ;
     end if ; 
     
