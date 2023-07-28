@@ -1184,6 +1184,7 @@ package body AlertLogPkg is
               FileName        => OSVVM_OUTPUT_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
             ) ;
           end if ;
+          TranscriptClose ;
           std.env.stop(ErrorCount) ;
         end if ;
       end if ;
@@ -1214,6 +1215,7 @@ package body AlertLogPkg is
           write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
           writeline(buf) ;
           ReportAlerts(ReportWhenZero => TRUE) ;
+          TranscriptClose ;
           std.env.stop(ErrorCount) ;
         end if ;
       end if ;
