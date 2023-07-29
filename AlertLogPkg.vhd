@@ -7,7 +7,7 @@
 --  Contributor(s):
 --     Jim Lewis      jim@synthworks.com
 --     Rob Gaddi      Highland Technology.    Inspired SetAlertLogPrefix / Suffix
---     Markus Ferringer                       Proposed printing time first with output formatter 
+--     Markus Ferringer                       Proposed printing time first with output formatter
 --
 --
 --  Description:
@@ -108,6 +108,7 @@ use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
+use work.CommonLogPkg.all ;
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -528,7 +529,7 @@ package AlertLogPkg is
     FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    TimeJustifyAmount        : integer             := integer'left 
+    TimeJustifyAmount        : integer             := integer'left
   ) ;
 
   procedure ReportAlertLogOptions ;
@@ -849,7 +850,7 @@ package body AlertLogPkg is
       FailName                 : string ;
       IdSeparator              : string ;
       WriteTimeLast            : OsvvmOptionsType ;
-      TimeJustifyAmount        : integer 
+      TimeJustifyAmount        : integer
     ) ;
     procedure ReportAlertLogOptions ;
 
@@ -897,7 +898,7 @@ package body AlertLogPkg is
 
     variable ErrorCount                : integer := 0 ;
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
-    
+
     ------------------------------------------------------------
     type AlertLogRecType is record
     ------------------------------------------------------------
@@ -977,7 +978,7 @@ package body AlertLogPkg is
     variable AlertLogJustifyAmountVar    : integer := 0 ;
     variable ReportJustifyAmountVar      : integer := 0 ;
     variable TimeJustifyAmountVar        : integer := 0 ;
-    
+
     variable WriteTimeLastVar            : boolean := TRUE ;
 
     ------------------------------------------------------------
@@ -1062,24 +1063,24 @@ package body AlertLogPkg is
         AlertLogPtr(AlertLogID).DisabledAlertCount(Level) := AlertLogPtr(AlertLogID).DisabledAlertCount(Level) + IncrementByAmount ;
       end if ;
     end procedure IncrementAlertCount ;
-    
+
     ------------------------------------------------------------
     -- PT Local
     procedure LocalPrint (
     ------------------------------------------------------------
       AlertLogID      : AlertLogIDType ;
-      AlertLogName    : string ; 
-      WriteErrorCount : boolean ; 
-      WriteLevel      : boolean ; 
-      LevelName       : string ; 
-      WriteName       : boolean ; 
+      AlertLogName    : string ;
+      WriteErrorCount : boolean ;
+      WriteLevel      : boolean ;
+      LevelName       : string ;
+      WriteName       : boolean ;
       Message         : string ;
       WriteTime       : boolean
     ) is
       variable buf : line ;
       variable ParentID : AlertLogIDType ;
     begin
-      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ) ; -- Print  
+      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ) ; -- Print
       -- Debug Mode
       if WriteErrorCount then
         if ErrorCount > 0 then
@@ -1128,7 +1129,19 @@ package body AlertLogPkg is
       end if ;
       writeline(buf) ;
     end procedure LocalPrint ;
-    
+
+    impure function GetAlertLogName(AlertLogID : AlertLogIDType; FoundAlertHier, WriteName : boolean; Name, ParentName : string) return string is
+    begin
+      if FoundAlertHier and WriteName then
+        if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
+          return Name ;
+        else
+          return ParentName & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) & Name ;
+        end if ;
+      end if ;
+      return "" ;
+    end;
+
     ------------------------------------------------------------
     procedure alert (
     ------------------------------------------------------------
@@ -1140,34 +1153,58 @@ package body AlertLogPkg is
       -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount  : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
+      constant LogSourceName : string := GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteAlertNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all);
     begin
       -- Only write and count when GlobalAlertEnabledVar is enabled
       if GlobalAlertEnabledVar then
         localAlertLogID := VerifyID(AlertLogID) ;
-        
+
         -- Always Count (before printing so have current ErrorCount
         IncrementAlertCount(localAlertLogID, Level, StopDueToCount) ;
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
-        
+
          -- Write when Alert is Enabled
         if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) <= AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
-          LocalPrint(
-            AlertLogID       => localAlertLogID,
-            AlertLogName     => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),  
-            WriteErrorCount  => WriteAlertErrorCountVar,
-            WriteLevel       => WriteAlertLevelVar,
-            LevelName        => ALERT_NAME(Level),
-            WriteName        => WriteAlertNameVar,
-            Message          => Message,
-            WriteTime        => WriteAlertTimeVar 
-          ) ;
+          if IsOriginalPkg then
+            LocalPrint(
+              AlertLogID       => localAlertLogID,
+              AlertLogName     => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
+              WriteErrorCount  => WriteAlertErrorCountVar,
+              WriteLevel       => WriteAlertLevelVar,
+              LevelName        => ALERT_NAME(Level),
+              WriteName        => WriteAlertNameVar,
+              Message          => Message,
+              WriteTime        => WriteAlertTimeVar
+            ) ;
+          else
+            if (not IsTranscriptOpen) or (IsTranscriptMirrored) then
+              WriteToLog(
+                LogDestination => output,
+                Msg => Message,
+                LogTime => now,
+                LogLevel => ALERT_NAME(Level),
+                LogSourceName => LogSourceName
+              );
+            end if;
+
+            if IsTranscriptOpen then
+              WriteToLog(
+                LogDestination => TranscriptFile,
+                LogDestinationPath => GetTranscriptFilePath,
+                Msg => Message,
+                LogTime => now,
+                LogLevel => ALERT_NAME(Level),
+                LogSourceName => LogSourceName
+              );
+            end if;
+          end if;
         end if ;
-        
+
         if StopDueToCount then
 --          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          write(buf, LF & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & 
-            AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & 
+          write(buf, LF & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &
+            AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " &
             ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
@@ -1517,7 +1554,7 @@ package body AlertLogPkg is
       end if ;
 
       if not TestFailed then
-        write(buf, 
+        write(buf,
           ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
           ResolveOsvvmPassName(PassNameVar.GetOpt) & "   " &  -- PassName
           Name
@@ -2762,17 +2799,41 @@ package body AlertLogPkg is
       Message      : string ;
       Level        : LogType
     ) is
+      constant LogSourceName : string := GetAlertLogName(AlertLogID, FoundAlertHierVar, WriteLogNameVar, AlertLogPtr(AlertLogID).Name.all, AlertLogPtr(AlertLogPtr(AlertLogID).ParentID).Name.all);
     begin
-      LocalPrint(
-        AlertLogID       => AlertLogID,
-        AlertLogName     => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),  
-        WriteErrorCount  => WriteLogErrorCountVar,
-        WriteLevel       => WriteLogLevelVar,
-        LevelName        => LOG_NAME(Level),
-        WriteName        => WriteLogNameVar,
-        Message          => Message,
-        WriteTime        => WriteLogTimeVar
-      ) ;
+      if IsOriginalPkg then
+        LocalPrint(
+          AlertLogID       => AlertLogID,
+          AlertLogName     => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
+          WriteErrorCount  => WriteLogErrorCountVar,
+          WriteLevel       => WriteLogLevelVar,
+          LevelName        => LOG_NAME(Level),
+          WriteName        => WriteLogNameVar,
+          Message          => Message,
+          WriteTime        => WriteLogTimeVar
+        ) ;
+      else
+        if (not IsTranscriptOpen) or (IsTranscriptMirrored) then
+          WriteToLog(
+            LogDestination => output,
+            Msg => Message,
+            LogTime => now,
+            LogLevel => LOG_NAME(Level),
+            LogSourceName => LogSourceName
+          );
+        end if;
+
+        if IsTranscriptOpen then
+          WriteToLog(
+            LogDestination => TranscriptFile,
+            LogDestinationPath => GetTranscriptFilePath,
+            Msg => Message,
+            LogTime => now,
+            LogLevel => LOG_NAME(Level),
+            LogSourceName => LogSourceName
+          );
+        end if;
+      end if;
     end procedure LocalLog ;
 
     ------------------------------------------------------------
@@ -3624,7 +3685,7 @@ package body AlertLogPkg is
       FailName                 : string ;
       IdSeparator              : string ;
       WriteTimeLast            : OsvvmOptionsType ;
-      TimeJustifyAmount        : integer 
+      TimeJustifyAmount        : integer
     ) is
     begin
       if FailOnWarning /= OPT_INIT_PARM_DETECT then
@@ -5815,7 +5876,7 @@ package body AlertLogPkg is
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType is
     variable result : AlertLogIDType ;
-	begin
+  begin
     -- synthesis translate_off
     result := AlertLogStruct.NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy) ;
     -- synthesis translate_on
@@ -5826,8 +5887,8 @@ package body AlertLogPkg is
   impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType is
   ------------------------------------------------------------
     variable result : AlertLogIDType ;
-		variable ReportMode  : AlertLogReportModeType := ENABLED ;
-	begin
+    variable ReportMode  : AlertLogReportModeType := ENABLED ;
+  begin
     -- synthesis translate_off
     if DoNotReport then
         ReportMode := DISABLED ;
@@ -6224,7 +6285,7 @@ package body AlertLogPkg is
     FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    TimeJustifyAmount        : integer          := integer'left 
+    TimeJustifyAmount        : integer          := integer'left
   ) is
   begin
     -- synthesis translate_off
@@ -6254,8 +6315,8 @@ package body AlertLogPkg is
       PassName                 => PassName,
       FailName                 => FailName,
       IdSeparator              => IdSeparator,
-      WriteTimeLast            => WriteTimeLast, 
-      TimeJustifyAmount        => TimeJustifyAmount 
+      WriteTimeLast            => WriteTimeLast,
+      TimeJustifyAmount        => TimeJustifyAmount
     );
     -- synthesis translate_on
   end procedure SetAlertLogOptions ;
