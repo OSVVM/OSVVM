@@ -1785,20 +1785,26 @@ package body ScoreboardGenericPkg is
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or PassedFlagEnabled then
         if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
-          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
-        else
-          write(WriteBuf, GetName(DefaultName => "")) ;
+          write(WriteBuf, GetName(DefaultName => "Scoreboard") & " ") ;
+          if not (ArrayLengthVar > 1 and PrintIndexVar) then
+            swrite(WriteBuf, "  ") ;
+          end if ;
+        elsif NameVar.IsSet then 
+          write(WriteBuf, GetName(DefaultName => "") & " ") ;
+          if not (ArrayLengthVar > 1 and PrintIndexVar) then
+            swrite(WriteBuf, "  ") ;
+          end if ;
         end if ;
         if ArrayLengthVar > 1 and PrintIndexVar then
-          write(WriteBuf, " (" & to_string(Index) & ") ") ;
+          write(WriteBuf, " (" & to_string(Index) & ")   ") ;
         end if ;
         if ExpectedInFIFO then
-          write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
+          write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
           if FoundError then
             write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
           end if ;
         else
-          write(WriteBuf, "   Received: " & expected_to_string(ExpectedPtr.all)) ;
+          write(WriteBuf, "Received: " & expected_to_string(ExpectedPtr.all)) ;
           if FoundError then
             write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
           end if ;
