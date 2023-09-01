@@ -912,14 +912,6 @@ package body AlertLogPkg is
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
 
     -- Calculated by NewID and GetReqID 
--- Replaced by calls to CalcJustifyOneLevel
---     constant DEFAULT_LENGTH : integer := 7 ; 
---     constant REPORT_INITIAL_JUSTIFY_AMOUNT    : integer := DEFAULT_LENGTH + 2 ; -- "Default"'length + 2 * Hierarchy Level (1)
---     constant ALERT_LOG_INITIAL_JUSTIFY_AMOUNT : integer := DEFAULT_LENGTH + 1 ; -- "Default"'length + ","'length
---     variable CalcAlertLogJustifyAmountVar  : integer := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
---     variable CurAlertLogJustifyAmountVar   : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
---     variable CalcReportJustifyAmountVar    : integer := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
---     variable CurReportJustifyAmountVar     : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
     variable CalcAlertLogJustifyAmountVar  : integer := 0 ;
     variable CurAlertLogJustifyAmountVar   : integer := 0 ;
     variable CalcReportJustifyAmountVar    : integer := 0 ;
@@ -3110,10 +3102,6 @@ package body AlertLogPkg is
       ErrorCount                    := 0 ;
       AlertCount                    := (0, 0, 0) ;
       
-      --CalcAlertLogJustifyAmountVar  := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
-      --CurAlertLogJustifyAmountVar   := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
-      --CalcReportJustifyAmountVar    := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
-      --CurReportJustifyAmountVar     := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
       CalcAlertLogJustifyAmountVar  := 0 ;
       CurAlertLogJustifyAmountVar   := 0 ;
       CalcReportJustifyAmountVar    := 0 ;
