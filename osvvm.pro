@@ -46,7 +46,8 @@
 #  
 library osvvm
 # CreateOsvvmScriptSettingsPkg
-analyze OsvvmScriptSettingsPkg.vhd
+analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+analyze OsvvmDefaultSettingsPkg.vhd
 analyze TextUtilPkg.vhd
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd

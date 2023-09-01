@@ -108,6 +108,7 @@ use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
+use work.OsvvmDefaultSettingsPkg.all ;
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -887,9 +888,20 @@ package body AlertLogPkg is
   end  protected AlertLogStructPType ;
 
   --- ///////////////////////////////////////////////////////////////////////////
+  -- ---------------------------------------------------------------
+  -- Local Copy from TbUtilPkg copied due to circular dependencies
+  function IfElse(Expr : boolean ; A, B : integer) return integer is
+  -- ---------------------------------------------------------------
+  begin
+    if Expr then
+      return A ;
+    else
+      return B ;
+    end if ;
+  end function IfElse ;
 
   type AlertLogStructPType is protected body
-
+  
     -- ----------------------------------------------------------
     -- AlertLog State information
     -- ----------------------------------------------------------
@@ -900,8 +912,12 @@ package body AlertLogPkg is
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
 
     -- Calculated by SetJustify
-    variable AlertLogJustifyAmountVar    : integer := 0 ;  -- Justify amount for Alert/Log
-    variable ReportJustifyAmountVar      : integer := 0 ;  -- Justify amount for ReportAlerts
+    constant REPORT_INITIAL_JUSTIFY_AMOUNT    : integer := 7 ; -- "Default"'length 
+    constant ALERT_LOG_INITIAL_JUSTIFY_AMOUNT : integer := REPORT_INITIAL_JUSTIFY_AMOUNT + 1 ; -- "Default"'length + ","'length
+    variable CalcAlertLogJustifyAmountVar  : integer := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+    variable CurAlertLogJustifyAmountVar   : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+    variable CalcReportJustifyAmountVar    : integer := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+    variable CurReportJustifyAmountVar     : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
 
     -- Calculated by NewID and GetReqID
     variable FoundReportHierVar          : boolean := FALSE ;    -- Calculated by NewID, GetReqID
@@ -934,10 +950,11 @@ package body AlertLogPkg is
       LogEnabled          : LogEnableType ;
       ReportMode          : AlertLogReportModeType ;
       PrintParent         : AlertLogPrintParentType ;
+      HierarchyLevel      : Integer ; 
       -- Used only by ReadTestSummaries
       TotalErrors         : integer ;
       AffirmPassedCount   : integer ;
---      IsRequirment        : boolean ;
+--      IsRequirement        : boolean ;
     end record AlertLogRecType ;
 
     -- ----------------------------------------------------------
@@ -954,9 +971,11 @@ package body AlertLogPkg is
     -- ----------------------------------------------------------
     -- Controls / Settings
     -- ----------------------------------------------------------
-
+    -- Controls whether CurAlertLogJustifyAmountVar is zero or CalcAlertLogJustifyAmountVar
+    variable JustifyEnableVar            : boolean := ALERT_LOG_JUSTIFY_ENABLE ; 
+    
     -- Global Alert on/off - nothing counted if FALSE
-    variable GlobalAlertEnabledVar     : boolean := TRUE ; -- Allows turn off and on
+    variable GlobalAlertEnabledVar       : boolean := TRUE ; -- Allows turn off and on
 
     -- Default Requirements Goal
     variable DefaultPassedGoalVar        : integer := 1 ;        -- ReadSpecification, GetReqID, SetPassedGoal
@@ -967,8 +986,8 @@ package body AlertLogPkg is
     variable FailOnRequirementErrorsVar  : boolean := TRUE ;     -- WriteAlertYaml, ReportAlerts
 
     -- Controls for printing Alert and Log
-    variable TimeJustifyAmountVar        : integer := 0 ;        -- LocalPrint
-    variable WriteTimeLastVar            : boolean := TRUE ;
+    variable TimeJustifyAmountVar        : integer := ALERT_LOG_TIME_JUSTIFY_AMOUNT ; -- LocalPrint
+    variable WriteTimeLastVar            : boolean := not ALERT_LOG_WRITE_TIME_FIRST ;
     variable WriteAlertErrorCountVar     : boolean := FALSE ;    -- Alert / LocalPrint
     variable WriteAlertLevelVar          : boolean := TRUE ;     -- Alert / LocalPrint
     variable WriteAlertNameVar           : boolean := TRUE ;     -- Alert / LocalPrint
@@ -978,6 +997,14 @@ package body AlertLogPkg is
     variable WriteLogNameVar             : boolean := TRUE ;     -- Log   / LocalPrint
     variable WriteLogTimeVar             : boolean := TRUE ;     -- Log   / LocalPrint
 
+    -- Controls for ReportAlerts:  Report formatting settings, with defaults
+    variable ReportHierarchyVar          : boolean := TRUE ;    -- ReportAerts
+    variable PrintPassedVar              : boolean := TRUE ;    -- ReportAlerts: Print PassedCount
+    variable PrintAffirmationsVar        : boolean := FALSE ;   -- ReportAlerts: Print Affirmations Checked
+    variable PrintDisabledAlertsVar      : boolean := FALSE ;   -- ReportAlerts: Print Disabled Alerts
+    variable PrintRequirementsVar        : boolean := FALSE ;   -- ReportAlerts: Print requirements
+    variable PrintIfHaveRequirementsVar  : boolean := TRUE ;    -- ReportAlerts: Print requirements if have any
+
     -- Names used with printing
     variable AlertPrefixVar              : NamePType ;
     variable LogPrefixVar                : NamePType ;
@@ -986,14 +1013,6 @@ package body AlertLogPkg is
     variable PassNameVar                 : NamePType ;
     variable FailNameVar                 : NamePType ;
     variable IdSeparatorVar              : NamePType ;
-
-    -- Controls for ReportAlerts:  Report formatting settings, with defaults
-    variable ReportHierarchyVar          : boolean := TRUE ;    -- ReportAerts
-    variable PrintPassedVar              : boolean := TRUE ;    -- ReportAlerts: Print PassedCount
-    variable PrintAffirmationsVar        : boolean := FALSE ;   -- ReportAlerts: Print Affirmations Checked
-    variable PrintDisabledAlertsVar      : boolean := FALSE ;   -- ReportAlerts: Print Disabled Alerts
-    variable PrintRequirementsVar        : boolean := FALSE ;   -- ReportAlerts: Print requirements
-    variable PrintIfHaveRequirementsVar  : boolean := TRUE ;    -- ReportAlerts: Print requirements if have any
 
     ------------------------------------------------------------
     -- PT Local
@@ -1105,38 +1124,40 @@ package body AlertLogPkg is
       end if ;
       -- Write Time
       if WriteTime and not WriteTimeLastVar then
---        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "    ") ;
-        write(buf, justify(to_string(NOW, GetOsvvmDefaultTimeUnits), TimeJustifyAmountVar, RIGHT) & "  ") ;
+        write(buf, justify(to_string(NOW, GetOsvvmDefaultTimeUnits), TimeJustifyAmountVar, RIGHT) & "    ") ;
       end if ;
       -- Alert or Log
-      write(buf, AlertLogName) ;
+--      write(buf, AlertLogName & " ") ;  -- one space
+      write(buf, AlertLogName & "  ") ;   -- two spaces
       -- Level Name, when enabled (default)
       if WriteLevel then
-        write(buf, " " & LevelName) ;
+        write(buf, LevelName & " ") ;
       end if ;
       -- AlertLog Name
       if FoundAlertHierVar and WriteName then
         if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
-          write(buf, " in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+          write(buf, "  in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
         else
           ParentID := AlertLogPtr(AlertLogID).ParentID ;
-          write(buf, " in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
-            AlertLogPtr(AlertLogID).Name.all & ',', AlertLogJustifyAmountVar) ) ;
+          write(buf, "  in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
+            AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
         end if ;
       end if ;
+      -- Spacing before message - including prefix
+--      swrite(buf, " ") ; -- Two spaces
+      swrite(buf, "  ") ; 
       -- Prefix
       if AlertLogPtr(AlertLogID).Prefix /= NULL then
-        write(buf, ' ' & AlertLogPtr(AlertLogID).Prefix.all & ' ') ;
+        write(buf, AlertLogPtr(AlertLogID).Prefix.all & ' ') ;
       end if ;
       -- Message
-      write(buf, ' ' & Message) ;
+      write(buf, Message) ;
       -- Suffix
       if AlertLogPtr(AlertLogID).Suffix /= NULL then
         write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
       end if ;
       -- Time Last
       if WriteTime and WriteTimeLastVar then
---        write(buf, " at " & to_string(NOW, 1 ns)) ;
         write(buf, " at " & to_string(NOW, GetOsvvmDefaultTimeUnits)) ;
       end if ;
       writeline(buf) ;
@@ -1242,13 +1263,12 @@ package body AlertLogPkg is
       variable CurID, ParentID : AlertLogIDType ;
       variable ParentNameLen   : integer ;
     begin
-      ResultValues(1) := CurrentLength + 1 ;            -- AlertLogJustifyAmountVar "+1" is for the ","
-      ResultValues(2) := CurrentLength + IndentAmount ; -- ReportJustifyAmountVar
+      ResultValues(1) := CurrentLength + 1 ;            -- CalcAlertLogJustifyAmountVar "+1" is for the ","
+      ResultValues(2) := CurrentLength + IndentAmount ; -- CurReportJustifyAmountVar
       if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME_AND_PARENT then
         ParentID := AlertLogPtr(AlertLogID).ParentID ;
         ParentNameLen := AlertLogPtr(ParentID).Name'length ;
-        ResultValues(1) := IdSeparatorLength + ParentNameLen + ResultValues(1) ;  -- AlertLogJustifyAmountVar
---        ResultValues(2) := IdSeparatorLength + ParentNameLen + ResultValues(2) ;  -- ReportJustifyAmountVar
+        ResultValues(1) := IdSeparatorLength + ParentNameLen + ResultValues(1) ;  -- CalcAlertLogJustifyAmountVar
       end if ;
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
@@ -1278,11 +1298,14 @@ package body AlertLogPkg is
     ) is
       constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
+      JustifyEnableVar := Enable ; 
       if Enable then
-        (AlertLogJustifyAmountVar, ReportJustifyAmountVar) := CalcJustify(AlertLogID, 0, 0, Separator'length) ;
+        -- (CalcAlertLogJustifyAmountVar, CalcReportJustifyAmountVar) := CalcJustify(AlertLogID, 0, 0, Separator'length) ;
+        CurAlertLogJustifyAmountVar := CalcAlertLogJustifyAmountVar ;
+        CurReportJustifyAmountVar   := CalcReportJustifyAmountVar ;
       else
-        AlertLogJustifyAmountVar := 0 ;
-        ReportJustifyAmountVar   := 0 ;
+        CurAlertLogJustifyAmountVar := 0 ;
+        CurReportJustifyAmountVar   := 0 ;
       end if;
     end procedure SetJustify ;
 
@@ -1535,14 +1558,18 @@ package body AlertLogPkg is
 
       if not TestFailed then
         write(buf,
-          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
-          ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
+--          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName  2 spaces
+--          ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
+          ResolveOsvvmPassName(PassNameVar.GetOpt) & "   " &  -- PassName
           Name
         ) ;
       else
         write(buf,
-          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
-          ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
+--          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName 2 spaces
+--          ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
+          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
+          ResolveOsvvmFailName(FailNameVar.GetOpt) & "   " &  -- FailName
           Name
         ) ;
       end if ;
@@ -1595,7 +1622,7 @@ package body AlertLogPkg is
       alias CurID  : AlertLogIDType is AlertLogID ;
     begin
       if ReportWhenZero or HasErrors then
-        write(buf, Prefix & LeftJustify(AlertLogPtr(CurID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
+        write(buf, Prefix & LeftJustify(AlertLogPtr(CurID).Name.all, CurReportJustifyAmountVar - IndentAmount)) ;
         write(buf, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
         write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
         write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).AlertCount(WARNING) ) ) ;
@@ -1679,7 +1706,7 @@ package body AlertLogPkg is
       variable localAlertLogID : AlertLogIDType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      if ReportJustifyAmountVar <= 0 then
+      if CurReportJustifyAmountVar <= 0 then
         TurnedOnJustify := TRUE ;
         SetJustify ;
       end if ;
@@ -1707,7 +1734,7 @@ package body AlertLogPkg is
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
 --          Prefix             => ReportPrefix & "  ",
-          Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
+          Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "   ",
           IndentAmount       => 2,
           ReportWhenZero     => ReportAll or ReportWhenZero,
           HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
@@ -1730,7 +1757,7 @@ package body AlertLogPkg is
       SavedPrintRequirementsVar := PrintRequirementsVar ;
       PrintRequirementsVar := TRUE ;
 
-      if ReportJustifyAmountVar <= 0 then
+      if CurReportJustifyAmountVar <= 0 then
         TurnedOnJustify := TRUE ;
         SetJustify ;
       end if ;
@@ -2348,7 +2375,7 @@ package body AlertLogPkg is
       else
         write(buf, string'("ReportTestSummaries Warning:  No checking done. ")) ;
       end if ;
-      write(buf, " " & LeftJustify(AlertLogPtr(AlertLogID).Name.all, ReportJustifyAmountVar)) ;
+      write(buf, " " & LeftJustify(AlertLogPtr(AlertLogID).Name.all, CurReportJustifyAmountVar)) ;
       write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
       write(buf, "  Failures: "  & to_string(AlertCount(FAILURE) ) ) ;
       write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
@@ -2402,11 +2429,11 @@ package body AlertLogPkg is
       variable IgnoredValue, OldReportJustifyAmount : integer ;
       constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
-      OldReportJustifyAmount  := ReportJustifyAmountVar ;
-      (IgnoredValue, ReportJustifyAmountVar) := CalcJustify(REQUIREMENT_ALERTLOG_ID, 0, 0, Separator'length) ;
+      OldReportJustifyAmount  := CurReportJustifyAmountVar ;
+      (IgnoredValue, CurReportJustifyAmountVar) := CalcJustify(REQUIREMENT_ALERTLOG_ID, 0, 0, Separator'length) ;
 
       ReportTestSummaries(AlertLogID   => REQUIREMENT_ALERTLOG_ID) ;
-      ReportJustifyAmountVar := OldReportJustifyAmount ;
+      CurReportJustifyAmountVar := OldReportJustifyAmount ;
     end procedure ReportTestSummaries ;
 
     ------------------------------------------------------------
@@ -2495,8 +2522,6 @@ package body AlertLogPkg is
       constant DELIMITER             : character := ',' ;
       variable AlertLogID            : AlertLogIDType ;
     begin
-      HasRequirementsVar := TRUE ;
-
       -- Format:   Spec Name, [Spec Description = "",] [Requirement Goal = 0]
       ReadFileLoop : while not EndFile(SpecificationFile) loop
         ReadLoop : loop
@@ -2563,6 +2588,8 @@ package body AlertLogPkg is
           AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ;
         end if ;
       end loop ReadFileLoop ;
+
+      HasRequirementsVar := TRUE ;
     end procedure ReadSpecification ;
 
     ------------------------------------------------------------
@@ -2963,7 +2990,7 @@ package body AlertLogPkg is
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
       if OSVVM_SCOREBOARD_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
-        NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "OSVVM Scoreboard", ALERTLOG_BASE_ID) ;
+        NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "Scoreboard", ALERTLOG_BASE_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
     end procedure LocalInitialize ;
@@ -2997,6 +3024,35 @@ package body AlertLogPkg is
         Deallocate(AlertLogPtr(i)) ;
       end loop ;
       deallocate(AlertLogPtr) ;
+      -- Restore variables to their initial state
+      JustifyEnableVar              := ALERT_LOG_JUSTIFY_ENABLE ; 
+      
+      GlobalAlertEnabledVar         := TRUE ; -- Allows turn off and on
+      
+      DefaultPassedGoalVar          := 1 ;
+      
+      FailOnWarningVar              := TRUE ;
+      FailOnDisabledErrorsVar       := TRUE ;
+      FailOnRequirementErrorsVar    := TRUE ;
+      
+      TimeJustifyAmountVar          := ALERT_LOG_TIME_JUSTIFY_AMOUNT ;
+      WriteTimeLastVar              := not ALERT_LOG_WRITE_TIME_FIRST ;
+      WriteAlertErrorCountVar       := FALSE ;
+      WriteAlertLevelVar            := TRUE ;
+      WriteAlertNameVar             := TRUE ;
+      WriteAlertTimeVar             := TRUE ;
+      WriteLogErrorCountVar         := FALSE ;
+      WriteLogLevelVar              := TRUE ;
+      WriteLogNameVar               := TRUE ;
+      WriteLogTimeVar               := TRUE ;
+      
+      ReportHierarchyVar            := TRUE ;
+      PrintPassedVar                := TRUE ;
+      PrintAffirmationsVar          := FALSE ;
+      PrintDisabledAlertsVar        := FALSE ;
+      PrintRequirementsVar          := FALSE ;
+      PrintIfHaveRequirementsVar    := TRUE ;
+      
       -- Free up space used by protected types within AlertLogPkg
       AlertPrefixVar.Deallocate ;
       LogPrefixVar.Deallocate ;
@@ -3004,36 +3060,25 @@ package body AlertLogPkg is
       DoneNameVar.Deallocate ;
       PassNameVar.Deallocate ;
       FailNameVar.Deallocate ;
-      -- Restore variables to their initial state
-      PrintPassedVar              := TRUE ;
-      PrintAffirmationsVar        := FALSE ;
-      PrintDisabledAlertsVar      := FALSE ;
-      PrintRequirementsVar        := FALSE ;
-      PrintIfHaveRequirementsVar  := TRUE ;
-      DefaultPassedGoalVar        := 1 ;
-      NumAlertLogIDsVar           := 0 ;
-      NumAllocatedAlertLogIDsVar  := 0 ;
-      GlobalAlertEnabledVar       := TRUE ; -- Allows turn off and on
-      AffirmCheckCountVar         := 0 ;
-      PassedCountVar              := 0 ;
-      FailOnWarningVar            := TRUE ;
-      FailOnDisabledErrorsVar     := TRUE ;
-      FailOnRequirementErrorsVar  := TRUE ;
-      ReportHierarchyVar          := TRUE ;
-      FoundReportHierVar          := FALSE ;
-      FoundAlertHierVar           := FALSE ;
-      WriteAlertErrorCountVar     := FALSE ;
-      WriteAlertLevelVar          := TRUE ;
-      WriteAlertNameVar           := TRUE ;
-      WriteAlertTimeVar           := TRUE ;
-      WriteLogErrorCountVar       := FALSE ;
-      WriteLogLevelVar            := TRUE ;
-      WriteLogNameVar             := TRUE ;
-      WriteLogTimeVar             := TRUE ;
-      WriteTimeLastVar            := TRUE ;
-      AlertLogJustifyAmountVar    := 0 ;
-      ReportJustifyAmountVar      := 0 ;
-      TimeJustifyAmountVar        := 0 ;
+
+      -- State information
+      AffirmCheckCountVar           := 0 ;
+      PassedCountVar                := 0 ;
+      ErrorCount                    := 0 ;
+      AlertCount                    := (0, 0, 0) ;
+      
+      CalcAlertLogJustifyAmountVar  := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+      CurAlertLogJustifyAmountVar   := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+      CalcReportJustifyAmountVar    := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+      CurReportJustifyAmountVar     := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+
+      FoundReportHierVar            := FALSE ;
+      FoundAlertHierVar             := FALSE ;
+      
+      HasRequirementsVar            := FALSE ;
+
+      NumAlertLogIDsVar             := 0 ;
+      NumAllocatedAlertLogIDsVar    := 0 ;
     end procedure DeallocateAlertLogStruct ;
 
     ------------------------------------------------------------
@@ -3138,6 +3183,40 @@ package body AlertLogPkg is
         end if ;
       end if ;
     end procedure AdjustID ;
+    
+    ------------------------------------------------------------
+    -- PT Local
+    procedure CalcJustifyOneLevel(ID : AlertLogIDType) is
+    ------------------------------------------------------------
+      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
+      variable ParentID : AlertLogIDType ; 
+      variable HierarchyLevel : integer := 1 ; 
+      variable IdNameLen : integer ; 
+      variable LocalAlertLogJustifyAmount, LocalReportJustifyAmount : integer ;
+    begin
+      ParentID := AlertLogPtr(ID).ParentID ;
+      if ParentID > ALERTLOG_BASE_ID then
+        HierarchyLevel := AlertLogPtr(ParentID).HierarchyLevel + 1 ; 
+      end if ; 
+      AlertLogPtr(ID).HierarchyLevel := HierarchyLevel ;
+      
+      if AlertLogPtr(ID).ReportMode /= DISABLED then
+        IdNameLen := AlertLogPtr(ID).Name'length ; 
+        LocalAlertLogJustifyAmount := IdNameLen + 1 ; -- 1 for comma
+        LocalReportJustifyAmount   := IdNameLen + (HierarchyLevel * 2) ;
+        -- Update LocalAlertLogJustifyAmountVar if PRINT_NAME_AND_PARENT
+        if AlertLogPtr(ID).PrintParent = PRINT_NAME_AND_PARENT then
+          LocalAlertLogJustifyAmount := Separator'length + AlertLogPtr(ParentID).Name'length + LocalAlertLogJustifyAmount ; 
+        end if ;
+        -- Integrate current values into global values
+        CalcAlertLogJustifyAmountVar  := maximum(CalcAlertLogJustifyAmountVar, LocalAlertLogJustifyAmount) ; 
+        CalcReportJustifyAmountVar    := maximum(CalcReportJustifyAmountVar,   LocalReportJustifyAmount) ; 
+        if JustifyEnableVar then
+          CurAlertLogJustifyAmountVar := CalcAlertLogJustifyAmountVar ;
+          CurReportJustifyAmountVar   := CalcReportJustifyAmountVar ;
+        end if ; 
+      end if ; 
+    end procedure CalcJustifyOneLevel ;
 
     ------------------------------------------------------------
     impure function NewID(
@@ -3180,6 +3259,8 @@ package body AlertLogPkg is
           end if ;
         end if ;
       end if ;
+      -- Set Level and Justify amounts
+      CalcJustifyOneLevel(ResultID) ; 
       return ResultID ;
     end function NewID ;
 
@@ -3189,7 +3270,6 @@ package body AlertLogPkg is
       variable ResultID : AlertLogIDType ;
       variable localParentID : AlertLogIDType ;
     begin
-      HasRequirementsVar := TRUE ;
       localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED, ALERTLOG_ID_NOT_ASSIGNED) ;
       ResultID := LocalFindAlertLogID(Name, localParentID) ;
       if ResultID = ALERTLOG_ID_NOT_FOUND then
@@ -3241,6 +3321,12 @@ package body AlertLogPkg is
           end if ;
         end if ;
       end if ;
+      -- Set Level and Justify amounts
+      CalcJustifyOneLevel(ResultID) ; 
+      if not HasRequirementsVar then
+        CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ; 
+      end if ; 
+      HasRequirementsVar := TRUE ;
       return ResultID ;
     end function GetReqID ;
 
@@ -3249,13 +3335,16 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
     begin
-      HasRequirementsVar := TRUE ;
       localAlertLogID := VerifyID(AlertLogID) ;
       if PassedGoal >= 0 then
         AlertLogPtr(localAlertLogID).PassedGoal := PassedGoal ;
       else
         AlertLogPtr(localAlertLogID).PassedGoal := DefaultPassedGoalVar ;
       end if ;
+      if not HasRequirementsVar then
+        CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ; 
+      end if ; 
+      HasRequirementsVar := TRUE ;
     end procedure SetPassedGoal ;
 
     ------------------------------------------------------------
@@ -3572,7 +3661,7 @@ package body AlertLogPkg is
       variable buf : line ;
       variable CurID : AlertLogIDType ;
     begin
-      write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(AlertLogID).Name.all, ReportJustifyAmountVar - IndentAmount)) ;
+      write(buf, Prefix &  " "   & LeftJustify(AlertLogPtr(AlertLogID).Name.all, CurReportJustifyAmountVar - IndentAmount)) ;
       for i in LogIndexType loop
         if AlertLogPtr(AlertLogID).LogEnabled(i) then
 --          write(buf, " "  & to_string(AlertLogPtr(AlertLogID).LogEnabled(i)) ) ;
@@ -3601,7 +3690,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       variable TurnedOnJustify : boolean := FALSE ;
     begin
-      if ReportJustifyAmountVar <= 0 then
+      if CurReportJustifyAmountVar <= 0 then
         TurnedOnJustify := TRUE ;
         SetJustify ;
       end if ;

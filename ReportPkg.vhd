@@ -114,13 +114,15 @@ package body ReportPkg is
     
     if work.ScoreboardPkg_slv.GotScoreboards then 
       work.ScoreboardPkg_slv.WriteScoreboardYaml (
-        FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml"
+--        FileName => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml" 
+        FileName => "slv", FileNameIsBaseName => TRUE
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_int.GotScoreboards then 
       work.ScoreboardPkg_int.WriteScoreboardYaml (
-        FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml"
+--        FileName           => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml" 
+        FileName => "int", FileNameIsBaseName => TRUE
       ) ;
     end if ; 
 

@@ -82,13 +82,13 @@ library ieee ;
   use ieee.numeric_std.all ;
 
   use work.OsvvmScriptSettingsPkg.all ;
+  use work.OsvvmDefaultSettingsPkg.all ;
   use work.TranscriptPkg.all ;
   use work.TextUtilPkg.all ;
   use work.AlertLogPkg.all ;
   use work.NamePkg.all ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ;
-
 
 package ScoreboardGenericPkg is
   generic (
@@ -251,8 +251,6 @@ package ScoreboardGenericPkg is
     constant ExpectedData : in  ActualType
   ) return boolean ;
 
-
-
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
 
@@ -268,7 +266,6 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string ;
     variable Item   : out  ExpectedType
   ) ;
-
 
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
@@ -429,7 +426,7 @@ package ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- Writing YAML Reports
   impure function GotScoreboards return boolean ;
-  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE; FileNameIsBaseName : boolean := SCOREBOARD_YAML_IS_BASE_FILE_NAME) ;
 
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and
@@ -853,7 +850,7 @@ package ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Writing YAML Reports
     impure function GotScoreboards return boolean ;
-    procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) ;
 
     ------------------------------------------------------------
     -- Generally these are not required.  When a simulation ends and
@@ -1550,8 +1547,8 @@ package body ScoreboardGenericPkg is
     begin
       return AlertIf(OSVVM_SCOREBOARD_ALERTLOG_ID, Index < HeadPointer'Low or Index > HeadPointer'High,
          GetName & " " & Name & " Index: " & to_string(Index) &
-               "is not in the range (" & to_string(HeadPointer'Low) &
-               "to " & to_string(HeadPointer'High) & ")",
+               " is not in the range (" & to_string(HeadPointer'Low) &
+               " to " & to_string(HeadPointer'High) & ")",
          FAILURE ) ;
     end function LocalOutOfRange ;
 
@@ -2717,9 +2714,10 @@ package body ScoreboardGenericPkg is
     end procedure WriteScoreboardYaml ;
 
     ------------------------------------------------------------
-    procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
+    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
+                                              IfElse(FileNameIsBaseName, OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
       file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       variable buf : line ;
     begin
@@ -3310,9 +3308,9 @@ package body ScoreboardGenericPkg is
   end function GotScoreboards ;
 
   ------------------------------------------------------------
-  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE; FileNameIsBaseName : boolean := SCOREBOARD_YAML_IS_BASE_FILE_NAME) is
   begin
-    ScoreboardStore.WriteScoreboardYaml(FileName, OpenKind) ;
+    ScoreboardStore.WriteScoreboardYaml(FileName, OpenKind, FileNameIsBaseName) ;
   end procedure WriteScoreboardYaml ;
 
   ------------------------------------------------------------

@@ -75,6 +75,7 @@ use work.OsvvmGlobalPkg.all ;
 use work.AlertLogPkg.all ; 
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
+use work.OsvvmDefaultSettingsPkg.all ;
 
 use std.textio.all ;
 
@@ -131,10 +132,10 @@ package RandomPkg is
     -- For integer_vector use either : RV.InitSeed(IV => (1,5)) ;
     --   or : RV.InitSeed(integer_vector'(1,5)) ;
     -- Initialize Seeds
-    procedure InitSeed         ( S : string ;  UseNewSeedMethods : boolean := FALSE ) ;
-    procedure InitSeed         ( I : integer ; UseNewSeedMethods : boolean := FALSE ) ;
-    procedure InitSeed         ( T : time ;    UseNewSeedMethods : boolean := TRUE ) ;
-    procedure InitSeed         ( IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) ;
+    procedure InitSeed         ( S : string ;  UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
+    procedure InitSeed         ( I : integer ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
+    procedure InitSeed         ( T : time ;    UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
+    procedure InitSeed         ( IV : integer_vector ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
     -- Save and restore seed values
     procedure       SetSeed    (RandomSeedIn : RandomSeedType ) ;
     impure function GetSeed    return RandomSeedType ;
@@ -439,7 +440,7 @@ package body RandomPkg is
     ---
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    procedure InitSeed (S : string ; UseNewSeedMethods : boolean := FALSE ) is
+    procedure InitSeed (S : string ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -452,7 +453,7 @@ package body RandomPkg is
     end procedure InitSeed ;
 
     ------------------------------------------------------------
-    procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := FALSE ) is
+    procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -465,7 +466,7 @@ package body RandomPkg is
     end procedure InitSeed ;
     
     ------------------------------------------------------------
-    procedure InitSeed (T : time ; UseNewSeedMethods : boolean := TRUE ) is
+    procedure InitSeed (T : time ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -480,7 +481,7 @@ package body RandomPkg is
     end procedure InitSeed ;
 
     ------------------------------------------------------------
-    procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) is
+    procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
