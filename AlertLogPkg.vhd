@@ -1622,7 +1622,7 @@ package body AlertLogPkg is
       alias CurID  : AlertLogIDType is AlertLogID ;
     begin
       if ReportWhenZero or HasErrors then
-        write(buf, Prefix & LeftJustify(AlertLogPtr(CurID).Name.all, CurReportJustifyAmountVar - IndentAmount)) ;
+        write(buf, Prefix & " " & LeftJustify(AlertLogPtr(CurID).Name.all, CurReportJustifyAmountVar - IndentAmount)) ;
         write(buf, "  Failures: "  & to_string(AlertLogPtr(CurID).AlertCount(FAILURE) ) ) ;
         write(buf, "  Errors: "    & to_string(AlertLogPtr(CurID).AlertCount(ERROR) ) ) ;
         write(buf, "  Warnings: "  & to_string(AlertLogPtr(CurID).AlertCount(WARNING) ) ) ;
@@ -1734,7 +1734,7 @@ package body AlertLogPkg is
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
 --          Prefix             => ReportPrefix & "  ",
-          Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "   ",
+          Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
           IndentAmount       => 2,
           ReportWhenZero     => ReportAll or ReportWhenZero,
           HasDisabledErrors  => HasDisabledErrors -- NumDisabledErrors /= 0
