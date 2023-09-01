@@ -911,14 +911,19 @@ package body AlertLogPkg is
     variable ErrorCount                : integer := 0 ;
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
 
-    -- Calculated by SetJustify
-    constant REPORT_INITIAL_JUSTIFY_AMOUNT    : integer := 7 ; -- "Default"'length 
-    constant ALERT_LOG_INITIAL_JUSTIFY_AMOUNT : integer := REPORT_INITIAL_JUSTIFY_AMOUNT + 1 ; -- "Default"'length + ","'length
-    variable CalcAlertLogJustifyAmountVar  : integer := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
-    variable CurAlertLogJustifyAmountVar   : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
-    variable CalcReportJustifyAmountVar    : integer := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
-    variable CurReportJustifyAmountVar     : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
-
+    -- Calculated by NewID and GetReqID 
+-- Replaced by calls to CalcJustifyOneLevel
+--     constant DEFAULT_LENGTH : integer := 7 ; 
+--     constant REPORT_INITIAL_JUSTIFY_AMOUNT    : integer := DEFAULT_LENGTH + 2 ; -- "Default"'length + 2 * Hierarchy Level (1)
+--     constant ALERT_LOG_INITIAL_JUSTIFY_AMOUNT : integer := DEFAULT_LENGTH + 1 ; -- "Default"'length + ","'length
+--     variable CalcAlertLogJustifyAmountVar  : integer := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+--     variable CurAlertLogJustifyAmountVar   : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+--     variable CalcReportJustifyAmountVar    : integer := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+--     variable CurReportJustifyAmountVar     : integer := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+    variable CalcAlertLogJustifyAmountVar  : integer := 0 ;
+    variable CurAlertLogJustifyAmountVar   : integer := 0 ;
+    variable CalcReportJustifyAmountVar    : integer := 0 ;
+    variable CurReportJustifyAmountVar     : integer := 0 ;
     -- Calculated by NewID and GetReqID
     variable FoundReportHierVar          : boolean := FALSE ;    -- Calculated by NewID, GetReqID
     variable FoundAlertHierVar           : boolean := FALSE ;    -- Calculated by NewID, GetReqID
@@ -1553,7 +1558,7 @@ package body AlertLogPkg is
 
       write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt)) ;
       if not WriteTimeLastVar then
-        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  ") ;
+        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  " & "  ") ;
       end if ;
 
       if not TestFailed then
@@ -2964,6 +2969,40 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
+    procedure CalcJustifyOneLevel(ID : AlertLogIDType) is
+    ------------------------------------------------------------
+      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
+      variable ParentID : AlertLogIDType ; 
+      variable HierarchyLevel : integer := 1 ; 
+      variable IdNameLen : integer ; 
+      variable LocalAlertLogJustifyAmount, LocalReportJustifyAmount : integer ;
+    begin
+      ParentID := AlertLogPtr(ID).ParentID ;
+      if ParentID > ALERTLOG_BASE_ID then
+        HierarchyLevel := AlertLogPtr(ParentID).HierarchyLevel + 1 ; 
+      end if ; 
+      AlertLogPtr(ID).HierarchyLevel := HierarchyLevel ;
+      
+      if AlertLogPtr(ID).ReportMode /= DISABLED then
+        IdNameLen := AlertLogPtr(ID).Name'length ; 
+        LocalAlertLogJustifyAmount := IdNameLen + 1 ; -- 1 for comma
+        LocalReportJustifyAmount   := IdNameLen + (HierarchyLevel * 2) ;
+        -- Update LocalAlertLogJustifyAmountVar if PRINT_NAME_AND_PARENT
+        if AlertLogPtr(ID).PrintParent = PRINT_NAME_AND_PARENT then
+          LocalAlertLogJustifyAmount := Separator'length + AlertLogPtr(ParentID).Name'length + LocalAlertLogJustifyAmount ; 
+        end if ;
+        -- Integrate current values into global values
+        CalcAlertLogJustifyAmountVar  := maximum(CalcAlertLogJustifyAmountVar, LocalAlertLogJustifyAmount) ; 
+        CalcReportJustifyAmountVar    := maximum(CalcReportJustifyAmountVar,   LocalReportJustifyAmount) ; 
+        if JustifyEnableVar then
+          CurAlertLogJustifyAmountVar := CalcAlertLogJustifyAmountVar ;
+          CurReportJustifyAmountVar   := CalcReportJustifyAmountVar ;
+        end if ; 
+      end if ; 
+    end procedure CalcJustifyOneLevel ;
+
+    ------------------------------------------------------------
+    -- PT Local
     -- Construct initial data structure
     procedure LocalInitialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) is
     ------------------------------------------------------------
@@ -2979,18 +3018,22 @@ package body AlertLogPkg is
       NewAlertLogRec(ALERTLOG_BASE_ID, "AlertLogTop", ALERTLOG_BASE_ID) ;
       -- Create DEFAULT AlertLogID
       NewAlertLogRec(ALERT_DEFAULT_ID, "Default", ALERTLOG_BASE_ID) ;
+      CalcJustifyOneLevel(ALERT_DEFAULT_ID) ; 
       NumAlertLogIDsVar := ALERT_DEFAULT_ID ;
       -- Create OSVVM AlertLogID (if it differs from DEFAULT
       if OSVVM_ALERTLOG_ID /= ALERT_DEFAULT_ID then
         NewAlertLogRec(OSVVM_ALERTLOG_ID, "OSVVM", ALERTLOG_BASE_ID) ;
+        CalcJustifyOneLevel(OSVVM_ALERTLOG_ID) ; 
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
       if REQUIREMENT_ALERTLOG_ID /= ALERT_DEFAULT_ID then
         NewAlertLogRec(REQUIREMENT_ALERTLOG_ID, "Requirements", ALERTLOG_BASE_ID) ;
+        -- CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ;  -- Done conditionally when requirements are added, otherwise not printed.
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
       if OSVVM_SCOREBOARD_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
         NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "Scoreboard", ALERTLOG_BASE_ID) ;
+        CalcJustifyOneLevel(OSVVM_SCOREBOARD_ALERTLOG_ID) ; 
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
     end procedure LocalInitialize ;
@@ -3067,10 +3110,14 @@ package body AlertLogPkg is
       ErrorCount                    := 0 ;
       AlertCount                    := (0, 0, 0) ;
       
-      CalcAlertLogJustifyAmountVar  := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
-      CurAlertLogJustifyAmountVar   := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
-      CalcReportJustifyAmountVar    := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
-      CurReportJustifyAmountVar     := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+      --CalcAlertLogJustifyAmountVar  := ALERT_LOG_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+      --CurAlertLogJustifyAmountVar   := IfElse(ALERT_LOG_JUSTIFY_ENABLE, ALERT_LOG_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+      --CalcReportJustifyAmountVar    := REPORT_INITIAL_JUSTIFY_AMOUNT ;  -- Calculated by NewID and GetReqID
+      --CurReportJustifyAmountVar     := IfElse(ALERT_LOG_JUSTIFY_ENABLE, REPORT_INITIAL_JUSTIFY_AMOUNT, 0) ;  -- IfElse(JustifyEnableVar, Calc, 0)
+      CalcAlertLogJustifyAmountVar  := 0 ;
+      CurAlertLogJustifyAmountVar   := 0 ;
+      CalcReportJustifyAmountVar    := 0 ;
+      CurReportJustifyAmountVar     := 0 ;
 
       FoundReportHierVar            := FALSE ;
       FoundAlertHierVar             := FALSE ;
@@ -3184,40 +3231,6 @@ package body AlertLogPkg is
       end if ;
     end procedure AdjustID ;
     
-    ------------------------------------------------------------
-    -- PT Local
-    procedure CalcJustifyOneLevel(ID : AlertLogIDType) is
-    ------------------------------------------------------------
-      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
-      variable ParentID : AlertLogIDType ; 
-      variable HierarchyLevel : integer := 1 ; 
-      variable IdNameLen : integer ; 
-      variable LocalAlertLogJustifyAmount, LocalReportJustifyAmount : integer ;
-    begin
-      ParentID := AlertLogPtr(ID).ParentID ;
-      if ParentID > ALERTLOG_BASE_ID then
-        HierarchyLevel := AlertLogPtr(ParentID).HierarchyLevel + 1 ; 
-      end if ; 
-      AlertLogPtr(ID).HierarchyLevel := HierarchyLevel ;
-      
-      if AlertLogPtr(ID).ReportMode /= DISABLED then
-        IdNameLen := AlertLogPtr(ID).Name'length ; 
-        LocalAlertLogJustifyAmount := IdNameLen + 1 ; -- 1 for comma
-        LocalReportJustifyAmount   := IdNameLen + (HierarchyLevel * 2) ;
-        -- Update LocalAlertLogJustifyAmountVar if PRINT_NAME_AND_PARENT
-        if AlertLogPtr(ID).PrintParent = PRINT_NAME_AND_PARENT then
-          LocalAlertLogJustifyAmount := Separator'length + AlertLogPtr(ParentID).Name'length + LocalAlertLogJustifyAmount ; 
-        end if ;
-        -- Integrate current values into global values
-        CalcAlertLogJustifyAmountVar  := maximum(CalcAlertLogJustifyAmountVar, LocalAlertLogJustifyAmount) ; 
-        CalcReportJustifyAmountVar    := maximum(CalcReportJustifyAmountVar,   LocalReportJustifyAmount) ; 
-        if JustifyEnableVar then
-          CurAlertLogJustifyAmountVar := CalcAlertLogJustifyAmountVar ;
-          CurReportJustifyAmountVar   := CalcReportJustifyAmountVar ;
-        end if ; 
-      end if ; 
-    end procedure CalcJustifyOneLevel ;
-
     ------------------------------------------------------------
     impure function NewID(
       Name            : string ;
