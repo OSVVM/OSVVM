@@ -1781,19 +1781,21 @@ package body ScoreboardGenericPkg is
 
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or PassedFlagEnabled then
+        -- Only used for PT based SB - SetName not accessible.
         if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
-          write(WriteBuf, GetName(DefaultName => "Scoreboard") & " ") ;
+          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
           if not (ArrayLengthVar > 1 and PrintIndexVar) then
-            swrite(WriteBuf, "  ") ;
+            swrite(WriteBuf, "   ") ;
           end if ;
         elsif NameVar.IsSet then 
-          write(WriteBuf, GetName(DefaultName => "") & " ") ;
+          write(WriteBuf, GetName(DefaultName => "")) ;
           if not (ArrayLengthVar > 1 and PrintIndexVar) then
-            swrite(WriteBuf, "  ") ;
+            swrite(WriteBuf, "   ") ;
           end if ;
         end if ;
+        -- Only used for PT based SB - Index SB not used in the same way.
         if ArrayLengthVar > 1 and PrintIndexVar then
-          write(WriteBuf, " (" & to_string(Index) & ")   ") ;
+          write(WriteBuf, " (" & to_string(Index) & ")    ") ;
         end if ;
         if ExpectedInFIFO then
           write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
