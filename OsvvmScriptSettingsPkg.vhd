@@ -41,6 +41,7 @@ package OsvvmScriptSettingsPkg is
   constant OSVVM_OUTPUT_DIRECTORY      : string ;
   constant OSVVM_BUILD_YAML_FILE       : string ;
   constant OSVVM_TRANSCRIPT_YAML_FILE  : string ;
+  constant OSVVM_REVISION              : string ;
 end package OsvvmScriptSettingsPkg ;
 
 -- For the package body with the deferred constant values, see
