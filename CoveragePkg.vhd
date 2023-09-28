@@ -115,7 +115,7 @@ use ieee.math_real.all ;
 use std.textio.all ;
 
 use work.OsvvmScriptSettingsPkg.all ;
-use work.OsvvmDefaultSettingsPkg.all ;
+use work.OsvvmSettingsPkg.all ;
 use work.TextUtilPkg.all ;
 use work.ResolutionPkg.all ;
 use work.TranscriptPkg.all ;
@@ -1695,6 +1695,10 @@ end package CoveragePkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body CoveragePkg is
+
+  constant DEFAULT_WEIGHT_MODE : WeightModeType := WeightModeType'value(COVERAGE_DEFAULT_WEIGHT_MODE) ;
+
+
   ------------------------------------------------------------
   --  package local
   function ActionToName(Action : integer) return string is
@@ -2266,7 +2270,7 @@ package body CoveragePkg is
         NextPointMode      =>  RANDOM,
         IllegalMode        =>  ILLEGAL_ON,
         IllegalModeLevel   =>  ERROR,
-        WeightMode         =>  AT_LEAST,
+        WeightMode         =>  DEFAULT_WEIGHT_MODE,
         WeightScale        =>  1.0,
 
         ThresholdingEnable =>  FALSE, -- thresholding disabled by default
@@ -3334,7 +3338,7 @@ package body CoveragePkg is
       CovStructPtr(Index).NextPointMode      := RANDOM ;
       CovStructPtr(Index).IllegalMode        := ILLEGAL_ON ;
       CovStructPtr(Index).IllegalModeLevel   := ERROR ;
-      CovStructPtr(Index).WeightMode         := AT_LEAST ;
+      CovStructPtr(Index).WeightMode         := DEFAULT_WEIGHT_MODE ;
       CovStructPtr(Index).WeightScale        := 1.0 ;
       CovStructPtr(Index).ThresholdingEnable := FALSE ;
       CovStructPtr(Index).CovThreshold       := 45.0 ;

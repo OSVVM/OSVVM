@@ -47,7 +47,7 @@
 library osvvm
 # CreateOsvvmScriptSettingsPkg
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
-analyze OsvvmDefaultSettingsPkg.vhd
+analyze OsvvmSettingsPkg.vhd
 analyze TextUtilPkg.vhd
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
@@ -109,4 +109,10 @@ if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
   analyze OsvvmScriptSettingsPkg_generated.vhd
 } else {
   analyze OsvvmScriptSettingsPkg_default.vhd
+}
+
+if {[FileExists OsvvmSettingsPkg_local.vhd]} {
+  analyze OsvvmSettingsPkg_local.vhd
+} else {
+  analyze OsvvmSettingsPkg_default.vhd
 }

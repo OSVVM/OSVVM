@@ -82,7 +82,7 @@ library ieee ;
   use ieee.numeric_std.all ;
 
   use work.OsvvmScriptSettingsPkg.all ;
-  use work.OsvvmDefaultSettingsPkg.all ;
+  use work.OsvvmSettingsPkg.all ;
   use work.TranscriptPkg.all ;
   use work.TextUtilPkg.all ;
   use work.AlertLogPkg.all ;

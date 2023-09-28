@@ -75,7 +75,7 @@ use work.OsvvmGlobalPkg.all ;
 use work.AlertLogPkg.all ; 
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
-use work.OsvvmDefaultSettingsPkg.all ;
+use work.OsvvmSettingsPkg.all ;
 
 use std.textio.all ;
 

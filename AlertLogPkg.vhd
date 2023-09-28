@@ -108,7 +108,7 @@ use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
-use work.OsvvmDefaultSettingsPkg.all ;
+use work.OsvvmSettingsPkg.all ;
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
