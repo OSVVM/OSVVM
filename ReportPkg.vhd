@@ -104,7 +104,7 @@ package body ReportPkg is
     file OsvvmYamlFile : text open APPEND_MODE is FileName ;
     variable buf : line ;
   begin
-    swrite(buf, "        SimulationTime: " & to_string(NOW)) ; 
+    swrite(buf, "        SimulationTime: """ & to_string(NOW) & '"') ; 
     writeline(OsvvmYamlFile, buf) ; 
     file_close(OsvvmYamlFile) ;
   end procedure WriteSimTimeYaml ;
