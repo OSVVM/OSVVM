@@ -2,9 +2,10 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2023.09   |  Added OsvvmSettingsPkg. Updated AlertLogPkg, CoveragePkg, ReportPkg
 | 2023.05   |  Added DelayCoveragePkg.  Changed seed in CoveragePkg.
-| 2023.04   |  Updated OsvvmSettingsPkg
-| 2023.01   |  Added OsvvmSettingsPkg
+| 2023.04   |  Updated OsvvmScriptSettingsPkg
+| 2023.01   |  Added OsvvmScriptSettingsPkg
 | 2022.11   |  ScoreboardGenericPkg, CoveragePkg, MemoryGenericPkg - search default now PRIVATE_NAME
 |           |  AlertLogPkg: Added GetTestName
 | 2022.10   |  RandomBasePkg: Added SetRandomSalt
@@ -73,7 +74,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2023.05 May 2023
+## Revision 2023.09  September 2023
 
 ### Current Revision and Compile Order
 
@@ -84,7 +85,8 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |
   -----------------------------------------------------|----------
-  | OsvvmScriptSettingsPkg.vhd                         | 2023.04  |
+  | OsvvmScriptSettingsPkg.vhd                         | ** 2023.09 **  |
+  | OsvvmSettingsPkg.vhd                               | ** 2023.09 NEW **  |
   | TextUtilPkg.vhd                                    | 2022.08  |
   | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2022.02  |
@@ -94,19 +96,19 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If not Aldec                                       |          |
   |     VendorCovApiPkg.vhd                            | 2020.01  |
   | TranscriptPkg.vhd                                  | 2023.01  |
-  | AlertLogPkg.vhd                                    | 2023.04  |
+  | AlertLogPkg.vhd                                    | ** 2023.09 **  |
   | TbUtilPkg.vhd                                      | 2022.09  |
   | NameStorePkg.vhd                                   | 2022.10  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2023.01  |
-  | RandomPkg.vhd                                      | 2021.06  |
+  | RandomPkg.vhd                                      | ** 2023.09 **  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | ** 2023.05 **  |
-  | DelayCoveragePkg.vhd                               | ** 2023.05 **  |
+  | CoveragePkg.vhd                                    | ** 2023.09 **  |
+  | DelayCoveragePkg.vhd                               | 2023.05  |
   | ResizePkg.vhd                                      | 2021.06  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | ** 2023.05 **  |
+  |     ScoreboardGenericPkg.vhd                       | ** 2023.09 **  |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   | If Not Support Generic Packages                    |          |
@@ -119,13 +121,45 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If Not Support Generic Packages                    |          |
   |     MemoryPkg_c.vhd                                | 2022.11  |
   |     MemoryPkg_orig_c.vhd                           | 2022.11  |
-  | ReportPkg.vhd                                      | 2023.04  |
+  | ReportPkg.vhd                                      | ** 2023.09 **  |
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmContext.vhd                                   | 2022.01  |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
   | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
-  |     OsvvmScriptSettingsPkg_default.vhd             | 2023.04  |
+  |     OsvvmScriptSettingsPkg_default.vhd             | ** 2023.09 **  |
+  | If exist OsvvmSettingsPkg_local.vhd                |          |
+  |     OsvvmSettingsPkg_local.vhd                     | User Created |
+  | If not exist OsvvmSettingsPkg_local.vhd            |          |
+  |     OsvvmSettingsPkg_default.vhd                   | ** 2023.09 NEW **  |
+
+### OsvvmSettingsPkg 2023.09 - NEW
+- Defines deferred constants that initialize settings in packages
+
+### ScoreboardGenericPkg 2023.09
+- WriteScoreboardYaml - updated to allow either full name of yaml file or just specifying base name
+- Default method for WriteScoreboardYaml selectable in OsvvmSettingsPkg (and the final setting of the call).
+- Updated spacing in printing
+
+### AlertLogPkg 2023.09
+- Updated for constants in OsvvmSettingsPkg
+- Updated justify calculations and printing for better unification of it.
+- TranscriptClose if stop due to count
+
+### CoveragePkg 2023.09
+- Updated for constants in OsvvmSettingsPkg
+
+### RandomPkg 2023.09
+- Updated for constants in OsvvmSettingsPkg
+
+### ReportPkg 2023.09
+- Added WriteSimTimeYaml to add "now" to yaml report
+
+### OsvvmScriptSettingsPkg 2023.09
+- Added OSVVM_REVISION
+
+
+## Revision 2023.05 May 2023
 
 ### DelayCoveragePkg  2023.05 (new)
 Implements a pattern for randomizing cycle based delays such as AXI's Valid and Ready.

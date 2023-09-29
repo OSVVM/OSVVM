@@ -75,6 +75,7 @@ use work.OsvvmGlobalPkg.all ;
 use work.AlertLogPkg.all ; 
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
+use work.OsvvmSettingsPkg.all ;
 
 use std.textio.all ;
 
@@ -131,10 +132,10 @@ package RandomPkg is
     -- For integer_vector use either : RV.InitSeed(IV => (1,5)) ;
     --   or : RV.InitSeed(integer_vector'(1,5)) ;
     -- Initialize Seeds
-    procedure InitSeed         ( S : string ;  UseNewSeedMethods : boolean := FALSE ) ;
-    procedure InitSeed         ( I : integer ; UseNewSeedMethods : boolean := FALSE ) ;
-    procedure InitSeed         ( T : time ;    UseNewSeedMethods : boolean := TRUE ) ;
-    procedure InitSeed         ( IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) ;
+    procedure InitSeed         ( S : string ;  UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
+    procedure InitSeed         ( I : integer ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
+    procedure InitSeed         ( T : time ;    UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
+    procedure InitSeed         ( IV : integer_vector ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) ;
     -- Save and restore seed values
     procedure       SetSeed    (RandomSeedIn : RandomSeedType ) ;
     impure function GetSeed    return RandomSeedType ;
@@ -247,7 +248,6 @@ package RandomPkg is
     impure function RandTimeV    (Min, Max : time ;    Size   : natural ; Unit : time := ns) return time_vector ;
     impure function RandTimeV    (Min, Max : time ;    Unique : natural ; Size : natural ; Unit : time := ns) return time_vector ;
 
-
     --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Randomization with range and exclude vector.
@@ -264,7 +264,6 @@ package RandomPkg is
     impure function RandIntV     (Min, Max : integer ; Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
     impure function RandTimeV    (Min, Max : time ;    Exclude : time_vector ;    Size   : natural ; Unit : in time := ns) return time_vector ;
     impure function RandTimeV    (Min, Max : time ;    Exclude : time_vector ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector ;
-
 
     --- ///////////////////////////////////////////////////////////////////////////
     --
@@ -286,7 +285,6 @@ package RandomPkg is
     impure function RandTimeV    (A : time_vector ;    Size   : natural) return time_vector ;
     impure function RandTimeV    (A : time_vector ;    Unique : natural ; Size : natural) return time_vector ;
 
-
     --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
@@ -295,17 +293,17 @@ package RandomPkg is
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
     impure function RandInt      (A, Exclude : integer_vector  ) return integer ;
-    impure function RandReal     (A, Exclude : real_vector ) return real ;
-    impure function RandTime     (A, Exclude : time_vector) return time ;
+    impure function RandReal     (A, Exclude : real_vector     ) return real ;
+    impure function RandTime     (A, Exclude : time_vector     ) return time ;
     impure function RandSlv      (A, Exclude : integer_vector ; Size : natural) return std_logic_vector  ;
     impure function RandUnsigned (A, Exclude : integer_vector ; Size : natural) return Unsigned ;
     impure function RandSigned   (A, Exclude : integer_vector ; Size : natural ) return Signed ;
     impure function RandIntV     (A, Exclude : integer_vector ; Size : natural) return integer_vector ;
     impure function RandIntV     (A, Exclude : integer_vector ; Unique : natural ; Size : natural) return integer_vector ;
-    impure function RandRealV    (A, Exclude : real_vector ; Size : natural) return real_vector ;
-    impure function RandRealV    (A, Exclude : real_vector ; Unique : natural ; Size : natural) return real_vector ;
-    impure function RandTimeV    (A, Exclude : time_vector ; Size : natural) return time_vector ;
-    impure function RandTimeV    (A, Exclude : time_vector ; Unique : natural ; Size : natural) return time_vector ;
+    impure function RandRealV    (A, Exclude : real_vector ;    Size : natural) return real_vector ;
+    impure function RandRealV    (A, Exclude : real_vector ;    Unique : natural ; Size : natural) return real_vector ;
+    impure function RandTimeV    (A, Exclude : time_vector ;    Size : natural) return time_vector ;
+    impure function RandTimeV    (A, Exclude : time_vector ;    Unique : natural ; Size : natural) return time_vector ;
 
     --- ///////////////////////////////////////////////////////////////////////////
     --
@@ -439,7 +437,7 @@ package body RandomPkg is
     ---
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    procedure InitSeed (S : string ; UseNewSeedMethods : boolean := FALSE ) is
+    procedure InitSeed (S : string ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -452,7 +450,7 @@ package body RandomPkg is
     end procedure InitSeed ;
 
     ------------------------------------------------------------
-    procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := FALSE ) is
+    procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -465,7 +463,7 @@ package body RandomPkg is
     end procedure InitSeed ;
     
     ------------------------------------------------------------
-    procedure InitSeed (T : time ; UseNewSeedMethods : boolean := TRUE ) is
+    procedure InitSeed (T : time ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -480,7 +478,7 @@ package body RandomPkg is
     end procedure InitSeed ;
 
     ------------------------------------------------------------
-    procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := FALSE ) is
+    procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : real ;
     begin
@@ -1993,7 +1991,7 @@ package body RandomPkg is
     begin
       return bit'val(RandInt(1));
     end function RandBit ;
-  
+    
   end protected body RandomPType ;
 
 end RandomPkg ;

@@ -114,11 +114,8 @@ use ieee.numeric_std.all ;
 use ieee.math_real.all ;
 use std.textio.all ;
 
--- comment out following 2 lines with VHDL-2008.  Leave in for VHDL-2002
--- library ieee_proposed ;						          -- remove with VHDL-2008
--- use ieee_proposed.standard_additions.all ;   -- remove with VHDL-2008
-
 use work.OsvvmScriptSettingsPkg.all ;
+use work.OsvvmSettingsPkg.all ;
 use work.TextUtilPkg.all ;
 use work.ResolutionPkg.all ;
 use work.TranscriptPkg.all ;
@@ -378,9 +375,9 @@ package CoveragePkg is
 
   ------------------------------------------------------------
   -- Seeds are initialized by NewID.
-  procedure       InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE) ;
-  impure function InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE ) return string ;
-  procedure       InitSeed      (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := TRUE ) ;
+  procedure       InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) ;
+  impure function InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) return string ;
+  procedure       InitSeed      (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) ;
 
   ------------------------------------------------------------
   procedure       SetSeed (ID : CoverageIDType; RandomSeedIn : RandomSeedType ) ;
@@ -884,9 +881,9 @@ package CoveragePkg is
     impure function GetAlertLogID (ID : CoverageIDType) return AlertLogIDType ;
 
     ------------------------------------------------------------
-    procedure       InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE) ;
-    impure function InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE ) return string ;
-    procedure       InitSeed      (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := TRUE ) ;
+    procedure       InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) ;
+    impure function InitSeed      (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) return string ;
+    procedure       InitSeed      (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) ;
 
     ------------------------------------------------------------
     procedure       SetSeed (ID : CoverageIDType; RandomSeedIn : RandomSeedType ) ;
@@ -1698,6 +1695,10 @@ end package CoveragePkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body CoveragePkg is
+
+  constant DEFAULT_WEIGHT_MODE : WeightModeType := WeightModeType'value(COVERAGE_DEFAULT_WEIGHT_MODE) ;
+
+
   ------------------------------------------------------------
   --  package local
   function ActionToName(Action : integer) return string is
@@ -2269,7 +2270,7 @@ package body CoveragePkg is
         NextPointMode      =>  RANDOM,
         IllegalMode        =>  ILLEGAL_ON,
         IllegalModeLevel   =>  ERROR,
-        WeightMode         =>  AT_LEAST,
+        WeightMode         =>  DEFAULT_WEIGHT_MODE,
         WeightScale        =>  1.0,
 
         ThresholdingEnable =>  FALSE, -- thresholding disabled by default
@@ -2521,7 +2522,7 @@ package body CoveragePkg is
     end function IsInitialized ;
 
     ------------------------------------------------------------
-    procedure InitSeed (ID : CoverageIDType; S : string;    UseNewSeedMethods : boolean := TRUE) is
+    procedure InitSeed (ID : CoverageIDType; S : string;    UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) is
     ------------------------------------------------------------
       variable ChurnSeed : integer ;
     begin
@@ -2535,7 +2536,7 @@ package body CoveragePkg is
     end procedure InitSeed ;
 
     ------------------------------------------------------------
-    impure function InitSeed (ID : CoverageIDType; S : string; UseNewSeedMethods : boolean := TRUE ) return string is
+    impure function InitSeed (ID : CoverageIDType; S : string; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) return string is
     ------------------------------------------------------------
     begin
       InitSeed(ID, S, UseNewSeedMethods) ;
@@ -2544,7 +2545,7 @@ package body CoveragePkg is
     end function InitSeed ;
 
     ------------------------------------------------------------
-    procedure InitSeed (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := TRUE ) is
+    procedure InitSeed (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
       variable ChurnSeed : integer ;
     begin
@@ -3337,7 +3338,7 @@ package body CoveragePkg is
       CovStructPtr(Index).NextPointMode      := RANDOM ;
       CovStructPtr(Index).IllegalMode        := ILLEGAL_ON ;
       CovStructPtr(Index).IllegalModeLevel   := ERROR ;
-      CovStructPtr(Index).WeightMode         := AT_LEAST ;
+      CovStructPtr(Index).WeightMode         := DEFAULT_WEIGHT_MODE ;
       CovStructPtr(Index).WeightScale        := 1.0 ;
       CovStructPtr(Index).ThresholdingEnable := FALSE ;
       CovStructPtr(Index).CovThreshold       := 45.0 ;
@@ -7891,17 +7892,17 @@ package body CoveragePkg is
 
 
   ------------------------------------------------------------
-  procedure InitSeed (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE) is
+  procedure InitSeed (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) is
   begin
     CoverageStore.InitSeed(ID, S, UseNewSeedMethods) ;
   end procedure InitSeed ;
 
-  impure function InitSeed (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := TRUE ) return string is
+  impure function InitSeed (ID : CoverageIDType; S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) return string is
   begin
     return CoverageStore.InitSeed(ID, S, UseNewSeedMethods) ;
   end function InitSeed ;
 
-  procedure InitSeed (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := TRUE ) is
+  procedure InitSeed (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) is
   begin
     CoverageStore.InitSeed(ID, I, UseNewSeedMethods) ;
   end procedure InitSeed ;

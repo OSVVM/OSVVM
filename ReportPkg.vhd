@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2023   2023.09    Added WriteSimTimeYaml.
 --    07/2023   2023.07    Added call to WriteRequirementsYaml.
 --    04/2023   2023.04    Added TranscriptOpen without parameters 
 --    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
@@ -98,6 +99,17 @@ package body ReportPkg is
   end procedure WriteCovSummaryYaml ;
 
   ------------------------------------------------------------
+  procedure WriteSimTimeYaml (FileName : string ) is
+  ------------------------------------------------------------
+    file OsvvmYamlFile : text open APPEND_MODE is FileName ;
+    variable buf : line ;
+  begin
+    swrite(buf, "        SimulationTime: """ & to_string(NOW) & '"') ; 
+    writeline(OsvvmYamlFile, buf) ; 
+    file_close(OsvvmYamlFile) ;
+  end procedure WriteSimTimeYaml ;
+
+  ------------------------------------------------------------
   impure function EndOfTestReports (
   ------------------------------------------------------------
     ReportAll      : boolean        := FALSE ;
@@ -114,13 +126,15 @@ package body ReportPkg is
     
     if work.ScoreboardPkg_slv.GotScoreboards then 
       work.ScoreboardPkg_slv.WriteScoreboardYaml (
-        FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml"
+--        FileName => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml" 
+        FileName => "slv", FileNameIsBaseName => TRUE
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_int.GotScoreboards then 
       work.ScoreboardPkg_int.WriteScoreboardYaml (
-        FileName     => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml"
+--        FileName           => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml" 
+        FileName => "int", FileNameIsBaseName => TRUE
       ) ;
     end if ; 
 
@@ -138,10 +152,15 @@ package body ReportPkg is
     WriteCovSummaryYaml (
       FileName        => OSVVM_BUILD_YAML_FILE
     ) ;
+    WriteSimTimeYaml (
+      FileName        => OSVVM_BUILD_YAML_FILE
+    ) ;
     WriteAlertYaml (
       FileName        => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
+    
+    TranscriptClose ; -- Close Transcript if open
 
     return SumAlertCount(GetAlertCount + ExternalErrors) ;
   end function EndOfTestReports ;
