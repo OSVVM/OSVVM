@@ -370,7 +370,7 @@ package body OsvvmGlobalPkg is
   
   impure function ResolveOsvvmDoneName(A, B : String)  return string is
   begin
-    return ResolveOsvvmOption(A, DoneNameVar.GetOpt, OSVVM_DEFAULT_DONE_NAME) ;
+    return ResolveOsvvmOption(A, B, DoneNameVar.GetOpt, OSVVM_DEFAULT_DONE_NAME) ;
   end function ResolveOsvvmDoneName ; 
   
   impure function ResolveOsvvmPassName(A, B : String)  return string is
