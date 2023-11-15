@@ -384,6 +384,7 @@ package RandomPkg is
     ------------------------------------------------------------
     impure function RandReal     return real ; -- 0.0 to 1.0
     impure function RandReal     (Max : Real) return real ; -- 0.0 to Max
+    impure function RandInt      return integer ;
     impure function RandInt      (Max : integer) return integer ;
     impure function RandSlv      (Max, Size : natural) return std_logic_vector ;
     impure function RandUnsigned (Max, Size : natural) return Unsigned ;
@@ -1941,6 +1942,13 @@ package body RandomPkg is
     begin
       return RandReal(0.0, Max) ;
     end function RandReal ;
+
+    ------------------------------------------------------------
+    impure function RandInt return integer is
+    ------------------------------------------------------------
+    begin
+      return RandInt(integer'low, integer'high) ;
+    end function RandInt ;
 
     ------------------------------------------------------------
     impure function RandInt (Max : integer) return integer is
