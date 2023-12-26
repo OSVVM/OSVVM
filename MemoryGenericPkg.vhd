@@ -428,7 +428,7 @@ package body MemoryGenericPkg is
       if NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr.all(1 to NumItems) := oldItemArrayPtr.all(1 to NumItems) ;
+        ItemArrayPtr.all(1 to NumItems) := ItemArrayType'(oldItemArrayPtr.all(1 to NumItems)) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
       NumItems := NewNumItems ; 
@@ -557,7 +557,7 @@ package body MemoryGenericPkg is
       
       -- Check Bounds of Address and if memory is initialized
       if Addr'length > AddrWidth then
-        if (MemStructPtr(ID).MemArrayPtr = NULL) then 
+        if (MemStructPtr(ID).MemArrayPtr = NULL) then -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Memory not initialized, Write Ignored.", FAILURE) ; 
           return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
@@ -628,7 +628,7 @@ package body MemoryGenericPkg is
       -- Check Bounds of Address and if memory is initialized
       if Addr'length > AddrWidth then
         Data := (Data'range => 'U') ; 
-        if (MemStructPtr(ID).MemArrayPtr = NULL) then 
+        if (MemStructPtr(ID).MemArrayPtr = NULL) then  -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
           return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
@@ -745,7 +745,7 @@ package body MemoryGenericPkg is
       variable Empty            : boolean ; 
       variable MultiLineComment : boolean ; 
       variable NextChar         : character ; 
-      variable StrLen           : integer ; 
+      variable StrLen           : integer ;       
     begin
       MultiLineComment := FALSE ; 
       if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
@@ -823,7 +823,7 @@ package body MemoryGenericPkg is
               -- invalid Text, issue warning and skip rest of line
               Alert(MemStructPtr(ID).AlertLogID,  
                 "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
-                "  Item: " & to_string(ItemNum) & ".  Skipping text: " & buf.all) ;
+                "  Item: " & to_string(ItemNum) & ".  Skipping text: " & StripCrLf(buf.all)) ;
               exit ItemLoop ; 
             end if ; 
           end if ; 

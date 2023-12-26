@@ -74,7 +74,9 @@ package body NamePkg is
     procedure Set (NameIn : String) is
     ------------------------------------------------------------
     begin
-      deallocate(NamePtr) ;
+      if NamePtr /= NULL then 
+        deallocate(NamePtr) ;
+      end if ; 
       NamePtr := new string'(NameIn) ;
     end procedure Set ;
 

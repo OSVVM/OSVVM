@@ -1783,12 +1783,14 @@ package body ScoreboardGenericPkg is
       if FoundError or PassedFlagEnabled then
         -- Only used for PT based SB - SetName not accessible.
         if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
-          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+--x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+          write(WriteBuf, NameVar.Get("Scoreboard")) ;
           if not (ArrayLengthVar > 1 and PrintIndexVar) then
             swrite(WriteBuf, "   ") ;
           end if ;
         elsif NameVar.IsSet then 
-          write(WriteBuf, GetName(DefaultName => "")) ;
+--x          write(WriteBuf, GetName(DefaultName => "")) ;
+          write(WriteBuf, NameVar.Get("")) ;
           if not (ArrayLengthVar > 1 and PrintIndexVar) then
             swrite(WriteBuf, "   ") ;
           end if ;
@@ -1808,7 +1810,8 @@ package body ScoreboardGenericPkg is
             write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
           end if ;
         end if ;
-        if PopListPointer(Index).TagPtr.all /= "" then
+--x        if PopListPointer(Index).TagPtr.all /= "" then
+        if PopListPointer(Index).TagPtr.all'length > 0 then
           write(WriteBuf, "   Tag: " & PopListPointer(Index).TagPtr.all) ;
         end if;
         write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
@@ -2090,14 +2093,17 @@ package body ScoreboardGenericPkg is
           if CurPtr.NextPtr = NULL then
             ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
             Alert(AlertLogIDVar(Index), GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
-            return NULL ;
+            -- return NULL ;
+            exit ; 
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
-            return CurPtr.NextPtr ;
+            -- return CurPtr.NextPtr ;
+            exit ; 
           else
             CurPtr := CurPtr.NextPtr ;
           end if ;
         end loop ;
       end if ;
+      return CurPtr.NextPtr ;
     end function LocalPeek ;
 
     ------------------------------------------------------------
@@ -2289,17 +2295,21 @@ package body ScoreboardGenericPkg is
       variable WriteBuf : line ;
     begin
       if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
-        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+--x        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+        write(WriteBuf, NameVar.Get("Scoreboard")) ;
       else
-        write(WriteBuf, GetName(DefaultName => "")) ;
+--x        write(WriteBuf, GetName(DefaultName => "")) ;
+        write(WriteBuf, NameVar.Get("")) ; 
       end if ;
       if ArrayLengthVar > 1 then
-        if WriteBuf.all /= "" then
+--x        if WriteBuf.all /= "" then
+        if WriteBuf.all'length > 0 then
           swrite(WriteBuf, " ") ;
         end if ;
         write(WriteBuf, "Index(" & to_string(Index) & "),  ") ;
       else
-        if WriteBuf.all /= "" then
+--x        if WriteBuf.all /= "" then
+        if WriteBuf.all'length > 0 then
           swrite(WriteBuf, ",  ") ;
         end if ;
       end if ;
@@ -2513,6 +2523,7 @@ package body ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer is
       variable CurPtr : ListPointerType ;
+      variable LocalItemNumber : integer := integer'left ; 
     begin
       if LocalOutOfRange(Index, "Find") then
         return integer'left ; -- error reporting in LocalOutOfRange
@@ -2531,17 +2542,22 @@ package body ScoreboardGenericPkg is
                   GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
                   FAILURE ) ;
           end if ;
-          return integer'left ;
+--          return integer'left ;
+          LocalItemNumber := integer'left ;
+          exit ;
 
         elsif CurPtr.TagPtr.all = Tag and
           Match(ActualData, CurPtr.ExpectedPtr.all) then
           -- Found it.  Return Index.
-          return CurPtr.ItemNumber ;
+--          return CurPtr.ItemNumber ;
+          LocalItemNumber := CurPtr.ItemNumber ;
+          exit ; 
 
         else  -- Descend
           CurPtr := CurPtr.NextPtr ;
         end if ;
       end loop ;
+      return LocalItemNumber ; 
     end function Find ;
 
     ------------------------------------------------------------
@@ -2720,9 +2736,11 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
                                               IfElse(FileNameIsBaseName, OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
-      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+--x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      file SbYamlFile : text ;
       variable buf : line ;
     begin
+      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
       if AlertLogIDVar = NULL or AlertLogIDVar'length <= 0 then
         Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
         return ;

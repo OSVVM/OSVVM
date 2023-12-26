@@ -2335,7 +2335,7 @@ package body CoveragePkg is
       elsif NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr(1 to NumItems) := oldItemArrayPtr(1 to NumItems) ;
+        ItemArrayPtr(1 to NumItems) := ItemArrayType'(oldItemArrayPtr(1 to NumItems)) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
       NumItems := NewNumItems ;
@@ -2367,7 +2367,7 @@ package body CoveragePkg is
       else
         -- Add New Coverage Model to Structure
         GrowNumberItems(CovStructPtr, NumItems, 1, MIN_NUM_ITEMS) ;
-        CovStructPtr(NumItems) := COV_STRUCT_INIT ;
+        CovStructPtr(NumItems) := CovStructType'(COV_STRUCT_INIT) ;
         NewCoverageID := (ID => NumItems) ;
         -- Create AlertLogID
         CovStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
@@ -4384,9 +4384,11 @@ package body CoveragePkg is
       -- constant rWritePrefix      : string         := ResolveOsvvmWritePrefix   (WritePrefixVar.GetOpt) ;
       -- constant rPassName         : string         := ResolveOsvvmPassName      (PassNameVar.GetOpt  ) ;
       -- constant rFailName         : string         := ResolveOsvvmFailName      (FailNameVar.GetOpt  ) ;
-      file     LocalWriteBinFile : text open OpenKind is FileName ;
+--x      file     LocalWriteBinFile : text open OpenKind is FileName ;
+      file LocalWriteBinFile : text ;
       variable buf               : line ;
     begin
+      file_open(LocalWriteBinFile, FileName, OpenKind) ;
       WriteBin (
         ID              => ID,
         buf             => buf,
@@ -4543,9 +4545,11 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteCovHoles (ID : CoverageIDType; FileName : string;  OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
-      file CovHoleFile : text open OpenKind is FileName ;
+--x      file CovHoleFile : text open OpenKind is FileName ;
+      file CovHoleFile : text ;
       variable buf : line ;
     begin
+      file_open(CovHoleFile, FileName, OpenKind) ;
 --      WriteCovHoles(ID, CovHoleFile, CovStructPtr(ID.ID).CovTarget, TRUE) ;
       WriteCovHoles(ID, buf, CovStructPtr(ID.ID).CovTarget, TRUE) ;
       writeline(CovHoleFile, buf) ;
@@ -4563,9 +4567,11 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteCovHoles (ID : CoverageIDType; FileName : string;  PercentCov : real ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
-      file CovHoleFile : text open OpenKind is FileName ;
+--x      file CovHoleFile : text open OpenKind is FileName ;
+      file CovHoleFile : text ;
       variable buf : line ;
     begin
+      file_open(CovHoleFile, FileName, OpenKind) ;
       -- WriteCovHoles(ID, CovHoleFile, PercentCov, TRUE) ;
       WriteCovHoles(ID, buf, PercentCov, TRUE) ;
       writeline(CovHoleFile, buf) ;
@@ -4608,23 +4614,24 @@ package body CoveragePkg is
 
     ------------------------------------------------------------
     --  pt local
-    procedure read (
+    procedure ReadNamePtr (
     ------------------------------------------------------------
       buf         : inout line ;
       NamePtr     : inout line ;
       NameLength  : in integer ;
-      ReadValid   : out boolean
+      ReadValid   : inout boolean
     ) is
       variable Name : string(1 to NameLength) ;
     begin
+      ReadValid := TRUE ; 
+      NamePtr   := NULL ; 
       if NameLength > 0 then
         read(buf, Name, ReadValid) ;
-        NamePtr := new string'(Name) ;
-      else
-        ReadValid := TRUE ;
-        NamePtr := new string'("") ;
+        if ReadValid then 
+          NamePtr := new string'(Name) ;
+        end if ; 
       end if ;
-    end procedure read ;
+    end procedure ReadNamePtr ;
 
     ------------------------------------------------------------
     --  pt local
@@ -4847,10 +4854,14 @@ package body CoveragePkg is
         read(buf, SkipBlank, ReadValid) ;
         exit ReadLoop when AlertIfNot(CovStructPtr(ID.ID).AlertLogID, ReadValid, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
                        "CoveragePkg.ReadCovDb: Failed while reading Bin Name Length", FAILURE) ;
-        read(buf, NamePtr, NameLength, ReadValid) ;
+        ReadNamePtr(buf, NamePtr, NameLength, ReadValid) ;
         exit ReadLoop when AlertIfNot(CovStructPtr(ID.ID).AlertLogID, ReadValid, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
                        "CoveragePkg.ReadCovDb: Failed while reading Bin Name", FAILURE) ;
-        index := FindExactBin(ID, Merge, BinVal, Action, AtLeast, Weight, NamePtr.all) ;
+        if NamePtr /= NULL then 
+          index := FindExactBin(ID, Merge, BinVal, Action, AtLeast, Weight, NamePtr.all) ;
+        else
+          index := FindExactBin(ID, Merge, BinVal, Action, AtLeast, Weight, "") ;
+        end if ; 
         if index > 0 then
           -- Bin is an exact match so only merge the count values
           CovStructPtr(ID.ID).CovBinPtr(index).Count := CovStructPtr(ID.ID).CovBinPtr(index).Count + Count ;
@@ -4858,7 +4869,11 @@ package body CoveragePkg is
             Count => CovStructPtr(ID.ID).CovBinPtr.all(index).Count,
             AtLeast =>  CovStructPtr(ID.ID).CovBinPtr.all(index).AtLeast ) ;
         else
-          InsertNewBin(ID, BinVal, Action, Count, AtLeast, Weight, NamePtr.all, PercentCov) ;
+          if NamePtr /= NULL then 
+            InsertNewBin(ID, BinVal, Action, Count, AtLeast, Weight, NamePtr.all, PercentCov) ;
+          else
+            InsertNewBin(ID, BinVal, Action, Count, AtLeast, Weight, "", PercentCov) ;
+          end if ; 
         end if ;
         deallocate(NamePtr) ;
       end loop ReadLoop ;
@@ -4870,7 +4885,6 @@ package body CoveragePkg is
     procedure ReadCovDb (ID : CoverageIDType; File CovDbFile : text; Merge : boolean := FALSE) is
     ------------------------------------------------------------
       -- Format:  Action Count min1 max1 min2 max2
-      -- file CovDbFile         : text open READ_MODE is FileName ;
       variable NumRangeItems : integer ;
       variable NumLines      : integer ;
       variable ReadValid    : boolean ;
@@ -4984,8 +4998,9 @@ package body CoveragePkg is
     procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
     ------------------------------------------------------------
       -- Format:  Action Count min1 max1 min2 max2
-      file CovDbFile : text open OpenKind is FileName ;
+      file CovDbFile : text ;
     begin
+      file_open(CovDbFile, FileName, OpenKind) ;
       if CovStructPtr(ID.ID).NumBins >= 1 then
         WriteCovDb(ID, CovDbFile) ;
       else
@@ -5156,9 +5171,11 @@ package body CoveragePkg is
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
       constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
-      file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+--x      file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      file CovYamlFile : text ;
       variable buf : line ;
     begin
+      file_open(CovYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
       swrite(buf, "Version: 1.0" & LF) ;
       swrite(buf, "Coverage: " & to_string(Coverage, 2) ) ;
       writeline(CovYamlFile, buf) ;
@@ -6237,8 +6254,10 @@ package body CoveragePkg is
     -- Deprecated.  New versions use PercentCov.
     procedure WriteCovHoles (ID : CoverageIDType; FileName : string;  AtLeast : integer ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
-      file CovHoleFile : text open OpenKind is FileName ;
+--x      file CovHoleFile : text open OpenKind is FileName ;
+      file CovHoleFile : text ;
     begin
+      file_open(CovHoleFile, FileName, OpenKind) ;
       WriteCovHoles(ID, CovHoleFile, AtLeast, TRUE) ;
     end procedure WriteCovHoles ;
 
@@ -7240,7 +7259,8 @@ package body CoveragePkg is
       PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
-      file LocalWriteBinFile : text open OpenKind is FileName ;
+--x      file LocalWriteBinFile : text open OpenKind is FileName ;
+      file LocalWriteBinFile : text ;
       constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFail,    WritePassFailVar) ;
       constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfo,     WriteBinInfoVar  ) ;
       constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount      (WriteCount,       WriteCountVar    ) ;
@@ -7250,6 +7270,7 @@ package body CoveragePkg is
       -- constant rFailName        : string         := ResolveOsvvmFailName      (FailName,         FailNameVar.GetOpt  ) ;
       variable buf : line ;
     begin
+      file_open(LocalWriteBinFile, FileName, OpenKind) ;
       WriteBin (
         ID              => COV_STRUCT_ID_DEFAULT,
         buf             => buf,

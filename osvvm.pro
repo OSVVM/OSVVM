@@ -45,9 +45,30 @@
 #  limitations under the License.
 #  
 library osvvm
-# CreateOsvvmScriptSettingsPkg
-analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
-analyze OsvvmSettingsPkg.vhd
+if {$::osvvm::ToolSupportsDeferredConstants}  {
+  # Preferred path
+  analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+  analyze OsvvmSettingsPkg.vhd
+} else {
+  # work around path for tools that do not understand dependencies on deferred constants
+  #  analyze OsvvmScriptSettingsPkg_WithoutDeferredConstants.vhd   ;# alternate solution to following - rejected
+  analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+  CreateOsvvmScriptSettingsPkg
+  if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
+    analyze OsvvmScriptSettingsPkg_generated.vhd
+  } else {
+    analyze OsvvmScriptSettingsPkg_default.vhd
+  }
+
+  #  analyze OsvvmSettingsPkg_WithoutDeferredConstants.vhd   ;# alternate solution to following - rejected
+  analyze OsvvmSettingsPkg.vhd
+  if {[FileExists OsvvmSettingsPkg_local.vhd]} {
+    analyze OsvvmSettingsPkg_local.vhd
+  } else {
+    analyze OsvvmSettingsPkg_default.vhd
+  }
+}
+
 analyze TextUtilPkg.vhd
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
@@ -91,7 +112,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 }
 
 analyze MemorySupportPkg.vhd
-if {$::osvvm::ToolSupportsGenericPackages}  {
+if {$::osvvm::ToolSupportsGenericPackages && ($::osvvm::ToolNameVersion ne "XSIM-2023.2")}  {
   analyze MemoryGenericPkg.vhd
   analyze MemoryPkg.vhd
 } else {
@@ -102,17 +123,19 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 analyze ReportPkg.vhd
 analyze OsvvmTypesPkg.vhd
 
+if {$::osvvm::ToolSupportsDeferredConstants}  {
+  CreateOsvvmScriptSettingsPkg
+  if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
+    analyze OsvvmScriptSettingsPkg_generated.vhd
+  } else {
+    analyze OsvvmScriptSettingsPkg_default.vhd
+  }
+
+  if {[FileExists OsvvmSettingsPkg_local.vhd]} {
+    analyze OsvvmSettingsPkg_local.vhd
+  } else {
+    analyze OsvvmSettingsPkg_default.vhd
+  }
+}
+
 analyze OsvvmContext.vhd 
-
-CreateOsvvmScriptSettingsPkg
-if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
-  analyze OsvvmScriptSettingsPkg_generated.vhd
-} else {
-  analyze OsvvmScriptSettingsPkg_default.vhd
-}
-
-if {[FileExists OsvvmSettingsPkg_local.vhd]} {
-  analyze OsvvmSettingsPkg_local.vhd
-} else {
-  analyze OsvvmSettingsPkg_default.vhd
-}

@@ -20,6 +20,9 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    12/2023   2024.01    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
+--                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
+--                         These updates are only so OSVVM can work with non-compilant (1076) tools.
 --    08/2022   2022.08    Added IsHexOrStdLogic.  Updated ReadHexToken to support reading "UWLH-"
 --    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
 --                         Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
@@ -55,12 +58,13 @@ use ieee.numeric_std.all ;
 
 package TextUtilPkg is
   ------------------------------------------------------------
-  function IsUpper (constant Char : character ) return boolean ;
-  function IsLower (constant Char : character ) return boolean ;
+  function IsUpper  (constant Char : character ) return boolean ;
+  function IsLower  (constant Char : character ) return boolean ;
   function to_lower (constant Char : character ) return character ;
-  function to_lower (constant Str : string ) return string ;
+  function to_lower (constant Str  : string ) return string ;
   function to_upper (constant Char : character ) return character ;
-  function to_upper (constant Str : string ) return string ;
+  function to_upper (constant Str  : string ) return string ;
+  function IsWhiteSpace (constant Char : character ) return boolean ;
   function IsHex (constant Char : character ) return boolean ; 
   function IsHexOrStdLogic (constant Char : character ) return boolean ;
   function IsNumber (constant Char : character ) return boolean ; 
@@ -94,6 +98,15 @@ package TextUtilPkg is
     variable Name      : InOut line ; 
     constant Delimiter : In    character ;
     variable ReadValid : Out   boolean 
+  ) ;
+
+  ------------------------------------------------------------
+  procedure sread_c (
+  -- sread for Xilinx tools
+  ------------------------------------------------------------
+    variable L          : InOut line ; 
+    variable Name       : Out   string ; 
+    variable NameLength : Out   integer 
   ) ;
 
   ------------------------------------------------------------
@@ -158,6 +171,12 @@ package TextUtilPkg is
   ------------------------------------------------------------
   impure function FileExists(FileName : string) return boolean ; 
 
+  ------------------------------------------------------------
+  -- StripCrLf
+  --    Remove CR LF from a string value
+  --    Primarily necessary with non-compliant simulators
+  ------------------------------------------------------------
+  impure function StripCrLf( name : string ) return string ;
 
 end TextUtilPkg ;
   
@@ -251,6 +270,15 @@ package body TextUtilPkg is
   end function to_upper ;
 
   ------------------------------------------------------------
+  function IsWhiteSpace (constant Char : character ) return boolean is
+  ------------------------------------------------------------
+  begin
+--x Note that LF and CR were added for Xilinx
+--x    return (Char = ' ' or Char = NBSP or Char = HT) ; 
+    return (Char = ' ' or Char = HT or Char = LF or Char = CR) ; 
+  end function IsWhiteSpace ;
+
+  ------------------------------------------------------------
   function IsHex (constant Char : character ) return boolean is
   ------------------------------------------------------------
   begin
@@ -341,7 +369,8 @@ package body TextUtilPkg is
   begin
     Empty := TRUE ; 
     WhiteSpLoop : while L /= null and L.all'length > 0 loop
-      if (L.all(L'left) = ' ' or L.all(L'left) = NBSP or L.all(L'left) = HT) then
+--x      if (L.all(L'left) = ' ' or L.all(L'left) = NBSP or L.all(L'left) = HT) then
+      if IsWhiteSpace(L.all(L'left)) then
         read (L, Char, Valid) ;
         exit when not Valid ; 
       else
@@ -445,7 +474,8 @@ package body TextUtilPkg is
     for i in NameStr'range loop
       Read(L, NameStr(i), Good) ; 
       ReadValid := ReadValid and Good ; 
-      if NameStr(i) = Delimiter then 
+--      if NameStr(i) = Delimiter then 
+      if NameStr(i) = Delimiter or NameStr(i) = CR or NameStr(i) = LF then 
         -- Read(L, NameStr(1 to i), ReadValid) ; 
         Name := new string'(NameStr(1 to i-1)) ;
         exit ; 
@@ -457,6 +487,33 @@ package body TextUtilPkg is
     end loop ;        
   end procedure ReadUntilDelimiterOrEOL ; 
   
+  ------------------------------------------------------------
+  procedure sread_c (
+  ------------------------------------------------------------
+    variable L          : InOut line ; 
+    variable Name       : Out   string ; 
+    variable NameLength : Out   integer 
+  ) is
+    variable NameStr   : string(1 to Name'length) ; 
+    variable ReadValid : boolean ; 
+    variable Empty     : boolean ;
+  begin
+    SkipWhiteSpace(L, Empty) ; 
+    if Empty then 
+      NameLength := 0 ;
+      return ; 
+    end if ; 
+    NameLength := NameStr'length ; 
+    for i in NameStr'range loop
+      Read(L, NameStr(i), ReadValid) ; 
+      if not ReadValid or IsWhiteSpace(NameStr(i)) then 
+        NameLength := i - 1 ; 
+        exit ; 
+      end if ; 
+    end loop ; 
+    Name := NameStr ; 
+  end procedure sread_c ;
+
   ------------------------------------------------------------
   procedure FindDelimiter(
   ------------------------------------------------------------
@@ -726,5 +783,19 @@ package body TextUtilPkg is
     file_close(FileID) ;
     return status = OPEN_OK ; 
   end function FileExists ;   
+  
+    ------------------------------------------------------------
+    impure function StripCrLf( name : string ) return string is
+    ------------------------------------------------------------
+      alias aName : string(1 to name'length) is name ; 
+      variable LocalLen : integer ; 
+    begin
+      for i in aName'reverse_range loop 
+        LocalLen := i ;
+        exit when not (aName(i) = CR or aName(i) = LF) ;  
+      end loop ;
+      return aName(1 to LocalLen) ; 
+    end function StripCrLf ; 
+
 
 end package body TextUtilPkg ;

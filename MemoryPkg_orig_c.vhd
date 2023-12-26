@@ -67,11 +67,19 @@ package MemoryPkg_orig is
 
   constant OSVVM_MEMORY_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
   ------------------------------------------------------------
+   --
+   --  Note that ReportMode, Search, and PrintParent are not 
+   --  implemented in this model. 
+   --  They are there to maximize portability with the Generic versions.
+   --
   impure function NewID (
     Name                : String ; 
     AddrWidth           : integer ; 
     DataWidth           : integer ; 
-    ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
+    ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ; 
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType ;
 
   ------------------------------------------------------------
@@ -462,7 +470,7 @@ package body MemoryPkg_orig is
         NameID := LocalNameStore.NewID(Name) ;
         MemStructPtr(NumItems).Name := new string'(Name) ; 
   -- Name is for SetAlertLogID + SetName of Memory   
-        MemStructPtr(NumItems).AlertLogID := GetAlertLogID(Name, ParentAlertLogID) ;
+        MemStructPtr(NumItems).AlertLogID := GetAlertLogID(Name, ParentAlertLogID, CreateHierarchy => FALSE) ;
         MemInit(NumItems, AddrWidth, DataWidth) ;
         AlertIfNotEqual(MemStructPtr(NumItems).AlertLogID, NameID, NumItems, "MemoryStore, Check Index of LocalNameStore matches MemoryID") ;  
         return NumItems ; 
@@ -762,7 +770,7 @@ package body MemoryPkg_orig is
           -- Invalid Text, Issue Warning and skip it
             Alert(MemStructPtr(ID).AlertLogID,  
               "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
-              "  Item: " & to_string(ItemNum) & ".  Skipping text: " & buf.all) ;
+                "  Item: " & to_string(ItemNum) & ".  Skipping text: " & StripCrLf(buf.all)) ;
             exit ItemLoop ; 
           end if ; 
           
@@ -1277,15 +1285,23 @@ package body MemoryPkg_orig is
   shared variable MemoryStore : MemoryPType ;
  
    ------------------------------------------------------------
+   --
+   --  Note that ReportMode, Search, and PrintParent are not 
+   --  implemented in this model. 
+   --  They are there to maximize portability with the Generic versions.
+   --
   impure function NewID (
     Name                : String ; 
     AddrWidth           : integer ; 
     DataWidth           : integer ; 
-    ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
+    ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ; 
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType is
     variable Result : MemoryIDType ; 
   begin
-    Result.ID := MemoryStore.NewID(Name, AddrWidth, DataWidth, ParentAlertLogID) ; 
+    Result.ID := MemoryStore.NewID(Name, AddrWidth, DataWidth, ParentID) ; 
     return Result ; 
   end function NewID ; 
 

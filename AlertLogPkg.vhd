@@ -1870,12 +1870,11 @@ package body AlertLogPkg is
       variable buf : line ;
       variable CurID : AlertLogIDType ;
       variable RequirementsPassed, RequirementsGoal : integer ;
+      variable FoundChildToReport : boolean := FALSE ; 
     begin
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       if CurID >= ALERTLOG_BASE_ID then
         -- Write "Children:" at current level
-        Write(buf, Prefix & "Children: " ) ;
-        WriteLine(TestFile, buf) ;
         while CurID > ALERTLOG_BASE_ID loop
           -- Don't print requirements if there no requirements
           if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
@@ -1890,6 +1889,11 @@ package body AlertLogPkg is
             RequirementsGoal   := 0 ;
           end if ;
           if AlertLogPtr(CurID).ReportMode /= DISABLED then
+            if not FoundChildToReport then 
+              Write(buf, Prefix & "Children: " ) ;
+              WriteLine(TestFile, buf) ;
+              FoundChildToReport := TRUE ; 
+            end if ; 
             WriteOneAlertYaml(
               TestFile             => TestFile,
               AlertLogID           => CurID,
@@ -1907,9 +1911,14 @@ package body AlertLogPkg is
           end if ;
           CurID := AlertLogPtr(CurID).SiblingID ;
         end loop ;
+        if not FoundChildToReport then 
+          Write(buf, Prefix & "Children: " & """""") ;
+          WriteLine(TestFile, buf) ;
+        end if ; 
       else
         -- No Children, Print Empty List
-        Write(buf, Prefix & "Children: {}" ) ;
+--req tcl 8.6        Write(buf, Prefix & "Children: {}" ) ;
+        Write(buf, Prefix & "Children: " & """""") ;
         WriteLine(TestFile, buf) ;
       end if ;
     end procedure IterateAndWriteChildrenYaml ;
@@ -2287,8 +2296,10 @@ package body AlertLogPkg is
       WriteFieldName : boolean
     ) is
       -- Format:  Action Count min1 max1 min2 max2
-      file TestFile : text open OpenKind is FileName ;
+--x      file TestFile : text open OpenKind is FileName ;
+      file TestFile : text ;
     begin
+      file_open(TestFile, FileName, OpenKind) ;
       WriteTestSummary(TestFile =>  TestFile, Prefix => Prefix, Suffix => Suffix, ExternalErrors => ExternalErrors, WriteFieldName => WriteFieldName) ;
     end procedure WriteTestSummary ;
 
@@ -2335,8 +2346,10 @@ package body AlertLogPkg is
       OpenKind    : File_Open_Kind
     ) is
       -- Format:  Action Count min1 max1 min2 max2
-      file TestFile : text open OpenKind is FileName ;
+--x      file TestFile : text open OpenKind is FileName ;
+      file TestFile : text ;
     begin
+      file_open(TestFile, FileName, OpenKind) ;
       WriteTestSummaries(
         TestFile   =>  TestFile,
         AlertLogID => REQUIREMENT_ALERTLOG_ID
@@ -2477,9 +2490,11 @@ package body AlertLogPkg is
       OpenKind    : File_Open_Kind
     ) is
       -- Format:  Action Count min1 max1 min2 max2
-      file RequirementsFile : text open OpenKind is FileName ;
       variable LocalAlertLogID : AlertLogIDType ;
+--x      file RequirementsFile : text open OpenKind is FileName ;
+      file RequirementsFile : text ;
     begin
+      file_open(RequirementsFile, FileName, OpenKind) ;
       localAlertLogID := VerifyID(AlertLogID) ;
       WriteTestSummary(RequirementsFile) ;
       if IsRequirement(localAlertLogID) then
@@ -2498,9 +2513,11 @@ package body AlertLogPkg is
       OpenKind    : File_Open_Kind
     ) is
       -- Format:  Action Count min1 max1 min2 max2
-      file AlertsFile : text open OpenKind is FileName ;
+--x      file AlertsFile : text open OpenKind is FileName ;
+      file AlertsFile : text ;
       variable LocalAlertLogID : AlertLogIDType ;
     begin
+      file_open(AlertsFile, FileName, OpenKind) ;
       localAlertLogID := VerifyID(AlertLogID) ;
       WriteTestSummary(AlertsFile) ;
       WriteAlerts(AlertsFile, localAlertLogID) ;
@@ -3997,19 +4014,28 @@ package body AlertLogPkg is
     begin
       return DefaultPassedGoalVar ;
     end function GetAlertLogDefaultPassedGoal ;
+    
+    ------------------------------------------------------------
+    -- Local.  
+    -- Bug work around.  Required for Xilinx 2023.02.
+    function to_s_4_x (A : string) return string is 
+    ------------------------------------------------------------
+    begin
+      return A ; 
+    end function to_s_4_x ; 
 
     ------------------------------------------------------------
     impure function GetAlertLogAlertPrefix          return string is
     ------------------------------------------------------------
     begin
-      return AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
+      return to_s_4_x(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX)) ;
     end function GetAlertLogAlertPrefix ;
 
     ------------------------------------------------------------
     impure function GetAlertLogLogPrefix            return string is
     ------------------------------------------------------------
     begin
-      return LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX) ;
+      return to_s_4_x(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX)) ;
     end function GetAlertLogLogPrefix ;
 
     ------------------------------------------------------------
@@ -6589,6 +6615,7 @@ package body AlertLogPkg is
       LogLevel := INFO ;
       LogValid := TRUE ;
     else
+      print("Name = " & Name  & "...") ; 
       LogLevel := ALWAYS ;
       LogValid := FALSE ;
     end if ;
@@ -6649,14 +6676,14 @@ package body AlertLogPkg is
 
         case ReadState is
           when GET_ID =>
-            sread(buf, Name, NameLen) ;
+            sread_c(buf, Name, NameLen) ;
             exit ReadNameLoop when NameLen = 0 ;
             AlertLogID := GetAlertLogID(Name(1 to NameLen), ALERTLOG_ID_NOT_ASSIGNED) ;
             ReadState := GET_ENABLE ;
             ReadAnEnable := FALSE ;
 
           when GET_ENABLE =>
-            sread(buf, Name, NameLen) ;
+            sread_c(buf, Name, NameLen) ;
             exit ReadNameLoop when NameLen = 0 ;
             ReadAnEnable := TRUE ;
 --            if not IsLogEnableType(Name(1 to NameLen)) then
