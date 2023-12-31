@@ -112,8 +112,12 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 }
 
 analyze MemorySupportPkg.vhd
-if {$::osvvm::ToolSupportsGenericPackages && ($::osvvm::ToolNameVersion ne "XSIM-2023.2")}  {
-  analyze MemoryGenericPkg.vhd
+if {$::osvvm::ToolSupportsGenericPackages}  {
+  if {$::osvvm::ToolNameVersion ne "XSIM-2023.2"}  {
+    analyze MemoryGenericPkg.vhd
+  } else {
+    analyze MemoryGenericPkg_xilinx.vhd
+  }
   analyze MemoryPkg.vhd
 } else {
   analyze MemoryPkg_c.vhd

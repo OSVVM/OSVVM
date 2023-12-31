@@ -534,6 +534,32 @@ package body MemoryGenericPkg is
     begin
       return MemBlockType'(0 to 2**BlockWidth-1 => BaseU) ;
     end function InitMemoryBlockType ; 
+    
+    ------------------------------------------------------------
+    procedure AllocateBlock ( 
+    ------------------------------------------------------------
+      ID, BlockAddr, BlockWidth, MemoryBaseWidth : integer 
+    ) is
+      variable MemArrayPtr : MemArrayPtrType ; 
+      variable MemBlockPtr : MemBlockPtrType ; 
+      subtype MemBlockSubType is MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseWidth-1 downto 0) ;
+      variable MemBlock : MemBlockSubType ;
+--x      constant MemBlock : MemBlockSubType := MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
+--x returns 0      constant MemBlock : MemBlockSubType := (others => InitMemoryBaseType(MemoryBaseWidth)) ;
+--x returns 0      constant MemBlock   : MemBlockSubType := (0 to 2**BlockWidth-1 => InitMemoryBaseType(MemoryBaseWidth)) ;
+--      variable MemInit : integer_vector(MemoryBaseWidth-1 downto 0) ;
+    begin
+      MemArrayPtr := MemStructPtr(ID).MemArrayPtr ;
+--x returns 0      MemBlock := (0 to 2**BlockWidth-1 => InitMemoryBaseType(MemoryBaseWidth)) ; 
+--x elab error     MemBlock := MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
+
+-- Note:  TbMemoryPkg_FileWrite1.vhd Test shows that this is the only way that inits memory correctly
+      for i in 0 to 2**BlockWidth-1 loop 
+        MemBlock(i) := InitMemoryBaseType(MemoryBaseWidth) ;
+      end loop ; 
+      MemBlockPtr := new MemBlockType'(MemBlock) ; 
+      MemArrayPtr.all(BlockAddr) := MemBlockPtrType'(MemBlockPtr) ; 
+    end procedure AllocateBlock ; 
 
     ------------------------------------------------------------
     procedure MemWrite ( 
@@ -549,10 +575,11 @@ package body MemoryGenericPkg is
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
 --      subtype MemBlockSubType is MemBlockType(0 to 2**BlockWidth-1) ;
       variable MemArrayPtr : MemArrayPtrType ; 
+      variable MemBlockPtr : MemBlockPtrType ; 
     begin
       if IdOutOfRange(ID, "MemWrite") then 
         return ;
-      end if ; 
+      end if ;  
       
       AddrWidth   := MemStructPtr(ID).AddrWidth  ;
       MemArrayPtr := MemStructPtr(ID).MemArrayPtr ;
@@ -589,26 +616,35 @@ package body MemoryGenericPkg is
       end if ; 
 
       MemoryBaseWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
+--      log("MemoryBaseWidth: " & to_string(MemoryBaseWidth) & ", BlockWidth: " & to_string(BlockWidth), DEBUG ) ; 
 
       -- If empty, allocate a memory block
       if (MemArrayPtr(BlockAddr) = NULL) then 
-        MemArrayPtr(BlockAddr) := new 
-            MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
-
--- Long term, we need the first one to allow transition of MemoryBaseType to a generic.
---!! GHDL Bug        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
---!! GHDL Bug            MemBlockType'(0 to 2**BlockWidth-1 =>  InitMemoryBaseType(MemoryBaseWidth) ) ;
---        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
---          MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseWidth-1 downto 0) ;
---!! GHDL Bug        MemStructPtr(ID).MemArrayPtr(BlockAddr).all := (0 to 2**BlockWidth-1 => InitMemoryBaseType(MemoryBaseWidth));
+        AllocateBlock(ID, BlockAddr, BlockWidth, MemoryBaseWidth) ;
+--x        MemArrayPtr(BlockAddr) := MemBlockPtrType'(new 
+--x            MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth))) ;
       end if ; 
 
       -- Address of a word within a block
       WordAddr  := to_integer(aAddr(BlockWidth -1 downto 0)) ;
-
       -- Write to BlockAddr, WordAddr
-      MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data, MemoryBaseWidth) ;
+--x      MemArrayPtr(BlockAddr)(WordAddr) := integer_vector'(ToMemoryBaseType(Data, MemoryBaseWidth)) ;
+      MemBlockPtr := MemArrayPtr(BlockAddr) ;
+      MemBlockPtr.all(WordAddr) := MemoryBaseType'(ToMemoryBaseType(Data, MemoryBaseWidth)) ;
     end procedure MemWrite ; 
+
+    ------------------------------------------------------------
+    impure function GetData ( 
+    ------------------------------------------------------------
+      ID, BlockAddr, WordAddr, MemoryBaseWidth : integer 
+    ) return integer_vector is
+      variable MemArrayPtr : MemArrayPtrType ; 
+      variable MemBlockPtr : MemBlockPtrType ; 
+      subtype DataType is integer_vector(MemoryBaseWidth-1 downto 0) ;
+    begin
+      MemBlockPtr := MemStructPtr(ID).MemArrayPtr(BlockAddr) ;
+      return DataType'(MemBlockPtr.all(WordAddr)) ; 
+    end function GetData ;
 
     ------------------------------------------------------------
     procedure MemRead (  
@@ -620,6 +656,9 @@ package body MemoryGenericPkg is
       variable BlockWidth, AddrWidth : integer ;
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
+      variable MemArrayPtr : MemArrayPtrType ; 
+      variable MemBlockPtr : MemBlockPtrType ; 
+      variable MemoryBaseWidth : integer ;
     begin
       if IdOutOfRange(ID, "MemRead") then 
         return ;
@@ -670,7 +709,14 @@ package body MemoryGenericPkg is
       -- Address of a word within a block
       WordAddr := to_integer(aAddr(BlockWidth -1 downto 0)) ;
       
-      Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ; 
+      MemoryBaseWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
+
+--      log("BlockAddr: " & to_string(BlockAddr) & ", WordAddr: " & to_string(WordAddr), DEBUG ) ; 
+--x      Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr)), Data'length) ; 
+--      log("MemBlockPtr.all(WordAddr)(0): " & to_string(MemBlockPtr.all(WordAddr)(0)), DEBUG) ; 
+--x      MemBlockPtr := MemStructPtr(ID).MemArrayPtr(BlockAddr) ;
+--x      Data := FromMemoryBaseType(MemBlockPtr.all(WordAddr), Data'length) ; 
+      Data := FromMemoryBaseType(GetData(ID, BlockAddr, WordAddr, MemoryBaseWidth), Data'length) ; 
 
     end procedure MemRead ; 
 
@@ -942,6 +988,7 @@ package body MemoryGenericPkg is
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant DATA_WIDTH  : integer := MemStructPtr(ID).DataWidth ; 
       constant BLOCK_WIDTH : integer := MemStructPtr(ID).BlockWidth ;
+      constant MEM_BASE_WIDTH : integer := MemStructPtr(ID).MemoryBaseTypeWidth ;
       -- Format:  
       --  @hh..h     -- Address in hex
       --  hhhhh      -- data one per line in either hex or binary as specified 
@@ -956,8 +1003,14 @@ package body MemoryGenericPkg is
       variable buf            : line ;
       variable Data           : std_logic_vector(DATA_WIDTH-1 downto 0) ;
       constant AllU           : std_logic_vector := (DATA_WIDTH-1 downto 0 => 'U');
+      variable DataIntV       : integer_vector(0 downto 0) ; 
       
     begin
+--      log("ADDR_WIDTH: " & to_string(ADDR_WIDTH) & ",  DATA_WIDTH: " & to_string(DATA_WIDTH) &
+--           ",  BLOCK_WIDTH: " & to_string(BLOCK_WIDTH) & ",  MEM_BASE_WIDTH: " & to_string(MEM_BASE_WIDTH)) ; 
+--      log("AllU: " & to_string(AllU)) ; 
+--      log("MetaMatch(Data, AllU): " & to_string(MetaMatch(AllU, AllU))) ; 
+
       if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
       -- Check StartAddr and EndAddr Widths and Memory not initialized
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
@@ -1003,7 +1056,11 @@ package body MemoryGenericPkg is
         end if ; 
         FoundData := FALSE ; 
         WordAddrLoop : for WordAddr in StartWordAddr to EndWordAddr loop 
-          Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ;
+--x          Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ;
+          Data := FromMemoryBaseType(GetData(ID, BlockAddr, WordAddr, MEM_BASE_WIDTH), Data'length) ; 
+--d          DataIntV := GetData(ID, BlockAddr, WordAddr, MEM_BASE_WIDTH) ;
+--d          print("DataIntV(0): " & to_string(DataIntV(0)) & ",  Data: " & to_string(Data)) ; 
+         
           if MetaMatch(Data, AllU) then 
             FoundData := FALSE ;
           else 
