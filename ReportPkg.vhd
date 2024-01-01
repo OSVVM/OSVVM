@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    12/2023   2024.01    Updated WriteCovSummaryYaml to print FunctionalCoverage:  "" when no functional coverage (to work with TCL 8.5).
 --    09/2023   2023.09    Added WriteSimTimeYaml.
 --    07/2023   2023.07    Added call to WriteRequirementsYaml.
 --    04/2023   2023.04    Added TranscriptOpen without parameters 
@@ -86,13 +87,15 @@ package body ReportPkg is
   ------------------------------------------------------------
   procedure WriteCovSummaryYaml (FileName : string ) is
   ------------------------------------------------------------
-    file OsvvmYamlFile : text open APPEND_MODE is FileName ;
+--x    file OsvvmYamlFile : text open APPEND_MODE is FileName ;
+    file OsvvmYamlFile : text ;
     variable buf : line ;
   begin
+    file_open(OsvvmYamlFile, FileName, APPEND_MODE) ;
     if GotCoverage then 
       swrite(buf, "        FunctionalCoverage: " & to_string(GetCov, 2)) ; 
     else
-      swrite(buf, "        FunctionalCoverage:  ") ; 
+      swrite(buf, "        FunctionalCoverage:  " & """""") ; 
     end if ; 
     writeline(OsvvmYamlFile, buf) ; 
     file_close(OsvvmYamlFile) ;
@@ -101,9 +104,11 @@ package body ReportPkg is
   ------------------------------------------------------------
   procedure WriteSimTimeYaml (FileName : string ) is
   ------------------------------------------------------------
-    file OsvvmYamlFile : text open APPEND_MODE is FileName ;
+--x    file OsvvmYamlFile : text open APPEND_MODE is FileName ;
+    file OsvvmYamlFile : text ;
     variable buf : line ;
   begin
+    file_open(OsvvmYamlFile, FileName, APPEND_MODE) ;
     swrite(buf, "        SimulationTime: """ & to_string(NOW) & '"') ; 
     writeline(OsvvmYamlFile, buf) ; 
     file_close(OsvvmYamlFile) ;

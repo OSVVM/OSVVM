@@ -2704,9 +2704,11 @@ package body ScoreBoardPkg_slv is
     procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
       constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_sb.yml", FileName) ;
-      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+--x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      file SbYamlFile : text ;
       variable buf : line ;
     begin
+      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
       if AlertLogIDVar = NULL or AlertLogIDVar'length <= 0 then
         Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
         return ;

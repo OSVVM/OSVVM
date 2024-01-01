@@ -41,5 +41,5 @@ package body OsvvmScriptSettingsPkg is
   constant OSVVM_OUTPUT_DIRECTORY      : string := "" ;
   constant OSVVM_BUILD_YAML_FILE       : string := "OsvvmRun.yml" ;
   constant OSVVM_TRANSCRIPT_YAML_FILE  : string := "OSVVM_transcript.yml" ;
-  constant OSVVM_REVISION              : string := "2023.09" ;
+  constant OSVVM_REVISION              : string := "2024.01" ;
 end package body OsvvmScriptSettingsPkg ;

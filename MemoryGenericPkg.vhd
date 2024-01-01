@@ -428,7 +428,7 @@ package body MemoryGenericPkg is
       if NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr.all(1 to NumItems) := oldItemArrayPtr.all(1 to NumItems) ;
+        ItemArrayPtr.all(1 to NumItems) := ItemArrayType'(oldItemArrayPtr.all(1 to NumItems)) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
       NumItems := NewNumItems ; 
@@ -548,16 +548,18 @@ package body MemoryGenericPkg is
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
 --      subtype MemBlockSubType is MemBlockType(0 to 2**BlockWidth-1) ;
+      variable MemArrayPtr : MemArrayPtrType ; 
     begin
       if IdOutOfRange(ID, "MemWrite") then 
         return ;
       end if ; 
       
-      AddrWidth  := MemStructPtr(ID).AddrWidth  ;
+      AddrWidth   := MemStructPtr(ID).AddrWidth  ;
+      MemArrayPtr := MemStructPtr(ID).MemArrayPtr ;
       
       -- Check Bounds of Address and if memory is initialized
       if Addr'length > AddrWidth then
-        if (MemStructPtr(ID).MemArrayPtr = NULL) then 
+        if (MemArrayPtr = NULL) then -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Memory not initialized, Write Ignored.", FAILURE) ; 
           return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
@@ -589,8 +591,8 @@ package body MemoryGenericPkg is
       MemoryBaseWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
 
       -- If empty, allocate a memory block
-      if (MemStructPtr(ID).MemArrayPtr(BlockAddr) = NULL) then 
-        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+      if (MemArrayPtr(BlockAddr) = NULL) then 
+        MemArrayPtr(BlockAddr) := new 
             MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
 
 -- Long term, we need the first one to allow transition of MemoryBaseType to a generic.
@@ -605,7 +607,7 @@ package body MemoryGenericPkg is
       WordAddr  := to_integer(aAddr(BlockWidth -1 downto 0)) ;
 
       -- Write to BlockAddr, WordAddr
-      MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data, MemoryBaseWidth) ;
+      MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data, MemoryBaseWidth) ;
     end procedure MemWrite ; 
 
     ------------------------------------------------------------
@@ -628,7 +630,7 @@ package body MemoryGenericPkg is
       -- Check Bounds of Address and if memory is initialized
       if Addr'length > AddrWidth then
         Data := (Data'range => 'U') ; 
-        if (MemStructPtr(ID).MemArrayPtr = NULL) then 
+        if (MemStructPtr(ID).MemArrayPtr = NULL) then  -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
           return ; 
         elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
@@ -745,7 +747,7 @@ package body MemoryGenericPkg is
       variable Empty            : boolean ; 
       variable MultiLineComment : boolean ; 
       variable NextChar         : character ; 
-      variable StrLen           : integer ; 
+      variable StrLen           : integer ;       
     begin
       MultiLineComment := FALSE ; 
       if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
@@ -823,7 +825,7 @@ package body MemoryGenericPkg is
               -- invalid Text, issue warning and skip rest of line
               Alert(MemStructPtr(ID).AlertLogID,  
                 "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
-                "  Item: " & to_string(ItemNum) & ".  Skipping text: " & buf.all) ;
+                "  Item: " & to_string(ItemNum) & ".  Skipping text: " & StripCrLf(buf.all)) ;
               exit ItemLoop ; 
             end if ; 
           end if ; 

@@ -263,13 +263,15 @@ package TbUtilPkg is
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : time ) ;
   -- resolved_barrier : summing resolution used in conjunction with integer based barriers
   function resolved_barrier ( s : integer_vector ) return integer ;
-  subtype  integer_barrier is resolved_barrier integer ;
+  subtype  BarrierType is resolved_barrier integer range integer'low+1 to integer'high ;
+--  alias    integer_barrier is BarrierType ; 
+  subtype  integer_barrier is BarrierType ; 
   -- Usage of integer barriers requires resolved_barrier. Initialization to 1 recommended, but not required
   --   signal barrier1 : resolved_barrier integer := 1 ;     -- using the resolution function
   --   signal barrier2 : integer_barrier := 1 ;              -- using the subtype that already applies the resolution function
-  procedure WaitForBarrier ( signal Sig : InOut integer ) ;
-  procedure WaitForBarrier ( signal Sig : InOut integer ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') ;
-  procedure WaitForBarrier ( signal Sig : InOut integer ; constant TimeOut : time ) ;
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ) ;
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') ;
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : time ) ;
   -- Using separate signals
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncInV : in  std_logic_vector ) ;
@@ -984,7 +986,7 @@ package body TbUtilPkg is
   -- Usage of integer barriers requires resolved_barrier. Initialization to 1 recommended, but not required
   --   signal barrier1 : resolved_barrier integer := 1 ;     -- using the resolution function
   --   signal barrier2 : integer_barrier := 1 ;              -- using the subtype that already applies the resolution function
-  procedure WaitForBarrier ( signal Sig : InOut integer ) is
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ) is
   begin
     Sig <= 0 ;
     -- Wait until all processes set Sig to 0
@@ -995,7 +997,7 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
-  procedure WaitForBarrier ( signal Sig : InOut integer ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') is
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') is
   begin
     Sig <= 0 ;
     -- Wait until all processes set Sig to 0
@@ -1006,7 +1008,7 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
-  procedure WaitForBarrier ( signal Sig : InOut integer ; constant TimeOut : time ) is
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : time ) is
   begin
     Sig <= 0 ;
     -- Wait until all processes set Sig to 0
