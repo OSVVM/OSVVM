@@ -1077,6 +1077,7 @@ package body AlertLogPkg is
       variable StopDueToCount    : inout boolean ;
       variable IncrementByAmount : in    integer := 1
     ) is
+      variable ParentID : AlertLogIDType ;
     begin
       if AlertLogPtr(AlertLogID).AlertEnabled(Level) then
         AlertLogPtr(AlertLogID).AlertCount(Level) := AlertLogPtr(AlertLogID).AlertCount(Level) + IncrementByAmount ;
@@ -1086,7 +1087,12 @@ package body AlertLogPkg is
         end if ;
         -- Propagate counts to parent(s)  -- Ascend Hierarchy
         if AlertLogID /= ALERTLOG_BASE_ID then
-          IncrementAlertCount(AlertLogPtr(AlertLogID).ParentID, Level, StopDueToCount, IncrementByAmount) ;
+          ParentID := AlertLogPtr(AlertLogID).ParentID ;
+          if AlertLogID /= ParentID then 
+            IncrementAlertCount(ParentID, Level, StopDueToCount, IncrementByAmount) ;
+          else
+            report "AlertLogPkg.IncrementAlertCount: Loop in data structure since AlertLogID = ParentID" severity failure ; 
+          end if ; 
         end if ;
       else
         -- Disabled, increment disabled count
