@@ -3346,11 +3346,11 @@ package body AlertLogPkg is
         end if ;
       end if ;
       -- Set Level and Justify amounts
-      CalcJustifyOneLevel(ResultID) ; 
       if not HasRequirementsVar then
         CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ; 
       end if ; 
       HasRequirementsVar := TRUE ;
+      CalcJustifyOneLevel(ResultID) ; 
       return ResultID ;
     end function GetReqID ;
 
