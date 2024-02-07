@@ -43,102 +43,123 @@
 --  limitations under the License.
 --
 
+use work.IfElsePkg.all ;
+use work.OsvvmScriptSettingsPkg.all ;
+
 package body OsvvmSettingsPkg is
-  -- ------------------------------------------
-  -- Settings for CoveragePkg
-  -- ------------------------------------------
-  -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.  
-  constant COVERAGE_USE_NEW_SEED_METHODS : boolean := TRUE ; 
---  constant COVERAGE_DEFAULT_WEIGHT_MODE  : WeightModeType := AT_LEAST ;
-  constant COVERAGE_DEFAULT_WEIGHT_MODE  : string := "AT_LEAST" ;
-
---!!  -- WriteBin Settings - not relevant important if you use the HTML reports
---!!  constant OSVVM_DEFAULT_WRITE_PASS_FAIL   : OsvvmOptionsType := FALSE ;
---!!  constant OSVVM_DEFAULT_WRITE_BIN_INFO    : OsvvmOptionsType := TRUE ;
---!!  constant OSVVM_DEFAULT_WRITE_COUNT       : OsvvmOptionsType := TRUE ;
---!!  constant OSVVM_DEFAULT_WRITE_ANY_ILLEGAL : OsvvmOptionsType := FALSE ;
-
   
   -- ------------------------------------------
   -- Settings for RandomPkg
   -- ------------------------------------------
-  -- RandomPkg.InitSeed:  For new designs make this TRUE
-  constant RANDOM_USE_NEW_SEED_METHODS : boolean := FALSE ; 
-  
-  
+  -- RandomPkg.InitSeed:  
+  --   For new designs, make this TRUE.
+  --   For old designs, changing it will change your randomization.  If you need that exact pattern, then do not change.
+  constant RANDOM_USE_NEW_SEED_METHODS : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
+
+
   -- ------------------------------------------
   -- Settings for ScoreboardGenericPkg
   -- ------------------------------------------
   -- WriteScoreboardYaml
-  constant SCOREBOARD_YAML_IS_BASE_FILE_NAME : boolean := FALSE ;  
+  constant SCOREBOARD_YAML_IS_BASE_FILE_NAME : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
+
+
+  -- ------------------------------------------
+  -- Settings shared by AlertLogPkg and CoveragePkg
+  -- ------------------------------------------
+  constant  OSVVM_PRINT_PREFIX         : string := "%% " ;
+  constant  OSVVM_DONE_NAME            : string := "DONE" ;
+  constant  OSVVM_PASS_NAME            : string := "PASSED" ;
+  constant  OSVVM_FAIL_NAME            : string := "FAILED" ;
+  
+  constant  OSVVM_DEFAULT_TIME_UNITS   : time := 1 ns ;
+
+
+  -- ------------------------------------------
+  -- Settings for CoveragePkg
+  -- ------------------------------------------
+  -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.  
+  constant  COVERAGE_USE_NEW_SEED_METHODS : boolean := TRUE ; 
+  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024", string'("REMAIN"), "AT_LEAST") ;
+  constant  COVERAGE_PRINT_PREFIX         : string := OSVVM_PRINT_PREFIX ; 
+  constant  COVERAGE_PASS_NAME            : string := OSVVM_PASS_NAME ;
+  constant  COVERAGE_FAIL_NAME            : string := OSVVM_FAIL_NAME ;
+
+  -- WriteBin Settings - not relevant if you use the HTML reports
+  constant COVERAGE_WRITE_PASS_FAIL   : boolean := FALSE ;
+  constant COVERAGE_WRITE_BIN_INFO    : boolean := TRUE ;
+  constant COVERAGE_WRITE_COUNT       : boolean := TRUE ;
+  constant COVERAGE_WRITE_ANY_ILLEGAL : boolean := FALSE ;
+
 
   -- ------------------------------------------
   -- Settings for AlertLogPkg
   -- ------------------------------------------
   -- Control printing of Alert/Log
-  constant  ALERT_LOG_JUSTIFY_ENABLE       : boolean := FALSE ; -- Historic FALSE
-  constant  ALERT_LOG_WRITE_TIME_FIRST     : boolean := FALSE ; -- Historic FALSE
-  constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT  : integer := 0 ;     -- Historic 0
+  constant  ALERT_LOG_JUSTIFY_ENABLE       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE - Do not Justify printing
+  constant  ALERT_LOG_WRITE_TIME_FIRST     : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE
+  constant  ALERT_LOG_WRITE_TIME_LAST      : boolean := not ALERT_LOG_WRITE_TIME_FIRST ; 
+  constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT  : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2024", 8, 0) ;  -- Justify time - particularly when at beginning
   
---!!  -- Boolean controls to print or not print fields in Alert/Log
---!!  constant  WRITE_ERRORCOUNT           : boolean := FALSE ;  -- prefix message with # of errors - requested by Marco for Mike P.
---!!  constant  WRITE_LEVEL                : boolean := TRUE ;   -- Print FAILURE, ERROR, WARNING
---!!  constant  WRITE_NAME                 : boolean := TRUE ;   -- Print Alert
---!!  constant  WRITE_TIME                 : boolean := TRUE ;   -- Print time 
---!!  
---!!  -- Defaults for names printed in ReportAlerts, Alert, Log
---!!  constant  OSVVM_PRINT_PREFIX         : string := "%% " ;
---!!  constant  ALERT_PRINT_PREFIX         : string := "Alert" ;
---!!  constant  LOG_PRINT_PREFIX           : string := "Log  " ;
---!!  constant  DONE_NAME                  : string := "DONE" ;
---!!  constant  PASS_NAME                  : string := "PASSED" ;
---!!  constant  FAIL_NAME                  : string := "FAILED" ;
---!!  constant  ALERT_LOG_ID_SEPARATOR     : string := ": " ; 
---!!
---!!  -- Defaults for Stop Counts
---!!  constant  STOP_COUNT_FAILURE         : integer ;  -- OSVVM 0
---!!  constant  STOP_COUNT_ERROR           : integer ;  -- OSVVM 2**31-1, VUnit 1
---!!  constant  STOP_COUNT_WARNING         : integer ;  -- OSVVM 2**31-1
---!!
---!!  -- requirements
---!!  constant  DEFAULT_PASSED_GOAL        : integer ; -- 1
---!!  
+  -- Boolean controls to print or not print fields in Alert/Log
+  constant  ALERT_LOG_WRITE_ERRORCOUNT     : boolean := FALSE ;  -- prefix message with # of errors - requested by Marco for Mike P.
+  constant  ALERT_LOG_WRITE_NAME           : boolean := TRUE ;   -- Print Alert/Log
+  constant  ALERT_LOG_WRITE_LEVEL          : boolean := TRUE ;   -- Print Level Name
+  constant  ALERT_LOG_WRITE_TIME           : boolean := TRUE ;   -- Print Level Name
+  
+  constant  ALERT_LOG_ALERT_NAME       : string := "Alert" ;
+  constant  ALERT_LOG_LOG_NAME         : string := "Log  " ;
+  constant  ALERT_LOG_ID_SEPARATOR     : string := ": " ; 
+  constant  ALERT_LOG_PRINT_PREFIX     : string := OSVVM_PRINT_PREFIX ; 
+  constant  ALERT_LOG_DONE_NAME        : string := OSVVM_DONE_NAME ;
+  constant  ALERT_LOG_PASS_NAME        : string := OSVVM_PASS_NAME ;
+  constant  ALERT_LOG_FAIL_NAME        : string := OSVVM_FAIL_NAME ;
+  
+  -- Defaults for Stop Counts
+  constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 0 ;
+  constant  ALERT_LOG_STOP_COUNT_ERROR           : integer := integer'high ; --  VUnit 1
+  constant  ALERT_LOG_STOP_COUNT_WARNING         : integer := integer'high ;
+
+  -- Allows disabling alerts at startup - and then turn them on at or near system reset
+  constant  ALERT_LOG_GLOBAL_ALERT_ENABLE        : boolean := TRUE ;
+  
+  -- requirements
+  constant  ALERT_LOG_DEFAULT_PASSED_GOAL        : integer := 1 ;
+  
+  -- Control what makes a test failure
+  constant  ALERT_LOG_FAIL_ON_WARNING            : boolean := TRUE ;
+  constant  ALERT_LOG_FAIL_ON_DISABLED_ERRORS    : boolean := TRUE ;
+  constant  ALERT_LOG_FAIL_ON_REQUIREMENT_ERRORS : boolean := TRUE ;
+  
+  -- ReportAlerts Settings 
+  constant ALERT_LOG_REPORT_HIERARCHY            : boolean := TRUE ;   -- ReportAerts 
+  constant ALERT_LOG_PRINT_PASSED                : boolean := TRUE ;   -- ReportAlerts: Print PassedCount 
+  constant ALERT_LOG_PRINT_AFFIRMATIONS          : boolean := FALSE ;  -- ReportAlerts: Print Affirmations Checked
+  constant ALERT_LOG_PRINT_DISABLED_ALERTS       : boolean := FALSE ;  -- ReportAlerts: Print Disabled Alerts
+  constant ALERT_LOG_PRINT_REQUIREMENTS          : boolean := FALSE ;  -- ReportAlerts: Print requirements
+  constant ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS  : boolean := TRUE ;   -- ReportAlerts: Print requirements if have any
+  
+  
 --!!  -- Defaults for Log Enables
---!!  constant LOG_ENABLE_INFO             : boolean ; -- FALSE 
---!!  constant LOG_ENABLE_DEBUG            : boolean ; -- FALSE 
---!!  constant LOG_ENABLE_PASSED           : boolean ; -- FALSE 
---!!  constant LOG_ENABLE_FINAL            : boolean ; -- FALSE 
+--!!  constant LOG_ENABLE_INFO             : boolean := FALSE ;  
+--!!  constant LOG_ENABLE_DEBUG            : boolean := FALSE ;  
+--!!  constant LOG_ENABLE_PASSED           : boolean := FALSE ;  
+--!!  constant LOG_ENABLE_FINAL            : boolean := FALSE ;  
 --!!
---!!  -- Allows disabling alerts at startup - and then turn them on at or near system reset
---!!  constant  GLOBAL_ALERT_ENABLE        : boolean ; -- default TRUE
---!!  
---!!  -- Control what makes a test failure
---!!  constant  FAIL_ON_WARNING            : boolean ; -- default TRUE
---!!  constant  FAIL_ON_DISABLED_ERRORS    : boolean ; -- default TRUE
---!!  constant  FAIL_ON_REQUIREMENT_ERRORS : boolean ; -- default TRUE
---!!  
---!!  -- ReportAlerts Settings 
---!!  constant REPORT_HIERARCHY            : boolean := TRUE ;   -- ReportAerts 
---!!  constant PRINT_PASSED                : boolean := TRUE ;   -- ReportAlerts: Print PassedCount 
---!!  constant PRINT_AFFIRMATIONS          : boolean := FALSE ;  -- ReportAlerts: Print Affirmations Checked
---!!  constant PRINT_DISABLED_ALERTS       : boolean := FALSE ;  -- ReportAlerts: Print Disabled Alerts
---!!  constant PRINT_REQUIREMENTS          : boolean := FALSE ;  -- ReportAlerts: Print requirements
---!!  constant PRINT_IF_HAVE_REQUIREMENTS  : boolean := TRUE ;   -- ReportAlerts: Print requirements if have any
---!!  
 --!!  -- Controls for default Alert enables
---!!  constant ALERT_ENABLE_FAILURE       : boolean ; -- TRUE and not setable 
---!!  constant ALERT_ENABLE_ERROR         : boolean ; -- TRUE and not setable 
---!!  constant ALERT_ENABLE_WARNING       : boolean ; -- TRUE and not setable 
+--!!  constant ALERT_ENABLE_FAILURE       : boolean := TRUE ; -- TRUE and not setable 
+--!!  constant ALERT_ENABLE_ERROR         : boolean := TRUE ; -- TRUE and not setable 
+--!!  constant ALERT_ENABLE_WARNING       : boolean := TRUE ; -- TRUE and not setable 
 --!!  
---!!  -- Controls that split the Alert/Log controls separately
---!!  constant  WRITEALERT_ERRORCOUNT      : boolean := WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
---!!  constant  WRITEALERT_LEVEL           : boolean := WRITE_LEVEL     ;   -- Print FAILURE, ERROR, WARNING
---!!  constant  WRITEALERT_NAME            : boolean := WRITE_NAME      ;   -- Print Alert Message
---!!  constant  WRITEALERT_TIME            : boolean := WRITE_TIME      ;   -- Print time 
---!!  constant  WRITELOG_ERRORCOUNT        : boolean := WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
---!!  constant  WRITELOG_LEVEL             : boolean := WRITE_LEVEL     ;   -- Print ALWAYS, INFO, DEBUG, FINAL, PASSED
---!!  constant  WRITELOG_NAME              : boolean := WRITE_NAME      ;   -- Print Log Message
---!!  constant  WRITELOG_TIME              : boolean := WRITE_TIME      ;   -- Print Time
+--!!  There does not seem to be any compelling reason for these
+--!!  Instead, I suspect code will be optimized better if these are merged into a single ALERT_LOG value
+--!!  -- Controls that split the Alert/Log controls separately 
+--!!  constant  ALERT_WRITE_ERRORCOUNT      : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
+--!!  constant  ALERT_WRITE_LEVEL           : boolean := ALERT_LOG_WRITE_LEVEL     ;   -- Print FAILURE, ERROR, WARNING
+--!!  constant  ALERT_WRITE_NAME            : boolean := ALERT_LOG_WRITE_NAME      ;   -- Print Alert Message
+--!!  constant  LOG_WRITE_ERRORCOUNT        : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
+--!!  constant  LOG_WRITE_LEVEL             : boolean := ALERT_LOG_WRITE_LEVEL     ;   -- Print ALWAYS, INFO, DEBUG, FINAL, PASSED
+--!!  constant  LOG_WRITE_NAME              : boolean := ALERT_LOG_WRITE_NAME      ;   -- Print Log Message
 
 
 end package body OsvvmSettingsPkg ;

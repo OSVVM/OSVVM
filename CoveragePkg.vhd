@@ -22,8 +22,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2024   2024.01    Changing settings to constants in OsvvmSettingsPkg rather than 
+--                         using Shared variable + PT and multiple levels of indirection 
 --    05/2023   2023.05    Updated InitSeed call in NewID to ensure a unique seed 
---    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    06/2022   2022.06    Add AlertIfNotCovered.  Settings for YAML output.
 --    02/2022   2022.02    Updated NewID with ParentID, ReportMode, Search, PrintParent.
@@ -114,6 +116,7 @@ use ieee.numeric_std.all ;
 use ieee.math_real.all ;
 use std.textio.all ;
 
+use work.IfElsePkg.all ;
 use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.TextUtilPkg.all ;
@@ -1212,9 +1215,9 @@ package CoveragePkg is
     impure function GetAlertLogID return AlertLogIDType ;
 
     ------------------------------------------------------------
-    procedure       InitSeed   (S  : string ) ;
-    impure function InitSeed   (S : string ) return string ;
-    procedure       InitSeed   (I  : integer ) ;
+    procedure       InitSeed   (S  : string;   UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) ;
+    impure function InitSeed   (S  : string;   UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) return string ;
+    procedure       InitSeed   (I  : integer;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) ;
 
     ------------------------------------------------------------
     procedure       SetSeed    (RandomSeedIn : RandomSeedType ) ;
@@ -2162,15 +2165,15 @@ package body CoveragePkg is
     ------------------------------------------------------------
     -- Global Settings for Coverage Modeling
     -- Local WriteBin and WriteCovHoles formatting settings, defaults determined by CoverageGlobals
-    variable WritePassFailVar   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WriteBinInfoVar    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WriteCountVar      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WriteAnyIllegalVar : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-    variable WritePrefixVar     : NamePType ;
-    variable PassNameVar        : NamePType ;
-    variable FailNameVar        : NamePType ;
+    variable WritePassFailVar   : boolean := COVERAGE_WRITE_PASS_FAIL   ;
+    variable WriteBinInfoVar    : boolean := COVERAGE_WRITE_BIN_INFO    ;
+    variable WriteCountVar      : boolean := COVERAGE_WRITE_COUNT       ;
+    variable WriteAnyIllegalVar : boolean := COVERAGE_WRITE_ANY_ILLEGAL ;
+--!!    variable WritePrefixVar     : NamePType ;
+--!!    variable PassNameVar        : NamePType ;
+--!!    variable FailNameVar        : NamePType ;
     variable ErrorIfNotCoveredVar           : boolean := FALSE ;
-    variable CheckedForErrorIfNotCoveredVar : boolean := FALSE ;
+--!!    variable CheckedForErrorIfNotCoveredVar : boolean := FALSE ;
 
     file WriteBinFile : text ;
     variable WriteBinFileInit : boolean := FALSE ;
@@ -2473,25 +2476,28 @@ package body CoveragePkg is
     ) is
     begin
       if WritePassFail /= COV_OPT_INIT_PARM_DETECT then
-        WritePassFailVar   := WritePassFail ;
+        WritePassFailVar   := IsEnabled(WritePassFail) ;
       end if ;
       if WriteBinInfo /= COV_OPT_INIT_PARM_DETECT then
-        WriteBinInfoVar    := WriteBinInfo ;
+        WriteBinInfoVar    := IsEnabled(WriteBinInfo) ;
       end if ;
       if WriteCount /= COV_OPT_INIT_PARM_DETECT then
-        WriteCountVar      := WriteCount ;
+        WriteCountVar      := IsEnabled(WriteCount) ;
       end if ;
       if WriteAnyIllegal /= COV_OPT_INIT_PARM_DETECT then
-        WriteAnyIllegalVar := WriteAnyIllegal ;
+        WriteAnyIllegalVar := IsEnabled(WriteAnyIllegal) ;
       end if ;
       if WritePrefix /= OSVVM_STRING_INIT_PARM_DETECT then
-        WritePrefixVar.Set(WritePrefix) ;
+--!!        WritePrefixVar.Set(WritePrefix) ;
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.COVERAGE_PRINT_PREFIX replaced SetReportOptions(WritePrefix)", WARNING) ;  
       end if ;
       if PassName /= OSVVM_STRING_INIT_PARM_DETECT then
-        PassNameVar.Set(PassName) ;
+--!!        PassNameVar.Set(PassName) ;
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.COVERAGE_PASS_NAME replaced SetReportOptions(PassName)", WARNING) ;  
       end if ;
       if FailName /= OSVVM_STRING_INIT_PARM_DETECT then
-        FailNameVar.Set(FailName) ;
+--!!        FailNameVar.Set(FailName) ;
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.COVERAGE_FAIL_NAME replaced SetReportOptions(FailName)", WARNING) ;  
       end if ;
     end procedure SetReportOptions ;
 
@@ -2500,13 +2506,13 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       -- Globals - for all coverage models
-      WritePassFailVar   := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfoVar    := COV_OPT_INIT_PARM_DETECT ;
-      WriteCountVar      := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegalVar := COV_OPT_INIT_PARM_DETECT ;
-      WritePrefixVar.deallocate ;
-      PassNameVar.deallocate ;
-      FailNameVar.deallocate ;
+      WritePassFailVar   := COVERAGE_WRITE_PASS_FAIL   ;
+      WriteBinInfoVar    := COVERAGE_WRITE_BIN_INFO    ;
+      WriteCountVar      := COVERAGE_WRITE_COUNT       ;
+      WriteAnyIllegalVar := COVERAGE_WRITE_ANY_ILLEGAL ;
+--!!      WritePrefixVar.deallocate ;
+--!!      PassNameVar.deallocate ;
+--!!      FailNameVar.deallocate ;
     end procedure ResetReportOptions ;
 
 
@@ -4269,10 +4275,14 @@ package body CoveragePkg is
       ID              : CoverageIDType ;
       variable buf    : inout line ;
 --      file f          : text ;
-      WritePassFail   : OsvvmOptionsType ;
-      WriteBinInfo    : OsvvmOptionsType ;
-      WriteCount      : OsvvmOptionsType ;
-      WriteAnyIllegal : OsvvmOptionsType ;
+--!!      WritePassFail   : OsvvmOptionsType ;
+--!!      WriteBinInfo    : OsvvmOptionsType ;
+--!!      WriteCount      : OsvvmOptionsType ;
+--!!      WriteAnyIllegal : OsvvmOptionsType ;
+      WritePassFail   : boolean ;
+      WriteBinInfo    : boolean ;
+      WriteCount      : boolean ;
+      WriteAnyIllegal : boolean ;
       WritePrefix     : string ;
       PassName        : string ;
       FailName        : string ;
@@ -4294,7 +4304,8 @@ package body CoveragePkg is
       WriteBinName(ID, buf, "WriteBin: ", WritePrefix) ;
       for i in 1 to CovStructPtr(ID.ID).NumBins loop      -- CovStructPtr(ID.ID).CovBinPtr.all'range
         if CovStructPtr(ID.ID).CovBinPtr(i).action = COV_COUNT or
-           (CovStructPtr(ID.ID).CovBinPtr(i).action = COV_ILLEGAL and IsEnabled(WriteAnyIllegal)) or
+--           (CovStructPtr(ID.ID).CovBinPtr(i).action = COV_ILLEGAL and IsEnabled(WriteAnyIllegal)) or
+           (CovStructPtr(ID.ID).CovBinPtr(i).action = COV_ILLEGAL and WriteAnyIllegal) or
            CovStructPtr(ID.ID).CovBinPtr(i).count < 0  -- Illegal bin with errors
         then
           -- WriteBin Info
@@ -4302,7 +4313,8 @@ package body CoveragePkg is
           if CovStructPtr(ID.ID).CovBinPtr(i).Name.all /= "" then
             swrite(buf, CovStructPtr(ID.ID).CovBinPtr(i).Name.all & "  ") ;
           end if ;
-          if IsEnabled(WritePassFail) then
+--!!          if IsEnabled(WritePassFail) then
+          if (WritePassFail) then
             -- For illegal bins, AtLeast = 0 and count is negative.
             if CovStructPtr(ID.ID).CovBinPtr(i).count >= CovStructPtr(ID.ID).CovBinPtr(i).AtLeast then
               swrite(buf, PassName & ' ') ;
@@ -4310,7 +4322,8 @@ package body CoveragePkg is
               swrite(buf, FailName & ' ') ;
             end if ;
           end if ;
-          if IsEnabled(WriteBinInfo) then
+--!!          if IsEnabled(WriteBinInfo) then
+          if (WriteBinInfo) then
             if CovStructPtr(ID.ID).CovBinPtr(i).action = COV_COUNT then
               swrite(buf, "Bin:") ;
             else
@@ -4318,7 +4331,8 @@ package body CoveragePkg is
             end if;
             write(buf, CovStructPtr(ID.ID).CovBinPtr(i).BinVal.all) ;
           end if ;
-          if IsEnabled(WriteCount) then
+--!!          if IsEnabled(WriteCount) then
+          if (WriteCount) then
             write(buf, "  Count = " & integer'image(abs(CovStructPtr(ID.ID).CovBinPtr(i).count))) ;
             write(buf, "  AtLeast = " & integer'image(CovStructPtr(ID.ID).CovBinPtr(i).AtLeast)) ;
             if CovStructPtr(ID.ID).WeightMode = WEIGHT or CovStructPtr(ID.ID).WeightMode = REMAIN_WEIGHT then
@@ -4337,10 +4351,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteBin (ID : CoverageIDType) is
     ------------------------------------------------------------
-      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail  (WritePassFailVar) ;
-      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo   (WriteBinInfoVar  ) ;
-      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount     (WriteCountVar    ) ;
-      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegalVar) ;
+--!!      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail  (WritePassFailVar) ;
+--!!      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo   (WriteBinInfoVar  ) ;
+--!!      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount     (WriteCountVar    ) ;
+--!!      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegalVar) ;
       -- constant rWritePrefix     : string         := ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt) ;
       -- constant rPassName        : string         := ResolveOsvvmPassName     (PassNameVar.GetOpt  ) ;
       -- constant rFailName        : string         := ResolveOsvvmFailName     (FailNameVar.GetOpt  ) ;
@@ -4349,16 +4363,23 @@ package body CoveragePkg is
       WriteBin (
         ID              => ID,
         buf             => buf,
-        WritePassFail   => rWritePassFail,
-        WriteBinInfo    => rWriteBinInfo,
-        WriteCount      => rWriteCount,
-        WriteAnyIllegal => rWriteAnyIllegal,
---        WritePrefix     => rWritePrefix,
-        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
---        PassName        => rPassName,
-        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
---        FailName        => rFailName
-        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  )
+--!!        WritePassFail   => rWritePassFail,
+--!!        WriteBinInfo    => rWriteBinInfo,
+--!!        WriteCount      => rWriteCount,
+--!!        WriteAnyIllegal => rWriteAnyIllegal,
+        WritePassFail   => WritePassFailVar,
+        WriteBinInfo    => WriteBinInfoVar,
+        WriteCount      => WriteCountVar,
+        WriteAnyIllegal => WriteAnyIllegalVar,
+--!!        WritePrefix     => rWritePrefix,
+--!!        PassName        => rPassName,
+--!!        FailName        => rFailName
+--!!        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+--!!        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+--!!        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  )
+        WritePrefix     => COVERAGE_PRINT_PREFIX,
+        PassName        => COVERAGE_PASS_NAME,
+        FailName        => COVERAGE_FAIL_NAME
       ) ;
       WriteToCovFile(buf) ;
     end procedure WriteBin ;
@@ -4377,10 +4398,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteBin (ID : CoverageIDType; FileName : string;  OpenKind : File_Open_Kind := APPEND_MODE) is
     ------------------------------------------------------------
-      constant rWritePassFail    : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFailVar) ;
-      constant rWriteBinInfo     : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfoVar  ) ;
-      constant rWriteCount       : OsvvmOptionsType := ResolveCovWriteCount      (WriteCountVar    ) ;
-      constant rWriteAnyIllegal  : OsvvmOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegalVar) ;
+--!!      constant rWritePassFail    : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFailVar) ;
+--!!      constant rWriteBinInfo     : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfoVar  ) ;
+--!!      constant rWriteCount       : OsvvmOptionsType := ResolveCovWriteCount      (WriteCountVar    ) ;
+--!!      constant rWriteAnyIllegal  : OsvvmOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegalVar) ;
       -- constant rWritePrefix      : string         := ResolveOsvvmWritePrefix   (WritePrefixVar.GetOpt) ;
       -- constant rPassName         : string         := ResolveOsvvmPassName      (PassNameVar.GetOpt  ) ;
       -- constant rFailName         : string         := ResolveOsvvmFailName      (FailNameVar.GetOpt  ) ;
@@ -4392,16 +4413,23 @@ package body CoveragePkg is
       WriteBin (
         ID              => ID,
         buf             => buf,
-        WritePassFail   => rWritePassFail,
-        WriteBinInfo    => rWriteBinInfo,
-        WriteCount      => rWriteCount,
-        WriteAnyIllegal => rWriteAnyIllegal,
---        WritePrefix     => rWritePrefix,
-        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
---        PassName        => rPassName,
-        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
---        FailName        => rFailName
-        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  ),
+--!!        WritePassFail   => rWritePassFail,
+--!!        WriteBinInfo    => rWriteBinInfo,
+--!!        WriteCount      => rWriteCount,
+--!!        WriteAnyIllegal => rWriteAnyIllegal,
+        WritePassFail   => WritePassFailVar,
+        WriteBinInfo    => WriteBinInfoVar,
+        WriteCount      => WriteCountVar,
+        WriteAnyIllegal => WriteAnyIllegalVar,
+--!!        WritePrefix     => rWritePrefix,
+--!!        PassName        => rPassName,
+--!!        FailName        => rFailName
+--!!        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefixVar.GetOpt),
+--!!        PassName        => ResolveOsvvmPassName     (PassNameVar.GetOpt  ),
+--!!        FailName        => ResolveOsvvmFailName     (FailNameVar.GetOpt  ),
+        WritePrefix     => COVERAGE_PRINT_PREFIX,
+        PassName        => COVERAGE_PASS_NAME,
+        FailName        => COVERAGE_FAIL_NAME,
         UsingLocalFile  => TRUE
       );
       writeline(LocalWriteBinFile, buf) ;
@@ -5150,11 +5178,11 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable buf            : line ;
       constant NAME_PREFIX    : string := "" ;
-      constant rWritePassFail : boolean := IsEnabled(ResolveCovWritePassFail(WritePassFailVar)) ;
+ --!!     constant rWritePassFail : boolean := IsEnabled(ResolveCovWritePassFail(WritePassFailVar)) ;
     begin
       write(buf, NAME_PREFIX & "Settings: " & LF) ;
       -- write(buf, NAME_PREFIX & "  AlertIfNotCovered: " & ifelse(AlertIfNotCoveredVar, "1", "0") & LF) ;
-      write(buf, NAME_PREFIX & "  WritePassFail: "     & ifelse(rWritePassFail or ErrorIfNotCoveredVar, "1", "0")) ;
+      write(buf, NAME_PREFIX & "  WritePassFail: "     & ifelse(WritePassFailVar or ErrorIfNotCoveredVar, "1", "0")) ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteSettingsYaml ;
 
@@ -5170,7 +5198,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
 --x      file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       file CovYamlFile : text ;
       variable buf : line ;
@@ -5767,7 +5795,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
       file CovYamlFile : text open READ_MODE is RESOLVED_FILE_NAME ;
       variable buf     : line ;
       variable Found   : boolean ;
@@ -5803,9 +5831,9 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       ErrorIfNotCoveredVar             := TRUE ;
-      if Checked then 
-        CheckedForErrorIfNotCoveredVar := TRUE ;
-      end if ; 
+--!!      if Checked then 
+--!!        CheckedForErrorIfNotCoveredVar := TRUE ;
+--!!      end if ; 
     end procedure SetErrorIfNotCovered ;
 
     ------------------------------------------------------------
@@ -6293,7 +6321,7 @@ package body CoveragePkg is
     begin
       SetAlertLogID(COV_STRUCT_ID_DEFAULT, Name, ParentID, CreateHierarchy) ;
       if not SeedInit then
-        InitSeed(COV_STRUCT_ID_DEFAULT, Name, FALSE) ;
+        InitSeed(COV_STRUCT_ID_DEFAULT, Name) ;
       end if ;
     end procedure SetAlertLogID ;
 
@@ -6311,7 +6339,7 @@ package body CoveragePkg is
     begin
       SetName(COV_STRUCT_ID_DEFAULT, Name) ;
       if not SeedInit then
-        InitSeed(COV_STRUCT_ID_DEFAULT, Name, FALSE) ;
+        InitSeed(COV_STRUCT_ID_DEFAULT, Name) ;
       end if ;
     end procedure SetName ;
 
@@ -6351,7 +6379,7 @@ package body CoveragePkg is
     begin
       SetMessage(COV_STRUCT_ID_DEFAULT, Message) ;
       if not SeedInit then
-        InitSeed(COV_STRUCT_ID_DEFAULT, Message, FALSE) ;
+        InitSeed(COV_STRUCT_ID_DEFAULT, Message) ;
       end if ;
     end procedure SetMessage ;
 
@@ -6433,24 +6461,24 @@ package body CoveragePkg is
     end procedure SetCountMode ;
 
     ------------------------------------------------------------
-    procedure InitSeed (S : string ) is
+    procedure InitSeed (S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) is
     ------------------------------------------------------------
     begin
-      InitSeed(COV_STRUCT_ID_DEFAULT, S, FALSE) ;
+      InitSeed(COV_STRUCT_ID_DEFAULT, S, UseNewSeedMethods) ;
     end procedure InitSeed ;
 
     ------------------------------------------------------------
-    impure function InitSeed (S : string ) return string is
+    impure function InitSeed (S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) return string is
     ------------------------------------------------------------
     begin
-      return InitSeed(COV_STRUCT_ID_DEFAULT, S, FALSE) ;
+      return InitSeed(COV_STRUCT_ID_DEFAULT, S, UseNewSeedMethods) ;
     end function InitSeed ;
 
     ------------------------------------------------------------
-    procedure InitSeed (I : integer ) is
+    procedure InitSeed (I : integer;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) is
     ------------------------------------------------------------
     begin
-      InitSeed(COV_STRUCT_ID_DEFAULT, I, FALSE) ;
+      InitSeed(COV_STRUCT_ID_DEFAULT, I, UseNewSeedMethods) ;
     end procedure InitSeed ;
 
     ------------------------------------------------------------
@@ -7193,10 +7221,14 @@ package body CoveragePkg is
       PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
-      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail  (WritePassFail,    WritePassFailVar) ;
-      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo   (WriteBinInfo,     WriteBinInfoVar  ) ;
-      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount     (WriteCount,       WriteCountVar    ) ;
-      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegal,  WriteAnyIllegalVar) ;
+--!!      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail  (WritePassFail,    WritePassFailVar) ;
+--!!      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo   (WriteBinInfo,     WriteBinInfoVar  ) ;
+--!!      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount     (WriteCount,       WriteCountVar    ) ;
+--!!      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal(WriteAnyIllegal,  WriteAnyIllegalVar) ;
+      constant rWritePassFail   : boolean := IfElse(WritePassFail   /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WritePassFail),    WritePassFailVar) ;
+      constant rWriteBinInfo    : boolean := IfElse(WriteBinInfo    /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WriteBinInfo),     WriteBinInfoVar  ) ;
+      constant rWriteCount      : boolean := IfElse(WriteCount      /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WriteCount),       WriteCountVar    ) ;
+      constant rWriteAnyIllegal : boolean := IfElse(WriteAnyIllegal /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WriteAnyIllegal),  WriteAnyIllegalVar) ;
       -- constant rWritePrefix     : string         := ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt) ;
       -- constant rPassName        : string         := ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ) ;
       -- constant rFailName        : string         := ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  ) ;
@@ -7209,12 +7241,15 @@ package body CoveragePkg is
         WriteBinInfo    => rWriteBinInfo,
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
---        WritePrefix     => rWritePrefix,
-        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt),
---        PassName        => rPassName,
-        PassName        => ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ),
---        FailName        => rFailName
-        FailName        => ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  )
+--!!        WritePrefix     => rWritePrefix,
+--!!        PassName        => rPassName,
+--!!        FailName        => rFailName
+--!!        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt),
+--!!        PassName        => ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ),
+--!!        FailName        => ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  )
+        WritePrefix     => COVERAGE_PRINT_PREFIX,
+        PassName        => COVERAGE_PASS_NAME,
+        FailName        => COVERAGE_FAIL_NAME
         ) ;
       WriteToCovFile(buf) ;
     end procedure WriteBin ;
@@ -7250,21 +7285,26 @@ package body CoveragePkg is
     procedure WriteBin (
     ------------------------------------------------------------
       FileName        : string;
-      OpenKind        : File_Open_Kind := APPEND_MODE ;
+      OpenKind        : File_Open_Kind   := APPEND_MODE ;
       WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WritePrefix     : string         := OSVVM_STRING_INIT_PARM_DETECT ;
-      PassName        : string         := OSVVM_STRING_INIT_PARM_DETECT ;
-      FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
+      WritePrefix     : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
+      PassName        : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
+      FailName        : string           := OSVVM_STRING_INIT_PARM_DETECT    --!! Deprecated
     ) is
 --x      file LocalWriteBinFile : text open OpenKind is FileName ;
       file LocalWriteBinFile : text ;
-      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFail,    WritePassFailVar) ;
-      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfo,     WriteBinInfoVar  ) ;
-      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount      (WriteCount,       WriteCountVar    ) ;
-      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegal,  WriteAnyIllegalVar) ;
+--!!      constant rWritePassFail   : OsvvmOptionsType := ResolveCovWritePassFail   (WritePassFail,    WritePassFailVar) ;
+--!!      constant rWriteBinInfo    : OsvvmOptionsType := ResolveCovWriteBinInfo    (WriteBinInfo,     WriteBinInfoVar  ) ;
+--!!      constant rWriteCount      : OsvvmOptionsType := ResolveCovWriteCount      (WriteCount,       WriteCountVar    ) ;
+--!!      constant rWriteAnyIllegal : OsvvmOptionsType := ResolveCovWriteAnyIllegal (WriteAnyIllegal,  WriteAnyIllegalVar) ;
+      -- If input set, use it.
+      constant rWritePassFail   : boolean := IfElse(WritePassFail   /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WritePassFail),    WritePassFailVar) ;
+      constant rWriteBinInfo    : boolean := IfElse(WriteBinInfo    /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WriteBinInfo),     WriteBinInfoVar  ) ;
+      constant rWriteCount      : boolean := IfElse(WriteCount      /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WriteCount),       WriteCountVar    ) ;
+      constant rWriteAnyIllegal : boolean := IfElse(WriteAnyIllegal /= COV_OPT_INIT_PARM_DETECT,  IsEnabled(WriteAnyIllegal),  WriteAnyIllegalVar) ;
       -- constant rWritePrefix     : string         := ResolveOsvvmWritePrefix   (WritePrefix,      WritePrefixVar.GetOpt) ;
       -- constant rPassName        : string         := ResolveOsvvmPassName      (PassName,         PassNameVar.GetOpt  ) ;
       -- constant rFailName        : string         := ResolveOsvvmFailName      (FailName,         FailNameVar.GetOpt  ) ;
@@ -7278,12 +7318,15 @@ package body CoveragePkg is
         WriteBinInfo    => rWriteBinInfo,
         WriteCount      => rWriteCount,
         WriteAnyIllegal => rWriteAnyIllegal,
---        WritePrefix     => rWritePrefix,
-        WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt),
---        PassName        => rPassName,
-        PassName        => ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ),
---        FailName        => rFailName
-        FailName        => ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  ),
+--!!      WritePrefix     => rWritePrefix,
+--!!      PassName        => rPassName,
+--!!      FailName        => rFailName
+--!!      WritePrefix     => ResolveOsvvmWritePrefix  (WritePrefix,      WritePrefixVar.GetOpt),
+--!!      PassName        => ResolveOsvvmPassName     (PassName,         PassNameVar.GetOpt  ),
+--!!      FailName        => ResolveOsvvmFailName     (FailName,         FailNameVar.GetOpt  ),
+        WritePrefix     => COVERAGE_PRINT_PREFIX,
+        PassName        => COVERAGE_PASS_NAME,
+        FailName        => COVERAGE_FAIL_NAME,
         UsingLocalFile  => TRUE
       );
       writeline(LocalWriteBinFile, buf) ;

@@ -44,15 +44,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  
+
+if {$::osvvm::ToolName eq "RivieraPRO"} {
+  RemoveLibrary osvvm
+}
 library osvvm
-if {$::osvvm::ToolSupportsDeferredConstants}  {
-  # Preferred path
-  analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
-  analyze OsvvmSettingsPkg.vhd
-} else {
-  # work around path for tools that do not understand dependencies on deferred constants
-  #  analyze OsvvmScriptSettingsPkg_WithoutDeferredConstants.vhd   ;# alternate solution to following - rejected
-  analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+# Analyze package declarations
+analyze IfElsePkg.vhd
+
+analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+analyze OsvvmSettingsPkg.vhd
+if {!$::osvvm::ToolSupportsDeferredConstants}  {
+  # work around path for tools that do not support deferred constants
   CreateOsvvmScriptSettingsPkg
   if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
     analyze OsvvmScriptSettingsPkg_generated.vhd
@@ -60,8 +63,6 @@ if {$::osvvm::ToolSupportsDeferredConstants}  {
     analyze OsvvmScriptSettingsPkg_default.vhd
   }
 
-  #  analyze OsvvmSettingsPkg_WithoutDeferredConstants.vhd   ;# alternate solution to following - rejected
-  analyze OsvvmSettingsPkg.vhd
   if {[FileExists OsvvmSettingsPkg_local.vhd]} {
     analyze OsvvmSettingsPkg_local.vhd
   } else {
@@ -128,9 +129,11 @@ analyze ReportPkg.vhd
 analyze OsvvmTypesPkg.vhd
 
 if {$::osvvm::ToolSupportsDeferredConstants}  {
-  CreateOsvvmScriptSettingsPkg
-  if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
-    analyze OsvvmScriptSettingsPkg_generated.vhd
+  set GeneratedPkg [CreateOsvvmScriptSettingsPkg]
+  puts "GeneratedPkg = $GeneratedPkg"
+##!!  if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} { }
+  if {[FileExists $GeneratedPkg]} {
+    analyze   $GeneratedPkg
   } else {
     analyze OsvvmScriptSettingsPkg_default.vhd
   }

@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    01/2024   2024.01    IfElse function moved to IfElsePkg
 --    09/2022   2022.09    Added WaitForTransactionOrIrq, FinishTransaction, and TransactionPending for AckType/RdyType
 --    03/2022   2022.03    Added EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge.
 --    01/2022   2022.01    Added MetaTo01.  Added WaitForTransaction without clock for RdyType/AckType and bit.
@@ -90,14 +91,6 @@ package TbUtilPkg is
   ------------------------------------------------------------
   function MetaTo01 ( constant A : in std_ulogic ) return std_ulogic ;
   function MetaTo01 ( constant A : in std_ulogic_vector ) return std_ulogic_vector ;
-
-  ------------------------------------------------------------
-  -- IfElse
-  --   Crutch until VHDL-2019 conditional initialization
-  --   If condition is true return first parameter otherwise return second
-  ------------------------------------------------------------
-  function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector ;
-  function IfElse(Expr : boolean ; A, B : integer) return integer ;
 
   ------------------------------------------------------------
   -- RequestTransaction - WaitForTransaction
@@ -484,28 +477,28 @@ package body TbUtilPkg is
     return result ;
   end function MetaTo01 ;
 
-  ------------------------------------------------------------
-  -- IfElse
-  --   Crutch until VHDL-2019 conditional initialization
-  --   If condition is true return first parameter otherwise return second
-  ------------------------------------------------------------
-  function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector is
-  begin
-    if Expr then
-      return A ;
-    else
-      return B ;
-    end if ;
-  end function IfElse ;
-
-  function IfElse(Expr : boolean ; A, B : integer) return integer is
-  begin
-    if Expr then
-      return A ;
-    else
-      return B ;
-    end if ;
-  end function IfElse ;
+  -- Moved  ------------------------------------------------------------
+  -- Moved  -- IfElse
+  -- Moved  --   Crutch until VHDL-2019 conditional initialization
+  -- Moved  --   If condition is true return first parameter otherwise return second
+  -- Moved  ------------------------------------------------------------
+  -- Moved  function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector is
+  -- Moved  begin
+  -- Moved    if Expr then
+  -- Moved      return A ;
+  -- Moved    else
+  -- Moved      return B ;
+  -- Moved    end if ;
+  -- Moved  end function IfElse ;
+  -- Moved  
+  -- Moved  function IfElse(Expr : boolean ; A, B : integer) return integer is
+  -- Moved  begin
+  -- Moved    if Expr then
+  -- Moved      return A ;
+  -- Moved    else
+  -- Moved      return B ;
+  -- Moved    end if ;
+  -- Moved  end function IfElse ;
 
   ------------------------------------------------------------
   -- RequestTransaction - WaitForTransaction

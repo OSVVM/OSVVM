@@ -97,15 +97,20 @@ package MemoryGenericPkg is
     Addr  : std_logic_vector ;
     Data  : std_logic_vector 
   ) ; 
+  alias Write is MemWrite [MemoryIDType, std_logic_vector, std_logic_vector ] ; 
+  
   procedure MemRead (  
     ID    : in MemoryIDType ;
     Addr  : in  std_logic_vector ;
     Data  : out std_logic_vector 
   ) ; 
+  alias Read is MemRead [MemoryIDType, std_logic_vector, std_logic_vector ] ; 
+  
   impure function MemRead ( 
     ID    : MemoryIDType ; 
     Addr  : std_logic_vector 
   ) return std_logic_vector ; 
+  alias Read is MemRead [MemoryIDType, std_logic_vector return std_logic_vector ] ; 
 
   ------------------------------------------------------------
   procedure MemErase (ID : in MemoryIDType); 

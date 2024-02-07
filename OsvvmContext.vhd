@@ -46,6 +46,7 @@
 context OsvvmContext is
   library OSVVM ;  
 
+  use OSVVM.IfElsePkg.all ;
   use OSVVM.OsvvmScriptSettingsPkg.all ;
   use OSVVM.NamePkg.all ;
   use OSVVM.NameStorePkg.all ;

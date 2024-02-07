@@ -37,9 +37,12 @@
 --
 
 package body OsvvmScriptSettingsPkg is
-  constant OSVVM_HOME_DIRECTORY        : string := "../OsvvmLibraries" ;
-  constant OSVVM_OUTPUT_DIRECTORY      : string := "" ;
-  constant OSVVM_BUILD_YAML_FILE       : string := "OsvvmRun.yml" ;
-  constant OSVVM_TRANSCRIPT_YAML_FILE  : string := "OSVVM_transcript.yml" ;
-  constant OSVVM_REVISION              : string := "2024.01" ;
+  constant OSVVM_HOME_DIRECTORY         : string := "../OsvvmLibraries" ;
+  constant OSVVM_RAW_OUTPUT_DIRECTORY   : string := "" ;
+  constant OSVVM_BASE_OUTPUT_DIRECTORY  : string := "" ;
+  constant OSVVM_BUILD_YAML_FILE        : string := "OsvvmRun.yml" ;
+  constant OSVVM_TRANSCRIPT_YAML_FILE   : string := "OSVVM_transcript.yml" ;
+  constant OSVVM_REVISION               : string := "2024.01" ;
+--  constant OSVVM_SETTINGS_REVISION      : string := "2023.99" ;  -- Purpose: use new release, but keep settings to match 2023 releases - See OsvvmSettingsPkg_default
+  constant OSVVM_SETTINGS_REVISION      : string := "2024.01" ;  -- Purpose: use new release and new settings - See OsvvmSettingsPkg_default
 end package body OsvvmScriptSettingsPkg ;

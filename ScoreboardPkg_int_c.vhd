@@ -21,7 +21,7 @@
 --
 --  Revision History:
 --    Date      Version     Description
---    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    09/2022   2022.09     Added FifoCount to YAML output.
 --    03/2022   2022.03     Removed deprecated SetAlertLogID in Singleton API
 --    02/2022   2022.02     Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID,
@@ -76,6 +76,7 @@ library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
 
+  use work.IfElsePkg.all ;
   use work.OsvvmScriptSettingsPkg.all ;
   use work.TranscriptPkg.all ;
   use work.TextUtilPkg.all ;
@@ -2703,7 +2704,7 @@ package body ScoreBoardPkg_int is
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetAlertLogName & "_sb.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName & "_sb.yml", FileName) ;
 --x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       file SbYamlFile : text ;
       variable buf : line ;

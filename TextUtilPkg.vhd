@@ -23,6 +23,7 @@
 --    12/2023   2024.01    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
 --                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
 --                         These updates are only so OSVVM can work with non-compilant (1076) tools.
+--                         IfElse function moved to IfElsePkg
 --    08/2022   2022.08    Added IsHexOrStdLogic.  Updated ReadHexToken to support reading "UWLH-"
 --    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
 --                         Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
@@ -72,9 +73,6 @@ package TextUtilPkg is
 
   function isstd_logic (constant Char : character ) return boolean ;
   
-  -- Crutch until VHDL-2019 conditional initialization
-  function IfElse(Expr : boolean ; A, B : string) return string ; 
-
   ------------------------------------------------------------
   procedure SkipWhiteSpace (
   ------------------------------------------------------------
@@ -333,18 +331,7 @@ package body TextUtilPkg is
         return FALSE ; 
     end case ; 
   end function isstd_logic ;
-  
-  ------------------------------------------------------------
-  function IfElse(Expr : boolean ; A, B : string) return string is 
-  ------------------------------------------------------------
-  begin
-    if Expr then 
-      return A ; 
-    else
-      return B ; 
-    end if ; 
-  end function IfElse ; 
-  
+    
 --  ------------------------------------------------------------
 --  function iscomment (constant Char : character ) return boolean is
 --  ------------------------------------------------------------
