@@ -99,7 +99,7 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_JUSTIFY_ENABLE       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE - Do not Justify printing
   constant  ALERT_LOG_WRITE_TIME_FIRST     : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE
   constant  ALERT_LOG_WRITE_TIME_LAST      : boolean := not ALERT_LOG_WRITE_TIME_FIRST ; 
-  constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT  : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2024", 8, 0) ;  -- Justify time - particularly when at beginning
+  constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT  : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2024", 9, 0) ;  -- Justify time - particularly when at beginning
   
   -- Boolean controls to print or not print fields in Alert/Log
   constant  ALERT_LOG_WRITE_ERRORCOUNT     : boolean := FALSE ;  -- prefix message with # of errors - requested by Marco for Mike P.
