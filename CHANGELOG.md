@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2024.03   |  Added OsvvmSettingsPkg. Updated AlertLogPkg, CoveragePkg, ReportPkg
 | 2023.09   |  Added OsvvmSettingsPkg. Updated AlertLogPkg, CoveragePkg, ReportPkg
 | 2023.05   |  Added DelayCoveragePkg.  Changed seed in CoveragePkg.
 | 2023.04   |  Updated OsvvmScriptSettingsPkg
@@ -52,8 +53,8 @@
 
 
 ## Copyright and License
-Copyright (C) 1999-2023 by [SynthWorks Design Inc.](http://www.synthworks.com/)
-Copyright (C) 2021-2023 by [OSVVM contributors](CONTRIBUTOR.md)
+Copyright (C) 1999-2024 by [SynthWorks Design Inc.](http://www.synthworks.com/)
+Copyright (C) 2021-2024 by [OSVVM contributors](CONTRIBUTOR.md)
 
 This file is part of OSVVM.
 
@@ -74,7 +75,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2023.09  September 2023
+## Revision 2024.03  September 2024
 
 ### Current Revision and Compile Order
 
@@ -84,31 +85,32 @@ compile switch. You may also use the OSVVM script - osvvm.pro -- details
 how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |
-  -----------------------------------------------------|----------
-  | OsvvmScriptSettingsPkg.vhd                         | ** 2023.09 **  |
-  | OsvvmSettingsPkg.vhd                               | ** 2023.09 NEW **  |
-  | TextUtilPkg.vhd                                    | 2022.08  |
+  -----------------------------------------------------|-----------------
+  | IfElsePkg.vhd                                      | ** 2024.03 NEW **  |
+  | OsvvmScriptSettingsPkg.vhd                         | ** 2024.03 **  |
+  | OsvvmSettingsPkg.vhd                               | ** 2024.03 **  |
+  | TextUtilPkg.vhd                                    | ** 2024.03 Xilinx **  |
   | ResolutionPkg.vhd                                  | 2021.06  |
-  | NamePkg.vhd                                        | 2022.02  |
-  | OsvvmGlobalPkg.vhd                                 | 2022.06  |
+  | NamePkg.vhd                                        | ** 2024.03 **  |
+  | OsvvmGlobalPkg.vhd                                 | ** 2024.03 **  |
   | If Aldec                                           |          |
   |     VendorCovApiPkg_Aldec.vhd                      | 2020.01  |
   | If not Aldec                                       |          |
   |     VendorCovApiPkg.vhd                            | 2020.01  |
   | TranscriptPkg.vhd                                  | 2023.01  |
-  | AlertLogPkg.vhd                                    | ** 2023.09 **  |
-  | TbUtilPkg.vhd                                      | 2022.09  |
+  | AlertLogPkg.vhd                                    | ** 2024.03 **  |
+  | TbUtilPkg.vhd                                      | ** 2024.03 **  |
   | NameStorePkg.vhd                                   | 2022.10  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | 2023.01  |
-  | RandomPkg.vhd                                      | ** 2023.09 **  |
+  | RandomBasePkg.vhd                                  | ** 2024.03 **  |
+  | RandomPkg.vhd                                      | ** 2024.03 **  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | ** 2023.09 **  |
+  | CoveragePkg.vhd                                    | ** 2024.03 **  |
   | DelayCoveragePkg.vhd                               | 2023.05  |
-  | ResizePkg.vhd                                      | 2021.06  |
+  | ResizePkg.vhd                                      | ** 2024.03 **  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | ** 2023.09 **  |
+  |     ScoreboardGenericPkg.vhd                       | ** 2024.03 Xilinx **  |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   | If Not Support Generic Packages                    |          |
@@ -116,22 +118,81 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     ScoreboardPkg_int_c.vhd                        | 2023.01  |
   | MemorySupportPkg.vhd                               | 2022.10  |
   | If Support Generic Packages                        |          |
-  |     MemoryGenericPkg.vhd                           | 2023.01  |
+  |     MemoryGenericPkg.vhd                           | ** 2024.03 Xilinx **  |
   |     MemoryPkg.vhd                                  | 2022.10  |
   | If Not Support Generic Packages                    |          |
-  |     MemoryPkg_c.vhd                                | 2022.11  |
+  |     MemoryPkg_c.vhd                                | ** 2024.03 Xilinx **  |
   |     MemoryPkg_orig_c.vhd                           | 2022.11  |
-  | ReportPkg.vhd                                      | ** 2023.09 **  |
+  | ReportPkg.vhd                                      | ** 2024.03 Xilinx **  |
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
-  | OsvvmContext.vhd                                   | 2022.01  |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
   | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
-  |     OsvvmScriptSettingsPkg_default.vhd             | ** 2023.09 **  |
+  |     OsvvmScriptSettingsPkg_default.vhd             | ** 2024.03 **  |
   | If exist OsvvmSettingsPkg_local.vhd                |          |
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | ** 2023.09 NEW **  |
+  |     OsvvmSettingsPkg_default.vhd                   | ** 2024.03 **  |
+  | OsvvmContext.vhd                                   | ** 2024.03 **  |
+
+### IfElsePkg.vhd 2024.03 - NEW
+- Moved the different versions of IfElse function into this package
+
+### OsvvmScriptSettingsPkg.vhd 2024.03
+- Added OSVVM_SETTINGS_REVISION and OSVVM_RAW_OUTPUT_DIRECTORY
+
+### OsvvmSettingsPkg.vhd and OsvvmSettingsPkg_default.vhd  2024.03
+- Updated with settings for 2024
+- Notable changes
+-   Random InitSeed uses new seed methods by default. Randomizations are likely to produce different results.
+-   Coverage uses randomizes using REMAIN mode rather than AT_LEAST. Intelligent Randomization Randomizations are likely to produce different results. 
+-   Alerts/Logs Write Time First and Justified by default
+-   WriteScoreboardYaml uses base name rather than whole name
+
+### TextUtilPkg.vhd 2024.03
+- Added handling for line having LF and CR at the end of the string 
+- This supports non-compliant implementations
+
+### NamePkg.vhd 2024.03
+- Check for pointer non-null before deallocation (supports non-compliant implementations)
+
+### OsvvmGlobalPkg.vhd 2024.03
+Most of package is now gone.
+Configuration of AlertLogPkg now handled though constants in OsvvmSettingsPkg_local.vhd or OsvvmSettingsPkg_default.vhd
+This allows the settings to be adjusted once for the entire library rather than by every testbench.
+
+### AlertLogPkg.vhd 2024.03
+- Changed settings to constants in OsvvmSettingsPkg rather than using Shared variable + PT and multiple levels of indirection.
+- Added AffirmIfTranscriptsMatch
+- Addressed issue so that a data structure and a VC ModelID can have the same name.
+
+### TbUtilPkg.vhd 2024.03
+- Moved the different versions of IfElse function to this IfElsePkg.vhd
+- Added BarrierType
+
+### RandomBasePkg.vhd 2024.03
+- Added SetRandomSalt function that returns its input value
+
+### RandomPkg.vhd 2024.03
+- Added impure function RandInt return integer that uses integer'low to integer'high
+- Uses settings from OsvvmSettingsPkg to control default behaviors
+
+### Coverage.vhd 2024.03
+- Changed settings to constants in OsvvmSettingsPkg rather than using Shared variable + PT and multiple levels of indirection.
+- Uses settings from OsvvmSettingsPkg to control default behaviors
+
+### ResizePkg.vhd 2024.03
+- Added AlertLogID to SafeResize
+- Improved message for errors.
+
+### MemoryGenericPkg.vhd  2024.03
+- Adjustments for Xilinx - but gave up and created MemoryGenericPkg_xilinx.vhd
+
+### OsvvmContext.vhd  2024.03
+- Added IfElsePkg 
+
+
+## Revision 2023.09  September 2023
 
 ### OsvvmSettingsPkg 2023.09 - NEW
 - Defines deferred constants that initialize settings in packages

@@ -27,8 +27,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2024   2024.01    Changing settings to constants in OsvvmSettingsPkg rather than 
---                         using Shared variable + PT and multiple levels of indirection 
+--    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
+--                         Allows setting constants for all tests rather than using SetAlertLogOptions.  
 --                         Added AffirmIfTranscriptsMatch
 --    07/2023   2023.07    Added WriteRequirementsYaml.
 --    04/2023   2023.04    Added GetTranscriptName.
@@ -3833,7 +3833,7 @@ package body AlertLogPkg is
       PassName                 : string ;               --!! These are deprecated
       FailName                 : string ;               --!! These are deprecated
       IdSeparator              : string ;               --!! These are deprecated
-      WriteTimeLast            : OsvvmOptionsType ;     --!! These are deprecated
+      WriteTimeLast            : OsvvmOptionsType ;  
       TimeJustifyAmount        : integer
     ) is
     begin

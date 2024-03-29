@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    03/2024   2024.03    Most of package functionality replaced by constants in OsvvmSettingsPkg_default.vhd
 --    06/2022   2022.06    Minor reordering of constants
 --    02/2022   2022.02    Added support for IdSeparator.  
 --                         Supports PrintParent mode PRINT_NAME_AND_PARENT.  <Parent Name> <IdSeparator> <AlertLogID Name>.   

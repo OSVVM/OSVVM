@@ -28,6 +28,8 @@
 --
 --  Revision History :
 --    Date       Version    Description
+--    03/2024    2024.04    Added RandInt that randomly selects a value in the entire integer range
+--    09/2023    2023.09    Added control of UseNewSeedMethods from OsvvmSettingsPkg.RANDOM_USE_NEW_SEED_METHODS
 --    06/2023    2023.06    Updated InitSeed for type time to do (T mod 2**30*std.env.resolution_limit)
 --    06/2021    2021.06    Updated InitSeed, moved shared stuff to RandomBasePkg
 --    08/2020    2020.08    RandBool, RandSl, RandBit, DistBool, DistSl, DistBit (from Lars)

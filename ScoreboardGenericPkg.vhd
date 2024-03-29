@@ -2537,11 +2537,11 @@ package body ScoreboardGenericPkg is
           if Tag /= "" then
             Alert(AlertLogIDVar(Index),
                   GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
-                  FAILURE ) ;
+                  ERROR ) ;
           else
             Alert(AlertLogIDVar(Index),
                   GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
-                  FAILURE ) ;
+                  ERROR ) ;
           end if ;
 --          return integer'left ;
           LocalItemNumber := integer'left ;

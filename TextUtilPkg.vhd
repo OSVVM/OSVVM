@@ -20,7 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    12/2023   2024.01    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
+--    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
 --                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
 --                         These updates are only so OSVVM can work with non-compilant (1076) tools.
 --                         IfElse function moved to IfElsePkg
@@ -37,7 +37,7 @@
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2015 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2015 - 2024 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.

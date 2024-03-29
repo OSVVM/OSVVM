@@ -22,8 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2024   2024.01    Changing settings to constants in OsvvmSettingsPkg rather than 
---                         using Shared variable + PT and multiple levels of indirection 
+--    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
+--                         Allows setting constants for all tests rather than using SetReportOptions.  
 --    05/2023   2023.05    Updated InitSeed call in NewID to ensure a unique seed 
 --    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
@@ -94,7 +94,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2010 - 2023 by SynthWorks Design Inc.
+--  Copyright (c) 2010 - 2024 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
