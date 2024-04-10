@@ -57,15 +57,23 @@ analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for pack
 analyze OsvvmSettingsPkg.vhd
 if {!$::osvvm::ToolSupportsDeferredConstants}  {
   # work around path for tools that do not support deferred constants
-  CreateOsvvmScriptSettingsPkg
-  if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} {
-    analyze OsvvmScriptSettingsPkg_generated.vhd
+  set SettingsDirectory [FindOsvvmSettingsDirectory]
+  
+  if {[FileExists $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd]} {
+    analyze $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd
   } else {
-    analyze OsvvmScriptSettingsPkg_default.vhd
+    # Generate the file if possible
+    set GeneratedPkg [CreateOsvvmScriptSettingsPkg $SettingsDirectory]
+    puts "GeneratedPkg = $GeneratedPkg"
+    if {[FileExists $GeneratedPkg]} {
+      analyze $GeneratedPkg
+    } else {
+      analyze OsvvmScriptSettingsPkg_default.vhd
+    }
   }
 
-  if {[FileExists OsvvmSettingsPkg_local.vhd]} {
-    analyze OsvvmSettingsPkg_local.vhd
+  if {[FileExists $SettingsDirectory/OsvvmSettingsPkg_local.vhd]} {
+    analyze $SettingsDirectory/OsvvmSettingsPkg_local.vhd
   } else {
     analyze OsvvmSettingsPkg_default.vhd
   }
@@ -130,17 +138,23 @@ analyze ReportPkg.vhd
 analyze OsvvmTypesPkg.vhd
 
 if {$::osvvm::ToolSupportsDeferredConstants}  {
-  set GeneratedPkg [CreateOsvvmScriptSettingsPkg]
-  puts "GeneratedPkg = $GeneratedPkg"
-##!!  if {[FileExists OsvvmScriptSettingsPkg_generated.vhd]} { }
-  if {[FileExists $GeneratedPkg]} {
-    analyze   $GeneratedPkg
+  set SettingsDirectory [FindOsvvmSettingsDirectory]
+  
+  if {[FileExists $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd]} {
+    analyze $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd
   } else {
-    analyze OsvvmScriptSettingsPkg_default.vhd
+    # Generate the file if possible
+    set GeneratedPkg [CreateOsvvmScriptSettingsPkg $SettingsDirectory]
+    puts "GeneratedPkg = $GeneratedPkg"
+    if {[FileExists $GeneratedPkg]} {
+      analyze   $GeneratedPkg
+    } else {
+      analyze OsvvmScriptSettingsPkg_default.vhd
+    }
   }
 
-  if {[FileExists OsvvmSettingsPkg_local.vhd]} {
-    analyze OsvvmSettingsPkg_local.vhd
+  if {[FileExists $SettingsDirectory/OsvvmSettingsPkg_local.vhd]} {
+    analyze $SettingsDirectory/OsvvmSettingsPkg_local.vhd
   } else {
     analyze OsvvmSettingsPkg_default.vhd
   }
