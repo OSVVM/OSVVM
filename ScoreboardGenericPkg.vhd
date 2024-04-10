@@ -23,7 +23,7 @@
 --    Date      Version    Description
 --    05/2023   2023.05    Updated Pop fail on empty error to print tag if a tag is used
 --    02/2023   2023.04    Bug fix for Peek with a tag.
---    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    10/2022   2022.10    Added Parent Name to YAML output.
 --    09/2022   2022.09    Added FifoCount to YAML output.
@@ -81,6 +81,7 @@ library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
 
+  use work.IfElsePkg.all ;
   use work.OsvvmScriptSettingsPkg.all ;
   use work.OsvvmSettingsPkg.all ;
   use work.TranscriptPkg.all ;
@@ -2536,11 +2537,11 @@ package body ScoreboardGenericPkg is
           if Tag /= "" then
             Alert(AlertLogIDVar(Index),
                   GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
-                  FAILURE ) ;
+                  ERROR ) ;
           else
             Alert(AlertLogIDVar(Index),
                   GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
-                  FAILURE ) ;
+                  ERROR ) ;
           end if ;
 --          return integer'left ;
           LocalItemNumber := integer'left ;
@@ -2734,8 +2735,8 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
-                                              IfElse(FileNameIsBaseName, OSVVM_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
+                                              IfElse(FileNameIsBaseName, OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
 --x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       file SbYamlFile : text ;
       variable buf : line ;
@@ -2747,7 +2748,7 @@ package body ScoreboardGenericPkg is
       end if ;
 
       swrite(buf, "Version: 1.1" & LF) ;
-      swrite(buf, "TestCase: " & '"' & GetAlertLogName & '"' & LF) ;
+      swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
       swrite(buf, "Scoreboards: ") ;
       writeline(SbYamlFile, buf) ;
       if CalledNewID then

@@ -24,7 +24,7 @@
 --    09/2023   2023.09    Added WriteSimTimeYaml.
 --    07/2023   2023.07    Added call to WriteRequirementsYaml.
 --    04/2023   2023.04    Added TranscriptOpen without parameters 
---    01/2023   2023.01    OSVVM_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
 --                         Added simple TranscriptOpen that uses GetTestName
 --    06/2022   2022.06    Minor reordering of EndOfTestReports
 --    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
@@ -125,27 +125,27 @@ package body ReportPkg is
     
     if GotCoverage then 
       WriteCovYaml (
-        FileName      => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
+        FileName      => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_slv.GotScoreboards then 
       work.ScoreboardPkg_slv.WriteScoreboardYaml (
---        FileName => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml" 
+--        FileName => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_sb_slv.yml" 
         FileName => "slv", FileNameIsBaseName => TRUE
       ) ;
     end if ; 
     
     if work.ScoreboardPkg_int.GotScoreboards then 
       work.ScoreboardPkg_int.WriteScoreboardYaml (
---        FileName           => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml" 
+--        FileName           => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_sb_int.yml" 
         FileName => "int", FileNameIsBaseName => TRUE
       ) ;
     end if ; 
 
     if GotRequirements then 
       WriteRequirementsYaml (
-        FileName      => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_req.yml"
+        FileName      => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_req.yml"
       ) ;
     end if ; 
     
@@ -161,7 +161,7 @@ package body ReportPkg is
       FileName        => OSVVM_BUILD_YAML_FILE
     ) ;
     WriteAlertYaml (
-      FileName        => OSVVM_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
+      FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors
     ) ; 
     
@@ -190,14 +190,14 @@ package body ReportPkg is
   ------------------------------------------------------------
     variable Status : FILE_OPEN_STATUS ; 
   begin
-    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
+    TranscriptOpen(Status, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
   end procedure TranscriptOpen ; 
 
   ------------------------------------------------------------
   procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
   begin
-    TranscriptOpen(Status, OSVVM_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
+    TranscriptOpen(Status, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
   end procedure TranscriptOpen ; 
   
 

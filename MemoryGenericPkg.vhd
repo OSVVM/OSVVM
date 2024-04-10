@@ -97,15 +97,20 @@ package MemoryGenericPkg is
     Addr  : std_logic_vector ;
     Data  : std_logic_vector 
   ) ; 
+  alias Write is MemWrite [MemoryIDType, std_logic_vector, std_logic_vector ] ; 
+  
   procedure MemRead (  
     ID    : in MemoryIDType ;
     Addr  : in  std_logic_vector ;
     Data  : out std_logic_vector 
   ) ; 
+  alias Read is MemRead [MemoryIDType, std_logic_vector, std_logic_vector ] ; 
+  
   impure function MemRead ( 
     ID    : MemoryIDType ; 
     Addr  : std_logic_vector 
   ) return std_logic_vector ; 
+  alias Read is MemRead [MemoryIDType, std_logic_vector return std_logic_vector ] ; 
 
   ------------------------------------------------------------
   procedure MemErase (ID : in MemoryIDType); 
@@ -480,11 +485,11 @@ package body MemoryGenericPkg is
 
       -- Share the memory if they match
       if NameID /= ID_NOT_FOUND.ID then
-        if MemStructPtr(NumItems).MemArrayPtr /= NULL then 
+        if MemStructPtr(NameID).MemArrayPtr /= NULL then 
           -- Found ID and structure exists, does structure match?
-          AlertIf(MemStructPtr(NumItems).AlertLogID, AddrWidth /= MemStructPtr(NameID).AddrWidth,  
+          AlertIf(MemStructPtr(NameID).AlertLogID, AddrWidth /= MemStructPtr(NameID).AddrWidth,  
             "NewID: AddrWidth: " & to_string(AddrWidth) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
-          AlertIf(MemStructPtr(NumItems).AlertLogID, DataWidth /= MemStructPtr(NameID).DataWidth,  
+          AlertIf(MemStructPtr(NameID).AlertLogID, DataWidth /= MemStructPtr(NameID).DataWidth,  
             "NewID: DataWidth: " & to_string(DataWidth) & " /= Existing DataWidth: "  & to_string(MemStructPtr(NameID).DataWidth), FAILURE);
           -- NameStore IDs are issued sequentially and match MemoryID
         else 
@@ -621,6 +626,9 @@ package body MemoryGenericPkg is
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
     begin
+    
+      Data := (Data'range => 'U') ;  -- Error return value
+
       if IdOutOfRange(ID, "MemRead") then 
         return ;
       end if ; 
@@ -629,7 +637,6 @@ package body MemoryGenericPkg is
 
       -- Check Bounds of Address and if memory is initialized
       if Addr'length > AddrWidth then
-        Data := (Data'range => 'U') ; 
         if (MemStructPtr(ID).MemArrayPtr = NULL) then  -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
           return ; 
@@ -642,7 +649,6 @@ package body MemoryGenericPkg is
       -- Check Bounds on Data
       if Data'length /= MemStructPtr(ID).DataWidth then
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Data'length: " & to_string(Data'length) & " /= Memory Data Width: " & to_string(MemStructPtr(ID).DataWidth), FAILURE) ; 
-        Data := (Data'range => 'U') ; 
         return ; 
       end if ; 
 
