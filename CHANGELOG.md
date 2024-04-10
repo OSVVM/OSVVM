@@ -2,7 +2,9 @@
 
 | Revision  |  Summary |
 ------------|-----------
-| 2024.03   |  Added OsvvmSettingsPkg. Updated AlertLogPkg, CoveragePkg, ReportPkg
+| 2024.03   |  Updated OsvvmSettingsPkg. Added OsvvmScriptSettingsPkg.  
+|           |  Updates to configure AlertLogPkg, CoveragePkg, RandomPkg.
+|           |  Updates to work around Xilinx bugs (numerous packages).
 | 2023.09   |  Added OsvvmSettingsPkg. Updated AlertLogPkg, CoveragePkg, ReportPkg
 | 2023.05   |  Added DelayCoveragePkg.  Changed seed in CoveragePkg.
 | 2023.04   |  Updated OsvvmScriptSettingsPkg
