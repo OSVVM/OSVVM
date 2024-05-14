@@ -56,7 +56,7 @@
 
 ## Copyright and License
 Copyright (C) 1999-2024 by [SynthWorks Design Inc.](http://www.synthworks.com/)
-Copyright (C) 2021-2024 by [OSVVM contributors](CONTRIBUTOR.md)
+Copyright (C) 2021-2024 by [OSVVM Authors](AUTHORS.md)   
 
 This file is part of OSVVM.
 

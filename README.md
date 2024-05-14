@@ -46,8 +46,7 @@ For directions on running the demos, see [OSVVM Scripts](https://github.com/osvv
 The OSVVM project welcomes your participation with either 
 issue reports or pull requests.
 
-You can find the project [Authors here](AUTHORS.md) and
-[Contributors here](CONTRIBUTORS.md).
+You can find the project [Authors and Contributors here](AUTHORS.md)
 
 ## The OSVVM Family of libraries
 The OSVVM family of libraries includes the VHDL Verification Utility library (this one)
