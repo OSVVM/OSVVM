@@ -705,7 +705,7 @@ package body RandomPkg is
     ------------------------------------------------------------
       constant CkMax : integer := CheckMinMax("Uniform", Min, Max) ;
     begin
-      return LocalUniform (Min, Max, Exclude) ; 
+      return LocalUniform (Min, CkMax, Exclude) ;
     end function Uniform ;
 
 
@@ -1216,11 +1216,10 @@ package body RandomPkg is
     ------------------------------------------------------------
     impure function RandTime (Min, Max : time ; Exclude : time_vector ; Unit : time := ns) return time is
     ------------------------------------------------------------
-      variable IntVal : integer ;
       constant CkMax  : time := CheckMinMax("RandTime", Min, Max) ;
     begin
       --  if Min or Max > 2**31 value will be out of range
-      return RandInt(Min/Unit, Max/Unit, to_integer_vector(Exclude, Unit)) * Unit ;
+      return RandInt(Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit)) * Unit ;
     end function RandTime ;
 
     ------------------------------------------------------------
