@@ -331,7 +331,7 @@ package body NameStorePkg is
   ) return NameIDType is
     variable Result : NameIDType ; 
   begin
-    Result.ID := NameStore.NewID(iName) ;
+    Result.ID := NameStore.NewID(iName, ParentID, Search) ;
     return Result ; 
   end function NewID ;
 
@@ -344,7 +344,7 @@ package body NameStorePkg is
     Search   : NameSearchType := NAME 
   ) is
   begin
-    NameStore.set(ID.ID, iName) ;
+    NameStore.set(ID.ID, iName, ParentID, Search) ;
   end procedure Set ;
 
   ------------------------------------------------------------
@@ -362,7 +362,7 @@ package body NameStorePkg is
     Search   : NameSearchType := NAME 
   ) return NameIDType is
   begin
-    return NameIDType'(ID => NameStore.Find(iName)) ;
+    return NameIDType'(ID => NameStore.Find(iName, ParentID, Search)) ;
   end function Find ;
 
   ------------------------------------------------------------
