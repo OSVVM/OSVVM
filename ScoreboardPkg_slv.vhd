@@ -19,15 +19,17 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    08/2012   2012.08    Generic Instance of ScoreboardGenericPkg
---    08/2014   2013.08    Updated interface for Match and to_string
---    11/2016   2016.11    Released as part of OSVVM library
+--    04/2022   2022.04    Replaced to_hstring with to_hxstring
+--    10/2020   2020.10    Replaced STD_MATCH for std_logic family with AlertLogPkg.MetaMatch
 --    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Released as part of OSVVM library
+--    08/2014   2013.08    Updated interface for Match and to_string
+--    08/2012   2012.08    Generic Instance of ScoreboardGenericPkg
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2006 - 2022 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -48,13 +50,15 @@ use std.textio.all ;
 library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
-
+ 
+use work.TextUtilPkg.all ; 
 
 package ScoreBoardPkg_slv is new work.ScoreboardGenericPkg
   generic map (
     ExpectedType        => std_logic_vector,  
     ActualType          => std_logic_vector,  
-    Match               => std_match,  -- "=", [std_logic_vector, std_logic_vector return boolean]
-    expected_to_string  => to_hstring, --      [std_logic_vector return string] 
-    actual_to_string    => to_hstring  --      [std_logic_vector return string]  
+--    Match               => std_match,  -- "=", [std_logic_vector, std_logic_vector return boolean]
+    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [std_logic_vector, std_logic_vector return boolean]
+    expected_to_string  => to_hxstring,  --      [std_logic_vector return string] 
+    actual_to_string    => to_hxstring   --      [std_logic_vector return string]  
   ) ;  

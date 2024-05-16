@@ -1,6 +1,6 @@
 --
---  File Name:         ScoreBoardGenericPkg.vhd
---  Design Unit Name:  ScoreBoardGenericPkg
+--  File Name:         ScoreBoardPkg_int_c.vhd
+--  Design Unit Name:  ScoreBoardPkg_int
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -20,41 +20,36 @@
 --        http://www.SynthWorks.com
 --
 --  Revision History:
---    Date      Version    Description
---    05/2023   2023.05    Updated Pop fail on empty error to print tag if a tag is used
---    02/2023   2023.04    Bug fix for Peek with a tag.
+--    Date      Version     Description
 --    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
---    11/2022   2022.11    Updated default search to PRIVATE_NAME
---    10/2022   2022.10    Added Parent Name to YAML output.
---    09/2022   2022.09    Added FifoCount to YAML output.
---    03/2022   2022.03    Removed deprecated SetAlertLogID in Singleton API
---    02/2022   2022.02    Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID,
---                         ReportMode, Search, PrintParent.   Supports searching for Scoreboard models..
---    01/2022   2022.01    Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType
---    08/2021   2021.08    Removed SetAlertLogID from singleton public interface - set instead by NewID
---    06/2021   2021.06    Updated Data Structure, IDs for new use model, and Wrapper Subprograms
---    10/2020   2020.10    Added Peek
---    05/2020   2020.05    Updated calls to IncAffirmCount
---                         Overloaded Check with functions that return pass/fail (T/F)
---                         Added GetFifoCount.   Added GetPushCount which is same as GetItemCount
---    01/2020   2020.01    Updated Licenses to Apache
---    04/2018   2018.04    Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
---    05/2017   2017.05    First print Actual then only print Expected if mis-match
---    11/2016   2016.11    Released as part of OSVVM
---    06/2015   2015.06    Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount,
---                         Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
---                         Deallocate, Initialized, Function SetName
---    09/2013   2013.09    Added file handling, Check Count, Finish Status
---                         Find, Flush
---    08/2013   2013.08    Generics:  to_string replaced write, Match replaced check
---                         Added Tags - Experimental
---                         Added Array of Scoreboards
---    08/2012   2012.08    Added Type and Subprogram Generics
---    05/2012   2012.05    Changed FIFO to store pointers to ExpectedType
---                         Allows usage of unconstrained arrays
---    08/2010   2010.08    Added Tailpointer
---    12/2006   2006.12    Initial revision
---
+--    09/2022   2022.09     Added FifoCount to YAML output.
+--    03/2022   2022.03     Removed deprecated SetAlertLogID in Singleton API
+--    02/2022   2022.02     Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID,
+--                          ReportMode, Search, PrintParent.   Supports searching for Scoreboard models..
+--    01/2022   2022.01     Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType
+--    08/2021   2021.08     Removed SetAlertLogID from singleton public interface - set instead by NewID
+--    06/2021   2021.06     Updated Data Structure, IDs for new use model, and Wrapper Subprograms
+--    10/2020   2020.10     Added Peek
+--    05/2020   2020.05     Updated calls to IncAffirmCount
+--                          Overloaded Check with functions that return pass/fail (T/F)
+--                          Added GetFifoCount.   Added GetPushCount which is same as GetItemCount
+--    01/2020   2020.01     Updated Licenses to Apache
+--    04/2018   2018.04     Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
+--    05/2017   2017.05     First print Actual then only print Expected if mis-match
+--    11/2016   2016.11     Released as part of OSVVM
+--    06/2015   2015.06     Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount,
+--                          Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
+--                          Deallocate, Initialized, Function SetName
+--    09/2013   2013.09     Added file handling, Check Count, Finish Status
+--                          Find, Flush
+--    08/2013   2013.08     Generics:  to_string replaced write, Match replaced check
+--                          Added Tags - Experimental
+--                          Added Array of Scoreboards
+--    08/2012   2012.08     Added Type and Subprogram Generics
+--    05/2012   2012.05     Changed FIFO to store pointers to ExpectedType
+--                          Allows usage of unconstrained arrays
+--    08/2010   2010.08     Added Tailpointer
+--    12/2006   2006.12     Initial revision
 --
 --
 --  This file is part of OSVVM.
@@ -83,7 +78,6 @@ library ieee ;
 
   use work.IfElsePkg.all ;
   use work.OsvvmScriptSettingsPkg.all ;
-  use work.OsvvmSettingsPkg.all ;
   use work.TranscriptPkg.all ;
   use work.TextUtilPkg.all ;
   use work.AlertLogPkg.all ;
@@ -91,25 +85,26 @@ library ieee ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ;
 
-package ScoreboardGenericPkg is
-  generic (
-    type ExpectedType ;
-    type ActualType ;
-    function Match(Actual : ActualType ;                           -- defaults
-                   Expected : ExpectedType) return boolean ;       -- is "=" ;
-    function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
-    function actual_to_string  (A : ActualType) return string      -- is to_string ;
-  ) ;
 
---   --  For a VHDL-2002 package, comment out the generics and
---   --  uncomment the following, it replaces a generic instance of the package.
---   --  As a result, you will have multiple copies of the entire package.
---   --  Inconvenient, but ok as it still works the same.
---   subtype ExpectedType is std_logic_vector ;
---   subtype ActualType   is std_logic_vector ;
---   alias Match is std_match [ActualType, ExpectedType return boolean] ;  -- for std_logic_vector
---   alias expected_to_string is to_hstring [ExpectedType return string];  -- VHDL-2008
---   alias actual_to_string is to_hstring [ActualType return string];  -- VHDL-2008
+package ScoreBoardPkg_int is
+--  generic (
+--    type ExpectedType ; 
+--    type ActualType ; 
+--    function Match(Actual : ActualType ;                           -- defaults
+--                   Expected : ExpectedType) return boolean ;       -- is "=" ;
+--    function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
+--    function actual_to_string  (A : ActualType) return string      -- is to_string ; 
+--  ) ; 
+--
+   --  For a VHDL-2002 package, comment out the generics and 
+   --  uncomment the following, it replaces a generic instance of the package.
+   --  As a result, you will have multiple copies of the entire package. 
+   --  Inconvenient, but ok as it still works the same.
+   subtype ExpectedType is integer ;
+   subtype ActualType   is integer ;
+   alias Match is "=" [ActualType, ExpectedType return boolean] ;  -- for std_logic_vector
+   alias expected_to_string is to_string [ExpectedType return string];  -- VHDL-2008
+   alias actual_to_string is to_string [ActualType return string];  -- VHDL-2008
 
   -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag
@@ -132,7 +127,7 @@ package ScoreboardGenericPkg is
     Name          : String ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIDType ;
 
@@ -143,7 +138,7 @@ package ScoreboardGenericPkg is
     Size          : positive ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIDArrayType ;
 
@@ -154,7 +149,7 @@ package ScoreboardGenericPkg is
     X             : integer_vector ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIDArrayType ;
 
@@ -165,7 +160,7 @@ package ScoreboardGenericPkg is
     X, Y          : positive ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIdMatrixType ;
 
@@ -176,7 +171,7 @@ package ScoreboardGenericPkg is
     X, Y          : integer_vector ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIdMatrixType ;
 
@@ -252,6 +247,8 @@ package ScoreboardGenericPkg is
     constant ExpectedData : in  ActualType
   ) return boolean ;
 
+
+
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
 
@@ -267,6 +264,7 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string ;
     variable Item   : out  ExpectedType
   ) ;
+
 
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
@@ -427,7 +425,7 @@ package ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- Writing YAML Reports
   impure function GotScoreboards return boolean ;
-  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE; FileNameIsBaseName : boolean := SCOREBOARD_YAML_IS_BASE_FILE_NAME) ;
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
 
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and
@@ -484,7 +482,7 @@ package ScoreboardGenericPkg is
       Name          : String ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDType ;
 
@@ -495,7 +493,7 @@ package ScoreboardGenericPkg is
       Size          : positive ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDArrayType ;
 
@@ -506,7 +504,7 @@ package ScoreboardGenericPkg is
       X             : integer_vector ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDArrayType ;
 
@@ -517,7 +515,7 @@ package ScoreboardGenericPkg is
       X, Y          : positive ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIdMatrixType ;
 
@@ -528,7 +526,7 @@ package ScoreboardGenericPkg is
       X, Y          : integer_vector ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIdMatrixType ;
 
@@ -851,7 +849,7 @@ package ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Writing YAML Reports
     impure function GotScoreboards return boolean ;
-    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) ;
+    procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
 
     ------------------------------------------------------------
     -- Generally these are not required.  When a simulation ends and
@@ -975,12 +973,12 @@ package ScoreboardGenericPkg is
   impure function NewID (Name : String; X, Y : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
 
 
-end ScoreboardGenericPkg ;
+end ScoreBoardPkg_int ;
 
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-package body ScoreboardGenericPkg is
+package body ScoreBoardPkg_int is
 
   type ScoreBoardPType is protected body
     type ExpectedPointerType is access ExpectedType ;
@@ -1112,7 +1110,7 @@ package body ScoreboardGenericPkg is
       Name          : String ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDType is
     ------------------------------------------------------------
@@ -1141,7 +1139,7 @@ package body ScoreboardGenericPkg is
       Name          : String ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDType is
     ------------------------------------------------------------
@@ -1165,7 +1163,7 @@ package body ScoreboardGenericPkg is
       X             : integer_vector ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDArrayType is
     ------------------------------------------------------------
@@ -1194,7 +1192,7 @@ package body ScoreboardGenericPkg is
       Size          : positive ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDArrayType is
     ------------------------------------------------------------
@@ -1209,7 +1207,7 @@ package body ScoreboardGenericPkg is
       X             : integer_vector ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIDArrayType is
     ------------------------------------------------------------
@@ -1226,7 +1224,7 @@ package body ScoreboardGenericPkg is
       X, Y          : integer_vector ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIdMatrixType is
     ------------------------------------------------------------
@@ -1257,7 +1255,7 @@ package body ScoreboardGenericPkg is
       X, Y          : positive ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIdMatrixType is
     ------------------------------------------------------------
@@ -1272,7 +1270,7 @@ package body ScoreboardGenericPkg is
       X, Y          : integer_vector ;
       ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
       ReportMode    : AlertLogReportModeType  := ENABLED ;
-      Search        : NameSearchType          := PRIVATE_NAME ;
+      Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIdMatrixType is
     ------------------------------------------------------------
@@ -1548,8 +1546,8 @@ package body ScoreboardGenericPkg is
     begin
       return AlertIf(OSVVM_SCOREBOARD_ALERTLOG_ID, Index < HeadPointer'Low or Index > HeadPointer'High,
          GetName & " " & Name & " Index: " & to_string(Index) &
-               " is not in the range (" & to_string(HeadPointer'Low) &
-               " to " & to_string(HeadPointer'High) & ")",
+               "is not in the range (" & to_string(HeadPointer'Low) &
+               "to " & to_string(HeadPointer'High) & ")",
          FAILURE ) ;
     end function LocalOutOfRange ;
 
@@ -1706,11 +1704,7 @@ package body ScoreboardGenericPkg is
       end if ;
       if HeadPointer(Index) = NULL then
         ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-        if tag'length > 0 then 
-          Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
-        else
-          Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ;
-        end if ; 
+        Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ;
         return ;
       end if ;
       PopCountVar(Index) := PopCountVar(Index) + 1 ;
@@ -1782,37 +1776,26 @@ package body ScoreboardGenericPkg is
 
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or PassedFlagEnabled then
-        -- Only used for PT based SB - SetName not accessible.
         if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
---x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
-          write(WriteBuf, NameVar.Get("Scoreboard")) ;
-          if not (ArrayLengthVar > 1 and PrintIndexVar) then
-            swrite(WriteBuf, "   ") ;
-          end if ;
-        elsif NameVar.IsSet then 
---x          write(WriteBuf, GetName(DefaultName => "")) ;
-          write(WriteBuf, NameVar.Get("")) ;
-          if not (ArrayLengthVar > 1 and PrintIndexVar) then
-            swrite(WriteBuf, "   ") ;
-          end if ;
+          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+        else
+          write(WriteBuf, GetName(DefaultName => "")) ;
         end if ;
-        -- Only used for PT based SB - Index SB not used in the same way.
         if ArrayLengthVar > 1 and PrintIndexVar then
-          write(WriteBuf, " (" & to_string(Index) & ")    ") ;
+          write(WriteBuf, " (" & to_string(Index) & ") ") ;
         end if ;
         if ExpectedInFIFO then
-          write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
+          write(WriteBuf, "   Received: " & actual_to_string(ActualData)) ;
           if FoundError then
             write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
           end if ;
         else
-          write(WriteBuf, "Received: " & expected_to_string(ExpectedPtr.all)) ;
+          write(WriteBuf, "   Received: " & expected_to_string(ExpectedPtr.all)) ;
           if FoundError then
             write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
           end if ;
         end if ;
---x        if PopListPointer(Index).TagPtr.all /= "" then
-        if PopListPointer(Index).TagPtr.all'length > 0 then
+        if PopListPointer(Index).TagPtr.all /= "" then
           write(WriteBuf, "   Tag: " & PopListPointer(Index).TagPtr.all) ;
         end if;
         write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
@@ -2094,17 +2077,14 @@ package body ScoreboardGenericPkg is
           if CurPtr.NextPtr = NULL then
             ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
             Alert(AlertLogIDVar(Index), GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
-            -- return NULL ;
-            exit ; 
+            return NULL ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
-            -- return CurPtr.NextPtr ;
-            exit ; 
+            return CurPtr ;
           else
             CurPtr := CurPtr.NextPtr ;
           end if ;
         end loop ;
       end if ;
-      return CurPtr.NextPtr ;
     end function LocalPeek ;
 
     ------------------------------------------------------------
@@ -2296,21 +2276,17 @@ package body ScoreboardGenericPkg is
       variable WriteBuf : line ;
     begin
       if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
---x        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
-        write(WriteBuf, NameVar.Get("Scoreboard")) ;
+        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
       else
---x        write(WriteBuf, GetName(DefaultName => "")) ;
-        write(WriteBuf, NameVar.Get("")) ; 
+        write(WriteBuf, GetName(DefaultName => "")) ;
       end if ;
       if ArrayLengthVar > 1 then
---x        if WriteBuf.all /= "" then
-        if WriteBuf.all'length > 0 then
+        if WriteBuf.all /= "" then
           swrite(WriteBuf, " ") ;
         end if ;
         write(WriteBuf, "Index(" & to_string(Index) & "),  ") ;
       else
---x        if WriteBuf.all /= "" then
-        if WriteBuf.all'length > 0 then
+        if WriteBuf.all /= "" then
           swrite(WriteBuf, ",  ") ;
         end if ;
       end if ;
@@ -2524,7 +2500,6 @@ package body ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer is
       variable CurPtr : ListPointerType ;
-      variable LocalItemNumber : integer := integer'left ; 
     begin
       if LocalOutOfRange(Index, "Find") then
         return integer'left ; -- error reporting in LocalOutOfRange
@@ -2537,28 +2512,23 @@ package body ScoreboardGenericPkg is
           if Tag /= "" then
             Alert(AlertLogIDVar(Index),
                   GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
-                  ERROR ) ;
+                  FAILURE ) ;
           else
             Alert(AlertLogIDVar(Index),
                   GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
-                  ERROR ) ;
+                  FAILURE ) ;
           end if ;
---          return integer'left ;
-          LocalItemNumber := integer'left ;
-          exit ;
+          return integer'left ;
 
         elsif CurPtr.TagPtr.all = Tag and
           Match(ActualData, CurPtr.ExpectedPtr.all) then
           -- Found it.  Return Index.
---          return CurPtr.ItemNumber ;
-          LocalItemNumber := CurPtr.ItemNumber ;
-          exit ; 
+          return CurPtr.ItemNumber ;
 
         else  -- Descend
           CurPtr := CurPtr.NextPtr ;
         end if ;
       end loop ;
-      return LocalItemNumber ; 
     end function Find ;
 
     ------------------------------------------------------------
@@ -2722,7 +2692,6 @@ package body ScoreboardGenericPkg is
       constant NAME_PREFIX : string := "  " ;
     begin
       write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(AlertLogIDVar(Index))) & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(AlertLogIDVar(Index)))) & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ;
@@ -2733,10 +2702,9 @@ package body ScoreboardGenericPkg is
     end procedure WriteScoreboardYaml ;
 
     ------------------------------------------------------------
-    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
+    procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
-                                              IfElse(FileNameIsBaseName, OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName & "_sb.yml", FileName) ;
 --x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       file SbYamlFile : text ;
       variable buf : line ;
@@ -2748,7 +2716,7 @@ package body ScoreboardGenericPkg is
       end if ;
 
       swrite(buf, "Version: 1.1" & LF) ;
-      swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
+      swrite(buf, "TestCase: " & '"' & GetAlertLogName & '"' & LF) ;
       swrite(buf, "Scoreboards: ") ;
       writeline(SbYamlFile, buf) ;
       if CalledNewID then
@@ -2890,7 +2858,7 @@ package body ScoreboardGenericPkg is
     Name          : String ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIDType is
   ------------------------------------------------------------
@@ -2905,7 +2873,7 @@ package body ScoreboardGenericPkg is
     Size          : positive ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIDArrayType is
   ------------------------------------------------------------
@@ -2920,7 +2888,7 @@ package body ScoreboardGenericPkg is
     X             : integer_vector ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIDArrayType is
   ------------------------------------------------------------
@@ -2935,7 +2903,7 @@ package body ScoreboardGenericPkg is
     X, Y          : positive ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIdMatrixType is
   ------------------------------------------------------------
@@ -2950,7 +2918,7 @@ package body ScoreboardGenericPkg is
     X, Y          : integer_vector ;
     ParentID      : AlertLogIDType          := OSVVM_SCOREBOARD_ALERTLOG_ID ;
     ReportMode    : AlertLogReportModeType  := ENABLED ;
-    Search        : NameSearchType          := PRIVATE_NAME ;
+    Search        : NameSearchType          := NAME_AND_PARENT_ELSE_PRIVATE ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIdMatrixType is
   ------------------------------------------------------------
@@ -3329,9 +3297,9 @@ package body ScoreboardGenericPkg is
   end function GotScoreboards ;
 
   ------------------------------------------------------------
-  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE; FileNameIsBaseName : boolean := SCOREBOARD_YAML_IS_BASE_FILE_NAME) is
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
   begin
-    ScoreboardStore.WriteScoreboardYaml(FileName, OpenKind, FileNameIsBaseName) ;
+    ScoreboardStore.WriteScoreboardYaml(FileName, OpenKind) ;
   end procedure WriteScoreboardYaml ;
 
   ------------------------------------------------------------
@@ -3461,4 +3429,4 @@ package body ScoreboardGenericPkg is
   end function NewID ;
 
 
-end ScoreboardGenericPkg ;
+end ScoreBoardPkg_int ;

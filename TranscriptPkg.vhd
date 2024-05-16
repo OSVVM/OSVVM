@@ -21,10 +21,13 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2015   2015.01    Initial revision
---    01/2016   2016.01    TranscriptOpen function now calls procedure of same name
---    11/2016   2016.l1    Added procedure BlankLine
+--    01/2023   2023.01    Uses OSVVM_TRANSCRIPT_YAML_FILE from OsvvmScriptSettingsPkg
+--    02/2022   2022.03    Create YAML with files opened during test
+--    12/2020   2020.12    Updated TranscriptOpen parameter Status to InOut to work around simulator bug.
 --    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.l1    Added procedure BlankLine
+--    01/2016   2016.01    TranscriptOpen function now calls procedure of same name
+--    01/2015   2015.01    Initial revision
 --
 --
 --  This file is part of OSVVM.
@@ -45,6 +48,7 @@
 --  
 
 use std.textio.all ;
+use work.OsvvmScriptSettingsPkg.all ;
 package TranscriptPkg is
 
   -- File Identifier to facilitate usage of one transcript file 
@@ -54,9 +58,12 @@ package TranscriptPkg is
   subtype WRITE_APPEND_OPEN_KIND is FILE_OPEN_KIND range WRITE_MODE to APPEND_MODE ; 
   
   -- Open and close TranscriptFile.  Function allows declarative opens 
-  procedure        TranscriptOpen (Status: out FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+  procedure        TranscriptOpen (Status: InOut FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
   procedure        TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;  
   impure function  TranscriptOpen (ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) return FILE_OPEN_STATUS ;
+  -- The following two are in ReportPkg to resolve circular depedencies
+  --   procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
+  --   procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
   
   procedure        TranscriptClose ;  
   impure function  IsTranscriptOpen return boolean ; 
@@ -98,16 +105,40 @@ package body TranscriptPkg is
     end function get ; 
   end protected body LocalBooleanPType ; 
   
+  file TranscriptYamlFile : text ;
+  
   ------------------------------------------------------------
   shared variable TranscriptEnable : LocalBooleanPType ; 
   shared variable TranscriptMirror : LocalBooleanPType ; 
+  shared variable TranscriptOpened : LocalBooleanPType ; 
 
   ------------------------------------------------------------
-  procedure TranscriptOpen (Status: out FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
+  procedure CreateTranscriptYamlLog (Name : STRING) is
+  ------------------------------------------------------------
+    variable buf : line ;
+  begin
+    -- Create Yaml file with list of files.
+    if not TranscriptOpened.Get then
+      file_open(TranscriptYamlFile, OSVVM_TRANSCRIPT_YAML_FILE, WRITE_MODE) ;
+--      swrite(buf, "Transcripts: ") ; 
+--      WriteLine(TranscriptYamlFile, buf) ; 
+      TranscriptOpened.Set(TRUE) ;
+    else
+      file_open(TranscriptYamlFile, OSVVM_TRANSCRIPT_YAML_FILE, APPEND_MODE) ;
+    end if ; 
+    swrite(buf, "  - " & Name) ; 
+    WriteLine(TranscriptYamlFile, buf) ; 
+    file_close(TranscriptYamlFile) ;
+  end procedure CreateTranscriptYamlLog ; 
+
+  ------------------------------------------------------------
+  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; ExternalName: STRING; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
   begin
     file_open(Status, TranscriptFile, ExternalName, OpenKind) ;
+    
     if Status = OPEN_OK then 
+      CreateTranscriptYamlLog(ExternalName) ; 
       TranscriptEnable.Set(TRUE) ;
     end if ; 
   end procedure TranscriptOpen ; 

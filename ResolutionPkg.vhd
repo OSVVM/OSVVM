@@ -3,369 +3,263 @@
 --  Design Unit Name:  ResolutionPkg
 --  Revision:          STANDARD VERSION
 --
---  Maintainer:        Jim Lewis      email:  jim@SynthWorks.com 
---  Contributor(s):            
---     Jim Lewis      email:  jim@SynthWorks.com   
+--  Maintainer:        Jim Lewis      email:  jim@SynthWorks.com
+--  Contributor(s):
+--     Jim Lewis      email:  jim@SynthWorks.com
 --
 --  Package Defines
 --      resolved resolution functions for integer, real, and time
 --      types resolved_integer, resolved_real, resolved_time
---    
---  Developed for: 
---        SynthWorks Design Inc. 
+--
+--  Developed for:
+--        SynthWorks Design Inc.
 --        VHDL Training Classes
 --        11898 SW 128th Ave.  Tigard, Or  97223
 --        http://www.SynthWorks.com
 --
 --  Revision History:
 --    Date      Version    Description
---    09/2006   0.1        Initial revision
---                         Numerous revisions for VHDL Testbenches and Verification
---    02/2009   1.0        VHDL-2008 STANDARD VERSION
---    05/2015   2015.05    Added Alerts
---    --                   Replaced Alerts with asserts as alerts are illegal in pure functions
+--    06/2021   2021.06    Moved To/FromTransaction and SafeResize to Resize package
+--    12/2020   2020.12    Updated ToTransaction and FromTransaction with length parameter.
+--                         Downsizing now permitted when it does not change the value.
+--    01/2020   2020.01    Updated Licenses to Apache
 --    11/2016   2016.11    Removed Asserts as they are not working as intended.
 --                         See ResolutionPkg_debug as it uses Alerts to correctly detect errors
---    01/2020   2020.01    Updated Licenses to Apache
+--    05/2015   2015.05    Added Alerts
+--    --                   Replaced Alerts with asserts as alerts are illegal in pure functions
+--    02/2009   1.0        VHDL-2008 STANDARD VERSION
+--    09/2006   0.1        Initial revision
+--                         Numerous revisions for VHDL Testbenches and Verification
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2005 - 2020 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2005 - 2021 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
+library ieee ;
+use ieee.std_logic_1164.all ;
+use ieee.numeric_std.all ;
 
-library ieee ; 
-use ieee.std_logic_1164.all ; 
-use ieee.numeric_std.all ; 
-
-library osvvm ; 
-use osvvm.AlertLogPkg.all ; 
-
-package ResolutionPkg is 
-  constant MULTIPLE_DRIVER_SEVERITY : severity_level := ERROR ; 
+package ResolutionPkg is
+  constant MULTIPLE_DRIVER_SEVERITY : severity_level := ERROR ;
 
 --
 -- Note that not all simulators support resolution functions of the form:
 --    subtype  std_logic_vector_max is (resolved_max) std_ulogic_vector ;
 --
--- Hence, types of the form are offered as a temporary workaround until they do: 
+-- Hence, types of the form are offered as a temporary workaround until they do:
 --    std_logic_vector_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008
 --
 
   -- resolved_max
-  --   return maximum value.  
+  --   return maximum value.
   --   No initializations required on ports, default of type'left is ok
-  function resolved_max ( s : std_ulogic_vector) return std_ulogic ; 
-  subtype  std_logic_max is resolved_max std_ulogic ; 
+  function resolved_max ( s : std_ulogic_vector) return std_ulogic ;
+  subtype  std_logic_max is resolved_max std_ulogic ;
   subtype  std_logic_vector_max is (resolved_max) std_ulogic_vector ;
-  type     std_logic_vector_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008  
+  type     std_logic_vector_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008
 
-  subtype  unsigned_max is (resolved_max) unresolved_unsigned ; 
-  type     unsigned_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008  
+  subtype  unsigned_max is (resolved_max) unresolved_unsigned ;
+  type     unsigned_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008
   subtype  signed_max   is (resolved_max) unresolved_signed ;
-  type     signed_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008  
+  type     signed_max_c is array (natural range <>) of std_logic_max ; -- for non VHDL-2008
 
-  function resolved_max ( s : bit_vector) return bit ;               
-  subtype  bit_max is resolved_max bit ; 
-  subtype  bit_vector_max is (resolved_max) bit_vector ; 
-  type     bit_vector_max_c is array (natural range <>) of bit_max ; -- for non VHDL-2008  
+  function resolved_max ( s : bit_vector) return bit ;
+  subtype  bit_max is resolved_max bit ;
+  subtype  bit_vector_max is (resolved_max) bit_vector ;
+  type     bit_vector_max_c is array (natural range <>) of bit_max ; -- for non VHDL-2008
 
-  function resolved_max ( s : integer_vector ) return integer ;      
-  subtype  integer_max is resolved_max integer ; 
-  subtype  integer_vector_max is (resolved_max) integer_vector ; 
-  type     integer_vector_max_c is array (natural range <>) of integer_max ; -- for non VHDL-2008  
+  function resolved_max ( s : integer_vector ) return integer ;
+  subtype  integer_max is resolved_max integer ;
+  subtype  integer_vector_max is (resolved_max) integer_vector ;
+  type     integer_vector_max_c is array (natural range <>) of integer_max ; -- for non VHDL-2008
 
-  function resolved_max ( s : time_vector ) return time ;            
-  subtype  time_max is resolved_max time ; 
-  subtype  time_vector_max is (resolved_max) time_vector ; 
-  type     time_vector_max_c is array (natural range <>) of time_max ; -- for non VHDL-2008  
+  function resolved_max ( s : time_vector ) return time ;
+  subtype  time_max is resolved_max time ;
+  subtype  time_vector_max is (resolved_max) time_vector ;
+  type     time_vector_max_c is array (natural range <>) of time_max ; -- for non VHDL-2008
 
-  function resolved_max ( s : real_vector ) return real ;            
-  subtype  real_max is resolved_max real ; 
-  subtype  real_vector_max is (resolved_max) real_vector ; 
-  type     real_vector_max_c is array (natural range <>) of real_max ; -- for non VHDL-2008  
+  function resolved_max ( s : real_vector ) return real ;
+  subtype  real_max is resolved_max real ;
+  subtype  real_vector_max is (resolved_max) real_vector ;
+  type     real_vector_max_c is array (natural range <>) of real_max ; -- for non VHDL-2008
 
-  function resolved_max ( s : string) return character ;             
-  subtype  character_max is resolved_max character ; 
-  subtype  string_max is (resolved_max) string ; 
-  type     string_max_c is array (positive range <>) of character_max ; -- for non VHDL-2008  
+  function resolved_max ( s : string) return character ;
+  subtype  character_max is resolved_max character ;
+  subtype  string_max is (resolved_max) string ;
+  type     string_max_c is array (positive range <>) of character_max ; -- for non VHDL-2008
 
-  function resolved_max ( s : boolean_vector) return boolean ;       
-  subtype  boolean_max is resolved_max boolean ; 
-  subtype  boolean_vector_max is (resolved_max) boolean_vector ; 
-  type     boolean_vector_max_c is array (natural range <>) of boolean_max ; -- for non VHDL-2008  
+  function resolved_max ( s : boolean_vector) return boolean ;
+  subtype  boolean_max is resolved_max boolean ;
+  subtype  boolean_vector_max is (resolved_max) boolean_vector ;
+  type     boolean_vector_max_c is array (natural range <>) of boolean_max ; -- for non VHDL-2008
 
-  --
-  -- ToTransaction and FromTransaction
-  -- Convert from Common types to their corresponding _max_c type
-  --
-  function Extend(A: std_logic_vector; Size : natural) return std_logic_vector ;
-  function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector ;
-
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max_c ;
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
-  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max_c) return integer ;
-  
-  --
-  -- ToTransaction and FromTransaction for _max provided to support a 
-  -- common methodology, conversions are not needed
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max ;
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max ;
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max ;
-  function FromTransaction (A: std_logic_vector_max) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector ;
-  function FromTransaction (A: std_logic_vector_max) return integer ;    
-  
   -- return sum of values that /= type'left
   -- No initializations required on ports, default of type'left is ok
-  function resolved_sum ( s : integer_vector ) return integer ;      
-  subtype  integer_sum is resolved_sum integer ; 
-  subtype  integer_vector_sum is (resolved_sum) integer_vector ; 
-  type     integer_vector_sum_c is array (natural range <>) of integer_sum ; -- for non VHDL-2008  
+  function resolved_sum ( s : integer_vector ) return integer ;
+  subtype  integer_sum is resolved_sum integer ;
+  subtype  integer_vector_sum is (resolved_sum) integer_vector ;
+  type     integer_vector_sum_c is array (natural range <>) of integer_sum ; -- for non VHDL-2008
 
-  function resolved_sum ( s : time_vector ) return time ;            
-  subtype  time_sum is resolved_sum time ; 
-  subtype  time_vector_sum is (resolved_sum) time_vector ; 
-  type     time_vector_sum_c is array (natural range <>) of time_sum ; -- for non VHDL-2008  
+  function resolved_sum ( s : time_vector ) return time ;
+  subtype  time_sum is resolved_sum time ;
+  subtype  time_vector_sum is (resolved_sum) time_vector ;
+  type     time_vector_sum_c is array (natural range <>) of time_sum ; -- for non VHDL-2008
 
-  function resolved_sum ( s : real_vector ) return real ;            
-  subtype  real_sum is resolved_sum real ; 
-  subtype  real_vector_sum is (resolved_sum) real_vector ; 
-  type     real_vector_sum_c is array (natural range <>) of real_sum ; -- for non VHDL-2008  
+  function resolved_sum ( s : real_vector ) return real ;
+  subtype  real_sum is resolved_sum real ;
+  subtype  real_vector_sum is (resolved_sum) real_vector ;
+  type     real_vector_sum_c is array (natural range <>) of real_sum ; -- for non VHDL-2008
 
-  
+
   -- resolved_weak
   -- Special just for std_ulogic
   -- No initializations required on ports, default of type'left is ok
   function resolved_weak (s : std_ulogic_vector) return std_ulogic ;  -- no init, type'left
-  subtype  std_logic_weak is resolved_weak std_ulogic ; 
-  subtype  std_logic_vector_weak is (resolved_weak) std_ulogic_vector ;  
+  subtype  std_logic_weak is resolved_weak std_ulogic ;
+  subtype  std_logic_vector_weak is (resolved_weak) std_ulogic_vector ;
 
 
   -- legacy stuff
-  -- requires ports to be initialized to 0 in the appropriate type.  
-  function resolved ( s : integer_vector ) return integer ;     
+  -- requires ports to be initialized to 0 in the appropriate type.
+  function resolved ( s : integer_vector ) return integer ;
   subtype  resolved_integer is resolved integer ;
 
-  function resolved ( s : time_vector ) return time ; 
+  function resolved ( s : time_vector ) return time ;
   subtype  resolved_time is resolved time ;
 
-  function resolved ( s : real_vector ) return real ; 
+  function resolved ( s : real_vector ) return real ;
   subtype  resolved_real is resolved real ;
-  
+
   function resolved (s : string) return character ;      -- same as resolved_max
   subtype  resolved_character is resolved character ;
-  -- subtype  resolved_string is (resolved) string ;  -- subtype will replace type later 
+  -- subtype  resolved_string is (resolved) string ;  -- subtype will replace type later
   type resolved_string is array (positive range <>) of resolved_character;  -- will change to subtype -- assert but no init
 
-  function resolved ( s : boolean_vector) return boolean ;  --same as resolved_max  
+  function resolved ( s : boolean_vector) return boolean ;  --same as resolved_max
   subtype  resolved_boolean is resolved boolean ;
 
 end package ResolutionPkg ;
-package body ResolutionPkg is 
+package body ResolutionPkg is
 
-  --
-  -- ToTransaction and FromTransaction
-  -- Convert from Common types to their corresponding _max_c type
-  --
-  function Extend(A: std_logic_vector; Size : natural) return std_logic_vector is
-    variable extA : std_logic_vector(Size downto 1) := (others => '0') ;
-  begin
-    extA(A'length downto 1) := A ;
-    return extA ;
-  end function Extend ;
-
-  function Reduce(A: std_logic_vector; Size : natural) return std_logic_vector is
-    alias aA : std_logic_vector(A'length-1 downto 0) is A ;
-  begin
-    return aA(Size-1 downto 0) ;
-  end function Reduce ;
-
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max_c is
-  begin
-    return std_logic_vector_max_c(A) ;
-  end function ToTransaction ;
-
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max_c is
-  begin
-    return std_logic_vector_max_c(Extend(A, Size)) ;
-  end function ToTransaction ;
-
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c is
-  begin
-    return std_logic_vector_max_c(to_signed(A, Size)) ;
-  end function ToTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max_c) return std_logic_vector is
-  begin
-    return std_logic_vector(A) ;
-  end function FromTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector is
-  begin
-    return Reduce(std_logic_vector(A), Size) ;
-  end function FromTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max_c) return integer is
-  begin
-    return to_integer(signed(A)) ;
-  end function FromTransaction ;
-  
-  ----------------------
-  -- Support for _max provided to support a common methodology, 
-  -- conversions are not needed
-  function ToTransaction(A : std_logic_vector) return std_logic_vector_max is
-  begin
-    return A ;
-  end function ToTransaction ;
-
-  function ToTransaction(A : std_logic_vector ; Size : integer) return std_logic_vector_max is
-  begin
-    return Extend(A, Size) ;
-  end function ToTransaction ;
-
-  function ToTransaction(A : integer; Size : natural) return std_logic_vector_max is
-  begin
-    return std_logic_vector_max(to_signed(A, Size)) ;
-  end function ToTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max) return std_logic_vector is
-  begin
-    return A ;
-  end function FromTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max ; Size : natural) return std_logic_vector is
-  begin
-    return Reduce(A, Size) ;
-  end function FromTransaction ;
-
-  function FromTransaction (A: std_logic_vector_max) return integer is
-  begin
-    return to_integer(signed(A)) ;
-  end function FromTransaction ;  
-  
-  
   -- resolved_max
   -- return maximum value.  Assert FAILURE if more than 1 /= type'left
   -- No initializations required on ports, default of type'left is ok
 
-  -- Optimized version is just the following:  
+  -- Optimized version is just the following:
   --  ------------------------------------------------------------
-  --  function resolved_max ( s : <array_type> ) return <element_type> is 
+  --  function resolved_max ( s : <array_type> ) return <element_type> is
   --  ------------------------------------------------------------
   --  begin
-  --    return maximum(s) ;  
-  --  end function resolved_max ; 
+  --    return maximum(s) ;
+  --  end function resolved_max ;
 
   ------------------------------------------------------------
-  function resolved_max (s : std_ulogic_vector) return std_ulogic is 
-  ------------------------------------------------------------ 
+  function resolved_max (s : std_ulogic_vector) return std_ulogic is
+  ------------------------------------------------------------
   begin
-    return maximum(s) ; 
-  end function resolved_max ; 
+    return maximum(s) ;
+  end function resolved_max ;
 
   ------------------------------------------------------------
-  function resolved_max ( s : bit_vector ) return bit is 
-  ------------------------------------------------------------ 
+  function resolved_max ( s : bit_vector ) return bit is
+  ------------------------------------------------------------
   begin
-    return maximum(s) ; 
-  end function resolved_max ; 
+    return maximum(s) ;
+  end function resolved_max ;
 
   ------------------------------------------------------------
-  function resolved_max ( s : integer_vector ) return integer is 
-  ------------------------------------------------------------ 
-  begin
-    return maximum(s) ; 
-  end function resolved_max ; 
-  
-  ------------------------------------------------------------
-  function resolved_max ( s : time_vector ) return time is 
+  function resolved_max ( s : integer_vector ) return integer is
   ------------------------------------------------------------
   begin
-    return maximum(s) ; 
-  end function resolved_max ; 
+    return maximum(s) ;
+  end function resolved_max ;
 
   ------------------------------------------------------------
-  function resolved_max ( s : real_vector ) return real is 
+  function resolved_max ( s : time_vector ) return time is
   ------------------------------------------------------------
   begin
-    return maximum(s) ; 
-  end function resolved_max ; 
-  
+    return maximum(s) ;
+  end function resolved_max ;
+
   ------------------------------------------------------------
-  function resolved_max ( s : string ) return character is 
+  function resolved_max ( s : real_vector ) return real is
   ------------------------------------------------------------
   begin
-    return maximum(s) ; 
-  end function resolved_max ; 
+    return maximum(s) ;
+  end function resolved_max ;
+
+  ------------------------------------------------------------
+  function resolved_max ( s : string ) return character is
+  ------------------------------------------------------------
+  begin
+    return maximum(s) ;
+  end function resolved_max ;
 
   ------------------------------------------------------------
   function resolved_max ( s : boolean_vector) return boolean is
   ------------------------------------------------------------
   begin
-    return maximum(s) ; 
-  end function resolved_max ; 
+    return maximum(s) ;
+  end function resolved_max ;
 
-  
+
   -- resolved_sum - appropriate for numeric types
   -- return sum of values that /= type'left
   -- No initializations required on ports, default of type'left is ok
   ------------------------------------------------------------
-  function resolved_sum ( s : integer_vector ) return integer is 
+  function resolved_sum ( s : integer_vector ) return integer is
   ------------------------------------------------------------
-    variable result : integer := 0 ; 
+    variable result : integer := 0 ;
   begin
     for i in s'RANGE loop
-      if s(i) /= integer'left then 
+      if s(i) /= integer'left then
         result := s(i) + result;
       end if ;
     end loop ;
-    return result ; 
-  end function resolved_sum ; 
-  
-  ------------------------------------------------------------
-  function resolved_sum ( s : time_vector ) return time is 
-  ------------------------------------------------------------
-    variable result : time := 0 sec ; 
-  begin
-    for i in s'RANGE loop
-      if s(i) /= time'left then 
-        result := s(i) + result;
-      end if ;
-    end loop ;
-    return result ; 
-  end function resolved_sum ; 
+    return result ;
+  end function resolved_sum ;
 
   ------------------------------------------------------------
-  function resolved_sum ( s : real_vector ) return real is 
+  function resolved_sum ( s : time_vector ) return time is
   ------------------------------------------------------------
-    variable result : real := 0.0 ; 
+    variable result : time := 0 sec ;
   begin
     for i in s'RANGE loop
-      if s(i) /= real'left then 
+      if s(i) /= time'left then
         result := s(i) + result;
       end if ;
     end loop ;
-    return result ; 
-  end function resolved_sum ; 
-  
-  
+    return result ;
+  end function resolved_sum ;
+
+  ------------------------------------------------------------
+  function resolved_sum ( s : real_vector ) return real is
+  ------------------------------------------------------------
+    variable result : real := 0.0 ;
+  begin
+    for i in s'RANGE loop
+      if s(i) /= real'left then
+        result := s(i) + result;
+      end if ;
+    end loop ;
+    return result ;
+  end function resolved_sum ;
+
+
   -- resolved_weak
   -- Special just for std_ulogic
   -- No initializations required on ports, default of type'left is ok
@@ -374,7 +268,7 @@ package body ResolutionPkg is
   constant weak_resolution_table : stdlogic_table := (
     --  Resolution order:  Z < U < W < X < - < L < H < 0 < 1
     --      ---------------------------------------------------------
-    --      |  U    X    0    1    Z    W    L    H    -        |   |  
+    --      |  U    X    0    1    Z    W    L    H    -        |   |
     --      ---------------------------------------------------------
              ('U', 'X', '0', '1', 'U', 'W', 'L', 'H', '-'),  -- | U |
              ('X', 'X', '0', '1', 'X', 'X', 'L', 'H', '-'),  -- | X |
@@ -386,110 +280,110 @@ package body ResolutionPkg is
              ('H', 'H', '0', '1', 'H', 'H', 'W', 'H', 'H'),  -- | H |
              ('-', '-', '0', '1', '-', '-', 'L', 'H', '-')   -- | - |
              );
-             
+
   ------------------------------------------------------------
   function resolved_weak (s : std_ulogic_vector) return std_ulogic is
   ------------------------------------------------------------
-    variable result : std_ulogic := 'Z' ; 
+    variable result : std_ulogic := 'Z' ;
   begin
     for i in s'RANGE loop
-      result := weak_resolution_table(result, s(i)) ; 
+      result := weak_resolution_table(result, s(i)) ;
     end loop ;
-    return result ; 
-  end function resolved_weak ; 
+    return result ;
+  end function resolved_weak ;
 
-  
+
   -- legacy stuff.
-  -- requires ports to be initialized to 0 in the appropriate type.  
-  
+  -- requires ports to be initialized to 0 in the appropriate type.
+
   ------------------------------------------------------------
-  function resolved ( s : integer_vector ) return integer is 
+  function resolved ( s : integer_vector ) return integer is
   -- requires interface to be initialized to 0
   ------------------------------------------------------------
-    variable result : integer := 0 ; 
-    variable failed : boolean := FALSE ; 
+    variable result : integer := 0 ;
+    variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) /= 0 then 
+      if s(i) /= 0 then
         failed := failed or (result /= 0) ;
         result := maximum(s(i),result);
       end if ;
     end loop ;
-    assert not failed report "ResolutionPkg.resolved: multiple drivers on integer" severity MULTIPLE_DRIVER_SEVERITY ; 
-    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on integer") ; 
-    return result ; 
-  end function resolved ; 
+    assert not failed report "ResolutionPkg.resolved: multiple drivers on integer" severity MULTIPLE_DRIVER_SEVERITY ;
+    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on integer") ;
+    return result ;
+  end function resolved ;
 
   ------------------------------------------------------------
-  function resolved ( s : time_vector ) return time is 
+  function resolved ( s : time_vector ) return time is
   -- requires interface to be initialized to 0 ns
   ------------------------------------------------------------
-    variable result : time := 0 ns ; 
-    variable failed : boolean := FALSE ; 
+    variable result : time := 0 ns ;
+    variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) > 0 ns then 
+      if s(i) > 0 ns then
         failed := failed or (result /= 0 ns) ;
         result := maximum(s(i),result);
       end if ;
     end loop ;
-    assert not failed report "ResolutionPkg.resolved: multiple drivers on time" severity MULTIPLE_DRIVER_SEVERITY ; 
-    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on time") ; 
-    return result ; 
-  end function resolved ; 
+    assert not failed report "ResolutionPkg.resolved: multiple drivers on time" severity MULTIPLE_DRIVER_SEVERITY ;
+    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on time") ;
+    return result ;
+  end function resolved ;
 
   ------------------------------------------------------------
-  function resolved ( s : real_vector ) return real is 
+  function resolved ( s : real_vector ) return real is
   -- requires interface to be initialized to 0.0
   ------------------------------------------------------------
-    variable result : real := 0.0 ; 
-    variable failed : boolean := FALSE ; 
+    variable result : real := 0.0 ;
+    variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) /= 0.0 then 
+      if s(i) /= 0.0 then
         failed := failed or (result /= 0.0) ;
         result := maximum(s(i),result);
       end if ;
     end loop ;
-    assert not failed report "ResolutionPkg.resolved: multiple drivers on real" severity MULTIPLE_DRIVER_SEVERITY ; 
-    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on real") ; 
-    return result ; 
-  end function resolved ; 
+    assert not failed report "ResolutionPkg.resolved: multiple drivers on real" severity MULTIPLE_DRIVER_SEVERITY ;
+    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on real") ;
+    return result ;
+  end function resolved ;
 
   ------------------------------------------------------------
-  function resolved (s : string) return character is  
+  function resolved (s : string) return character is
   -- same as resolved_max
   ------------------------------------------------------------
-    variable result : character := NUL ; 
-    variable failed : boolean := FALSE ; 
+    variable result : character := NUL ;
+    variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) /= NUL then 
+      if s(i) /= NUL then
         failed := failed or (result /= NUL) ;
-        result := maximum(result, s(i)) ; 
-      end if ; 
+        result := maximum(result, s(i)) ;
+      end if ;
     end loop ;
-    assert not failed report "ResolutionPkg.resolved: multiple drivers on character" severity MULTIPLE_DRIVER_SEVERITY ; 
-    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on character") ; 
-    return result ; 
-  end function resolved ; 
+    assert not failed report "ResolutionPkg.resolved: multiple drivers on character" severity MULTIPLE_DRIVER_SEVERITY ;
+    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on character") ;
+    return result ;
+  end function resolved ;
 
   ------------------------------------------------------------
   function resolved ( s : boolean_vector) return boolean is
   -- same as resolved_max
   ------------------------------------------------------------
-    variable result : boolean := FALSE ; 
-    variable failed : boolean := FALSE ; 
+    variable result : boolean := FALSE ;
+    variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) then 
-        failed := failed or result ; 
+      if s(i) then
+        failed := failed or result ;
         result := TRUE ;
-      end if ; 
+      end if ;
     end loop ;
-    assert not failed report "ResolutionPkg.resolved: multiple drivers on boolean" severity MULTIPLE_DRIVER_SEVERITY ; 
-    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on boolean") ; 
-    return result ; 
-  end function resolved ; 
+    assert not failed report "ResolutionPkg.resolved: multiple drivers on boolean" severity MULTIPLE_DRIVER_SEVERITY ;
+    -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on boolean") ;
+    return result ;
+  end function resolved ;
 
 end package body ResolutionPkg ;

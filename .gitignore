@@ -1,5 +1,6 @@
-docs/**/*.*
-!docs/**/*.rst
-!docs/conf.py
-!docs/requirements.txt
-!docs/make.bat
+OsvvmScriptSettingsPkg_local.vhd
+OsvvmScriptSettingsPkg_generated.vhd
+OsvvmSettingsPkg_local.vhd
+archive
+debug.pro
+/NamePtrPkg_why_to_not_do_this.vhd

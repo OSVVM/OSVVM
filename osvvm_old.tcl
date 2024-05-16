@@ -7,9 +7,9 @@
 #
 #
 #  Description:
-#        Script to compile the OSVVM library for ModelSim, QuestaSim, and RivieraPro 
-#        make sure to change OSVVM_DIR
-#        If using Aldec, use VendorCovApiPkg_Aldec.vhd and not VendorCovApiPkg.vhd
+#        A simple "do" file to compile OSVVM
+#        Updated for 2021.06, but not tested.
+#        Please switch to the osvvm.pro scripts to build the design
 #
 #  Developed for:
 #        SynthWorks Design Inc.
@@ -19,13 +19,14 @@
 #
 #  Revision History:
 #    Date      Version    Description
-#    11/2016   2016.11    Compile Script for OSVVM
+#    06/2021   2021.06    Updated for current release - but not tested
 #    01/2020   2020.01    Updated Licenses to Apache
+#    11/2016   2016.11    Compile Script for OSVVM
 #
 #
 #  This file is part of OSVVM.
 #  
-#  Copyright (c) 2016 - 2020 by SynthWorks Design Inc.  
+#  Copyright (c) 2016 - 2021 by SynthWorks Design Inc.  
 #  
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -47,7 +48,9 @@ if {$argc > 0} {
   set OSVVM_DIR $1
 }
 
+vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/ResolutionPkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/NamePkg.vhd
+vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/NameStorePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/OsvvmGlobalPkg.vhd
 
 # Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
@@ -65,6 +68,7 @@ vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/MessagePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/SortListPkg_int.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/RandomBasePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/RandomPkg.vhd
+vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/RandomProcedurePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/CoveragePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/MemoryPkg.vhd
 
@@ -72,7 +76,7 @@ vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/ScoreboardGenericPkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/ScoreboardPkg_slv.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/ScoreboardPkg_int.vhd
 
-vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/ResolutionPkg.vhd
+vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/ResizePkg.vhd
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/TbUtilPkg.vhd
 
 vcom -2008 -work ${OSVVM_LIB_NAME}  ${OSVVM_DIR}/OsvvmContext.vhd 

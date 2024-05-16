@@ -17,8 +17,8 @@
 --
 --  Revision History:      For more details, see CoveragePkg_release_notes.pdf
 --    Date      Version    Description
---    11/2016   2016.11    Initial revision
 --    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Initial revision
 --
 --
 --  This file is part of OSVVM.

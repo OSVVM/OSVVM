@@ -1,33 +1,62 @@
-# OSVVM Utility Library (aka OSVVM) Change Log 
+# OSVVM Utility Library (aka OSVVM) Change Log
 
-| Revision name | Revision  Date |
-----------------|---------------- 
-| 2020.08  | August 2020   
-| 2020.05  | May 2020   
-| 2020.01  | January 2020   
-| 2018.04  | April 2018  
-| 2017.05  | May 2017   
-| 2016.11  | November 2016   
-| 2016.01  | January 2016   
-| 2015.06  | June 2015   
-| 2015.03  | March 2015   
-| 2015.01  | January 2015   
-| 2014.07a | December 2014   
-| 2014.07  | July 2014   
-| 2014.01  | January 2014   
-| 2013.05  | May 2013   
-| 2013.04  | April 2013   
-| 2.4      | January 2012   
-| 2.3      | January 2012   
-| 2.2      | July 2011   
-| 2.1      | June 2011   
-| 2.0      | April 2011   
-| 1.X      | June 2010   
+| Revision  |  Summary |
+------------|-----------
+| 2024.03   |  Updated OsvvmSettingsPkg. Added OsvvmScriptSettingsPkg.  
+|           |  Updates to configure AlertLogPkg, CoveragePkg, RandomPkg.
+|           |  Updates to work around Xilinx bugs (numerous packages).
+| 2023.09   |  Added OsvvmSettingsPkg. Updated AlertLogPkg, CoveragePkg, ReportPkg
+| 2023.05   |  Added DelayCoveragePkg.  Changed seed in CoveragePkg.
+| 2023.04   |  Updated OsvvmScriptSettingsPkg
+| 2023.01   |  Added OsvvmScriptSettingsPkg
+| 2022.11   |  ScoreboardGenericPkg, CoveragePkg, MemoryGenericPkg - search default now PRIVATE_NAME
+|           |  AlertLogPkg: Added GetTestName
+| 2022.10   |  RandomBasePkg: Added SetRandomSalt
+|           |  Minor updates to NameStorePkg, MemoryGenericPkg, ScoreboardGenericPkg
+| 2022.08   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
+| 2022.06   |  Updated AlertLogPkg for AffirmIfCovered, Yaml, and Output formatter.
+|           |  Updated CoveragePkg for putting coverage pass/fail into YAML and reports
+| 2022.03   |  Added EdgeRose, ..., FindRisingEdge, ..., ScoreboardPkg Updates
+| 2022.02   |  Added Transition Coverage.
+| 2022.01   |  Added Transition Coverage.
+| 2021.12   |  Added ReadCovYaml.
+| 2021.11   |  Minor updates.  Print CovWeight first in WriteCovYaml.
+|           |     Update to usage of PercentCov in GetCov.
+| 2021.10   |  Updates to generate HTML and JUnit XML for test suite information
+|           |     Generate YAML and HTML for reporting Alert and Coverag information
+|           |     Added ReportPkg. Uupdated CoveragePkg and AlertLogPkg
+| 2021.09   |  Minor updates to support Synopsys and Cadence
+| 2021.08   |  Minor deprecations in CoveragePkg and ScoreboardGenericPkg
+| 2021.07   |  Updated Data Structure of CoveragePkg
+| 2021.06   |  Updated Data Structures
+| 2020.12   |  Minor Updates
+| 2020.10   |  Minor Updates
+| 2020.08   |  Specification Tracking
+| 2020.05   |  PASSED Counting
+| 2020.01   |  Apache Licensing
+| 2018.04   |
+| 2017.05   |
+| 2016.11   |
+| 2016.01   |
+| 2015.06   |
+| 2015.03   |
+| 2015.01   |
+| 2014.07a  |
+| 2014.07   |
+| 2014.01   |
+| 2013.05   |
+| 2013.04   |
+| 2.4       |
+| 2.3       |
+| 2.2       |
+| 2.1       |
+| 2.0       |
+| 1.X       |
 
 
 ## Copyright and License
-Copyright (C) 1999-2020 by [SynthWorks Design Inc.](http://www.synthworks.com/)   
-Copyright (C) 2020 by [OSVVM contributors](CONTRIBUTOR.md)   
+Copyright (C) 1999-2024 by [SynthWorks Design Inc.](http://www.synthworks.com/)
+Copyright (C) 2021-2024 by [OSVVM contributors](CONTRIBUTOR.md)
 
 This file is part of OSVVM.
 
@@ -44,37 +73,493 @@ This file is part of OSVVM.
     limitations under the License.
 
 
-## Revision 2020.08 August 2020
+## Compile Order
+Compile order for a given release is in the CHANGELOG that is distributed with that release.
+Hence, this file only has the compile order for the most recent release.
+
+## Revision 2024.03  September 2024
 
 ### Current Revision and Compile Order
 
 The following table lists the files and revision, starting with the
 files that need to be compiled first. Be sure to turn on the VHDL-2008
-compile switch. If you are using Aldec or Mentor simulators, you may
-also use the OSVVM scripts (osvvm.pro -- details how to run in the
-scripts directory) or osvvm.tcl script.
+compile switch. You may also use the OSVVM script - osvvm.pro -- details
+how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
-  | File Name                                          | Revision Date  |  
-  -----------------------------------------------------|----------
-  | NamePkg.vhd                                        | 2020.01  |  
-  | OsvvmGlobalPkg.vhd                                 | 2020.01  |  
-  | VendorCovApiPkg.vhd or VendorCovApiPkg_Aldec.vhd   | 2020.01  |
-  | TranscriptPkg.vhd                                  | 2020.01  |  
-  | TextUtilPkg.vhd                                    | 2020.08  | 
-  | AlertLogPkg.vhd                                    | 2020.08  | 
-  | MessagePkg.vhd                                     | 2020.01  | 
+  | File Name                                          | Revision Date  |
+  -----------------------------------------------------|-----------------
+  | IfElsePkg.vhd                                      | ** 2024.03 NEW **  |
+  | OsvvmScriptSettingsPkg.vhd                         | ** 2024.03 **  |
+  | OsvvmSettingsPkg.vhd                               | ** 2024.03 **  |
+  | TextUtilPkg.vhd                                    | ** 2024.03 Xilinx **  |
+  | ResolutionPkg.vhd                                  | 2021.06  |
+  | NamePkg.vhd                                        | ** 2024.03 **  |
+  | OsvvmGlobalPkg.vhd                                 | ** 2024.03 **  |
+  | If Aldec                                           |          |
+  |     VendorCovApiPkg_Aldec.vhd                      | 2020.01  |
+  | If not Aldec                                       |          |
+  |     VendorCovApiPkg.vhd                            | 2020.01  |
+  | TranscriptPkg.vhd                                  | 2023.01  |
+  | AlertLogPkg.vhd                                    | ** 2024.03 **  |
+  | TbUtilPkg.vhd                                      | ** 2024.03 **  |
+  | NameStorePkg.vhd                                   | 2022.10  |
+  | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | 2020.01  |
-  | RandomPkg.vhd                                      | 2020.08  |
-  | CoveragePkg.vhd                                    | 2020.05  |
-  | MemoryPkg.vhd                                      | 2020.01  |
-  | ScoreboardGenericPkg.vhd                           | 2020.05  |
-  | ScoreboardPkg_slv.vhd                              | 2020.01  |
-  | ScoreboardPkg_int.vhd                              | 2020.01  |
-  | ResolutionPkg.vhd                                  | 2020.01  |
-  | TbUtilPkg.vhd                                      | 2020.01  |
-  | OsvvmContext.vhd                                   | 2020.01  |
+  | RandomBasePkg.vhd                                  | ** 2024.03 **  |
+  | RandomPkg.vhd                                      | ** 2024.03 **  |
+  | RandomProcedurePkg.vhd                             | 2021.05  |
+  | CoveragePkg.vhd                                    | ** 2024.03 **  |
+  | DelayCoveragePkg.vhd                               | 2023.05  |
+  | ResizePkg.vhd                                      | ** 2024.03 **  |
+  | If Support Generic Packages                        |          |
+  |     ScoreboardGenericPkg.vhd                       | ** 2024.03 Xilinx **  |
+  |     ScoreboardPkg_slv.vhd                          | 2022.04  |
+  |     ScoreboardPkg_int.vhd                          | 2020.01  |
+  | If Not Support Generic Packages                    |          |
+  |     ScoreboardPkg_slv_c.vhd                        | 2023.01  |
+  |     ScoreboardPkg_int_c.vhd                        | 2023.01  |
+  | MemorySupportPkg.vhd                               | 2022.10  |
+  | If Support Generic Packages                        |          |
+  |     MemoryGenericPkg.vhd                           | ** 2024.03 Xilinx **  |
+  |     MemoryPkg.vhd                                  | 2022.10  |
+  | If Not Support Generic Packages                    |          |
+  |     MemoryPkg_c.vhd                                | ** 2024.03 Xilinx **  |
+  |     MemoryPkg_orig_c.vhd                           | 2022.11  |
+  | ReportPkg.vhd                                      | ** 2024.03 Xilinx **  |
+  | OsvvmTypesPkg.vhd                                  | 2022.01  |
+  | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
+  |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
+  | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
+  |     OsvvmScriptSettingsPkg_default.vhd             | ** 2024.03 **  |
+  | If exist OsvvmSettingsPkg_local.vhd                |          |
+  |     OsvvmSettingsPkg_local.vhd                     | User Created |
+  | If not exist OsvvmSettingsPkg_local.vhd            |          |
+  |     OsvvmSettingsPkg_default.vhd                   | ** 2024.03 **  |
+  | OsvvmContext.vhd                                   | ** 2024.03 **  |
 
+### IfElsePkg.vhd 2024.03 - NEW
+- Moved the different versions of IfElse function into this package
+
+### OsvvmScriptSettingsPkg.vhd 2024.03
+- Added OSVVM_SETTINGS_REVISION and OSVVM_RAW_OUTPUT_DIRECTORY
+
+### OsvvmSettingsPkg.vhd and OsvvmSettingsPkg_default.vhd  2024.03
+- Updated with settings for 2024
+- Notable changes
+-   Random InitSeed uses new seed methods by default. Randomizations are likely to produce different results.
+-   Coverage uses randomizes using REMAIN mode rather than AT_LEAST. Intelligent Randomization Randomizations are likely to produce different results. 
+-   Alerts/Logs Write Time First and Justified by default
+-   WriteScoreboardYaml uses base name rather than whole name
+
+### TextUtilPkg.vhd 2024.03
+- Added handling for line having LF and CR at the end of the string 
+- This supports non-compliant implementations
+
+### NamePkg.vhd 2024.03
+- Check for pointer non-null before deallocation (supports non-compliant implementations)
+
+### OsvvmGlobalPkg.vhd 2024.03
+Most of package is now gone.
+Configuration of AlertLogPkg now handled though constants in OsvvmSettingsPkg_local.vhd or OsvvmSettingsPkg_default.vhd
+This allows the settings to be adjusted once for the entire library rather than by every testbench.
+
+### AlertLogPkg.vhd 2024.03
+- Changed settings to constants in OsvvmSettingsPkg rather than using Shared variable + PT and multiple levels of indirection.
+- Added AffirmIfTranscriptsMatch
+- Addressed issue so that a data structure and a VC ModelID can have the same name.
+
+### TbUtilPkg.vhd 2024.03
+- Moved the different versions of IfElse function to this IfElsePkg.vhd
+- Added BarrierType
+
+### RandomBasePkg.vhd 2024.03
+- Added SetRandomSalt function that returns its input value
+
+### RandomPkg.vhd 2024.03
+- Added impure function RandInt return integer that uses integer'low to integer'high
+- Uses settings from OsvvmSettingsPkg to control default behaviors
+
+### Coverage.vhd 2024.03
+- Changed settings to constants in OsvvmSettingsPkg rather than using Shared variable + PT and multiple levels of indirection.
+- Uses settings from OsvvmSettingsPkg to control default behaviors
+
+### ResizePkg.vhd 2024.03
+- Added AlertLogID to SafeResize
+- Improved message for errors.
+
+### MemoryGenericPkg.vhd  2024.03
+- Adjustments for Xilinx - but gave up and created MemoryGenericPkg_xilinx.vhd
+
+### OsvvmContext.vhd  2024.03
+- Added IfElsePkg 
+
+
+## Revision 2023.09  September 2023
+
+### OsvvmSettingsPkg 2023.09 - NEW
+- Defines deferred constants that initialize settings in packages
+
+### ScoreboardGenericPkg 2023.09
+- WriteScoreboardYaml - updated to allow either full name of yaml file or just specifying base name
+- Default method for WriteScoreboardYaml selectable in OsvvmSettingsPkg (and the final setting of the call).
+- Updated spacing in printing
+
+### AlertLogPkg 2023.09
+- Updated for constants in OsvvmSettingsPkg
+- Updated justify calculations and printing for better unification of it.
+- TranscriptClose if stop due to count
+
+### CoveragePkg 2023.09
+- Updated for constants in OsvvmSettingsPkg
+
+### RandomPkg 2023.09
+- Updated for constants in OsvvmSettingsPkg
+
+### ReportPkg 2023.09
+- Added WriteSimTimeYaml to add "now" to yaml report
+
+### OsvvmScriptSettingsPkg 2023.09
+- Added OSVVM_REVISION
+
+
+## Revision 2023.05 May 2023
+
+### DelayCoveragePkg  2023.05 (new)
+Implements a pattern for randomizing cycle based delays such as AXI's Valid and Ready.
+
+### CoveragePkg 2023.05
+- Updated InitSeed to include name of ParentID 
+- Added bug fix for NVC
+- Added IsNotCovered
+
+### OsvvmContext  2023.05
+Added DelayCoveragePkg
+
+### AlertLogPkg 2023.05
+Bug fix in Yaml file.  No longer has items whose ReportMode is DISABLED
+
+### ScoreboardGenericPkg 2023.05
+Updated Pop fail on empty error to print tag if a tag is used
+
+
+## Revision 2023.04 April
+### OsvvmScriptSettingsPkg and OsvvmScriptSettings_default (new)  2023.04
+Updated OsvvmScriptSettingsPkg to only contains the package declaration with deferred constants.
+Scripts generate package, OsvvmScriptSettingsPkg_generated, with constants defined by scripts.
+OsvvmScriptSettingsPkg_generated is in the .gitignore,
+so it will not indicate your repository has been updated.
+
+### OsvvmScriptSettings_default 2023.04 (new)
+If you are not using OSVVM compile scripts and do not wish to generate the file,
+OsvvmScriptSettingsPkg_default has the values that were used in older revisions.
+
+### AlertLogPkg 2023.04
+Added GetTranscriptName
+
+### ReportPkg 2023.04
+Added TranscriptOpen without parameters.  Names transcript GetTranscriptName & ".log"
+
+### ScoreboardGenericPkg 2023.04
+Bug fix for Peek with a tag
+
+
+## Revision 2023.01 January
+
+### OsvvmScriptSettingsPkg  2023.01 (new)
+Defines settings that are shared by the scripts.  Autogenerated by OSVVM scripts.
+
+### Updated to use Constants from OsvvmScriptSettingsPkg  2023.01
+- TranscriptPkg, AlertLogPkg, CoveragePkg, ReportPkg, ScoreboardGenericPkg, ScoreboardPkg_xxx_c.vhd
+
+### RandomBasePkg  2023.01
+Added functions for RandomSalt to allow setting in a declaration region
+
+### OsvvmContext  2023.01
+Added OsvvmScriptSettingsPkg
+
+
+## Revision 2022.11 November 2022
+
+### ScoreboardGenericPkg, CoveragePkg, MemoryGenericPkg  2022.10
+Changed the default of the search parameter to PRIVATE_NAME.
+The original preference was NAME_AND_PARENT_ELSE_PRIVATE.
+
+When iterating across VC instances using `for generate`,
+each instance ended up with the same name.  As a result,
+all the FIFOs, Scoreboards, Coverage Models, and Memories
+in the multiple instances were shared by default, unless,
+more advanced methods for setting the AlertLogID for the VC.
+These methods require users to also set generics.
+The result is a methodology that goes wrong for basic users.
+
+## Revision 2022.10 OCtober 2022
+
+### RandomBasePkg.vhd  2022.10
+Added SetRandomSalt(string or integer), GetRandomSalt (integer).
+
+### ScoreboardGenericPkg.vhd  2022.10
+Added Parent Name to YAML output.
+
+### NameStorePkg.vhd  2022.10
+Changed PRIVATE to PRIVATE_NAME to avoid VHDL-2019 issue.
+
+### MemorySupportPkg.vhd, MemoryGenericPkg.vhd, MemoryPkg.vhd, MemoryPkg_c.vhd  2022.10
+Minor teaks for code quality improvement.
+Working toward MemoryBaseType being a generic. Waiting on GHDL release update.
+
+### ScoreboardGenericPkg.vhd  2022.10
+Changed PRIVATE to PRIVATE_NAME to avoid VHDL-2019 issue.
+
+
+## Revision 2022.09 September 2022
+
+### ScoreboardGenericPkg.vhd, ScoreboardPkg_slv_c.vhd, ScoreboardPkg_int_c.vhd  2022.09
+Added FifoCount to YAML output.
+
+### TbUtilPkg.vhd  2022.09
+Added WaitForTransactionOrIrq, FinishTransaction, TransactionPending for RdyType, AckType
+
+### CoveragePkg.vhd  2022.09
+Updated AffirmIfCovered and AlertIfNotCovered for Aldec 2018.02 version
+
+## Revision 2022.08 August 2022
+
+### TbUtilPkg.vhd  2022.08
+Added IsHexOrStdLogic.  Updated ReadHexToken to support reading "UWLH-"
+
+### MemorySupportPkg.vhd, MemoryGenericPkg.vhd, MemoryPkg.vhd, MemoryPkg_c.vhd  2022.08
+New.  Implements storage policies for MemoryGenericPkg/MemoryPkg
+Supports any bit length of memory.
+
+
+## Revision 2022.06 June 2022
+
+### AlertLogPkg.vhd  2022.06
+Added Output formatter that allows adjustments to output.
+Updated output of AlertIfDiff / AffirmIfNotDiff.
+
+### CoveragePkg.vhd  2022.06
+Updated CoveragePkg for putting coverage pass/fail into YAML and reports.
+Added AffirmIfCovered.
+
+## Revision 2022.03 March 2022
+
+### TbUtilPkg.vhd  2022.03
+Added EdgeRose, EdgeFell, EdgeActive, FindRisingEdge, FindFallingEdge, FindActiveEdge
+Updated WaitForTransaction for RdyType/AckType to use EdgeActive
+
+### ScoreboardGenericPkg.vhd  2022.03
+Maintence update to SetAlertLogID / NewID
+
+## Revision 2022.02 February 2022
+
+### AlertLogPkg.vhd  2022.02
+Added SetAlertPrintCount.   Sets a maximum number of times to print an Alert level for an AlertLogID.
+Added NewID to bring consistent naming with other Singleton data structures and new capability (PrintParent and ReportMode).
+
+### CoveragePkg.vhd  2022.02
+Updated NewID with ParentID, ReportMode, Search, PrintParent.   Supports searching for coverage models.
+
+### MemoryPkg.vhd  2022.02
+Updated NewID with ReportMode, Search, PrintParent.   Supports searching for Memory models.
+
+### ScoreboardGenericPkg.vhd  2022.02
+Updated NewID with ParentID, ReportMode, Search, PrintParent.   Supports searching for Scoreboard models.
+Added support to do Scoreboard Reports (GotScoreboards, WriteScoreboardYaml)
+
+### ReportPkg.vhd  2022.02
+In EndOfTestReports, added calls to WriteScoreboardYaml for Scoreboard reporting.
+
+### NameStorePkg.vhd  2022.02
+Updated NewID and Find with ParentID and Search.   Supports searching in CoveragePkg, ScoreboardGenericPkg, and MemoryPkg.
+
+### TextUtilPkg.vhd  2022.02
+Updated to_hxstring for better meta value handling (U, X, Z, W, ).
+Four consecutive meta values result in that character.  Mixed meta results in '?'.
+Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
+
+### OsvvmGlobalPkg.vhd  2022.02
+Added support for IdSeparator.  Supports PrintParent mode PRINT_NAME_AND_PARENT.  <Parent Name> <IdSeparator> <AlertLogID Name>
+
+### NamePkg.vhd  2022.02
+Added NameLength method to NamePType
+
+## Revision 2022.01 January 2022
+
+### TextUtilPkg.vhd  2022.01
+Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
+
+### AlertLogPkg.vhd  2022.01
+For AlertIfEqual and AffirmIfEqual, all arrays of std_ulogic use to_hxstring
+Updated return value for PathTail
+
+### CoveragePkg.vhd  2022.01
+Added DeallocateBins and TCover
+Updates to allow AddBins and AddCross with 0 for AtLeast and Weight
+    Updated GenBin s.t. defaults AtLeast and Weight to 0
+    Updated AddBins and AddCross s.t. defaults AtLeast and Weight to 1
+
+### ScoreboardGenericPkg.vhd, ScoreboardPkg_slv_c, ScoreboardPkg_int_c  2022.01
+Added CheckExpected
+Added SetCheckCountZero to ScoreboardPType
+
+### TbUtilPkg.vhd  2022.01
+Added MetaTo01
+Added WaitForTransaction without clock for RdyType/AckType and bit
+
+### OsvvmTypesPkg.vhd  2022.01
+Defined slv_vector
+
+### OsvvmContext.vhd  2022.01
+Added OsvvmTypesPkg
+
+## Revision 2021.12 December 2021
+
+### CoveragePkg.vhd  2021.12
+Added ReadCovYaml.
+
+
+## Revision 2021.11 November 2021
+
+### CoveragePkg.vhd  2021.11
+Minor updates.  Print CovWeight first in WriteCovYaml.
+Update to usage of PercentCov in GetCov.
+
+## Revision 2021.10 October 2021
+
+### ReportPkg.vhd 2021.10
+Implements EndOfTestReports (was called EndOfTestSummary in 2021.09).
+EndOfTestReports calls
+   - ReportAlerts from AlertPkg,
+   - WriteAlertSummaryYaml from AlertPkg to generate Build Report <build>.yml,
+   - WriteAlertYaml from AlertPkg to generate ./reports/<test>_alerts.yml
+   - WriteCovYaml from CoveragePkg to generate ./reports/<test>_cov.yml
+See the OSVVM scripts as the above YAML files are all automatically converted to HTML.
+Make sure to name your tests with AlertLogPkg.SetAlertLogName as that is where the
+above "<test>" comes from.
+
+### AlertLogPkg.vhd 2021.10
+Added WriteAlertYaml to create AlertLog reports in Yaml (which the scripts convert to HTML)
+WriteAlertSummaryYaml replaced the experimental CreateYamlReport.
+Both of the above are called by ReportPkg.EndOfTestReports.  See above.
+Deprecated Items:
+  - CreateYamlReport is deprecated.  Please use WriteAlertSummaryYaml.
+  - EndOfTestSummary was moved to ReportPkg and deprecated.   It is replaced by EndOfTestReports.
+    The move was necessary as it calls procedures from AlertLogPkg and CoveragePkg.
+
+### CoveragePkg.vhd  2021.10
+Added WriteCovYaml which is called by EndOfTestReports
+
+
+## Revision 2021.09 September 2021
+### AlertLogPkg.vhd 2021.09
+Experimental Release of EndOfTestSummary and CreateYamlReport
+
+### CoveragePkg.vhd  2021.09
+Minor update to WriteBin in CoveragePkg for setting parameters
+
+### ScoreboardPkg_slv_c.vhd and ScoreboardPkg_int_c.vhd  2021.09
+Reintroduced into the repository.  Cadence Xcelium does not yet
+support generics on a package.
+
+### Minor updates for compile/simulate in Synopsys VCS and Cadence Xcelium
+CoveragePkg.vhd, MemoryPkg.vhd, NameStorePkg.vhd, RandomPkg.vhd,
+RandomBasePkg.vhd, and ScoreboardGenericPkg.vhd
+
+
+## Revision 2021.08 August 2021
+
+### CoveragePkg.vhd  2021.08
+Deprecated and removed SetAlertLogID.  Use NewID instead.
+Deprecated SetName, SetMessage.
+Deprecated AddBins, AddCross, GenBin, and GenCross with weight parameter.
+
+### ScoreboardGenericPkg.vhd  2021.08
+Deprecated and removed SetAlertLogID.  Use NewID instead.
+
+
+
+## Revision 2021.07 July 2021
+
+### MessageListPkg.vhd and deprecated MessagePkg.vhd  2021.07
+Created linked list version for multi-line message handling.
+Deprecated protected type version (MessagePkg) as it cannot be
+used directly in the new data structures.
+
+### CoveragePkg.vhd  2021.07
+Added new data structure to CoveragePkg to facilitate creating
+functional coverage using ordinary procedure and function calls.
+
+### Deprecated osvvm.tcl  2021.07
+The compile script, osvvm.tcl, is no longer supported.
+Correct order is specified above as well as by osvvm.pro.
+
+
+
+## Revision 2021.06 June 2021
+
+### ResolutionPkg.vhd and ResizePkg.vhd  2021.06
+Refactored conversions of transaction records from ResolutionPkg.vhd into ResizePkg.vhd.
+Part of plan to transaction to VHDL-2019 interfaces.
+
+### NameStorePkg.vhd   2021.06
+NamePkg with updated data structure to better support new data structures
+
+### AlertLogPkg.vhd 2021.06
+Minor updates to FindAlertLogID
+
+### RandomPkg.vhd and RandomBasePkg.vhd  2021.06
+Updated InitSeed for better seeds.  Defaults to old method.
+Moved some items from RandomPkg to RandomBasePkg to support future revisions
+
+### RandomProcedurePkg.vhd   2021.06
+Added to support new data structures in CoveragePkg.
+Capability limited to what is needed by CoveragePkg.
+When you can use a protected type, use RandomPkg.vhd.
+When we have VHDL-2019 support will no longer need this.
+
+### MemoryPkg.vhd    2021.06
+New data structure.  Supports old code.  Adds new use models.
+
+### MemoryPkg_2019.vhd is deleted  2021.06
+New MemoryPkg.vhd replaces MemoryPkg_2019 with data structure + NewID
+
+### ScoreboardGenericPkg.vhd    2021.06
+New data structure.  Supports old code.  Adds new use models.
+
+
+## Revision 2020.12 December 2020
+
+### Resolution.vhd 2020.12
+Updated ToTransaction and FromTransaction with length parameter.
+Downsizing now permitted when it does not change the value.
+
+### MemoryPkg_2019.vhd 2020.12
+Beta version of MemoryPType with VHDL-2019 generics.
+Used in place of MemoryPkg.  Tested in RivieraPro.
+Requires compile switch -2019.
+
+### AlertLogPkg.vhd 2020.12
+Added MetaMatch to AffirmIfEqual and AffirmIfNotEqual
+for std_logic family to use MetaMatch.
+Added AffirmIfEqual for boolean.
+Oversight as MetaMatch was added to AlertIfEqual and AlertIfNotEqual in 2020.10.
+
+### Transcript.vhd 2020.12
+Updated TranscriptOpen parameter Status to InOut to work around simulator bug.
+
+
+## Revision 2020.10 October 2020
+
+### AlertLogPkg.vhd 2020.10
+Added function MetaMatch.   It is similar to STD_MATCH and ?=,
+except that U=U, X=X, Z=Z, and W=W.  All else is the same as STD_MATCH.
+AlertIfEqual and AlertIfNotEqual for std_logic family use MetaMatch rather than ?=.
+
+### ScoreboardPkg_slv.vhd 2020.10
+Uses MetaMatch for the Match function instead of STD_MATCH.
+
+## Revision 2020.08 August 2020
 ### AlertLogPkg.vhd 2020.08
 
 2020.08 is a major update to AlertLogPkg.
@@ -722,8 +1207,8 @@ ignore bins.
 
 Revised method naming for consistency. The following have changed:
 
-  | New Name     | Old Name                | Why                    |   
-  ---------------|-------------------------|-------------------------   
+  | New Name     | Old Name                | Why                    |
+  ---------------|-------------------------|-------------------------
   | GetErrorCount | CovBinErrCnt           |  Consistency between packages
   | GetMinCount   | GetMinCov\[return integer\]     |  Naming clarity
   | GetMaxCount   | GetMaxCov\[return integer\]     |  Naming clarity
@@ -750,7 +1235,7 @@ Renamed GetCovHole to GetCovBinVal. Old names maintained for backward
 compatibility.
 
   | New Name     | Old Name  | Why   |
-  ---------------|-------------|--------------------   
+  ---------------|-------------|--------------------
   | RandCovBinVal  | RandCovHole  | Naming consistency |
   | GetCovBinVal   | GetCovHole   | Naming consistency |
 

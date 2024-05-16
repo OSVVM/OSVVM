@@ -20,16 +20,24 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    01/2015   2015.05    Initial revision
---    01/2016   2016.01    Update for L.all(L'left)
---    11/2016   2016.11    Added IsUpper, IsLower, to_upper, to_lower
---    01/2020   2020.01    Updated Licenses to Apache
+--    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
+--                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
+--                         These updates are only so OSVVM can work with non-compilant (1076) tools.
+--                         IfElse function moved to IfElsePkg
+--    08/2022   2022.08    Added IsHexOrStdLogic.  Updated ReadHexToken to support reading "UWLH-"
+--    02/2022   2022.02    Updated to_hxstring to print U, X, Z, W, - when there are 4 in a row and ? for mixed meta
+--                         Added Justify that aligns LEFT, RIGHT, and CENTER with parameters in a sensible order.
+--    01/2022   2022.01    Added to_hxstring - based on hxwrite (in TbUtilPkg prior to release)
 --    08/2020   2020.08    Added ReadUntilDelimiterOrEOL and FindDelimiter
+--    01/2020   2020.01    Updated Licenses to Apache
+--    11/2016   2016.11    Added IsUpper, IsLower, to_upper, to_lower
+--    01/2016   2016.01    Update for L.all(L'left)
+--    01/2015   2015.05    Initial revision
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2015 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2015 - 2024 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -47,24 +55,24 @@
 use std.textio.all ;
 library ieee ; 
 use ieee.std_logic_1164.all ; 
+use ieee.numeric_std.all ; 
 
 package TextUtilPkg is
   ------------------------------------------------------------
-  function IsUpper (constant Char : character ) return boolean ;
-  function IsLower (constant Char : character ) return boolean ;
+  function IsUpper  (constant Char : character ) return boolean ;
+  function IsLower  (constant Char : character ) return boolean ;
   function to_lower (constant Char : character ) return character ;
-  function to_lower (constant Str : string ) return string ;
+  function to_lower (constant Str  : string ) return string ;
   function to_upper (constant Char : character ) return character ;
-  function to_upper (constant Str : string ) return string ;
+  function to_upper (constant Str  : string ) return string ;
+  function IsWhiteSpace (constant Char : character ) return boolean ;
   function IsHex (constant Char : character ) return boolean ; 
+  function IsHexOrStdLogic (constant Char : character ) return boolean ;
   function IsNumber (constant Char : character ) return boolean ; 
   function IsNumber (Name : string ) return boolean ; 
 
   function isstd_logic (constant Char : character ) return boolean ;
   
-  -- Crutch until VHDL-2019 conditional initialization
-  function IfElse(Expr : boolean ; A, B : string) return string ; 
-
   ------------------------------------------------------------
   procedure SkipWhiteSpace (
   ------------------------------------------------------------
@@ -88,6 +96,15 @@ package TextUtilPkg is
     variable Name      : InOut line ; 
     constant Delimiter : In    character ;
     variable ReadValid : Out   boolean 
+  ) ;
+
+  ------------------------------------------------------------
+  procedure sread_c (
+  -- sread for Xilinx tools
+  ------------------------------------------------------------
+    variable L          : InOut line ; 
+    variable Name       : Out   string ; 
+    variable NameLength : Out   integer 
   ) ;
 
   ------------------------------------------------------------
@@ -118,6 +135,47 @@ package TextUtilPkg is
     variable StrLen : Out   integer 
   ) ;   
 
+  ------------------------------------------------------------
+  -- to_hxstring
+  --   print in hex.  If string contains X, then also print in binary
+  ------------------------------------------------------------
+  function to_hxstring ( A : std_ulogic_vector) return string ;
+  function to_hxstring ( A : unsigned) return string ;
+  function to_hxstring ( A : signed) return string ; 
+  
+  ------------------------------------------------------------
+  -- Justify
+  --   w/ Fill Character
+  --   w/o Fill character, Parameter order & names sensible
+  ------------------------------------------------------------
+  type AlignType is (RIGHT, LEFT, CENTER) ;
+  
+  function Justify (
+    S       : string ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string ;  
+
+  function Justify (
+    S       : string ;
+    Fill    : character ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string ;
+
+  ------------------------------------------------------------
+  -- FileExists
+  --    Return TRUE if file exists
+  ------------------------------------------------------------
+  impure function FileExists(FileName : string) return boolean ; 
+
+  ------------------------------------------------------------
+  -- StripCrLf
+  --    Remove CR LF from a string value
+  --    Primarily necessary with non-compliant simulators
+  ------------------------------------------------------------
+  impure function StripCrLf( name : string ) return string ;
+
 end TextUtilPkg ;
   
 --- ///////////////////////////////////////////////////////////////////////////
@@ -125,6 +183,8 @@ end TextUtilPkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body TextUtilPkg is
+  type stdulogic_indexby_stdulogic is array (std_ulogic) of std_ulogic;
+
   constant LOWER_TO_UPPER_OFFSET : integer := character'POS('a') - character'POS('A') ;
   
   ------------------------------------------------------------
@@ -208,19 +268,38 @@ package body TextUtilPkg is
   end function to_upper ;
 
   ------------------------------------------------------------
+  function IsWhiteSpace (constant Char : character ) return boolean is
+  ------------------------------------------------------------
+  begin
+--x Note that LF and CR were added for Xilinx
+--x    return (Char = ' ' or Char = NBSP or Char = HT) ; 
+    return (Char = ' ' or Char = HT or Char = LF or Char = CR) ; 
+  end function IsWhiteSpace ;
+
+  ------------------------------------------------------------
   function IsHex (constant Char : character ) return boolean is
   ------------------------------------------------------------
   begin
-    if Char >= '0' and Char <= '9' then 
-      return TRUE ; 
-    elsif Char >= 'a' and Char <= 'f' then 
-      return TRUE ; 
-    elsif Char >= 'A' and Char <= 'F' then 
-      return TRUE ; 
-    else
-      return FALSE ; 
-    end if ; 
+    case Char is 
+      when '0' to '9' =>   return TRUE ; 
+      when 'a' to 'f' =>   return TRUE ;
+      when 'A' to 'F' =>   return TRUE ;
+      when others     =>   return FALSE ;
+    end case ; 
   end function IsHex ; 
+
+  ------------------------------------------------------------
+  function IsHexOrStdLogic (constant Char : character ) return boolean is
+  ------------------------------------------------------------
+  begin
+    case Char is 
+      when '0' to '9' =>   return TRUE ; 
+      when 'a' to 'f' =>   return TRUE ;
+      when 'A' to 'F' =>   return TRUE ;
+      when 'U' | 'X' | 'Z' | 'W' | 'L' | 'H' | '-' => return TRUE ; 
+      when others     =>   return FALSE ;
+    end case ; 
+  end function IsHexOrStdLogic ; 
   
   ------------------------------------------------------------
   function IsNumber (constant Char : character ) return boolean is 
@@ -252,18 +331,7 @@ package body TextUtilPkg is
         return FALSE ; 
     end case ; 
   end function isstd_logic ;
-  
-  ------------------------------------------------------------
-  function IfElse(Expr : boolean ; A, B : string) return string is 
-  ------------------------------------------------------------
-  begin
-    if Expr then 
-      return A ; 
-    else
-      return B ; 
-    end if ; 
-  end function IfElse ; 
-  
+    
 --  ------------------------------------------------------------
 --  function iscomment (constant Char : character ) return boolean is
 --  ------------------------------------------------------------
@@ -288,7 +356,8 @@ package body TextUtilPkg is
   begin
     Empty := TRUE ; 
     WhiteSpLoop : while L /= null and L.all'length > 0 loop
-      if (L.all(L'left) = ' ' or L.all(L'left) = NBSP or L.all(L'left) = HT) then
+--x      if (L.all(L'left) = ' ' or L.all(L'left) = NBSP or L.all(L'left) = HT) then
+      if IsWhiteSpace(L.all(L'left)) then
         read (L, Char, Valid) ;
         exit when not Valid ; 
       else
@@ -392,7 +461,8 @@ package body TextUtilPkg is
     for i in NameStr'range loop
       Read(L, NameStr(i), Good) ; 
       ReadValid := ReadValid and Good ; 
-      if NameStr(i) = Delimiter then 
+--      if NameStr(i) = Delimiter then 
+      if NameStr(i) = Delimiter or NameStr(i) = CR or NameStr(i) = LF then 
         -- Read(L, NameStr(1 to i), ReadValid) ; 
         Name := new string'(NameStr(1 to i-1)) ;
         exit ; 
@@ -404,6 +474,33 @@ package body TextUtilPkg is
     end loop ;        
   end procedure ReadUntilDelimiterOrEOL ; 
   
+  ------------------------------------------------------------
+  procedure sread_c (
+  ------------------------------------------------------------
+    variable L          : InOut line ; 
+    variable Name       : Out   string ; 
+    variable NameLength : Out   integer 
+  ) is
+    variable NameStr   : string(1 to Name'length) ; 
+    variable ReadValid : boolean ; 
+    variable Empty     : boolean ;
+  begin
+    SkipWhiteSpace(L, Empty) ; 
+    if Empty then 
+      NameLength := 0 ;
+      return ; 
+    end if ; 
+    NameLength := NameStr'length ; 
+    for i in NameStr'range loop
+      Read(L, NameStr(i), ReadValid) ; 
+      if not ReadValid or IsWhiteSpace(NameStr(i)) then 
+        NameLength := i - 1 ; 
+        exit ; 
+      end if ; 
+    end loop ; 
+    Name := NameStr ; 
+  end procedure sread_c ;
+
   ------------------------------------------------------------
   procedure FindDelimiter(
   ------------------------------------------------------------
@@ -442,6 +539,7 @@ package body TextUtilPkg is
     variable CharCount     : integer ; 
     variable ReturnVal     : std_logic_vector(ResultNormLen-1 downto 0) ;
     variable ReadVal       : std_logic_vector(3 downto 0) ; 
+    variable ReadValSl     : std_logic ; 
     variable ReadValid     : boolean ; 
   begin
     ReturnVal := (others => '0') ;
@@ -449,8 +547,15 @@ package body TextUtilPkg is
     
     ReadLoop : while L /= null and L.all'length > 0 loop
       NextChar := L.all(L'left) ; 
-      if ishex(NextChar) or NextChar = 'X' or NextChar = 'Z' then 
-        hread(L, ReadVal, ReadValid) ; 
+--      if ishex(NextChar) or NextChar = 'X' or NextChar = 'Z' then 
+      if IsHexOrStdLogic(NextChar) then 
+        -- Currently hread only handles X or Z
+        if IsHex(NextChar) then
+          hread(L, ReadVal, ReadValid) ; 
+        else
+          read(L, ReadValSl, ReadValid) ; 
+          ReadVal := ReadValSl & ReadValSl & ReadValSl & ReadValSl ; 
+        end if ; 
         ReturnVal := ReturnVal(ResultNormLen-5 downto 0) & ReadVal ; 
         CharCount := CharCount + 1 ; 
         exit ReadLoop when CharCount >= NumHexChars ; 
@@ -505,6 +610,179 @@ package body TextUtilPkg is
     StrLen := CharCount ; 
     Result := ReturnVal ;
   end procedure ReadBinaryToken ;   
+  
+  ------------------------------------------------------------
+  -- RemoveHLTable
+  --   Convert L to 0 and H to 1, and nothing else
+  ------------------------------------------------------------
+  constant RemoveHLTable : stdulogic_indexby_stdulogic := (
+      'U'   => 'U', 
+      'X'   => 'X', 
+      '0'   => '0', 
+      '1'   => '1', 
+      'Z'   => 'Z', 
+      'W'   => 'W', 
+      'L'   => '0', 
+      'H'   => '1', 
+      '-'   => '-'
+  ); 
+  
+  ------------------------------------------------------------
+  -- local
+  function RemoveHL(A : std_ulogic_vector) return std_ulogic_vector is 
+  ------------------------------------------------------------
+--    variable result : A'subtype ;
+    variable result : std_ulogic_vector(A'range) ;
+  begin
+    for i in result'range loop 
+      result(i) := RemoveHLTable(A(i)) ;
+    end loop ; 
+    return result ; 
+  end function RemoveHL ;
+  
+  ------------------------------------------------------------
+  -- local_to_hxstring  
+  function local_to_hxstring ( A : std_ulogic_vector; IsSigned : Boolean := TRUE ) return string is
+  -- Code based on to_hstring from std_logic_1164-body.vhd
+  -- Copyright 2019 IEEE P1076 WG Authors
+  -- License:  Apache License 2.0 - same as this package
+  ------------------------------------------------------------
+    constant STRING_LEN   : integer := (A'length+3)/4;
+    variable result       : string(1 to STRING_LEN);
+    constant EXTEND_A_LEN : integer := STRING_LEN*4 ;
+    variable ExtendedA    : std_ulogic_vector(1 to EXTEND_A_LEN) ; 
+    variable PadA         : std_ulogic_vector(1 to EXTEND_A_LEN - A'length) ; 
+    variable HexVal       : std_ulogic_vector(1 to 4) ; 
+    variable PrintBinary  : boolean := FALSE ; 
+  begin
+    if A'length = 0 then 
+      return "" ;
+    end if ; 
+    if IsSigned or is_x(A(A'left)) then 
+      PadA := (others => A(A'left)) ; 
+    else
+      PadA := (others => '0') ; 
+    end if ; 
+    ExtendedA := RemoveHL(PadA & A) ; 
+    for i in result'range loop
+      HexVal := ExtendedA(4*i-3 to 4*i);
+      case HexVal is
+        when X"0"   => result(i) := '0';
+        when X"1"   => result(i) := '1';
+        when X"2"   => result(i) := '2';
+        when X"3"   => result(i) := '3';
+        when X"4"   => result(i) := '4';
+        when X"5"   => result(i) := '5';
+        when X"6"   => result(i) := '6';
+        when X"7"   => result(i) := '7';
+        when X"8"   => result(i) := '8';
+        when X"9"   => result(i) := '9';
+        when X"A"   => result(i) := 'A';
+        when X"B"   => result(i) := 'B';
+        when X"C"   => result(i) := 'C';
+        when X"D"   => result(i) := 'D';
+        when X"E"   => result(i) := 'E';
+        when X"F"   => result(i) := 'F';
+        when "UUUU" => result(i) := 'U';
+        when "XXXX" => result(i) := 'X';
+        when "ZZZZ" => result(i) := 'Z';
+        when "WWWW" => result(i) := 'W';
+        when "----" => result(i) := '-';
+        when others => result(i) := '?';  PrintBinary := TRUE ;
+      end case;
+    end loop;
+    if PrintBinary then 
+      return result & " (" & to_string(A) & ")" ;
+    else 
+      return result ; 
+    end if ; 
+  end function local_to_hxstring;
+  
+
+  ------------------------------------------------------------
+  -- to_hxstring  
+  function to_hxstring ( A : std_ulogic_vector) return string is 
+  ------------------------------------------------------------
+  begin
+    return local_to_hxstring(A, IsSigned => FALSE) ; 
+  end function to_hxstring ; 
+
+  ------------------------------------------------------------
+  -- to_hxstring  
+  function to_hxstring ( A : unsigned) return string is 
+  ------------------------------------------------------------
+  begin
+    return local_to_hxstring(std_ulogic_vector(A), IsSigned => FALSE) ; 
+  end function to_hxstring ; 
+
+  ------------------------------------------------------------
+  -- to_hxstring  
+  function to_hxstring (A : signed) return string is 
+  ------------------------------------------------------------
+  begin
+    return local_to_hxstring(std_ulogic_vector(A), IsSigned => TRUE) ; 
+  end function to_hxstring ; 
+  
+  ------------------------------------------------------------
+  -- Justify
+  --   w/ Fill Character
+  --   w/o Fill character, Parameter order & names sensible
+  ------------------------------------------------------------
+  function Justify (
+    S       : string ;
+    Fill    : character ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string is
+    constant FillLen     : integer := maximum(1, Amount - S'length) ; 
+    constant HalfFillLen : integer := (FillLen+1)/2 ; 
+    constant FillString  : string(1 to  FillLen) := (others => FILL) ;
+  begin
+    if S'length >= Amount then
+      return S ;
+    end if ;
+    
+    case Align is
+      when LEFT   =>  return S & FillString ; 
+      when RIGHT  =>  return FillString & S ;
+      when CENTER =>  return FillString(1 to HalfFillLen) & S & FillString(HalfFillLen+1 to FillLen) ; 
+    end case ; 
+  end function Justify ; 
+
+  function Justify (
+    S       : string ;
+    Amount  : natural ;
+    Align   : AlignType := LEFT
+  ) return string is
+  begin
+    return Justify(S, ' ', Amount, Align) ; 
+  end function Justify ;   
+  
+  ------------------------------------------------------------
+  -- FileExists
+  --    Return TRUE if file exists
+  ------------------------------------------------------------
+  impure function FileExists(FileName : string) return boolean is 
+    file     FileID : text ;
+    variable status : file_open_status ;
+  begin
+    file_open(status, FileID, FileName, READ_MODE) ;
+    file_close(FileID) ;
+    return status = OPEN_OK ; 
+  end function FileExists ;   
+  
+    ------------------------------------------------------------
+    impure function StripCrLf( name : string ) return string is
+    ------------------------------------------------------------
+      alias aName : string(1 to name'length) is name ; 
+      variable LocalLen : integer ; 
+    begin
+      for i in aName'reverse_range loop 
+        LocalLen := i ;
+        exit when not (aName(i) = CR or aName(i) = LF) ;  
+      end loop ;
+      return aName(1 to LocalLen) ; 
+    end function StripCrLf ; 
 
 
 end package body TextUtilPkg ;

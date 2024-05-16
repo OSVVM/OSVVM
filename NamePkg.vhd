@@ -19,12 +19,13 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    06/2010:  0.1        Initial revision
+--    02/2022   2022.02    Added NameLength method to NamePType
+--    01/2020   2020.01    Updated Licenses to Apache
+--    05/2015   2015.06    Added input to Get to return when not initialized
+--    12/2014:  2014.07a   Removed initialized pointers which can lead to memory leaks.
 --    07/2014:  2014.07    Moved specialization required by CoveragePkg to CoveragePkg
 --                         Separated name handling from message handling to simplify naming
---    12/2014:  2014.07a   Removed initialized pointers which can lead to memory leaks.
---    05/2015   2015.06    Added input to Get to return when not initialized
---    01/2020   2020.01    Updated Licenses to Apache
+--    06/2010:  0.1        Initial revision
 --
 --
 --  This file is part of OSVVM.
@@ -53,6 +54,7 @@ package NamePkg is
     impure function Get (DefaultName : string := "") return string ;
     impure function GetOpt return string ;
     impure function IsSet return boolean ; 
+    impure function NameLength return integer ; 
     procedure Clear ; -- clear name
     procedure Deallocate ; -- effectively alias to clear name
   end protected NamePType ;
@@ -72,7 +74,9 @@ package body NamePkg is
     procedure Set (NameIn : String) is
     ------------------------------------------------------------
     begin
-      deallocate(NamePtr) ;
+      if NamePtr /= NULL then 
+        deallocate(NamePtr) ;
+      end if ; 
       NamePtr := new string'(NameIn) ;
     end procedure Set ;
 
@@ -105,6 +109,17 @@ package body NamePkg is
       return NamePtr /= NULL ; 
     end function IsSet ;      
     
+    ------------------------------------------------------------
+    impure function NameLength return integer is
+    ------------------------------------------------------------
+    begin
+      if NamePtr = NULL then 
+        return 0 ; 
+      else
+        return NamePtr.all'length ; 
+      end if ; 
+    end function NameLength ;
+
     ------------------------------------------------------------
     procedure Clear is  -- clear name
     ------------------------------------------------------------
