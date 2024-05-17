@@ -1,6 +1,6 @@
 --
---  File Name:         ScoreBoardPkg_int.vhd
---  Design Unit Name:  ScoreBoardPkg_int
+--  File Name:         ScoreBoardPkg_signed.vhd
+--  Design Unit Name:  ScoreBoardPkg_signed
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
