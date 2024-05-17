@@ -15,18 +15,34 @@
 #### [Lars Asplund](https://opensource.ieee.org/)
 * Contributor
 
+## OSVVM Project Contributors - The people who contribute to OSVVM
+
+#### [Jim Lewis](https://opensource.ieee.org/jim)
+* Technical/Project lead
+* Maintainer / Contributor
+* email: jim (at) synthworks.com
+
+#### [Patrick Lehmann](https://opensource.ieee.org/patrick.lehmann)
+* Maintainer / Contributor
+
+#### [Rob Gaddi](https://opensource.ieee.org/)
+* Contributor
+
+#### [Lars Asplund](https://opensource.ieee.org/)
+* Contributor
+
+
+### [Full contributors list](https://opensource.ieee.org/OSVVM/OsvvmLibraries/-/graphs/master)
+
+
 ## Participating  
 The OSVVM project welcomes your participation with either 
 issue reports or pull requests.
 For details on [how to participate see](https://opensource.ieee.org/osvvm/OsvvmLibraries/-/blob/master/CONTRIBUTING.md)
 
-You can find the project
-[Contributors here](CONTRIBUTORS.md).
-
-
 
 #### Copyright and License
-Copyright (C) 2020 by [OSVVM Authors](AUTHORS.md)   
+Copyright (C) 2020-2024 by [OSVVM Authors](AUTHORS.md)   
 
 This file is part of OSVVM.
 
