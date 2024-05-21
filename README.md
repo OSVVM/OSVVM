@@ -61,8 +61,8 @@ as submodules of [OsvvmLibraries](https://github.com/osvvm/OsvvmLibraries).
 **Documentation:** [PDF Documentation](https://github.com/OSVVM/Documentation)  
 
 ## Copyright and License
-Copyright (C) 2006-2022 by [SynthWorks Design Inc.](http://www.synthworks.com/)  
-Copyright (C) 2022 by [OSVVM Authors](AUTHORS.md)   
+Copyright (C) 2006-2024 by [SynthWorks Design Inc.](http://www.synthworks.com/)  
+Copyright (C) 2022-2024 by [OSVVM Authors](AUTHORS.md)   
 
 This file is part of OSVVM.
 
