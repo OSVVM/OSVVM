@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2024.05   |  Minor updates to parameter handling in RandomPkg and NameStorePkg.  
 | 2024.03   |  Updated OsvvmSettingsPkg. Added OsvvmScriptSettingsPkg.  
 |           |  Updates to configure AlertLogPkg, CoveragePkg, RandomPkg.
 |           |  Updates to work around Xilinx bugs (numerous packages).
@@ -88,31 +89,31 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |
   -----------------------------------------------------|-----------------
-  | IfElsePkg.vhd                                      | ** 2024.03 NEW **  |
-  | OsvvmScriptSettingsPkg.vhd                         | ** 2024.03 **  |
-  | OsvvmSettingsPkg.vhd                               | ** 2024.03 **  |
-  | TextUtilPkg.vhd                                    | ** 2024.03 Xilinx **  |
+  | IfElsePkg.vhd                                      | 2024.03  |
+  | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
+  | OsvvmSettingsPkg.vhd                               | 2024.03  |
+  | TextUtilPkg.vhd                                    | 2024.03  |
   | ResolutionPkg.vhd                                  | 2021.06  |
-  | NamePkg.vhd                                        | ** 2024.03 **  |
-  | OsvvmGlobalPkg.vhd                                 | ** 2024.03 **  |
+  | NamePkg.vhd                                        | 2024.03  |
+  | OsvvmGlobalPkg.vhd                                 | 2024.03  |
   | If Aldec                                           |          |
   |     VendorCovApiPkg_Aldec.vhd                      | 2020.01  |
   | If not Aldec                                       |          |
   |     VendorCovApiPkg.vhd                            | 2020.01  |
   | TranscriptPkg.vhd                                  | 2023.01  |
-  | AlertLogPkg.vhd                                    | ** 2024.03 **  |
-  | TbUtilPkg.vhd                                      | ** 2024.03 **  |
-  | NameStorePkg.vhd                                   | 2022.10  |
+  | AlertLogPkg.vhd                                    | 2024.03  |
+  | TbUtilPkg.vhd                                      | 2024.03  |
+  | NameStorePkg.vhd                                   | ** 2024.05 **  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | ** 2024.03 **  |
-  | RandomPkg.vhd                                      | ** 2024.03 **  |
+  | RandomBasePkg.vhd                                  | 2024.03  |
+  | RandomPkg.vhd                                      | ** 2024.05 **  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | ** 2024.03 **  |
+  | CoveragePkg.vhd                                    | 2024.03  |
   | DelayCoveragePkg.vhd                               | 2023.05  |
-  | ResizePkg.vhd                                      | ** 2024.03 **  |
+  | ResizePkg.vhd                                      | 2024.03  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | ** 2024.03 Xilinx **  |
+  |     ScoreboardGenericPkg.vhd                       | 2024.03  |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   | If Not Support Generic Packages                    |          |
@@ -120,23 +121,31 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     ScoreboardPkg_int_c.vhd                        | 2023.01  |
   | MemorySupportPkg.vhd                               | 2022.10  |
   | If Support Generic Packages                        |          |
-  |     MemoryGenericPkg.vhd                           | ** 2024.03 Xilinx **  |
+  |     MemoryGenericPkg.vhd                           | 2024.03  |
   |     MemoryPkg.vhd                                  | 2022.10  |
   | If Not Support Generic Packages                    |          |
-  |     MemoryPkg_c.vhd                                | ** 2024.03 Xilinx **  |
+  |     MemoryPkg_c.vhd                                | 2024.03  |
   |     MemoryPkg_orig_c.vhd                           | 2022.11  |
-  | ReportPkg.vhd                                      | ** 2024.03 Xilinx **  |
+  | ReportPkg.vhd                                      | 2024.03  |
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
   | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
-  |     OsvvmScriptSettingsPkg_default.vhd             | ** 2024.03 **  |
+  |     OsvvmScriptSettingsPkg_default.vhd             | 2024.03  |
   | If exist OsvvmSettingsPkg_local.vhd                |          |
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | ** 2024.03 **  |
-  | OsvvmContext.vhd                                   | ** 2024.03 **  |
+  |     OsvvmSettingsPkg_default.vhd                   | 2024.03  |
+  | OsvvmContext.vhd                                   | 2024.03  |
 
+### RandomPkg.vhd 2024.05
+- Update to address if max < min sometimes multiple errors were generated
+
+### NameStorePkg.vhd 2024.05
+- Calls to singleton forgot to pass ParentID and Search parameter to internal Protected type calls
+
+
+## Revision 2024.03  March 2023
 ### IfElsePkg.vhd 2024.03 - NEW
 - Moved the different versions of IfElse function into this package
 
