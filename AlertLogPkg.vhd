@@ -2011,9 +2011,9 @@ package body AlertLogPkg is
       Write(buf,
         Prefix & "Settings: {" &
           "ExternalErrors: {" &
-            "Failure: "                & '"' & to_string( ExternalErrors(FAILURE) )  & '"'  & DELIMITER &
-            "Error: "                  & '"' & to_string( ExternalErrors(ERROR) )    & '"'  & DELIMITER &
-            "Warning: "                & '"' & to_string( ExternalErrors(WARNING) )  & '"'  &
+            "Failure: "                & to_string( ExternalErrors(FAILURE) )  & DELIMITER &
+            "Error: "                  & to_string( ExternalErrors(ERROR) )    & DELIMITER &
+            "Warning: "                & to_string( ExternalErrors(WARNING) )  &
           "}" & DELIMITER &
           "FailOnDisabledErrors: "     & '"' & to_string( FailOnDisabledErrorsVar )     & '"' & DELIMITER &
           "FailOnRequirementErrors: "  & '"' & to_string( FailOnRequirementErrorsVar )  & '"' & DELIMITER &
