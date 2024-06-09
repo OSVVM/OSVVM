@@ -287,6 +287,10 @@ package TbUtilPkg is
   procedure WaitForLevel ( signal A : in boolean ) ;
   procedure WaitForLevel ( signal A : in std_logic ; Polarity : std_logic := '1' ) ;
 
+  procedure WaitForLevelTimeout ( signal A : in boolean ; constant TimeOut : time; variable TimeOutReached : out boolean);
+  procedure WaitForLevelTimeout ( signal A : in std_logic ; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1');
+
+
   ------------------------------------------------------------
   -- CreateClock,  CreateReset
   --   Note these do not exit
@@ -1096,7 +1100,34 @@ package body TbUtilPkg is
     end if ;
   end procedure WaitForLevel ;
 
-
+  ------------------------------------------------------------
+  -- WaitForLevelTimeout
+  --   Find a signal at a level or simply pass after timeout
+  ------------------------------------------------------------
+  procedure WaitForLevelTimeout ( signal A : in boolean ; constant TimeOut : time; variable TimeOutReached : out boolean) is 
+  begin
+  	TimeOutReached := false;
+    if not A then 
+      wait until A for TimeOut;
+	  if not A then
+	  	TimeOutReached := true;
+	  end if;
+	else
+    end if ; 
+  end procedure WaitForLevelTimeout ; 
+  
+  procedure WaitForLevelTimeout ( signal A : in std_logic ; constant TimeOut : time; variable TimeOutReached : out boolean ; constant Polarity : std_logic := '1') is 
+  begin
+  	TimeOutReached := false;
+    if A /= Polarity then 
+	    wait until A = Polarity for TimeOut; 
+		if A /= Polarity then
+			TimeOutReached := true;
+		end if;
+    end if ; 
+  end procedure WaitForLevelTimeout ; 
+				
+				
   ------------------------------------------------------------
   -- CreateClock,  CreateReset
   --   Note these do not exit
