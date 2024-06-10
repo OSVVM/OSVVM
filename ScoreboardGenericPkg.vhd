@@ -2317,6 +2317,7 @@ package body ScoreboardGenericPkg is
         return AllEmpty ; 
       else
         -- singleton not initialized.  Return TRUE as all are indeed empty.
+        alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "AllScoreboardsEmpty: Scoreboard is either a PT or not initialized") ;
         return TRUE ; 
       end if ;
     end function AllScoreboardsEmpty ;
