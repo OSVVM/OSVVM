@@ -59,7 +59,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2006 - 2023 by SynthWorks Design Inc.
+--  Copyright (c) 2006 - 2024 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -317,24 +317,40 @@ package ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- Empty - check to see if scoreboard is empty
-  -- Simple
-  impure function ScoreboardEmpty (
+  impure function IsEmpty (
     constant ID     : in  ScoreboardIDType
   ) return boolean ;
   -- Tagged
-  impure function ScoreboardEmpty (
+  impure function IsEmpty (
     constant ID     : in  ScoreboardIDType ;
     constant Tag    : in  string
   ) return boolean ;                    -- Simple, Tagged
 
-  impure function Empty (
-    constant ID     : in  ScoreboardIDType
-  ) return boolean ;
-  -- Tagged
-  impure function Empty (
-    constant ID     : in  ScoreboardIDType ;
-    constant Tag    : in  string
-  ) return boolean ;                    -- Simple, Tagged
+  alias Empty           is IsEmpty [ScoreboardIDType return boolean] ;
+  alias Empty           is IsEmpty [ScoreboardIDType, string return boolean] ;
+  alias ScoreboardEmpty is IsEmpty [ScoreboardIDType return boolean] ;
+  alias ScoreboardEmpty is IsEmpty [ScoreboardIDType, string return boolean] ;
+  
+  impure function AllScoreboardsEmpty return boolean ;                     -- All scoreboards in the singleton
+
+--  -- Simple
+--  impure function ScoreboardEmpty (
+--    constant ID     : in  ScoreboardIDType
+--  ) return boolean ;
+--  -- Tagged
+--  impure function ScoreboardEmpty (
+--    constant ID     : in  ScoreboardIDType ;
+--    constant Tag    : in  string
+--  ) return boolean ;                    -- Simple, Tagged
+--
+--  impure function Empty (
+--    constant ID     : in  ScoreboardIDType
+--  ) return boolean ;
+--  -- Tagged
+--  impure function Empty (
+--    constant ID     : in  ScoreboardIDType ;
+--    constant Tag    : in  string
+--  ) return boolean ;                    -- Simple, Tagged
 
 --!!  ------------------------------------------------------------
 --!!  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
@@ -746,6 +762,7 @@ package ScoreboardGenericPkg is
     impure function Empty (Tag : String) return boolean ;                    -- Simple, Tagged
     impure function Empty (Index  : integer) return boolean ;                -- Array
     impure function Empty (Index  : integer; Tag : String) return boolean ;  -- Array, Tagged
+    impure function AllScoreboardsEmpty return boolean ;                     -- All scoreboards in the singleton
 
     ------------------------------------------------------------
     -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
@@ -2284,7 +2301,27 @@ package body ScoreboardGenericPkg is
     begin
       return HeadPointer(FirstIndexVar) = NULL ;
     end function Empty ;
-
+    
+    ------------------------------------------------------------
+    impure function AllScoreboardsEmpty return boolean is
+    -- All scoreboards in the singleton.  Not for PT
+    ------------------------------------------------------------
+      variable AllEmpty : boolean := FALSE ; 
+    begin
+      if CalledNewID then
+        -- Is a singleton 
+        for i in 1 to NumItems loop
+          AllEmpty := Empty(i) ; 
+          exit when not AllEmpty ; 
+        end loop ;
+        return AllEmpty ; 
+      else
+        -- singleton not initialized.  Return TRUE as all are indeed empty.
+        alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "AllScoreboardsEmpty: Scoreboard is either a PT or not initialized") ;
+        return TRUE ; 
+      end if ;
+    end function AllScoreboardsEmpty ;
+    
     ------------------------------------------------------------
     procedure CheckFinish (
     ------------------------------------------------------------
@@ -3160,37 +3197,60 @@ package body ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- ScoreboardEmpty - check to see if scoreboard is empty
   -- Simple
-  impure function ScoreboardEmpty (
+  impure function IsEmpty (
     constant ID     : in  ScoreboardIDType
   ) return boolean is
   begin
     return ScoreboardStore.Empty(ID.ID) ;
-  end function ScoreboardEmpty ;
+  end function IsEmpty ;
 
   -- Tagged
-  impure function ScoreboardEmpty (
+  impure function IsEmpty (
     constant ID     : in  ScoreboardIDType ;
     constant Tag    : in  string
   ) return boolean is
   begin
     return ScoreboardStore.Empty(ID.ID, Tag) ;
-  end function ScoreboardEmpty ;
-
-  impure function Empty (
-    constant ID     : in  ScoreboardIDType
-  ) return boolean is
+  end function IsEmpty ;
+  
+  -- All scoreboards in the singleton
+  impure function AllScoreboardsEmpty return boolean is
   begin
-    return ScoreboardStore.Empty(ID.ID) ;
-  end function Empty ;
+    return ScoreboardStore.AllScoreboardsEmpty ;
+  end function AllScoreboardsEmpty ; 
 
-  -- Tagged
-  impure function Empty (
-    constant ID     : in  ScoreboardIDType ;
-    constant Tag    : in  string
-  ) return boolean is
-  begin
-    return ScoreboardStore.Empty(ID.ID, Tag) ;
-  end function Empty ;
+--!!   --
+--!!   --  impure function ScoreboardEmpty (
+--!!   --    constant ID     : in  ScoreboardIDType
+--!!   --  ) return boolean is
+--!!   --  begin
+--!!   --    return ScoreboardStore.Empty(ID.ID) ;
+--!!   --  end function ScoreboardEmpty ;
+--!!   --
+--!!   --  -- Tagged
+--!!   --  impure function ScoreboardEmpty (
+--!!   --    constant ID     : in  ScoreboardIDType ;
+--!!   --    constant Tag    : in  string
+--!!   --  ) return boolean is
+--!!   --  begin
+--!!   --    return ScoreboardStore.Empty(ID.ID, Tag) ;
+--!!   --  end function ScoreboardEmpty ;
+--!!   --
+--!!   --  impure function Empty (
+--!!   --    constant ID     : in  ScoreboardIDType
+--!!   --  ) return boolean is
+--!!   --  begin
+--!!   --    return ScoreboardStore.Empty(ID.ID) ;
+--!!   --  end function Empty ;
+--!!   --
+--!!   --  -- Tagged
+--!!   --  impure function Empty (
+--!!   --    constant ID     : in  ScoreboardIDType ;
+--!!   --    constant Tag    : in  string
+--!!   --  ) return boolean is
+--!!   --  begin
+--!!   --    return ScoreboardStore.Empty(ID.ID, Tag) ;
+--!!   --  end function Empty ;
 
 --!!  ------------------------------------------------------------
 --!!  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting

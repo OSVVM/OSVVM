@@ -140,7 +140,7 @@ package CoveragePkg is
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
-  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_COV_ALERTLOG_ID ;
 
   -- CovPType allocates bins that are multiples of MIN_NUM_BINS
   constant MIN_NUM_BINS : integer := 2**7 ;  -- power of 2
@@ -480,10 +480,14 @@ package CoveragePkg is
   -- /////////////////////////////////////////
   ------------------------------------------------------------
   ------------------------------------------------------------
-  impure function IsCovered     (ID : CoverageIDType; PercentCov : real ) return boolean ;
-  impure function IsCovered     (ID : CoverageIDType) return boolean ;
-  impure function IsNotCovered  (ID : CoverageIDType; PercentCov : real ) return boolean ;
-  impure function IsNotCovered  (ID : CoverageIDType) return boolean ;
+  impure function IsBinCovered (ID : CoverageIDType ; BinIndex : integer ; PercentCov : real ) return boolean ;
+  impure function IsBinCovered (ID : CoverageIDType ; BinIndex : integer ) return boolean ;
+  impure function IsCovered    (ID : CoverageIDType ; PercentCov : real ) return boolean ;
+  impure function IsCovered    (ID : CoverageIDType) return boolean ;
+  impure function AllCovered (PercentCov : real ) return boolean ;
+  impure function AllCovered return boolean ;
+  impure function IsNotCovered (ID : CoverageIDType ; PercentCov : real ) return boolean ;
+  impure function IsNotCovered (ID : CoverageIDType) return boolean ;
 
   impure function IsInitialized (ID : CoverageIDType) return boolean ;
 
@@ -1013,8 +1017,12 @@ package CoveragePkg is
     -- /////////////////////////////////////////
     ------------------------------------------------------------
     ------------------------------------------------------------
-    impure function IsCovered     (ID : CoverageIDType; PercentCov : real ) return boolean ;
-    impure function IsCovered     (ID : CoverageIDType) return boolean ;
+    impure function IsBinCovered (ID : CoverageIDType ; BinIndex : integer ; PercentCov : real ) return boolean ;
+    impure function IsBinCovered (ID : CoverageIDType ; BinIndex : integer ) return boolean ;
+    impure function IsCovered    (ID : CoverageIDType ; PercentCov : real ) return boolean ;
+    impure function IsCovered    (ID : CoverageIDType) return boolean ;
+    impure function AllCovered (PercentCov : real ) return boolean ;
+    impure function AllCovered return boolean ;
 
     impure function IsInitialized (ID : CoverageIDType) return boolean ;
 
@@ -3516,6 +3524,24 @@ package body CoveragePkg is
     end function CountCovHoles ;
 
     ------------------------------------------------------------
+    impure function IsBinCovered (ID : CoverageIDType; BinIndex : integer ; PercentCov : real ) return boolean is
+    ------------------------------------------------------------
+    begin
+      if (CovStructPtr(ID.ID).CovBinPtr(BinIndex).action = COV_COUNT) then
+        return CovStructPtr(ID.ID).CovBinPtr(BinIndex).PercentCov >= PercentCov ;
+      else
+        return false;
+      end if;
+    end function IsBinCovered ;
+
+    ------------------------------------------------------------
+    impure function IsBinCovered (ID : CoverageIDType; BinIndex : integer  ) return boolean is
+    ------------------------------------------------------------
+    begin
+      return IsBinCovered(ID, BinIndex, CovStructPtr(ID.ID).CovTarget) ;
+    end function IsBinCovered ;
+
+    ------------------------------------------------------------
     impure function CountCovHoles (ID : CoverageIDType) return integer is
     ------------------------------------------------------------
     begin
@@ -3538,6 +3564,46 @@ package body CoveragePkg is
       return CountCovHoles(ID, CovStructPtr(ID.ID).CovTarget) = 0 ;
     end function IsCovered ;
 
+    ------------------------------------------------------------
+    impure function AllCovered (PercentCov : real ) return boolean is
+    -- All Coverage models Covered in the singleton.  Not for PT
+    ------------------------------------------------------------
+      variable AllCov : boolean := FALSE ; 
+    begin
+      if NumItems > 0 then
+        -- Is a singleton 
+        for i in 1 to NumItems loop
+          AllCov := IsCovered(CoverageIDType'(ID => i), PercentCov) ; 
+          exit when not AllCov ; 
+        end loop ;
+        return AllCov ; 
+      else
+        -- singleton not initialized.  Return FALSE.
+        alert(OSVVM_COVERAGE_ALERTLOG_ID, "AllCovered: Coverage model is either a PT or not initialized") ;
+        return FALSE ; 
+      end if ;
+    end function AllCovered ;
+    
+    ------------------------------------------------------------
+    impure function AllCovered return boolean is
+    -- All Coverage models Covered in the singleton.  Not for PT
+    ------------------------------------------------------------
+      variable AllCov : boolean := FALSE ; 
+    begin
+      if NumItems > 0 then
+        -- Is a singleton 
+        for i in 1 to NumItems loop
+          AllCov := IsCovered(CoverageIDType'(ID => i)) ; 
+          exit when not AllCov ; 
+        end loop ;
+        return AllCov ; 
+      else
+        -- singleton not initialized.  Return FALSE.
+        alert(OSVVM_COVERAGE_ALERTLOG_ID, "AllCovered: Coverage model is either a PT or not initialized") ;
+        return FALSE ; 
+      end if ;
+    end function AllCovered ;
+    
     ------------------------------------------------------------
     procedure GetTotalCovCountAndGoal (ID : CoverageIDType; PercentCov : real; TotalCovCount : out integer; TotalCovGoal : out integer ) is
     ------------------------------------------------------------
@@ -5313,7 +5379,7 @@ package body CoveragePkg is
         exit ReadLoop when not Found ;
         -- Get the Name
         ReadQuotedString(buf, sName) ;
-        exit when AlertIf(OSVVM_COV_ALERTLOG_ID, sName = NULL,
+        exit when AlertIf(OSVVM_COVERAGE_ALERTLOG_ID, sName = NULL,
             "CoveragePkg.ReadCovYaml: Unnamed Coverage Model.", COV_READ_YAML_ALERT_LEVEL);
 
 --!! TODO: Add reading for ParentName, ReportMode, Search, PrintParent
@@ -5802,7 +5868,7 @@ package body CoveragePkg is
     begin
       ReadFindToken (CovYamlFile, "Models:", buf, Found) ;
       if not Found then
-        Alert(OSVVM_COV_ALERTLOG_ID,
+        Alert(OSVVM_COVERAGE_ALERTLOG_ID,
             "No Coverage Models found in " & RESOLVED_FILE_NAME, COV_READ_YAML_ALERT_LEVEL) ;
         return ;
       end if;
@@ -8229,6 +8295,16 @@ package body CoveragePkg is
   -- /////////////////////////////////////////
   ------------------------------------------------------------
   ------------------------------------------------------------
+  impure function IsBinCovered (ID : CoverageIDType; BinIndex : integer ; PercentCov : real ) return boolean is
+  begin
+    return CoverageStore.IsBinCovered (ID, BinIndex, PercentCov) ;
+  end function IsBinCovered ;
+
+  impure function IsBinCovered (ID : CoverageIDType ; BinIndex : integer ) return boolean is
+  begin
+    return CoverageStore.IsBinCovered (ID, BinIndex) ;
+  end function IsBinCovered ;
+
   impure function IsCovered (ID : CoverageIDType; PercentCov : real ) return boolean is
   begin
     return CoverageStore.IsCovered (ID, PercentCov) ;
@@ -8238,6 +8314,16 @@ package body CoveragePkg is
   begin
     return CoverageStore.IsCovered (ID) ;
   end function IsCovered ;
+
+  impure function AllCovered return boolean is
+  begin
+    return CoverageStore.AllCovered ;
+  end function AllCovered ;
+
+  impure function AllCovered (PercentCov : real ) return boolean is
+  begin
+    return CoverageStore.AllCovered(PercentCov) ;
+  end function AllCovered ;
 
   impure function IsNotCovered (ID : CoverageIDType; PercentCov : real ) return boolean is
   begin
