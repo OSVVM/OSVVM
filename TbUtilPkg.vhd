@@ -37,7 +37,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 1999 - 2021 by SynthWorks Design Inc.
+--  Copyright (c) 1999 - 2024 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -287,8 +287,13 @@ package TbUtilPkg is
   procedure WaitForLevel ( signal A : in boolean ) ;
   procedure WaitForLevel ( signal A : in std_logic ; Polarity : std_logic := '1' ) ;
 
-  procedure WaitForLevelTimeout ( signal A : in boolean ; constant TimeOut : time; variable TimeOutReached : out boolean);
-  procedure WaitForLevelTimeout ( signal A : in std_logic ; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1');
+  procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : time);
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Polarity : std_logic := '1');
+
+  procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : time; variable TimeOutReached : out boolean);
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1');
+  alias WaitForLevelTimeOut is WaitForLevel [boolean, time, boolean] ;
+  alias WaitForLevelTimeOut is WaitForLevel [std_logic, time, boolean, std_logic] ;
 
 
   ------------------------------------------------------------
@@ -1101,31 +1106,34 @@ package body TbUtilPkg is
   end procedure WaitForLevel ;
 
   ------------------------------------------------------------
-  -- WaitForLevelTimeout
+  -- WaitForLevel with TimeOut
   --   Find a signal at a level or simply pass after timeout
   ------------------------------------------------------------
-  procedure WaitForLevelTimeout ( signal A : in boolean ; constant TimeOut : time; variable TimeOutReached : out boolean) is 
+  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : time) is 
   begin
-  	TimeOutReached := false;
     if not A then 
       wait until A for TimeOut;
-	  if not A then
-	  	TimeOutReached := true;
-	  end if;
-	else
     end if ; 
-  end procedure WaitForLevelTimeout ; 
+  end procedure WaitForLevel ; 
   
-  procedure WaitForLevelTimeout ( signal A : in std_logic ; constant TimeOut : time; variable TimeOutReached : out boolean ; constant Polarity : std_logic := '1') is 
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Polarity : std_logic := '1') is 
   begin
-  	TimeOutReached := false;
     if A /= Polarity then 
 	    wait until A = Polarity for TimeOut; 
-		if A /= Polarity then
-			TimeOutReached := true;
-		end if;
     end if ; 
-  end procedure WaitForLevelTimeout ; 
+  end procedure WaitForLevel ; 
+				
+  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : time; variable TimeOutReached : out boolean) is 
+  begin
+    WaitForLevel(A, TimeOut) ; 
+    TimeOutReached := not A ; 
+  end procedure WaitForLevel ; 
+  
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1') is 
+  begin
+    WaitForLevel(A, TimeOut, Polarity) ; 
+    TimeOutReached := A /= Polarity ; 
+  end procedure WaitForLevel ; 
 				
 				
   ------------------------------------------------------------
