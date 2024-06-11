@@ -3551,17 +3551,26 @@ package body CoveragePkg is
     ------------------------------------------------------------
     impure function IsCovered (ID : CoverageIDType; PercentCov : real ) return boolean is
     ------------------------------------------------------------
+      variable HasACountBin : boolean := FALSE ; 
     begin
-      -- AlertIf(CovStructPtr(ID.ID).NumBins < 1, OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
-      return CountCovHoles(ID, PercentCov) = 0 ;
+      -- return false ASAP - like a short-circuit operation
+      CovLoop : for i in 1 to CovStructPtr(ID.ID).NumBins loop
+        if CovStructPtr(ID.ID).CovBinPtr(i).action = COV_COUNT then
+          if CovStructPtr(ID.ID).CovBinPtr(i).PercentCov < PercentCov then
+            return FALSE ; 
+          end if ; 
+          HasACountBin := TRUE ; 
+        end if ;
+      end loop CovLoop ; 
+      -- if has at least one count bin return TRUE otherwise returns FALSE (model not initalized?)
+      return HasACountBin ; 
     end function IsCovered ;
 
     ------------------------------------------------------------
     impure function IsCovered (ID : CoverageIDType) return boolean is
     ------------------------------------------------------------
     begin
-      -- AlertIf(CovStructPtr(ID.ID).NumBins < 1, OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.IsCovered: Empty Coverage Model", failure) ;
-      return CountCovHoles(ID, CovStructPtr(ID.ID).CovTarget) = 0 ;
+      return IsCovered(ID, CovStructPtr(ID.ID).CovTarget) ; 
     end function IsCovered ;
 
     ------------------------------------------------------------
