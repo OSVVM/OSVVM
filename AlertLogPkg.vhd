@@ -2038,7 +2038,12 @@ package body AlertLogPkg is
       variable TotalErrors : integer ;
       variable TotalAlertCount : AlertCountType ;
       variable TotalRequirementsPassed, TotalRequirementsCount : integer ;
+      variable buf : line ; 
     begin
+      if PrintSettings then
+        write(buf, Prefix & "Version: 1.0") ; 
+        WriteLine(TestFile, buf) ; 
+      end if ; 
       CalcTopTotalErrors (
         ExternalErrors           => ExternalErrors         ,
         TotalErrors              => TotalErrors            ,
