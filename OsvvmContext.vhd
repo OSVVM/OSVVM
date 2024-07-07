@@ -63,6 +63,7 @@ context OsvvmContext is
   use OSVVM.ResolutionPkg.all ;
   use OSVVM.ResizePkg.all ;
   use OSVVM.TbUtilPkg.all ;
+  use OSVVM.ClockResetPkg.all ;
   use OSVVM.ReportPkg.all ;
   use OSVVM.OsvvmTypesPkg.all ; 
 

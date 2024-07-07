@@ -95,6 +95,7 @@ analyze TranscriptPkg.vhd
 analyze AlertLogPkg.vhd
 
 analyze TbUtilPkg.vhd
+analyze ClockResetPkg.vhd
 
 analyze NameStorePkg.vhd
 
