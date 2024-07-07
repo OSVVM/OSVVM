@@ -2760,12 +2760,18 @@ package body ScoreboardGenericPkg is
     begin
       write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(AlertLogIDVar(Index))) & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(AlertLogIDVar(Index)))) & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(PopCountVar(Index))         & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(DropCountVar(Index))        & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
+      write(buf, NAME_PREFIX & "  ItemCount:    " & to_string(ItemNumberVar(Index))  & LF) ;
+      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(ErrCntVar(Index))      & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsChecked: " & to_string(CheckCountVar(Index))  & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsPopped:  " & to_string(PopCountVar(Index))    & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsDropped: " & to_string(DropCountVar(Index))   & LF) ;
+      write(buf, NAME_PREFIX & "  FifoCount: "    & to_string(GetFifoCount(Index))   ) ;
+--      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(PopCountVar(Index))         & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(DropCountVar(Index))        & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteScoreboardYaml ;
 
