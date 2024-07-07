@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Factored Clock and Reset support out of TbUtilPkg
 --    01/2024   2024.01    IfElse function moved to IfElsePkg
 --    09/2022   2022.09    Added WaitForTransactionOrIrq, FinishTransaction, and TransactionPending for AckType/RdyType
 --    03/2022   2022.03    Added EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge.
@@ -61,11 +62,18 @@ library ieee ;
   use work.OsvvmGlobalPkg.all ;
 
 package TbUtilPkg is
+  type stdulogic_indexed_by_stdulogic is array (std_ulogic) of std_ulogic;
 
   constant CLK_ACTIVE : std_logic := '1' ;
 
   constant t_sim_resolution : time := std.env.resolution_limit ;  -- VHDL-2008
   -- constant t_sim_resolution : time := 1 ns ;  -- for non VHDL-2008 simulators
+
+  constant toggle_sl_table : stdulogic_indexed_by_stdulogic := (
+      '0'     => '1',
+      'L'     => '1',
+      others  => '0'
+  );
 
   ------------------------------------------------------------
   -- ZeroOneHot, OneHot
@@ -269,6 +277,13 @@ package TbUtilPkg is
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncInV : in  std_logic_vector ) ;
 
+  ------------------------------------------------------------
+  -- Predefined barrier signals
+  ------------------------------------------------------------
+  signal TestInit  : BarrierType ; 
+  signal ResetDone : BarrierType ; 
+  signal TestDone  : BarrierType ; 
+  signal VcInit    : BarrierType ; 
 
   ------------------------------------------------------------
   -- WaitForClock
@@ -294,55 +309,6 @@ package TbUtilPkg is
   procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1');
   alias WaitForLevelTimeOut is WaitForLevel [boolean, time, boolean] ;
   alias WaitForLevelTimeOut is WaitForLevel [std_logic, time, boolean, std_logic] ;
-
-
-  ------------------------------------------------------------
-  -- CreateClock,  CreateReset
-  --   Note these do not exit
-  ------------------------------------------------------------
-  procedure CreateClock (
-    signal   Clk        : inout std_logic ;
-    constant Period     : time ;
-    constant DutyCycle  : real := 0.5
-  )  ;
-
-  procedure CheckClockPeriod (
-    constant AlertLogID : AlertLogIDType ;
-    signal   Clk        : in  std_logic ;
-    constant Period     : time ;
-    constant ClkName    : string := "Clock" ;
-    constant HowMany    : integer := 5
-  ) ;
-
-  procedure CheckClockPeriod (
-    signal   Clk        : in  std_logic ;
-    constant Period     : time ;
-    constant ClkName    : string := "Clock" ;
-    constant HowMany    : integer := 5
-  ) ;
-
-  procedure CreateReset (
-    signal   Reset       : out std_logic ;
-    constant ResetActive : in  std_logic ;
-    signal   Clk         : in  std_logic ;
-    constant Period      :     time ;
-    constant tpd         :     time := 0 ns
-  ) ;
-
-  procedure LogReset (
-    constant AlertLogID  : AlertLogIDType ;
-    signal   Reset       : in  std_logic ;
-    constant ResetActive : in  std_logic ;
-    constant ResetName   : in  string := "Reset" ;
-    constant LogLevel    : in  LogType := ALWAYS
-  ) ;
-
-  procedure LogReset (
-    signal   Reset       : in  std_logic ;
-    constant ResetActive : in  std_logic ;
-    constant ResetName   : in  string := "Reset" ;
-    constant LogLevel    : in  LogType := ALWAYS
-  ) ;
 
   ------------------------------------------------------------
   --  Deprecated subprogram names
@@ -373,7 +339,6 @@ end TbUtilPkg ;
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 package body TbUtilPkg is
-  type stdulogic_indexby_stdulogic is array (std_ulogic) of std_ulogic;
 
   ------------------------------------------------------------
   -- ZeroOneHot, OneHot
@@ -466,7 +431,7 @@ package body TbUtilPkg is
   -- MetaTo01
   --   Convert Meta values to 0
   ------------------------------------------------------------
-  constant MetaTo01Table : stdulogic_indexby_stdulogic := (
+  constant MetaTo01Table : stdulogic_indexed_by_stdulogic := (
       '1'     => '1',
       'H'     => '1',
       others  => '0'
@@ -486,28 +451,6 @@ package body TbUtilPkg is
     return result ;
   end function MetaTo01 ;
 
-  -- Moved  ------------------------------------------------------------
-  -- Moved  -- IfElse
-  -- Moved  --   Crutch until VHDL-2019 conditional initialization
-  -- Moved  --   If condition is true return first parameter otherwise return second
-  -- Moved  ------------------------------------------------------------
-  -- Moved  function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector is
-  -- Moved  begin
-  -- Moved    if Expr then
-  -- Moved      return A ;
-  -- Moved    else
-  -- Moved      return B ;
-  -- Moved    end if ;
-  -- Moved  end function IfElse ;
-  -- Moved  
-  -- Moved  function IfElse(Expr : boolean ; A, B : integer) return integer is
-  -- Moved  begin
-  -- Moved    if Expr then
-  -- Moved      return A ;
-  -- Moved    else
-  -- Moved      return B ;
-  -- Moved    end if ;
-  -- Moved  end function IfElse ;
 
   ------------------------------------------------------------
   -- RequestTransaction - WaitForTransaction
@@ -829,12 +772,6 @@ package body TbUtilPkg is
   -- Toggle, WaitForToggle
   --   Used for communicating between processes
   ------------------------------------------------------------
-  constant toggle_sl_table : stdulogic_indexby_stdulogic := (
-      '0'     => '1',
-      'L'     => '1',
-      others  => '0'
-  );
-
   procedure Toggle (
     signal Sig        : InOut std_logic ;
     constant DelayVal : time
@@ -1134,135 +1071,6 @@ package body TbUtilPkg is
     WaitForLevel(A, TimeOut, Polarity) ; 
     TimeOutReached := A /= Polarity ; 
   end procedure WaitForLevel ; 
-				
-				
-  ------------------------------------------------------------
-  -- CreateClock,  CreateReset
-  --   Note these do not exit
-  ------------------------------------------------------------
-  procedure CreateClock (
-    signal   Clk        : inout std_logic ;
-    constant Period     : time ;
-    constant DutyCycle  : real := 0.5
-  ) is
-    constant HIGH_TIME : time := Period * DutyCycle ;
-    constant LOW_TIME  : time := Period - HIGH_TIME ;
-  begin
-    if HIGH_TIME = LOW_TIME then
- --     -- Set a 1 if not initialized, otherwise use initialized value.
- --     if Clk = 'U' then 
- --       Clk <= '1' ; 
- --       wait for 0 ns ; 
- --     end if  ;
-      loop
-        Clk <= toggle_sl_table(Clk) after HIGH_TIME ;
-        wait on Clk ;
-      end loop ;
-    else
-      -- Schedule s.t. all assignments after the first occur on delta cycle 0
-      Clk <= '0', '1' after LOW_TIME ;
-      wait for period - t_sim_resolution ; -- allows after on future Clk <= '0'
-      loop
-        Clk <= '0' after t_sim_resolution, '1' after LOW_TIME + t_sim_resolution ;
-        wait for period ;
-      end loop ;
-    end if ;
-  end procedure CreateClock ;
-
-  procedure CheckClockPeriod (
-    constant AlertLogID : AlertLogIDType ;
-    signal   Clk        : in  std_logic ;
-    constant Period     : time ;
-    constant ClkName    : string := "Clock" ;
-    constant HowMany    : integer := 5
-  ) is
-    variable LastLogTime, ObservedPeriod : time ;
-  begin
-    wait until EdgeActive(Clk, CLK_ACTIVE) ;
-    LastLogTime := now ;
-    -- Check First HowMany clocks
-    for i in 1 to HowMany loop
-      wait until Clk = CLK_ACTIVE ;
-      ObservedPeriod := now - LastLogTime ;
-      AffirmIf(AlertLogID, ObservedPeriod = Period,
-         "CheckClockPeriod: " & ClkName & " Period: " & to_string(ObservedPeriod, GetOsvvmDefaultTimeUnits) &
-         " = Expected " & to_string(Period, GetOsvvmDefaultTimeUnits)) ;
-      LastLogTime := now ;
-     end loop ;
-     wait ;
-  end procedure CheckClockPeriod ;
-
-  procedure CheckClockPeriod (
-    signal   Clk        : in  std_logic ;
-    constant Period     : time ;
-    constant ClkName    : string := "Clock" ;
-    constant HowMany    : integer := 5
-  ) is
-  begin
-    CheckClockPeriod (
-      AlertLogID => ALERTLOG_DEFAULT_ID,
-      Clk        => Clk,
-      Period     => Period,
-      ClkName    => ClkName,
-      HowMany    => HowMany
-    ) ;
-  end procedure CheckClockPeriod ;
-
-  procedure CreateReset (
-    signal   Reset       : out std_logic ;
-    constant ResetActive : in  std_logic ;
-    signal   Clk         : in  std_logic ;
-    constant Period      :     time ;
-    constant tpd         :     time := 0 ns
-  ) is
-  begin
-    wait until EdgeActive(Clk, CLK_ACTIVE) ;
-    Reset <= ResetActive after tpd ;
-    wait for Period - t_sim_resolution ;
-    wait until Clk = CLK_ACTIVE ;
-    Reset <= not ResetActive after tpd ;
-    wait ;
-  end procedure CreateReset ;
-
-  procedure LogReset (
-    constant AlertLogID  : AlertLogIDType ;
-    signal   Reset       : in  std_logic ;
-    constant ResetActive : in  std_logic ;
-    constant ResetName   : in  string := "Reset" ;
-    constant LogLevel    : in  LogType := ALWAYS
-  ) is
-  begin
-    -- Does not log the value of Reset at time 0.
-    for_ever : loop
-      wait on Reset ;
-      if Reset = ResetActive then
-        LOG(AlertLogID, ResetName & " now active", INFO) ;
-        print("") ;
-      elsif Reset = not ResetActive then
-        LOG(AlertLogID, ResetName & " now inactive", INFO) ;
-        print("") ;
-      else
-        LOG(AlertLogID, ResetName & " = " & to_string(Reset), INFO) ;
-        print("") ;
-      end if ;
-    end loop for_ever ;
-  end procedure LogReset ;
-
-  procedure LogReset (
-    signal   Reset       : in  std_logic ;
-    constant ResetActive : in  std_logic ;
-    constant ResetName   : in  string := "Reset" ;
-    constant LogLevel    : in  LogType := ALWAYS
-  ) is
-  begin
-    LogReset (
-      AlertLogID  => ALERTLOG_DEFAULT_ID,
-      Reset       => Reset,
-      ResetActive => ResetActive,
-      ResetName   => ResetName,
-      LogLevel    => LogLevel
-    ) ;
-  end procedure LogReset ;
 
   ------------------------------------------------------------
   -- Deprecated
