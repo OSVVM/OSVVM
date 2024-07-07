@@ -1986,13 +1986,15 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
         end loop ;
         if not FoundChildToReport then 
-          Write(buf, Prefix & "Children: " & """""") ;
+--          Write(buf, Prefix & "Children: " & """""") ;
+          Write(buf, Prefix & "Children: []") ;
           WriteLine(TestFile, buf) ;
         end if ; 
       else
         -- No Children, Print Empty List
 --req tcl 8.6        Write(buf, Prefix & "Children: {}" ) ;
-        Write(buf, Prefix & "Children: " & """""") ;
+--        Write(buf, Prefix & "Children: " & """""") ;
+        Write(buf, Prefix & "Children: []") ;
         WriteLine(TestFile, buf) ;
       end if ;
     end procedure IterateAndWriteChildrenYaml ;
