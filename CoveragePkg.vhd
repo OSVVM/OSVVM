@@ -5287,7 +5287,16 @@ package body CoveragePkg is
       writeline(CovYamlFile, buf) ;
       for i in 1 to NumItems loop
         if CovStructPtr(i).NumBins >= 1 then
-          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+          if CovStructPtr(i).CovWeight >= 1 then
+            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+          end if ;
+        end if ;
+      end loop ;
+      for i in 1 to NumItems loop
+        if CovStructPtr(i).NumBins >= 1 then
+          if CovStructPtr(i).CovWeight < 1 then
+            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+          end if ;
         end if ;
       end loop ;
       file_close(CovYamlFile) ;
