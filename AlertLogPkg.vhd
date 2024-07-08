@@ -120,6 +120,9 @@ use ieee.numeric_std.all ;
 
 package AlertLogPkg is
 
+  constant ALERT_LOG_NOCHECKS_NAME : string := "NOCHECKS" ;
+  constant ALERT_LOG_TIMEOUT_NAME  : string := "TIMEOUT" ;
+  
 --  type   AlertLogIDType       is range integer'low to integer'high ; -- next revision
   subtype  AlertLogIDType       is integer ;
   type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;
@@ -353,7 +356,8 @@ package AlertLogPkg is
     Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ;
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0) ;
-    ReportAll      : Boolean         := FALSE
+    ReportAll      : Boolean         := FALSE ;
+    TimeOut        : boolean         := FALSE 
   ) ;
 
   procedure ReportNonZeroAlerts (
@@ -368,9 +372,10 @@ package AlertLogPkg is
     Prefix         : string := "" ;
     PrintSettings  : boolean := TRUE ;
     PrintChildren  : boolean := TRUE ;
-    OpenKind       : File_Open_Kind := WRITE_MODE
+    OpenKind       : File_Open_Kind := WRITE_MODE ;
+    TimeOut        : boolean 
   ) ;
-  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) ;
+  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0) ; TimeOut : boolean := FALSE) ;
   procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;  -- Deprecated.  Use WriteAlertSummaryYaml.
 
   ------------------------------------------------------------
@@ -728,7 +733,8 @@ package body AlertLogPkg is
       AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
       ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := FALSE ;
-      ReportWhenZero : boolean := TRUE
+      ReportWhenZero : boolean := TRUE ;
+      TimeOut        : boolean := FALSE 
     ) ;
     procedure WriteAlertYaml (
       FileName       : string ;
@@ -736,7 +742,8 @@ package body AlertLogPkg is
       Prefix         : string := "" ;
       PrintSettings  : boolean := TRUE ;
       PrintChildren  : boolean := TRUE ;
-      OpenKind       : File_Open_Kind := WRITE_MODE
+      OpenKind       : File_Open_Kind := WRITE_MODE ;
+      TimeOut        : boolean := FALSE
     ) ;
     procedure WriteRequirementsYaml (
       FileName    : string ;
@@ -1506,7 +1513,8 @@ package body AlertLogPkg is
       variable TotalErrors              : out integer ;
       variable TotalAlertCount          : out AlertCountType ;
       variable TotalRequirementsPassed  : out integer ;
-      variable TotalRequirementsCount   : out integer
+      variable TotalRequirementsCount   : out integer ;
+      constant TimeOut                  : in  boolean
     ) is
       variable DisabledAlertCount : AlertCountType ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
@@ -1529,6 +1537,10 @@ package body AlertLogPkg is
       if FailOnRequirementErrorsVar then
         TotalErrors := TotalErrors + TotalRequirementErrors ;
       end if ;
+
+      if TimeOut then
+        TotalErrors := TotalErrors + 1 ;
+      end if ; 
 
       -- Set AffirmCount for top level
       AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
@@ -1573,7 +1585,8 @@ package body AlertLogPkg is
       Name                        : string ;
       ExternalErrors              : AlertCountType ;
       variable HasDisabledAlerts  : inout Boolean ;
-      variable TestFailed         : inout Boolean
+      variable TestFailed         : inout Boolean ;
+      TimeOut                     : boolean 
     ) is
 --      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
 --      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
@@ -1606,6 +1619,10 @@ package body AlertLogPkg is
       if FailOnRequirementErrorsVar then
         TotalErrors := TotalErrors + TotalRequirementErrors ;
       end if ;
+      
+      if TimeOut then
+        TotalErrors := TotalErrors + 1 ;
+      end if ; 
 
       TestFailed := TotalErrors /= 0 ;
 
@@ -1619,21 +1636,34 @@ package body AlertLogPkg is
       end if ;
 
       if not TestFailed then
-        write(buf,
---!!          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
---!!          ResolveOsvvmPassName(PassNameVar.GetOpt) & "   " &  -- PassName
-          ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-          ALERT_LOG_PASS_NAME & "   " &  -- PassName
-          Name
-        ) ;
+        if AffirmCheckCountVar = 0 then 
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_NOCHECKS_NAME & "   " &  -- NoChecksName
+            Name
+          ) ;
+        else
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_PASS_NAME & "   " &  -- PassName
+            Name
+          ) ;
+        end if; 
       else
-        write(buf,
---!!          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
---!!          ResolveOsvvmFailName(FailNameVar.GetOpt) & "   " &  -- FailName
-          ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-          ALERT_LOG_FAIL_NAME & "   " &  -- FailName
-          Name
-        ) ;
+        if TimeOut then 
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_TIMEOUT_NAME & "   " &  -- TimeOutName
+            Name
+          ) ;
+
+        else
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_FAIL_NAME & "   " &  -- FailName
+            Name
+          ) ;
+        end if ;
       end if ;
 --?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
       if TestFailed then
@@ -1760,7 +1790,8 @@ package body AlertLogPkg is
       AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
       ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := FALSE ;
-      ReportWhenZero : boolean := TRUE
+      ReportWhenZero : boolean := TRUE ;
+      TimeOut        : boolean := FALSE 
     ) is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
@@ -1780,7 +1811,8 @@ package body AlertLogPkg is
           Name               => Name,
           ExternalErrors     => ExternalErrors,
           HasDisabledAlerts  => HasDisabledErrors,
-          TestFailed         => TestFailed
+          TestFailed         => TestFailed,
+          TimeOut            => TimeOut
         ) ;
       else
         PrintTopAlerts (
@@ -1788,7 +1820,8 @@ package body AlertLogPkg is
           Name               => AlertLogPtr(localAlertLogID).Name.all,
           ExternalErrors     => ExternalErrors,
           HasDisabledAlerts  => HasDisabledErrors,
-          TestFailed         => TestFailed
+          TestFailed         => TestFailed,
+          TimeOut            => TimeOut
         ) ;
       end if ;
       --Print Hierarchy when enabled and test failed
@@ -1830,7 +1863,8 @@ package body AlertLogPkg is
         Name               => AlertLogPtr(ALERTLOG_BASE_ID).Name.all,
         ExternalErrors     => (0,0,0),
         HasDisabledAlerts  => HasDisabledErrors,
-        TestFailed         => TestFailed
+        TestFailed         => TestFailed,
+          TimeOut          => FALSE
       ) ;
       IterateAndPrintChildren(
         AlertLogID         => REQUIREMENT_ALERTLOG_ID,
@@ -1896,6 +1930,26 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     --  pt local
+    impure function GetTestResultStatus (TotalErrors : integer ; TimeOut : boolean) return string is
+    ------------------------------------------------------------
+    begin
+      if TotalErrors = 0 then
+        if AffirmCheckCountVar = 0 then 
+          return "NOCHECKS" ;
+        else
+          return "PASSED" ; 
+        end if; 
+      else
+        if TimeOut then 
+          return "TIMEOUT" ; 
+        else
+          return "FAILED" ; 
+        end if; 
+      end if ;
+    end function GetTestResultStatus ;
+    
+    ------------------------------------------------------------
+    --  pt local
     procedure WriteOneAlertYaml (
     ------------------------------------------------------------
       file TestFile : text ;
@@ -1904,14 +1958,15 @@ package body AlertLogPkg is
       RequirementsPassed   : integer ;
       RequirementsGoal     : integer ;
       FirstPrefix          : string := "" ;
-      Prefix               : string := ""
+      Prefix               : string := "" ;
+      TimeOut              : boolean := FALSE
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
     begin
       Write(buf,
         FirstPrefix & "Name: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
-        Prefix & "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED")        & LF  &
+        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut)        & LF  &
         Prefix & "Results: {" &
           "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
           "AlertCount: {" &
@@ -2034,7 +2089,8 @@ package body AlertLogPkg is
       ExternalErrors : AlertCountType ;
       Prefix         : string ;
       PrintSettings  : boolean ;
-      PrintChildren  : boolean
+      PrintChildren  : boolean ;
+      TimeOut        : boolean 
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       variable TotalErrors : integer ;
@@ -2051,7 +2107,8 @@ package body AlertLogPkg is
         TotalErrors              => TotalErrors            ,
         TotalAlertCount          => TotalAlertCount        ,
         TotalRequirementsPassed  => TotalRequirementsPassed,
-        TotalRequirementsCount   => TotalRequirementsCount
+        TotalRequirementsCount   => TotalRequirementsCount , 
+        TimeOut                  => TimeOut
       ) ;
 
       WriteOneAlertYaml (
@@ -2061,7 +2118,8 @@ package body AlertLogPkg is
         RequirementsPassed       => TotalRequirementsPassed,
         RequirementsGoal         => TotalRequirementsCount,
         FirstPrefix              => Prefix,
-        Prefix                   => Prefix
+        Prefix                   => Prefix,
+        TimeOut                  => TimeOut
       ) ;
       if PrintSettings then
         WriteSettingsYaml(
@@ -2087,14 +2145,15 @@ package body AlertLogPkg is
       Prefix         : string := "" ;
       PrintSettings  : boolean := TRUE ;
       PrintChildren  : boolean := TRUE ;
-      OpenKind       : File_Open_Kind := WRITE_MODE
+      OpenKind       : File_Open_Kind := WRITE_MODE ;
+      TimeOut        : boolean := FALSE
     ) is
       file     FileID : text ;
       variable status : file_open_status ;
     begin
       file_open(status, FileID, FileName, OpenKind) ;
       if status = OPEN_OK then
-        WriteAlertYaml(FileID, ExternalErrors, Prefix, PrintSettings, PrintChildren) ;
+        WriteAlertYaml(FileID, ExternalErrors, Prefix, PrintSettings, PrintChildren, TimeOut) ;
         file_close(FileID) ;
       else
         Alert("WriteAlertYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ;
@@ -5840,11 +5899,12 @@ package body AlertLogPkg is
     Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ;
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0) ;
-    ReportAll      : Boolean         := FALSE
+    ReportAll      : Boolean         := FALSE ;
+    TimeOut        : boolean         := FALSE 
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE, TimeOut) ;
     -- synthesis translate_on
   end procedure ReportAlerts ;
 
@@ -5857,7 +5917,7 @@ package body AlertLogPkg is
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE, FALSE) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE, FALSE, FALSE) ;
     -- synthesis translate_on
   end procedure ReportNonZeroAlerts ;
 
@@ -5869,21 +5929,22 @@ package body AlertLogPkg is
     Prefix         : string := "" ;
     PrintSettings  : boolean := TRUE ;
     PrintChildren  : boolean := TRUE ;
-    OpenKind       : File_Open_Kind := WRITE_MODE
+    OpenKind       : File_Open_Kind := WRITE_MODE ;
+    TimeOut        : boolean 
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.WriteAlertYaml(FileName, ExternalErrors, Prefix, PrintSettings, PrintChildren, OpenKind) ;
+    AlertLogStruct.WriteAlertYaml(FileName, ExternalErrors, Prefix, PrintSettings, PrintChildren, OpenKind, TimeOut) ;
     -- synthesis translate_on
   end procedure WriteAlertYaml ;
 
   ------------------------------------------------------------
-  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) is
+  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0) ; TimeOut : boolean := FALSE) is
   ------------------------------------------------------------
     constant RESOLVED_FILE_NAME : string := IfElse(FileName'length = 0, OSVVM_BUILD_YAML_FILE, FileName) ;
   begin
     -- synthesis translate_off
-    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
+    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE, TimeOut => TimeOut) ;
     -- WriteTestSummary(FileName => OSVVM_BUILD_YAML_FILE, OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ;
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;

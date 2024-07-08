@@ -61,20 +61,22 @@ package ReportPkg is
 
   impure function EndOfTestReports (
     ReportAll      : boolean        := FALSE ;
-    ExternalErrors : AlertCountType := (0,0,0) 
+    ExternalErrors : AlertCountType := (0,0,0) ;
+    TimeOut        : boolean        := FALSE 
   ) return integer ;
 
   procedure EndOfTestReports (
     ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
-    Stop           : boolean        := FALSE
+    Stop           : boolean        := FALSE ;
+    TimeOut        : boolean        := FALSE 
   ) ;
   
   procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
   procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
 
-  alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType return integer] ;
-  alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean] ;
+  alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean return integer] ;
+  alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean, boolean] ;
 
 end ReportPkg ;
 
@@ -118,10 +120,11 @@ package body ReportPkg is
   impure function EndOfTestReports (
   ------------------------------------------------------------
     ReportAll      : boolean        := FALSE ;
-    ExternalErrors : AlertCountType := (0,0,0) 
+    ExternalErrors : AlertCountType := (0,0,0) ;
+    TimeOut        : boolean        := FALSE 
   ) return integer is
   begin
-    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll) ; 
+    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
     
     if GotCoverage then 
       WriteCovYaml (
@@ -152,7 +155,8 @@ package body ReportPkg is
     -- Summarize Alerts Last to allow previous steps to update Alerts
     WriteAlertSummaryYaml(
       FileName        => OSVVM_BUILD_YAML_FILE, 
-      ExternalErrors  => ExternalErrors
+      ExternalErrors  => ExternalErrors,
+      TimeOut         => TimeOut
     ) ; 
     WriteCovSummaryYaml (
       FileName        => OSVVM_BUILD_YAML_FILE
@@ -162,7 +166,8 @@ package body ReportPkg is
     ) ;
     WriteAlertYaml (
       FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
-      ExternalErrors  => ExternalErrors
+      ExternalErrors  => ExternalErrors,
+      TimeOut         => TimeOut
     ) ; 
     
     TranscriptClose ; -- Close Transcript if open
@@ -175,11 +180,12 @@ package body ReportPkg is
   ------------------------------------------------------------
     ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
-    Stop           : boolean        := FALSE
+    Stop           : boolean        := FALSE ;
+    TimeOut        : boolean        := FALSE 
   ) is
     variable ErrorCount : integer ; 
   begin
-    ErrorCount := EndOfTestReports(ReportAll, ExternalErrors) ;
+    ErrorCount := EndOfTestReports(ReportAll, ExternalErrors, TimeOut) ;
     if Stop then 
       std.env.stop ; 
     end if ;
