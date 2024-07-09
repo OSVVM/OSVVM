@@ -280,10 +280,11 @@ package TbUtilPkg is
   ------------------------------------------------------------
   -- Predefined barrier signals
   ------------------------------------------------------------
-  signal TestInit  : BarrierType ; 
-  signal ResetDone : BarrierType ; 
-  signal TestDone  : BarrierType ; 
-  signal VcInit    : BarrierType ; 
+  signal OsvvmTestInit  : BarrierType ; 
+  signal OsvvmResetDone : BarrierType ; 
+  signal OsvvmTestDone  : BarrierType ; 
+  signal TestDone       : BarrierType ; 
+  signal OsvvmVcInit    : BarrierType ; 
 
   ------------------------------------------------------------
   -- WaitForClock
