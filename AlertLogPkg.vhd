@@ -1864,7 +1864,7 @@ package body AlertLogPkg is
         ExternalErrors     => (0,0,0),
         HasDisabledAlerts  => HasDisabledErrors,
         TestFailed         => TestFailed,
-          TimeOut          => FALSE
+        TimeOut            => FALSE
       ) ;
       IterateAndPrintChildren(
         AlertLogID         => REQUIREMENT_ALERTLOG_ID,
@@ -1930,11 +1930,11 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     --  pt local
-    impure function GetTestResultStatus (TotalErrors : integer ; TimeOut : boolean) return string is
+    impure function GetTestResultStatus (TotalErrors : integer ; TimeOut : boolean ; TopLevel : boolean) return string is
     ------------------------------------------------------------
     begin
       if TotalErrors = 0 then
-        if AffirmCheckCountVar = 0 then 
+        if TopLevel and AffirmCheckCountVar = 0 then 
           return "NOCHECKS" ;
         else
           return "PASSED" ; 
@@ -1959,14 +1959,15 @@ package body AlertLogPkg is
       RequirementsGoal     : integer ;
       FirstPrefix          : string := "" ;
       Prefix               : string := "" ;
-      TimeOut              : boolean := FALSE
+      TimeOut              : boolean := FALSE ; 
+      TopLevel             : boolean := FALSE 
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
     begin
       Write(buf,
         FirstPrefix & "Name: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
-        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut)        & LF  &
+        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut, TopLevel)        & LF  &
         Prefix & "Results: {" &
           "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
           "AlertCount: {" &
@@ -2119,7 +2120,8 @@ package body AlertLogPkg is
         RequirementsGoal         => TotalRequirementsCount,
         FirstPrefix              => Prefix,
         Prefix                   => Prefix,
-        TimeOut                  => TimeOut
+        TimeOut                  => TimeOut, 
+        TopLevel                 => TRUE
       ) ;
       if PrintSettings then
         WriteSettingsYaml(
