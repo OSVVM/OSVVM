@@ -77,6 +77,9 @@ package MemoryGenericPkg is
   type MemoryIDType is record
     ID : integer_max ;
   end record MemoryIDType ; 
+  
+  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'left) ; 
+
   type MemoryIDArrayType is array (integer range <>) of MemoryIDType ;
 
   constant OSVVM_MEMORY_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
@@ -90,6 +93,8 @@ package MemoryGenericPkg is
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType ;
+
+  impure function IsInitialized (ID : MemoryIDType) return boolean ;
 
   ------------------------------------------------------------
   procedure MemWrite ( 
@@ -198,6 +203,8 @@ package MemoryGenericPkg is
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return integer ;
+
+    impure function IsInitialized (ID : MemoryIDType) return boolean ;
 
     ------------------------------------------------------------
     procedure MemWrite ( 
@@ -513,6 +520,13 @@ package body MemoryGenericPkg is
       end if ;
     end function NewID ;
     
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : MemoryIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= MEMORY_ID_UNINITIALZED ;
+    end function IsInitialized ;
+
     ------------------------------------------------------------
     -- PT Local 
     impure function IdOutOfRange(
@@ -1366,6 +1380,13 @@ package body MemoryGenericPkg is
     Result.ID := MemoryStore.NewID(Name, AddrWidth, DataWidth, ParentID, ReportMode, Search, PrintParent) ; 
     return Result ; 
   end function NewID ; 
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : MemoryIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    return MemoryStore.IsInitialized(ID) ;
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   procedure MemWrite ( 

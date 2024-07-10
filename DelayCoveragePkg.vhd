@@ -58,8 +58,9 @@ package DelayCoveragePkg is
       BurstDelayCov  : CoverageIDType ; 
       BeatDelayCov   : CoverageIDType ; 
   end record DelayCoverageIDType ; 
-  
   type DelayCoverageIDArrayType is array (integer range <>) of DelayCoverageIDType ;  
+
+  constant DELAYCOVERAGE_ID_UNINITIALZED : DelayCoverageIDType := (ID => integer'left, others => COVERAGE_ID_UNINITIALZED) ; 
   
   ------------------------------------------------------------
   --- ///////////////////////////////////////////////////////////////////////////
@@ -83,6 +84,9 @@ package DelayCoveragePkg is
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return DelayCoverageIDType ;
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : DelayCoverageIDType) return boolean ;
 
   ------------------------------------------------------------
   impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
@@ -202,6 +206,9 @@ package body DelayCoveragePkg is
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return DelayCoverageIDType ;
+
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : DelayCoverageIDType) return boolean ;
 
     impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
     procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
@@ -411,6 +418,13 @@ package body DelayCoveragePkg is
       SetCovWeight(NewCoverageID.BeatDelayCov, 0) ; 
       return NewCoverageID ; 
     end function NewDelayCoverage ; 
+    
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : DelayCoverageIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= DELAYCOVERAGE_ID_UNINITIALZED ;
+    end function IsInitialized ;
 
     ------------------------------------------------------------
     impure function GetDelayCoverage ( ID : integer ) return DelayCoverageIDType is
@@ -665,6 +679,13 @@ package body DelayCoveragePkg is
   begin
     return DelayCoverage.NewDelayCoverage (ID, Name, ParentID, ReportMode, Search, PrintParent) ;
   end function NewDelayCoverage ; 
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : DelayCoverageIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    return DelayCoverage.IsInitialized(ID) ;
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   impure function GetDelayCoverage ( ID : integer ) return DelayCoverageIDType is

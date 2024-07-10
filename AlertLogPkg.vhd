@@ -125,6 +125,8 @@ package AlertLogPkg is
   
 --  type   AlertLogIDType       is range integer'low to integer'high ; -- next revision
   subtype  AlertLogIDType       is integer ;
+  constant ALERTLOG_ID_UNINITIALZED : AlertLogIdType := integer'left ; 
+  
   type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;
   type     AlertType            is (FAILURE, ERROR, WARNING) ;  -- NEVER
   subtype  AlertIndexType       is AlertType range FAILURE to WARNING ;
@@ -494,6 +496,7 @@ package AlertLogPkg is
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType ;
   impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
+  impure function IsInitialized (ID : AlertLogIDType) return boolean ;
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
   procedure SetAlertLogPrefix(AlertLogID : AlertLogIDType; Name : string ) ;
@@ -819,6 +822,7 @@ package body AlertLogPkg is
     ) return AlertLogIDType ;
     -- impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType; CreateHierarchy : Boolean; DoNotReport : Boolean) return AlertLogIDType ;
     impure function GetReqID(Name : string ; PassedGoal : integer ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
+    impure function IsInitialized (ID : AlertLogIDType) return boolean ;
     procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
     procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) ;
@@ -3501,6 +3505,13 @@ package body AlertLogPkg is
       CalcJustifyOneLevel(ResultID) ; 
       return ResultID ;
     end function GetReqID ;
+
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : AlertLogIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= ALERTLOG_ID_UNINITIALZED ;
+    end function IsInitialized ;
 
     ------------------------------------------------------------
     procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) is
@@ -6494,6 +6505,15 @@ package body AlertLogPkg is
     -- synthesis translate_on
     return result ;
   end function GetReqID ;
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : AlertLogIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    return AlertLogStruct.IsInitialized(ID) ;
+    -- synthesis translate_on
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) is

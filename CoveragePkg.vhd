@@ -137,6 +137,8 @@ package CoveragePkg is
   type CoverageIDType is record
     ID : integer_max ;
   end record CoverageIDType ;
+  
+  constant COVERAGE_ID_UNINITIALZED : CoverageIdType := (ID => integer'left) ; 
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
@@ -2532,7 +2534,11 @@ package body CoveragePkg is
     impure function IsInitialized (ID : CoverageIDType) return boolean is
     ------------------------------------------------------------
     begin
-      return CovStructPtr(ID.ID).NumBins > 0 ;
+      if ID =  COVERAGE_ID_UNINITIALZED then 
+        return FALSE ; 
+      else 
+        return CovStructPtr(ID.ID).NumBins > 0 ;
+      end if ; 
     end function IsInitialized ;
 
     ------------------------------------------------------------

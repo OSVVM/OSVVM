@@ -56,6 +56,7 @@ package NameStorePkg is
   type NameIDArrayType is array (integer range <>) of NameIDType ;  
   type NameSearchType is (PRIVATE_NAME, NAME, NAME_AND_PARENT, NAME_AND_PARENT_ELSE_PRIVATE) ; 
   constant ID_NOT_FOUND : NameIDType := (ID => -1) ; 
+  constant NAME_ID_UNINITIALZED : NameIdType := (ID => integer'left) ; 
   
   ------------------------------------------------------------
   impure function NewID (
@@ -64,6 +65,9 @@ package NameStorePkg is
     Search   : NameSearchType := NAME 
   ) return NameIDType ;
   
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : NameIDType) return boolean ;
+
   ------------------------------------------------------------
   procedure Set (
     ID       : NameIDType ; 
@@ -101,6 +105,9 @@ package NameStorePkg is
       ParentID : AlertLogIdType := ALERTLOG_BASE_ID ;
       Search   : NameSearchType := NAME 
     ) return integer ;
+
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : NameIDType) return boolean ;
 
     ------------------------------------------------------------
     procedure Set (
@@ -208,6 +215,13 @@ package body NameStorePkg is
       Set(NumItems, iName, ParentID, Search) ; 
       return NumItems ; 
     end function NewID ;
+
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : NameIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= NAME_ID_UNINITIALZED ;
+    end function IsInitialized ;
 
     ------------------------------------------------------------
     procedure Set (
@@ -335,6 +349,13 @@ package body NameStorePkg is
     Result.ID := NameStore.NewID(iName, ParentID, Search) ;
     return Result ; 
   end function NewID ;
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : NameIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    return NameStore.IsInitialized(ID) ;
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   procedure Set (

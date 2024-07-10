@@ -95,7 +95,7 @@ package ScoreboardGenericPkg is
   generic (
     type ExpectedType ;
     type ActualType ;
-    function Match(Actual : ActualType ;                           -- defaults
+    impure function Match(Actual : ActualType ;                           -- defaults
                    Expected : ExpectedType) return boolean ;       -- is "=" ;
     function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
     function actual_to_string  (A : ActualType) return string      -- is to_string ;
@@ -120,6 +120,8 @@ package ScoreboardGenericPkg is
   end record ScoreboardIdType ;
   type ScoreboardIdArrayType  is array (integer range <>) of ScoreboardIdType ;
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;
+
+  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'left) ; 
 
   -- Preparation for refactoring - if that ever happens.
   subtype FifoIdType       is ScoreboardIdType ;
@@ -179,6 +181,9 @@ package ScoreboardGenericPkg is
     Search        : NameSearchType          := PRIVATE_NAME ;
     PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return ScoreboardIdMatrixType ;
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : ScoreboardIDType) return boolean ;
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
@@ -547,6 +552,9 @@ package ScoreboardGenericPkg is
       Search        : NameSearchType          := PRIVATE_NAME ;
       PrintParent   : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return ScoreboardIdMatrixType ;
+
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : ScoreboardIDType) return boolean ;
 
     ------------------------------------------------------------
     -- Emulate arrays of scoreboards
@@ -1300,6 +1308,13 @@ package body ScoreboardGenericPkg is
       AlertIf(ParentID, Y(Y'Left) > Y(Y'right), "ScoreboardPkg.NewID Matrix parameter Y(Y'left): " & to_string(Y'Left) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ;
       return LocalNewID(Name, X, Y, ParentID, ReportMode, Search, PrintParent) ;
     end function NewID ;
+
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : ScoreboardIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= SCOREBOARD_ID_UNINITIALZED ;
+    end function IsInitialized ;
 
     ------------------------------------------------------------
     procedure SetName (Name : String) is
@@ -3001,7 +3016,12 @@ package body ScoreboardGenericPkg is
     return ScoreboardStore.NewID(Name, X, Y, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
-
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : ScoreboardIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    return ScoreboardStore.IsInitialized(ID) ; 
+  end function IsInitialized ; 
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
