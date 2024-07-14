@@ -91,11 +91,16 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
   analyze VendorCovApiPkg.vhd
 }
 
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze LanguageSupport2019Pkg.vhd
+} else {
+  analyze LanguageSupport2019Pkg_c.vhd
+}
+
 analyze TranscriptPkg.vhd
 analyze AlertLogPkg.vhd
 
 analyze TbUtilPkg.vhd
-analyze ClockResetPkg.vhd
 
 analyze NameStorePkg.vhd
 
@@ -111,12 +116,21 @@ analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 analyze DelayCoveragePkg.vhd
 
+if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
+  analyze ClockResetPkg.vhd
+} else {
+  analyze deprecated/ClockResetPkg_2024_05.vhd
+}
+
 analyze ResizePkg.vhd
 
 if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze ScoreboardGenericPkg.vhd
   analyze ScoreboardPkg_slv.vhd
   analyze ScoreboardPkg_int.vhd
+  analyze ScoreboardPkg_signed.vhd
+  analyze ScoreboardPkg_unsigned.vhd
+  analyze ScoreboardPkg_IntV.vhd
 } else {
   analyze ScoreboardPkg_slv_c.vhd
   analyze ScoreboardPkg_int_c.vhd
