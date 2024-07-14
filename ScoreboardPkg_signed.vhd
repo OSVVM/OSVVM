@@ -19,15 +19,12 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    08/2012   2012.08    Generic Instance of ScoreboardGenericPkg
---    08/2014   2013.08    Updated interface for Match and to_string
---    11/2016   2016.11    Released as part of OSVVM library
---    01/2020   2020.01    Updated Licenses to Apache
+--    07/2023   2024.07    Generic Instance of ScoreboardGenericPkg based on ScoreboardPkg_slv
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2006 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2024 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -42,8 +39,6 @@
 --  limitations under the License.
 --  
 
-use std.textio.all ;
-
 library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
@@ -53,7 +48,7 @@ package ScoreBoardPkg_signed is new work.ScoreboardGenericPkg
   generic map (
     ExpectedType        => signed,
     ActualType          => signed,
-    Match               => "=",  
-    expected_to_string  => to_hstring,
-    actual_to_string    => to_hstring
+    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [signed, signed return boolean]
+    expected_to_string  => work.TextUtilPkg.to_hxstring,  --    [signed return string] 
+    actual_to_string    => work.TextUtilPkg.to_hxstring   --    [signed return string]  
   ) ;  
