@@ -41,10 +41,12 @@ library ieee ;
   use ieee.std_logic_1164.all ;
 
   use work.AlertLogPkg.all ;
+  use work.CoveragePkg.all ;
   use work.TranscriptPkg.all ;
   use work.ResolutionPkg.all ;
   use work.OsvvmGlobalPkg.all ;
   use work.TbUtilPkg.all ;
+  use work.IfElsePkg.all ;
 
 package ClockResetPkg is
 
@@ -53,10 +55,36 @@ package ClockResetPkg is
   --   Note these do not exit
   ------------------------------------------------------------
   procedure CreateClock (
+    signal   Clk             : inout std_logic ;
+    constant Period          : time ;
+    constant DutyCycle       : real := 0.5 ;
+    constant Offset          : time := 0 sec ;
+    constant ActiveValue     : std_logic := '1' 
+  ) ;
+
+  procedure CreateClock (
+    signal   Clk             : inout std_logic ;
+    signal   Enable          : in boolean ; 
+    constant Period          : time ;
+    constant DutyCycle       : real := 0.5 ;
+    constant Offset          : time := 0 sec ;
+    constant ActiveValue     : std_logic := '1' 
+  ) ;
+
+  procedure CreateJitterClock (
+    signal   Clk             : inout std_logic ;
+    variable CoverID         : inout CoverageIdType ; 
+    constant Period          : time ;
+    constant DutyCycle       : real := 0.5 ;
+    constant Offset          : time := 0 sec ;
+    constant ActiveValue     : std_logic := '1' 
+  ) ;
+
+  procedure OldCreateClock (
     signal   Clk        : inout std_logic ;
     constant Period     : time ;
     constant DutyCycle  : real := 0.5
-  )  ;
+  ) ;
 
   procedure CheckClockPeriod (
     constant AlertLogID : AlertLogIDType ;
@@ -107,6 +135,96 @@ package body ClockResetPkg is
   --   Note these do not exit
   ------------------------------------------------------------
   procedure CreateClock (
+    signal   Clk             : inout std_logic ;
+    constant Period          : time ;
+    constant DutyCycle       : real := 0.5 ;
+    constant Offset          : time := 0 sec ;
+    constant ActiveValue     : std_logic := '1' 
+  ) is
+    constant ACTIVE_TIME     : time := Period * DutyCycle ;
+    constant INACTIVE_TIME   : time := Period - ACTIVE_TIME ;
+    constant INACTIVE_VALUE  : std_logic := not ActiveValue ; 
+  begin
+    if Clk = 'U' then 
+      Clk <= INACTIVE_VALUE ; 
+    end if ; 
+    wait for Offset ;
+    Clk <= ActiveValue, INACTIVE_VALUE after ACTIVE_TIME, ActiveValue after Period ;
+    wait for Period ;     
+    loop 
+      Clk <= INACTIVE_VALUE after ACTIVE_TIME, ActiveValue after Period ; 
+      wait for Period ;     
+    end loop ; 
+  end procedure CreateClock ;
+
+  procedure CreateClock (
+    signal   Clk             : inout std_logic ;
+    signal   Enable          : in boolean ; 
+    constant Period          : time ;
+    constant DutyCycle       : real := 0.5 ;
+    constant Offset          : time := 0 sec ;
+    constant ActiveValue     : std_logic := '1' 
+  ) is
+    constant ACTIVE_TIME     : time := Period * DutyCycle ;
+    constant INACTIVE_TIME   : time := Period - ACTIVE_TIME ;
+    constant INACTIVE_VALUE  : std_logic := not ActiveValue ; 
+  begin
+    if Clk = 'U' then 
+      Clk <= INACTIVE_VALUE ; 
+    end if ; 
+    wait for Offset ;
+    if not Enable then 
+      wait until Enable ; 
+    end if ; 
+    Clk <= ActiveValue, INACTIVE_VALUE after ACTIVE_TIME, ActiveValue after Period ;
+    wait for Period ;     
+    loop 
+      if not Enable then 
+        wait until Enable ; 
+      end if ; 
+      Clk <= INACTIVE_VALUE after ACTIVE_TIME, ActiveValue after Period ; 
+      wait for Period ;     
+    end loop ; 
+  end procedure CreateClock ;
+  
+  procedure CreateJitterClock (
+    signal   Clk             : inout std_logic ;
+    variable CoverID         : inout CoverageIdType ; 
+    constant Period          : time ;
+    constant DutyCycle       : real := 0.5 ;
+    constant Offset          : time := 0 sec ;
+    constant ActiveValue     : std_logic := '1' 
+  ) is
+    variable RandClkPeriod   : time ; 
+    variable BurstLength, ClockVariance : integer ; 
+    constant ACTIVE_TIME     : time := Period * DutyCycle ;
+    constant INACTIVE_TIME   : time := Period - ACTIVE_TIME ;
+    constant INACTIVE_VALUE  : std_logic := not ActiveValue ; 
+  begin
+    CoverID := NewID("JitterClk") ; 
+    AddCross(CoverID, GenBin(1,20,1), GenBin(900,1100)) ; 
+
+    if Clk = 'U' then 
+      Clk <= INACTIVE_VALUE ; 
+    end if ; 
+    wait for Offset ;
+    Clk <= ActiveValue, INACTIVE_VALUE after ACTIVE_TIME, ActiveValue after Period ;
+    wait for Period ;     
+    loop 
+      (BurstLength, ClockVariance) := RandCovPoint(CoverID) ; 
+      RandClkPeriod := (ClockVariance * Period) / 1000 ; 
+      for i in 1 to BurstLength loop 
+        Clk <= INACTIVE_VALUE after ACTIVE_TIME, ActiveValue after Period ; 
+        wait for RandClkPeriod ;
+      end loop ; 
+    end loop ;
+  end procedure CreateJitterClock ;
+
+  ------------------------------------------------------------
+  -- CreateClock,  CreateReset
+  --   Note these do not exit
+  ------------------------------------------------------------
+  procedure OldCreateClock (
     signal   Clk        : inout std_logic ;
     constant Period     : time ;
     constant DutyCycle  : real := 0.5
@@ -115,11 +233,6 @@ package body ClockResetPkg is
     constant LOW_TIME  : time := Period - HIGH_TIME ;
   begin
     if HIGH_TIME = LOW_TIME then
- --     -- Set a 1 if not initialized, otherwise use initialized value.
- --     if Clk = 'U' then 
- --       Clk <= '1' ; 
- --       wait for 0 ns ; 
- --     end if  ;
       loop
         Clk <= toggle_sl_table(Clk) after HIGH_TIME ;
         wait on Clk ;
@@ -133,7 +246,7 @@ package body ClockResetPkg is
         wait for period ;
       end loop ;
     end if ;
-  end procedure CreateClock ;
+  end procedure OldCreateClock ;
 
   procedure CheckClockPeriod (
     constant AlertLogID : AlertLogIDType ;
