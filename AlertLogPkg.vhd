@@ -113,6 +113,8 @@ use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
 use work.OsvvmSettingsPkg.all ;
+use work.LanguageSupport2019Pkg.all ; 
+
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -120,9 +122,6 @@ use ieee.numeric_std.all ;
 
 package AlertLogPkg is
 
-  constant ALERT_LOG_NOCHECKS_NAME : string := "NOCHECKS" ;
-  constant ALERT_LOG_TIMEOUT_NAME  : string := "TIMEOUT" ;
-  
 --  type   AlertLogIDType       is range integer'low to integer'high ; -- next revision
   subtype  AlertLogIDType       is integer ;
   constant ALERTLOG_ID_UNINITIALZED : AlertLogIdType := integer'left ; 
@@ -196,6 +195,7 @@ package AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : character ;         Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : string ;            Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : time ;              Message : string ; Level : AlertType := ERROR ) ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : integer_vector ;    Message : string ; Level : AlertType := ERROR ) ;
 
   procedure AlertIfEqual( L, R : boolean ;          Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR ) ;
@@ -207,6 +207,7 @@ package AlertLogPkg is
   procedure AlertIfEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( L, R : integer_vector ;   Message : string ; Level : AlertType := ERROR ) ;
 
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : boolean ;          Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic ;        Message : string ; Level : AlertType := ERROR ) ;
@@ -218,6 +219,7 @@ package AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : character ;        Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : string ;           Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : time ;             Message : string ; Level : AlertType := ERROR ) ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : integer_vector ;   Message : string ; Level : AlertType := ERROR ) ;
 
   procedure AlertIfNotEqual( L, R : boolean ;          Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR ) ;
@@ -229,6 +231,7 @@ package AlertLogPkg is
   procedure AlertIfNotEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR ) ;
+  procedure AlertIfNotEqual( L, R : integer_vector ;   Message : string ; Level : AlertType := ERROR ) ;
 
   ------------------------------------------------------------
   -- Simple Diff for file comparisons
@@ -283,54 +286,58 @@ package AlertLogPkg is
   procedure AffirmError( Message : string ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE );
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE );
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   -- Without AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE );
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE );
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   -- Without AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfNotEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfNotEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
   procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
@@ -4547,6 +4554,16 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
+  ------------------------------------------------------------
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L = R then
+      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
   -- AlertIfEqual without AlertLogID
@@ -4657,6 +4674,17 @@ package body AlertLogPkg is
     if L = R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits)
                                                            & "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfEqual ;
+
+  ------------------------------------------------------------
+  procedure AlertIfEqual( L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L = R then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4775,6 +4803,17 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
+  ------------------------------------------------------------
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L /= R then
+      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfNotEqual ;
+
 
   ------------------------------------------------------------
   -- AlertIfNotEqual without AlertLogID
@@ -4888,6 +4927,18 @@ package body AlertLogPkg is
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
+
+  ------------------------------------------------------------
+  procedure AlertIfNotEqual( L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L /= R then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfNotEqual ;
+
 
   ------------------------------------------------------------
   -- Local
@@ -5365,6 +5416,18 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(AlertLogID, Received = Expected,
+      Message & " Received : " & to_string(Received),
+               "= Expected : " & to_string(Expected),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfEqual ;
+
   -- Without AlertLogID
   ------------------------------------------------------------
   procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
@@ -5482,6 +5545,19 @@ package body AlertLogPkg is
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits),
                 "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfEqual ;
+
+
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
+      Message & " Received : " & to_string(Received),
+               "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5607,6 +5683,18 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
 
+  ------------------------------------------------------------
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(AlertLogID, Received /= Expected,
+      Message & " Received : " & to_string(Received),
+               "/= Expected : " & to_string(Expected),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotEqual ;
+
   -- Without AlertLogID
   ------------------------------------------------------------
   procedure AffirmIfNotEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
@@ -5724,6 +5812,18 @@ package body AlertLogPkg is
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
       Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits) &
                 " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotEqual ;
+
+  ------------------------------------------------------------
+  procedure AffirmIfNotEqual( Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
+      Message & " Received : " & to_string(Received),
+               "/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
