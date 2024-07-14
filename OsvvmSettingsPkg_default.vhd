@@ -115,6 +115,11 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_PASS_NAME        : string := OSVVM_PASS_NAME ;
   constant  ALERT_LOG_FAIL_NAME        : string := OSVVM_FAIL_NAME ;
   
+--  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
+--  constant ALERT_LOG_NOCHECKS_NAME     : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024.07", "NOCHECKS", "PASSED") ;
+  constant ALERT_LOG_NOCHECKS_NAME     : string := "NOCHECKS" ;
+  constant ALERT_LOG_TIMEOUT_NAME      : string := "TIMEOUT" ;
+  
   -- Defaults for Stop Counts
   constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 0 ;
   constant  ALERT_LOG_STOP_COUNT_ERROR           : integer := integer'high ; --  VUnit 1

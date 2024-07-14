@@ -110,6 +110,9 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_PASS_NAME        : string ;
   constant  ALERT_LOG_FAIL_NAME        : string ;
   
+  constant ALERT_LOG_NOCHECKS_NAME     : string ;
+  constant ALERT_LOG_TIMEOUT_NAME      : string ;
+  
   -- Defaults for Stop Counts
   constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer ;  -- OSVVM 0
   constant  ALERT_LOG_STOP_COUNT_ERROR           : integer ;  -- OSVVM 2**31-1, VUnit 1
