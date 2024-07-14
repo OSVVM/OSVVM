@@ -132,8 +132,8 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze ScoreboardPkg_unsigned.vhd
   analyze ScoreboardPkg_IntV.vhd
 } else {
-  analyze ScoreboardPkg_slv_c.vhd
-  analyze ScoreboardPkg_int_c.vhd
+  analyze deprecated/ScoreboardPkg_slv_c.vhd
+  analyze deprecated/ScoreboardPkg_int_c.vhd
 }
 
 analyze MemorySupportPkg.vhd
@@ -145,8 +145,8 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   }
   analyze MemoryPkg.vhd
 } else {
-  analyze MemoryPkg_c.vhd
-  analyze MemoryPkg_orig_c.vhd
+  analyze deprecated/MemoryPkg_c.vhd
+  analyze deprecated/MemoryPkg_orig_c.vhd
 }
 
 analyze ReportPkg.vhd
