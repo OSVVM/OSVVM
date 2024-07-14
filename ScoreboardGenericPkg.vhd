@@ -97,8 +97,8 @@ package ScoreboardGenericPkg is
     type ActualType ;
     impure function Match(Actual : ActualType ;                           -- defaults
                    Expected : ExpectedType) return boolean ;       -- is "=" ;
-    function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
-    function actual_to_string  (A : ActualType) return string      -- is to_string ;
+    impure function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
+    impure function actual_to_string  (A : ActualType) return string      -- is to_string ;
   ) ;
 
 --   --  For a VHDL-2002 package, comment out the generics and
