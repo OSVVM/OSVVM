@@ -89,6 +89,8 @@ package TbUtilPkg is
   function  EdgeRose ( signal C : in std_logic ) return boolean ;
   function  EdgeFell ( signal C : in std_logic ) return boolean ;
   function  EdgeActive ( signal C : in std_logic; A : std_logic ) return boolean ;
+  function  ChangingEdge ( signal C : in std_logic; A : std_logic ) return boolean ; -- rising/falling edge that can be specified
+  alias changing_edge is ChangingEdge [std_logic, std_logic return boolean] ; -- matching naming of rising_edge
   procedure FindRisingEdge ( signal C : in std_logic) ;
   procedure FindFallingEdge ( signal C : in std_logic ) ;
   procedure FindActiveEdge ( signal C : in std_logic; A : std_logic ) ;
@@ -115,9 +117,10 @@ package TbUtilPkg is
   ) ;
 
   procedure WaitForTransaction (
-    signal Clk  : In  std_logic ;
-    signal Rdy  : In  std_logic ;
-    signal Ack  : Out std_logic
+    signal Clk         : In  std_logic ;
+    signal Rdy         : In  std_logic ;
+    signal Ack         : Out std_logic ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) ;
 
   -- Only for clockless models
@@ -136,9 +139,10 @@ package TbUtilPkg is
   ) ;
 
   procedure WaitForTransaction (
-    signal Clk  : In  std_logic ;
-    signal Rdy  : In  bit ;
-    signal Ack  : Out bit
+    signal Clk         : In  std_logic ;
+    signal Rdy         : In  bit ;
+    signal Ack         : Out bit ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) ;
   
   -- Only for clockless models
@@ -160,9 +164,10 @@ package TbUtilPkg is
   ) ;
 
   procedure WaitForTransaction (
-    signal Clk      : In    std_logic ;
-    signal Rdy      : In    RdyType ;
-    signal Ack      : InOut AckType
+    signal Clk         : In    std_logic ;
+    signal Rdy         : In    RdyType ;
+    signal Ack         : InOut AckType ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) ;
 
   -- Only for clockless models
@@ -177,19 +182,21 @@ package TbUtilPkg is
   --   std_logic / std_logic 
   ------------------------------------------------------------
   procedure WaitForTransaction (
-    signal   Clk       : In  std_logic ;
-    signal   Rdy       : In  std_logic ;
-    signal   Ack       : Out std_logic ;
-    signal   TimeOut   : In  std_logic ;
-    constant Polarity  : In  std_logic := '1'
+    signal   Clk            : In  std_logic ;
+    signal   Rdy            : In  std_logic ;
+    signal   Ack            : Out std_logic ;
+    signal   TimeOut        : In  std_logic ;
+    constant TimeOutActive  : In  std_logic := '1' ;
+    constant ClkActive      : In std_logic := CLK_ACTIVE
   ) ;
 
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
   procedure WaitForTransactionOrIrq (
-    signal Clk     : In  std_logic ;
-    signal Rdy     : In  std_logic ;
-    signal IntReq  : In  std_logic
+    signal Clk         : In  std_logic ;
+    signal Rdy         : In  std_logic ;
+    signal IntReq      : In  std_logic ;
+    constant ClkActive : In  std_logic := CLK_ACTIVE
   ) ;
 
   -- Set Ack to Model starting value
@@ -206,11 +213,12 @@ package TbUtilPkg is
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
   procedure WaitForTransactionOrIrq (
-    signal   Clk      : In  std_logic ;
-    signal   Rdy      : In  RdyType ;
-    signal   Ack      : In  AckType ;
-    signal   IntReq   : In  std_logic ;
-    constant POLARITY : In  std_logic := '1' 
+    signal   Clk          : In  std_logic ;
+    signal   Rdy          : In  RdyType ;
+    signal   Ack          : In  AckType ;
+    signal   IntReq       : In  std_logic ;
+    constant IntReqActive : In  std_logic := '1' ;
+    constant ClkActive    : In std_logic := CLK_ACTIVE
   ) ;
 
   -- StartTransaction not used, Ack is incremented at transaction completion
@@ -260,7 +268,7 @@ package TbUtilPkg is
   --   Multiple processes call it, it finishes when all have called it
   ------------------------------------------------------------
   procedure WaitForBarrier ( signal Sig : InOut std_logic ) ;
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') ;
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : time ) ;
   -- resolved_barrier : summing resolution used in conjunction with integer based barriers
   function resolved_barrier ( s : integer_vector ) return integer ;
@@ -271,7 +279,7 @@ package TbUtilPkg is
   --   signal barrier1 : resolved_barrier integer := 1 ;     -- using the resolution function
   --   signal barrier2 : integer_barrier := 1 ;              -- using the subtype that already applies the resolution function
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ) ;
-  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') ;
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : time ) ;
   -- Using separate signals
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
@@ -290,24 +298,23 @@ package TbUtilPkg is
   -- WaitForClock
   --   Sync to Clock - after a delay, after a number of clocks
   ------------------------------------------------------------
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in time ) ;
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in integer := 1) ;
-  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in boolean ) ;
-  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in std_logic ; constant Polarity : std_logic := '1' ) ;
-
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in time ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in integer := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
+  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in boolean ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
+  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in std_logic ; constant EnableActive : std_logic := '1' ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
 
   ------------------------------------------------------------
   -- WaitForLevel
   --   Find a signal at a level
   ------------------------------------------------------------
   procedure WaitForLevel ( signal A : in boolean ) ;
-  procedure WaitForLevel ( signal A : in std_logic ; Polarity : std_logic := '1' ) ;
+  procedure WaitForLevel ( signal A : in std_logic ; Level : std_logic := '1' ) ;
 
   procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : time);
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Polarity : std_logic := '1');
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Level : std_logic := '1');
 
   procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : time; variable TimeOutReached : out boolean);
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1');
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Level : std_logic := '1');
   alias WaitForLevelTimeOut is WaitForLevel [boolean, time, boolean] ;
   alias WaitForLevelTimeOut is WaitForLevel [std_logic, time, boolean, std_logic] ;
 
@@ -317,7 +324,7 @@ package TbUtilPkg is
   ------------------------------------------------------------
   -- History of RequestTransaction / WaitForTransaction
   alias RequestAction is RequestTransaction [std_logic, std_logic] ;
-  alias WaitForRequest is WaitForTransaction [std_logic, std_logic, std_logic] ;
+  alias WaitForRequest is WaitForTransaction [std_logic, std_logic, std_logic, std_logic] ;
   -- History of WaitForToggle
   alias WaitOnToggle is WaitForToggle [std_logic] ;
   -- History of WaitForBarrier
@@ -325,7 +332,7 @@ package TbUtilPkg is
   alias SyncTo is WaitForBarrier2[std_logic, std_logic] ;
   alias SyncTo is WaitForBarrier2[std_logic, std_logic_vector] ;
   -- Backward compatible name
-  alias SyncToClk is WaitForClock [std_logic, time] ;
+  alias SyncToClk is WaitForClock [std_logic, time, std_logic] ;
 
   ------------------------------------------------------------
   -- Deprecated
@@ -391,6 +398,11 @@ package body TbUtilPkg is
   begin
     return  to_x01(C)=A and to_x01(C'last_value)=not A and C'last_event= 0 sec ;
   end function EdgeActive ;
+
+  function ChangingEdge ( signal C : in std_logic; A : std_logic ) return boolean is
+  begin
+    return  to_x01(C)=A and to_x01(C'last_value)=not A and C'event ;
+  end function ChangingEdge ;
 
   procedure FindRisingEdge ( signal C : in std_logic) is
   begin
@@ -478,9 +490,10 @@ package body TbUtilPkg is
   end procedure RequestTransaction ;
 
   procedure WaitForTransaction (
-    signal Clk  : In  std_logic ;
-    signal Rdy  : In  std_logic ;
-    signal Ack  : Out std_logic
+    signal Clk         : In  std_logic ;
+    signal Rdy         : In  std_logic ;
+    signal Ack         : Out std_logic ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) is
     variable AckTime : time ;
   begin
@@ -496,7 +509,7 @@ package body TbUtilPkg is
     end if ;
     -- align to clock if needed (not back-to-back transactions)
     if NOW /= AckTime then
-      wait until Clk = CLK_ACTIVE ;
+      wait until Clk = ClkActive ;
     end if ;
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
@@ -541,9 +554,10 @@ package body TbUtilPkg is
   end procedure RequestTransaction ;
 
   procedure WaitForTransaction (
-    signal Clk  : In  std_logic ;
-    signal Rdy  : In  bit ;
-    signal Ack  : Out bit
+    signal Clk         : In  std_logic ;
+    signal Rdy         : In  bit ;
+    signal Ack         : Out bit ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) is
     variable AckTime : time ;
   begin
@@ -559,7 +573,7 @@ package body TbUtilPkg is
     end if ;
     -- align to clock if needed (not back-to-back transactions)
     if NOW /= AckTime then
-      wait until Clk = CLK_ACTIVE ;
+      wait until Clk = ClkActive ;
     end if ;
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
@@ -602,9 +616,10 @@ package body TbUtilPkg is
   end procedure RequestTransaction ;
 
   procedure WaitForTransaction (
-    signal Clk      : In    std_logic ;
-    signal Rdy      : In    RdyType ;
-    signal Ack      : InOut AckType
+    signal Clk         : In    std_logic ;
+    signal Rdy         : In    RdyType ;
+    signal Ack         : InOut AckType ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) is
   begin
     -- End of Previous Cycle.  Signal Done
@@ -614,8 +629,8 @@ package body TbUtilPkg is
     wait until Ack /= Rdy ;
 
     -- Align to clock if needed (not back-to-back transactions)
-    if not EdgeActive(Clk, CLK_ACTIVE) then
-      wait until Clk = CLK_ACTIVE ;
+    if not EdgeActive(Clk, ClkActive) then
+      wait until Clk = ClkActive ;
     end if ;
   end procedure WaitForTransaction ;
 
@@ -637,11 +652,12 @@ package body TbUtilPkg is
   --   Specializations for interrupt handling
   ------------------------------------------------------------
   procedure WaitForTransaction (
-    signal   Clk       : In  std_logic ;
-    signal   Rdy       : In  std_logic ;
-    signal   Ack       : Out std_logic ;
-    signal   TimeOut   : In  std_logic ;
-    constant Polarity  : In  std_logic := '1'
+    signal   Clk            : In  std_logic ;
+    signal   Rdy            : In  std_logic ;
+    signal   Ack            : Out std_logic ;
+    signal   TimeOut        : In  std_logic ;
+    constant TimeOutActive  : In  std_logic := '1' ;
+    constant ClkActive      : In std_logic := CLK_ACTIVE
   ) is
     variable AckTime : time ;
     variable FoundRdy : boolean ;
@@ -651,13 +667,13 @@ package body TbUtilPkg is
     AckTime    := NOW ;
     -- Find Ready or Time out
     wait for 0 ns ; -- Allow Rdy from previous cycle to clear
-    if (Rdy /= '1' and TimeOut /= Polarity) then
-      wait until Rdy = '1' or TimeOut = Polarity ;
+    if (Rdy /= '1' and TimeOut /= TimeOutActive) then
+      wait until Rdy = '1' or TimeOut = TimeOutActive ;
     end if ;
     FoundRdy := Rdy = '1' ;
     -- align to clock if Rdy or TimeOut does not happen within delta cycles from Ack
     if NOW /= AckTime then
-      wait until Clk = CLK_ACTIVE ;
+      wait until Clk = ClkActive ;
     end if ;
     if FoundRdy then
       -- Model active and owns the record
@@ -670,24 +686,25 @@ package body TbUtilPkg is
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
   procedure WaitForTransactionOrIrq (
-    signal Clk     : In  std_logic ;
-    signal Rdy     : In  std_logic ;
-    signal IntReq  : In  std_logic
+    signal Clk         : In  std_logic ;
+    signal Rdy         : In  std_logic ;
+    signal IntReq      : In  std_logic ;
+    constant ClkActive : In std_logic := CLK_ACTIVE
   ) is
     variable AckTime : time ;
-    constant POLARITY : std_logic := '1' ;
+    constant IntReqActive : std_logic := '1' ;
   begin
     AckTime    := NOW ;
     -- Find Ready or Time out
     wait for 0 ns ; -- allow Rdy from previous cycle to clear
-    if (Rdy /= '1' and IntReq /= POLARITY) then
-      wait until Rdy = '1' or IntReq = POLARITY ;
+    if (Rdy /= '1' and IntReq /= IntReqActive) then
+      wait until Rdy = '1' or IntReq = IntReqActive ;
     else
       wait for 0 ns ; -- allow Ack to update
    end if ;
     -- align to clock if Rdy or IntReq does not happen within delta cycles from Ack
     if NOW /= AckTime then
-      wait until Clk = CLK_ACTIVE ;
+      wait until Clk = ClkActive ;
     end if ;
   end procedure ;
 
@@ -725,19 +742,20 @@ package body TbUtilPkg is
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
   procedure WaitForTransactionOrIrq (
-    signal   Clk      : In  std_logic ;
-    signal   Rdy      : In  RdyType ;
-    signal   Ack      : In  AckType ;
-    signal   IntReq   : In  std_logic ;
-    constant POLARITY : In  std_logic := '1' 
+    signal   Clk          : In  std_logic ;
+    signal   Rdy          : In  RdyType ;
+    signal   Ack          : In  AckType ;
+    signal   IntReq       : In  std_logic ;
+    constant IntReqActive : In  std_logic := '1' ;
+    constant ClkActive    : In std_logic := CLK_ACTIVE
   ) is
   begin
-    if (Ack = Rdy and IntReq /= POLARITY) then
-      wait until Ack /= Rdy or IntReq = POLARITY ;
+    if (Ack = Rdy and IntReq /= IntReqActive) then
+      wait until Ack /= Rdy or IntReq = IntReqActive ;
    end if ;
     -- Align to clock if needed (not back-to-back transactions)
-    if not EdgeActive(Clk, CLK_ACTIVE) then
-      wait until Clk = CLK_ACTIVE ;
+    if not EdgeActive(Clk, ClkActive) then
+      wait until Clk = ClkActive ;
     end if ;
   end procedure ;
 
@@ -884,12 +902,12 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') is
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') is
   begin
     Sig <= 'H' ;
     -- Wait until all processes set Sig to H
     -- Level check not necessary since last value /= H yet
-    wait until Sig = 'H' or TimeOut = Polarity ;
+    wait until Sig = 'H' or TimeOut = TimeOutActive ;
     -- Deactivate and propagate to allow back to back calls
     Sig <= '0' ;
     wait for 0 ns ;
@@ -937,12 +955,12 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
-  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant Polarity : in std_logic := '1') is
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') is
   begin
     Sig <= 0 ;
     -- Wait until all processes set Sig to 0
     -- Level check not necessary since last value /= 0 yet
-    wait until Sig = 0 or TimeOut = Polarity ;
+    wait until Sig = 0 or TimeOut = TimeOutActive ;
     -- Deactivate and propagate to allow back to back calls
     Sig <= 1 ;
     wait for 0 ns ;
@@ -994,29 +1012,29 @@ package body TbUtilPkg is
   -- WaitForClock
   --   Sync to Clock - after a delay, after a number of clocks
   ------------------------------------------------------------
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in time ) is
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in time ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
     if delay > t_sim_resolution then
       wait for delay - t_sim_resolution ;
     end if ;
-    wait until Clk = CLK_ACTIVE ;
+    wait until Clk = ClkActive ;
   end procedure WaitForClock ;
 
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in integer := 1) is
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in integer := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
     for i in 1 to NumberOfClocks loop
-      wait until Clk = CLK_ACTIVE ;
+      wait until Clk = ClkActive ;
     end loop ;
   end procedure WaitForClock ;
 
-  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in boolean ) is
+  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in boolean ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
-    wait on Clk until Clk = CLK_ACTIVE and Enable ;
+    wait on Clk until Clk = ClkActive and Enable ;
   end procedure WaitForClock ;
 
-  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in std_logic ; constant Polarity : std_logic := '1' ) is
+  procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in std_logic ; constant EnableActive : std_logic := '1' ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
-    wait on Clk until Clk = CLK_ACTIVE and Enable = Polarity ;
+    wait on Clk until Clk = ClkActive and Enable = EnableActive ;
   end procedure WaitForClock ;
 
 
@@ -1031,11 +1049,11 @@ package body TbUtilPkg is
     end if ;
   end procedure WaitForLevel ;
 
-  procedure WaitForLevel ( signal A : in std_logic ; Polarity : std_logic := '1' ) is
+  procedure WaitForLevel ( signal A : in std_logic ; Level : std_logic := '1' ) is
   begin
-    if A /= Polarity then
-      -- wait on A until A = Polarity ;
-      if Polarity = '1' then
+    if A /= Level then
+      -- wait on A until A = Level ;
+      if Level = '1' then
         wait until A = '1' ;
       else
         wait until A = '0' ;
@@ -1054,10 +1072,10 @@ package body TbUtilPkg is
     end if ; 
   end procedure WaitForLevel ; 
   
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Polarity : std_logic := '1') is 
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Level : std_logic := '1') is 
   begin
-    if A /= Polarity then 
-	    wait until A = Polarity for TimeOut; 
+    if A /= Level then 
+	    wait until A = Level for TimeOut; 
     end if ; 
   end procedure WaitForLevel ; 
 				
@@ -1067,10 +1085,10 @@ package body TbUtilPkg is
     TimeOutReached := not A ; 
   end procedure WaitForLevel ; 
   
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Polarity : std_logic := '1') is 
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Level : std_logic := '1') is 
   begin
-    WaitForLevel(A, TimeOut, Polarity) ; 
-    TimeOutReached := A /= Polarity ; 
+    WaitForLevel(A, TimeOut, Level) ; 
+    TimeOutReached := A /= Level ; 
   end procedure WaitForLevel ; 
 
   ------------------------------------------------------------
