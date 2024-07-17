@@ -629,7 +629,8 @@ package AlertLogPkg is
   procedure ReadLogEnables (FileName : string) ;
 
   -- String Helper Functions -- This should be in a more general string package
-  function PathTail (A : string) return string ;
+  function OldPathTail (A : string) return string ;
+  impure function PathTail (A : string) return string ;
 
   ------------------------------------------------------------
   -- MetaMatch
@@ -7356,7 +7357,7 @@ package body AlertLogPkg is
   end procedure ReadLogEnables ;
 
   ------------------------------------------------------------
-  function PathTail (A : string) return string is
+  function OldPathTail (A : string) return string is
   ------------------------------------------------------------
     alias aA : string(1 to A'length) is A ;
     variable LenA : integer := A'length ;
@@ -7374,8 +7375,56 @@ package body AlertLogPkg is
       end if ;
     end loop ;
     return aA(1 to LenA) ;
-  end function PathTail ;
+  end function OldPathTail ;
 
+  ------------------------------------------------------------
+  impure function PathTail (A : string) return string is
+  ------------------------------------------------------------
+    alias aA : string(1 to A'length) is A ;
+    variable LenA : integer := A'length ;
+    variable Result : string(1 to A'length) ;
+    variable FoundAtIndex, ResultLength : integer ; 
+    variable FoundLeftParen : boolean := FALSE ; 
+  begin
+    -- Factor out ending ':'
+    if aA(LenA) = ':' then
+      LenA := LenA - 1 ;
+    end if ;
+    -- Find ending characters from right until find ':'
+    ResultLength := LenA ; 
+    FoundAtIndex := 1 ;
+    Result := aA ; 
+    for i in LenA downto 1 loop
+      if aA(i) = ':' then
+        FoundAtIndex := i ;
+        ResultLength := LenA - i ; 
+        Result(1 to ResultLength) := aA(i+1 to LenA) ;
+        exit ;
+      end if ;
+    end loop ;
+    -- Find characters that are within (12) and reformat as _12 at end of string
+    for i in 1 to FoundAtIndex - 1 loop 
+      if aA(i) = '(' then
+        if FoundLeftParen then 
+          Alert("AlertLogPkg.PathTail: found second left parenthese before finding right") ; 
+        end if ; 
+        FoundLeftParen := TRUE ; 
+        ResultLength := ResultLength + 1 ; 
+        Result(ResultLength) := '_' ; 
+      elsif aA(i) = ')' then 
+        if not FoundLeftParen then 
+          Alert("AlertLogPkg.PathTail: found right parenthese before finding left") ; 
+        end if ; 
+        FoundLeftParen := FALSE ;
+      else 
+        if FoundLeftParen then 
+          ResultLength := ResultLength + 1 ; 
+          Result(ResultLength) := aA(i) ; 
+        end if ; 
+      end if; 
+    end loop ; 
+    return Result(1 to ResultLength) ;
+  end function PathTail ;
 
   ------------------------------------------------------------
   -- MetaMatch
