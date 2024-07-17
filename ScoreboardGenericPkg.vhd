@@ -2805,7 +2805,7 @@ package body ScoreboardGenericPkg is
         return ;
       end if ;
 
-      swrite(buf, "Version: 1.1" & LF) ;
+      swrite(buf, "Version: ""1.1""" & LF) ;
       swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
       swrite(buf, "Scoreboards: ") ;
       writeline(SbYamlFile, buf) ;

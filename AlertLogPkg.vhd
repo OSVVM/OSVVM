@@ -2112,7 +2112,7 @@ package body AlertLogPkg is
       variable buf : line ; 
     begin
       if PrintSettings then
-        write(buf, Prefix & "Version: 1.0") ; 
+        write(buf, Prefix & "Version: ""1.0""") ; 
         WriteLine(TestFile, buf) ; 
       end if ; 
       CalcTopTotalErrors (
