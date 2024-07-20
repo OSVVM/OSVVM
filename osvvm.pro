@@ -17,6 +17,7 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#     7/2024   2024.07    Added signed, unsigned, and integer_vector scoreboards 
 #     3/2024   2024.03    Updated to handle Xilinx issues 
 #     5/2023   2023.05    Added BurstCoveragePkg 
 #     4/2023   2023.04    Updated handling of OsvvmScriptSettingsPkg since it 
@@ -134,6 +135,9 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 } else {
   analyze deprecated/ScoreboardPkg_slv_c.vhd
   analyze deprecated/ScoreboardPkg_int_c.vhd
+  analyze deprecated/ScoreboardPkg_signed_c.vhd
+  analyze deprecated/ScoreboardPkg_unsigned_c.vhd
+  analyze deprecated/ScoreboardPkg_IntV_c.vhd
 }
 
 analyze MemorySupportPkg.vhd

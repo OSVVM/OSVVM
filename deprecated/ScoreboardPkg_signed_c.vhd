@@ -1,6 +1,6 @@
 --
---  File Name:         ScoreBoardPkg_int.vhd
---  Design Unit Name:  ScoreBoardPkg_int
+--  File Name:         ScoreBoardPkg_signed.vhd
+--  Design Unit Name:  ScoreBoardPkg_signed
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -58,7 +58,7 @@ library ieee ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ;
 
-package ScoreBoardPkg_int is
+package ScoreBoardPkg_signed is
 --  generic (
 --    type ExpectedType ;
 --    type ActualType ;
@@ -72,11 +72,11 @@ package ScoreBoardPkg_int is
    --  uncomment the following, it replaces a generic instance of the package.
    --  As a result, you will have multiple copies of the entire package. 
    --  Inconvenient, but ok as it still works the same.
-   subtype ExpectedType is integer ;
-   subtype ActualType   is integer ;
-   alias   Match is "=" [ActualType, ExpectedType return boolean] ;       
-   alias   expected_to_string is to_string [ExpectedType return string];  
-   alias   actual_to_string   is to_string [ActualType   return string];      
+  subtype ExpectedType is signed ;
+  subtype ActualType   is signed ;
+  alias   Match is work.AlertLogPkg.MetaMatch [ExpectedType, ActualType return boolean] ;  
+  alias   expected_to_string is to_hxstring   [ExpectedType return string];  
+  alias   actual_to_string   is to_hxstring   [ActualType   return string];  
 
   -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag
@@ -967,12 +967,12 @@ package ScoreBoardPkg_int is
   impure function NewID (Name : String; X, Y : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
 
 
-end ScoreBoardPkg_int ;
+end ScoreBoardPkg_signed ;
 
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-package body ScoreBoardPkg_int is
+package body ScoreBoardPkg_signed is
 
   type ScoreBoardPType is protected body
     type ExpectedPointerType is access ExpectedType ;
@@ -3514,4 +3514,4 @@ package body ScoreBoardPkg_int is
   end function NewID ;
 
 
-end ScoreBoardPkg_int ;
+end ScoreBoardPkg_signed ;
