@@ -57,6 +57,7 @@ library ieee ;
   use work.NamePkg.all ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ;
+  use work.LanguageSupport2019Pkg.all ;  -- to_string for integer_vector prior to 1076-2019
 
 package ScoreBoardPkg_IntV is
 --  generic (

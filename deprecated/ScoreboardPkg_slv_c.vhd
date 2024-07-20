@@ -75,8 +75,8 @@ package ScoreBoardPkg_slv is
   subtype ExpectedType is std_ulogic_vector ;
   subtype ActualType   is std_ulogic_vector ;
   alias   Match is work.AlertLogPkg.MetaMatch [ExpectedType, ActualType return boolean] ;  
-  alias   expected_to_string is to_hxstring   [std_logic_vector return string];  
-  alias   actual_to_string   is to_hxstring   [std_logic_vector return string];  
+  alias   expected_to_string is to_hxstring   [ExpectedType return string];  
+  alias   actual_to_string   is to_hxstring   [ActualType   return string];  
 
   -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag

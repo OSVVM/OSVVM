@@ -54,7 +54,10 @@ use work.TranscriptPkg.all ;
 use work.AlertLogPkg.all ;
 use work.CoveragePkg.all ;
 use work.ScoreboardPkg_slv.all ;
+use work.ScoreboardPkg_signed.all ;
+use work.ScoreboardPkg_unsigned.all ;
 use work.ScoreboardPkg_int.all ;
+use work.ScoreboardPkg_IntV.all ;
 
 
 package ReportPkg is
