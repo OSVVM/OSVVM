@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
 --    01/2023   2023.01    Updated address checks in MemRead and MemWrite
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    08/2022   2022.08    Refactored and added generics for base type
@@ -373,6 +374,8 @@ end MemoryGenericPkg ;
 
 package body MemoryGenericPkg is 
   constant BLOCK_WIDTH : integer := 10 ; 
+  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 26 ; -- 64 M Word array of pointers
+  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 31 ; -- 2 G Array of pointers - Maximum size supported by type integer
 
   type MemoryPType is protected body
 
@@ -448,13 +451,38 @@ package body MemoryGenericPkg is
     
    ------------------------------------------------------------
     -- PT Local 
+    function MaximumAddressWidth (AddrWidth : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return minimum(AddrWidth, MAXIMUM_ADDRESS_WIDTH) ;
+    end function MaximumAddressWidth ; 
+
+   ------------------------------------------------------------
+    -- PT Local 
     procedure MemInit (ID : integer ;  AddrWidth, DataWidth  : integer ) is
     ------------------------------------------------------------
-      constant ADJ_BLOCK_WIDTH : integer := minimum(BLOCK_WIDTH, AddrWidth) ;
+      constant ADJ_BLOCK_WIDTH             : integer := minimum(BLOCK_WIDTH, AddrWidth) ;
+      constant ADJ_ADDR_WDITH              : integer := MaximumAddressWidth(AddrWidth) ; 
+      constant ADJ_ARRAY_OF_POINTERS_WIDTH : integer := ADJ_ADDR_WDITH - ADJ_BLOCK_WIDTH ; 
     begin
       if AddrWidth <= 0 then 
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  AddrWidth = " & to_string(AddrWidth) & " must be > 0.", FAILURE) ; 
         return ; 
+      end if ; 
+      if AddrWidth >= WARNING_AT_ADDRESS_WIDTH then  
+        -- Array of pointers > 64 M words
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & ".") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Internally this creates an array sized 2**" & to_string(ADJ_ARRAY_OF_POINTERS_WIDTH) & ".") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Memories this large may result in poor simulation performance.") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  If you need a memory this large, be sure to file an issue on GitHub/OSVVM/OsvvmLibraries or osvvm.org.") ; 
+
+        if AddrWidth > MAXIMUM_ADDRESS_WIDTH then
+          -- Array of pointers > 4 G or larger
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & "was truncated to 41.", ERROR) ; 
+        else 
+          -- Array size 64 M or larger
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & "is large and may slow simulation.", WARNING) ; 
+        end if ; 
       end if ; 
 --      if DataWidth <= 0 or DataWidth > 31 then 
 --        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(DataWidth) & " must be > 0 and <= 31.", FAILURE) ; 
@@ -463,11 +491,16 @@ package body MemoryGenericPkg is
         return ; 
       end if ; 
 
-      MemStructPtr(ID).AddrWidth           := AddrWidth ; 
+      MemStructPtr(ID).AddrWidth           := ADJ_ADDR_WDITH ; 
       MemStructPtr(ID).DataWidth           := DataWidth ; 
       MemStructPtr(ID).MemoryBaseTypeWidth := SizeMemoryBaseType(DataWidth) ; 
       MemStructPtr(ID).BlockWidth          := ADJ_BLOCK_WIDTH ;
-      MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to 2**(AddrWidth-ADJ_BLOCK_WIDTH)-1) ;  
+      if ADJ_ARRAY_OF_POINTERS_WIDTH < 31 then 
+        MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to 2**(ADJ_ARRAY_OF_POINTERS_WIDTH)-1) ;  
+      else
+        -- with 32 bit signed numbers, formulating 2**31-1 can be interesting.
+        MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to (2**30-1) + 2**30) ; 
+      end if ; 
     end procedure MemInit ;
     
     ------------------------------------------------------------
@@ -494,8 +527,8 @@ package body MemoryGenericPkg is
       if NameID /= ID_NOT_FOUND.ID then
         if MemStructPtr(NameID).MemArrayPtr /= NULL then 
           -- Found ID and structure exists, does structure match?
-          AlertIf(MemStructPtr(NameID).AlertLogID, AddrWidth /= MemStructPtr(NameID).AddrWidth,  
-            "NewID: AddrWidth: " & to_string(AddrWidth) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
+          AlertIf(MemStructPtr(NameID).AlertLogID, MaximumAddressWidth(AddrWidth) /= MemStructPtr(NameID).AddrWidth,  
+            "NewID: AddrWidth: " & to_string(MaximumAddressWidth(AddrWidth)) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
           AlertIf(MemStructPtr(NameID).AlertLogID, DataWidth /= MemStructPtr(NameID).DataWidth,  
             "NewID: DataWidth: " & to_string(DataWidth) & " /= Existing DataWidth: "  & to_string(MemStructPtr(NameID).DataWidth), FAILURE);
           -- NameStore IDs are issued sequentially and match MemoryID
