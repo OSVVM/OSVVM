@@ -92,7 +92,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   -----------------------------------------------------|-----------------
   | IfElsePkg.vhd                                      | ** 2024.07 **  |
   | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
-  | OsvvmSettingsPkg.vhd                               | 2024.03  |
+  | OsvvmSettingsPkg.vhd                               | ** 2024.07 **  |
   | TextUtilPkg.vhd                                    | 2024.03  |
   | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2024.03  |
@@ -155,11 +155,18 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 ### IfElse.vhd 2024.07
 - Added IfElse for std_logic
 
+### OsvvmSettingsPkg.vhd                   2024.07 
+- Added settings for ALERT_LOG_NOCHECKS_NAME and ALERT_LOG_TIMEOUT_NAME
+- See AlertLogPkg, on/off controlls for NOCHECKS is done via script variables
+
 ### LanguageSupport2019Pkg.vhd and LanguageSupport2019Pkg_c.vhd           2024.07
 - Introduced to sort out the differences between VHDL-2008 and 2019
 - Currently has to_string for integer_vector for 2008 - which is already in 2019.
 
 ### AlertLogPkg.vhd                        2024.07
+- Test Status is now PASSED, FAILED, NOCHECKS, TIMEOUT.
+    - OSVVM behavior defaults to test FAILED on NOCHECKS  
+    - This can be changed by setting script variable FailOnNoChecks to FALSE or 0 in OsvvmSettingsLocal.tcl
 - Updated PathTail to incorporate for generate indicies in the name.
 - Added AffirmIfEqual, AffirmIfNotEqual, AlertIfEqual, AlertIfNotEqual for integer_vector
 - Added TimeOut indication to ReportAlerts and WriteAlertYaml.
@@ -191,7 +198,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 ### deprecated/ClockResetPkg_2024_05.vhd   2024.07
 - Moved Clock and Reset support from TbUtilPkg to ClockResetPkg
 - Has the original version of CreateClock
-- Select this package by setting the variable ClockResetVersion to 2024.05 or less in OsvvmSettingsLocal.tcl
+- Select this package by setting the script variable ClockResetVersion to 2024.05 or less in OsvvmSettingsLocal.tcl
 
 ### ScoreboardGenericPkg, ScoreboardPkg_*  2024.07
 - Made function generics impure. 
