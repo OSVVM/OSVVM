@@ -478,10 +478,10 @@ package body MemoryGenericPkg is
 
         if AddrWidth > MAXIMUM_ADDRESS_WIDTH then
           -- Array of pointers > 4 G or larger
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & "was truncated to 41.", ERROR) ; 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & " was truncated to 41.", ERROR) ; 
         else 
           -- Array size 64 M or larger
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & "is large and may slow simulation.", WARNING) ; 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & " is large and may slow simulation.", WARNING) ; 
         end if ; 
       end if ; 
 --      if DataWidth <= 0 or DataWidth > 31 then 
