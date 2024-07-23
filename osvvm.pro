@@ -145,7 +145,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   if {$::osvvm::ToolName ne "XSIM"}  {
     analyze MemoryGenericPkg.vhd
   } else {
-    analyze MemoryGenericPkg_xilinx.vhd
+    analyze deprecated/MemoryGenericPkg_xilinx.vhd
   }
   analyze MemoryPkg.vhd
 } else {

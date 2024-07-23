@@ -17,7 +17,13 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2024   2024.07    Factored Clock and Reset support out of TbUtilPkg
+--    07/2024   2024.07    Added pre-defined barriers:  
+--                             OsvvmTestInit, OsvvmResetDone, OsvvmVcInit, 
+--                             OsvvmTestDone, TestDone
+--                         For all procedures that use Clk, added a ClkActive input parameter and 
+--                         defaulted it to CLOCK_ACTIVE.  Allows all to support either edge of clock.
+--                         Former input parameters named polarity were renamed - breaking change if using named association
+--                         Moved Clock and Reset support from TbUtilPkg to ClockResetPkg
 --    01/2024   2024.01    IfElse function moved to IfElsePkg
 --    09/2022   2022.09    Added WaitForTransactionOrIrq, FinishTransaction, and TransactionPending for AckType/RdyType
 --    03/2022   2022.03    Added EdgeRose, EdgeFell, FindRisingEdge, FindFallingEdge.

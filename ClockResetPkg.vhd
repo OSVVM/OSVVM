@@ -17,7 +17,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2024   2024.07    Factored Clock and Reset support out of TbUtilPkg
+--    07/2024   2024.07    Moved Clock and Reset support from TbUtilPkg to here
+--                         CreateClock behavior slightly different.
+--                         Added Offset, ClockActive, and Enable inputs
+--                         Added CreateJitterClock
 --
 --
 --  This file is part of OSVVM.

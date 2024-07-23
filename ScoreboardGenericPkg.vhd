@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Made function generics impure. Added IsInitialized.  Updated Yaml.  
 --    05/2023   2023.05    Updated Pop fail on empty error to print tag if a tag is used
 --    02/2023   2023.04    Bug fix for Peek with a tag.
 --    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 

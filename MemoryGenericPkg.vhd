@@ -20,6 +20,7 @@
 --  Revision History:
 --    Date      Version    Description
 --    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
+--                         Added IsInitialized
 --    01/2023   2023.01    Updated address checks in MemRead and MemWrite
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    08/2022   2022.08    Refactored and added generics for base type

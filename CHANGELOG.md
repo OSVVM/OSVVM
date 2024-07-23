@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2024.07   |  Major due to moving CreateClock/CreateReset and CreateClock interface changes  
 | 2024.05   |  Minor updates to parameter handling in RandomPkg and NameStorePkg.  
 | 2024.03   |  Updated OsvvmSettingsPkg. Added OsvvmScriptSettingsPkg.  
 |           |  Updates to configure AlertLogPkg, CoveragePkg, RandomPkg.
@@ -78,7 +79,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2024.03  September 2024
+## Revision 2024.07  July 2024
 
 ### Current Revision and Compile Order
 
@@ -89,7 +90,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                          | Revision Date  |
   -----------------------------------------------------|-----------------
-  | IfElsePkg.vhd                                      | 2024.03  |
+  | IfElsePkg.vhd                                      | ** 2024.07 **  |
   | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
   | OsvvmSettingsPkg.vhd                               | 2024.03  |
   | TextUtilPkg.vhd                                    | 2024.03  |
@@ -100,33 +101,46 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     VendorCovApiPkg_Aldec.vhd                      | 2020.01  |
   | If not Aldec                                       |          |
   |     VendorCovApiPkg.vhd                            | 2020.01  |
+  | LanguageSupport2019Pkg.vhd                         | ** 2024.07 **  |
+  | LanguageSupport2019Pkg_c.vhd                       | ** 2024.07 **  |
   | TranscriptPkg.vhd                                  | 2023.01  |
-  | AlertLogPkg.vhd                                    | 2024.03  |
-  | TbUtilPkg.vhd                                      | 2024.03  |
-  | NameStorePkg.vhd                                   | ** 2024.05 **  |
+  | AlertLogPkg.vhd                                    | ** 2024.07 **  |
+  | TbUtilPkg.vhd                                      | ** 2024.07 **  |
+  | NameStorePkg.vhd                                   | ** 2024.07 **  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2024.03  |
-  | RandomPkg.vhd                                      | ** 2024.05 **  |
+  | RandomPkg.vhd                                      | 2024.05  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | 2024.03  |
-  | DelayCoveragePkg.vhd                               | 2023.05  |
+  | CoveragePkg.vhd                                    | ** 2024.07 **  |
+  | DelayCoveragePkg.vhd                               | ** 2024.07 **  |
+  | ClockResetPkg.vhd                                  | ** 2024.07 **  |
+  | deprecated/ClockResetPkg_2024_05.vhd               | ** 2024.07 **  |
   | ResizePkg.vhd                                      | 2024.03  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | 2024.03  |
+  |     ScoreboardGenericPkg.vhd                       | ** 2024.07 **  |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
-  | If Not Support Generic Packages                    |          |
-  |     ScoreboardPkg_slv_c.vhd                        | 2023.01  |
-  |     ScoreboardPkg_int_c.vhd                        | 2023.01  |
+  |     ScoreboardPkg_signed.vhd                       | ** 2024.07 **  |
+  |     ScoreboardPkg_unsigned.vhd                     | ** 2024.07 **  |
+  |     ScoreboardPkg_IntV.vhd                         | ** 2024.07 **  |
+  | If NotSupport Generic Packages                     |          |
+  |     deprecated/ScoreboardPkg_slv_c.vhd             | ** 2024.07 **  |
+  |     deprecated/ScoreboardPkg_int_c.vhd             | ** 2024.07 **  |
+  |     deprecated/ScoreboardPkg_signed.vhd            | ** 2024.07 **  |
+  |     deprecated/ScoreboardPkg_unsigned.vhd          | ** 2024.07 **  |
+  |     deprecated/ScoreboardPkg_IntV.vhd              | ** 2024.07 **  |
   | MemorySupportPkg.vhd                               | 2022.10  |
   | If Support Generic Packages                        |          |
-  |     MemoryGenericPkg.vhd                           | 2024.03  |
+  |     If not Xilinx                                  |          |
+  |         MemoryGenericPkg.vhd                       | ** 2024.07 **  |
+  |     If Xilinx                                      |          |
+  |         deprecated/MemoryGenericPkg_xilinx.vhd     | 2024.03  |
   |     MemoryPkg.vhd                                  | 2022.10  |
   | If Not Support Generic Packages                    |          |
   |     MemoryPkg_c.vhd                                | 2024.03  |
   |     MemoryPkg_orig_c.vhd                           | 2022.11  |
-  | ReportPkg.vhd                                      | 2024.03  |
+  | ReportPkg.vhd                                      | ** 2024.07 **  |
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
@@ -136,7 +150,67 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
   |     OsvvmSettingsPkg_default.vhd                   | 2024.03  |
-  | OsvvmContext.vhd                                   | 2024.03  |
+  | OsvvmContext.vhd                                   | ** 2024.07 **  |
+  
+### IfElse.vhd 2024.07
+- Added IfElse for std_logic
+
+### LanguageSupport2019Pkg.vhd and LanguageSupport2019Pkg_c.vhd           2024.07
+- Introduced to sort out the differences between VHDL-2008 and 2019
+- Currently has to_string for integer_vector for 2008 - which is already in 2019.
+
+### AlertLogPkg.vhd                        2024.07
+- Updated PathTail to incorporate for generate indicies in the name.
+- Added AffirmIfEqual, AffirmIfNotEqual, AlertIfEqual, AlertIfNotEqual for integer_vector
+- Added TimeOut indication to ReportAlerts and WriteAlertYaml.
+- Added IsInitialized.
+
+### TbUtilPkg.vhd                          2024.07
+- Added pre-defined barriers:  
+    OsvvmTestInit, OsvvmResetDone, OsvvmTestDone, TestDone, OsvvmVcInit
+- For all procedures that use Clk, added a ClkActive input parameter and 
+  defaulted it to CLOCK_ACTIVE.  Allows all to support either edge of clock.
+- Former inputs named polarity were renamed - breaking change if using named association
+- Moved Clock and Reset support from TbUtilPkg to ClockResetPkg
+
+### NameStorePkg.vhd                       2024.07
+- Added IsInitialized.
+
+### CoveragePkg.vhd                        2024.07
+- In Yaml reports, print ones with weight = 0 last
+- Added IsInitialized.
+
+### DelayCoveragePkg.vhd                   2024.07
+- Added IsInitialized.
+
+### ClockResetPkg.vhd                      2024.07
+- Moved Clock and Reset support from TbUtilPkg to ClockResetPkg
+- Updated versions of CreateClock.  Start behavior slightly different from old version.
+- Added CreateJitterClock
+
+### deprecated/ClockResetPkg_2024_05.vhd   2024.07
+- Moved Clock and Reset support from TbUtilPkg to ClockResetPkg
+- Has the original version of CreateClock
+- Select this package by setting the variable ClockResetVersion to 2024.05 or less in OsvvmSettingsLocal.tcl
+
+### ScoreboardGenericPkg, ScoreboardPkg_*  2024.07
+- Made function generics impure. 
+- Added IsInitialized.
+- Updated Yaml. 
+
+### MemoryGenericPkg.vhd   2024.07
+- Throw Errors on Address > 41 and warnings if Address > 38
+- Added IsInitialized
+
+### ReportPkg.vhd          2024.07
+- Added timeout flag to EndOfTestReports. 
+- Added scoreboard reporting for: unsigned, signed, and IntV
+
+### OsvvmContext.vhd       2024.07
+- Added ClockResetPkg
+
+  
+## Revision 2024.03  March 2024
 
 ### RandomPkg.vhd 2024.05
 - Update to address if max < min sometimes multiple errors were generated

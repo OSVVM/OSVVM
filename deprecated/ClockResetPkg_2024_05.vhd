@@ -17,7 +17,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2024   2024.07    Factored Clock and Reset support out of TbUtilPkg
+--    07/2024   2024.07    Moved Clock and Reset support from TbUtilPkg to here
+--                         This package has the unmodified version of CreateClock
+--                         Select this package by setting the variable ClockResetVersion 
+--                         to 2024.05 or less in OsvvmSettingsLocal.tcl
 --
 --
 --  This file is part of OSVVM.

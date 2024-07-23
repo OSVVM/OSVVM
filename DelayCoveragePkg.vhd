@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Added IsInitialized
 --    05/2023   2023.05    Initial revision. 
 --
 --

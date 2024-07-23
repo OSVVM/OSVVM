@@ -20,6 +20,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Added timeout flag to EndOfTestReports. 
+--                         Added scoreboard reporting for: unsigned, signed, and IntV
 --    12/2023   2024.01    Updated WriteCovSummaryYaml to print FunctionalCoverage:  "" when no functional coverage (to work with TCL 8.5).
 --    09/2023   2023.09    Added WriteSimTimeYaml.
 --    07/2023   2023.07    Added call to WriteRequirementsYaml.
@@ -32,7 +34,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2021-2023 by SynthWorks Design Inc.
+--  Copyright (c) 2021-2024 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.

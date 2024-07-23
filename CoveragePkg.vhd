@@ -22,6 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    In Yaml reports, print ones with weight = 0 last
+--                         Added IsInitialized
 --    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
 --                         Allows setting constants for all tests rather than using SetReportOptions.  
 --    05/2023   2023.05    Updated InitSeed call in NewID to ensure a unique seed 

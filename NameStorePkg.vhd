@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Added IsInitialized
 --    05/2024   2024.05    Calls to singleton forgot to pass ParentID and Search parameter to internal Protected type calls
 --    10/2022   2022.10    Changed enum value PRIVATE to PRIVATE_NAME due to VHDL-2019 keyword conflict.   
 --    02/2022   2022.02    Updated NewID for Updated NewID and Find with ParentID and Search.   

@@ -27,6 +27,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Updated PathTail to incorporate for generate indicies in the name.
+--                         Added AffirmIfEqual, AffirmIfNotEqual, AlertIfEqual, AlertIfNotEqual for integer_vector
+--                         Added TimeOut indication to ReportAlerts and WriteAlertYaml.
+--                         Added IsInitialized.
 --    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
 --                         Allows setting constants for all tests rather than using SetAlertLogOptions.  
 --                         Added AffirmIfTranscriptsMatch
