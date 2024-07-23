@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Added IfElse for std_logic
 --    01/2024   2024.01    Initial revision
 --
 --
