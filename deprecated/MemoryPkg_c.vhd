@@ -64,8 +64,7 @@ library IEEE ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ; 
   
--- Temporary workaround for MemoryBaseType 
-  use work.MemorySupportPkg.MemoryBaseType ;
+  use work.MemorySupportPkg.all ; 
 
 package MemoryPkg is
 --  generic (

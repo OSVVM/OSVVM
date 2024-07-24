@@ -1,6 +1,6 @@
 --
---  File Name:         MemoryPkg.vhd
---  Design Unit Name:  MemoryPkg
+--  File Name:         MemoryPkg_orig.vhd
+--  Design Unit Name:  MemoryPkg_orig
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com 
@@ -64,10 +64,9 @@ library IEEE ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ; 
   
--- Temporary workaround for MemoryBaseType 
-  use work.MemorySupportPkg.MemoryBaseType ;
+  use work.MemorySupportPkg.all ; 
 
-package MemoryPkg is
+package MemoryPkg_orig is
 --  generic (
 ----    type MemoryBaseType ;
 --    function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
@@ -380,9 +379,9 @@ package MemoryPkg is
 
   end protected MemoryPType ;
 
-end MemoryPkg ;
+end MemoryPkg_orig ;
 
-package body MemoryPkg is 
+package body MemoryPkg_orig is 
   constant BLOCK_WIDTH : integer := 10 ; 
   constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 24 ; -- 64 M Byte array of pointers
   constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 30 ; -- 4 G Byte Array of pointers - Maximum size supported by type integer
@@ -1590,4 +1589,4 @@ package body MemoryPkg is
   begin
     MemoryStore.FileWriteB(ID.ID, FileName) ; 
   end procedure FileWriteB ; 
-end MemoryPkg ;
+end MemoryPkg_orig ;
