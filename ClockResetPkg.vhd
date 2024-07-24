@@ -17,7 +17,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2024   2024.07    Moved Clock and Reset support from TbUtilPkg to here
+--    07/2024   2024.07    Initial Version
+--                         Moved Clock and Reset support from TbUtilPkg to here
 --                         CreateClock behavior slightly different.
 --                         Added Offset, ClockActive, and Enable inputs
 --                         Added CreateJitterClock
