@@ -121,6 +121,8 @@ package MemoryGenericPkg is
 
   ------------------------------------------------------------
   procedure MemErase (ID : in MemoryIDType); 
+  procedure deallocate (ID : in MemoryIDType) ;
+  procedure MemoryPkgDeallocate ;
   
   ------------------------------------------------------------
   impure function GetAlertLogID (ID : in MemoryIDType) return AlertLogIDType ;
@@ -303,6 +305,7 @@ package MemoryGenericPkg is
     -- memory used by data structure.  
     -- Note, a normal simulator does this for you.  
     -- You only need this if the simulator is broken.
+    procedure deallocate (ID : integer) ; 
     procedure deallocate ; 
 
     ------------------------------------------------------------
@@ -375,8 +378,8 @@ end MemoryGenericPkg ;
 
 package body MemoryGenericPkg is 
   constant BLOCK_WIDTH : integer := 10 ; 
-  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 26 ; -- 64 M Word array of pointers
-  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 31 ; -- 2 G Array of pointers - Maximum size supported by type integer
+  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 24 ; -- 64 M Byte array of pointers
+  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 30 ; -- 4 G Byte Array of pointers - Maximum size supported by type integer
 
   type MemoryPType is protected body
 
@@ -477,11 +480,10 @@ package body MemoryGenericPkg is
         log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Memories this large may result in poor simulation performance.") ; 
         log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  If you need a memory this large, be sure to file an issue on GitHub/OSVVM/OsvvmLibraries or osvvm.org.") ; 
 
-        if AddrWidth > MAXIMUM_ADDRESS_WIDTH then
-          -- Array of pointers > 4 G or larger
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & " was truncated to 41.", ERROR) ; 
+        if AddrWidth > ADJ_ADDR_WDITH then
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & 
+                                             " was truncated to " & to_string(ADJ_ADDR_WDITH) & ".", ERROR) ; 
         else 
-          -- Array size 64 M or larger
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & " is large and may slow simulation.", WARNING) ; 
         end if ; 
       end if ; 
@@ -1196,8 +1198,7 @@ package body MemoryGenericPkg is
     -- Note, a normal simulator does this for you.  
     -- You only need this if the simulator is broken.
     ------------------------------------------------------------
-    -- PT Local
-     procedure deallocate (ID : integer) is 
+    procedure deallocate (ID : integer) is 
     ------------------------------------------------------------
     begin
       MemErase(ID) ; 
@@ -1205,18 +1206,15 @@ package body MemoryGenericPkg is
       MemStructPtr(ID).AddrWidth   := -1 ;
       MemStructPtr(ID).DataWidth   := 1 ;
       MemStructPtr(ID).BlockWidth  := 0 ;
---! removed      -- deallocate(MemStructPtr(ID).Name) ; 
     end procedure ; 
 
     procedure deallocate is
     begin
-      for ID in MemStructPtr'range loop 
+      for ID in 1 to NumItems loop 
         deallocate(ID) ;
       end loop ;
---! Deallocate not able to be called on MemoryStore - no accessor procedure
---! if make directly visible, then do this, but otherwise no.
---      deallocate(MemStructPtr) ;   
---      NumItems := 0 ; 
+      deallocate(MemStructPtr) ;   
+      NumItems := 0 ; 
     end procedure deallocate ; 
 
 -- /////////////////////////////////////////
@@ -1455,6 +1453,18 @@ package body MemoryGenericPkg is
     MemoryStore.MemErase(ID.ID) ; 
   end procedure MemErase ;  
   
+  ------------------------------------------------------------
+  procedure deallocate (ID : in MemoryIDType) is 
+  begin
+    MemoryStore.deallocate(ID.ID) ; 
+  end procedure ; 
+
+  ------------------------------------------------------------
+  procedure MemoryPkgDeallocate is
+  begin
+    MemoryStore.deallocate ; 
+  end procedure MemoryPkgDeallocate ; 
+
   ------------------------------------------------------------
   impure function GetAlertLogID (
     ID : in MemoryIDType
