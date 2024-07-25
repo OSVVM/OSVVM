@@ -17,6 +17,7 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#     7/2024   2024.07    Added signed, unsigned, and integer_vector scoreboards 
 #     3/2024   2024.03    Updated to handle Xilinx issues 
 #     5/2023   2023.05    Added BurstCoveragePkg 
 #     4/2023   2023.04    Updated handling of OsvvmScriptSettingsPkg since it 
@@ -91,6 +92,12 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
   analyze VendorCovApiPkg.vhd
 }
 
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze LanguageSupport2019Pkg.vhd
+} else {
+  analyze LanguageSupport2019Pkg_c.vhd
+}
+
 analyze TranscriptPkg.vhd
 analyze AlertLogPkg.vhd
 
@@ -110,15 +117,27 @@ analyze RandomProcedurePkg.vhd
 analyze CoveragePkg.vhd
 analyze DelayCoveragePkg.vhd
 
+if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
+  analyze ClockResetPkg.vhd
+} else {
+  analyze deprecated/ClockResetPkg_2024_05.vhd
+}
+
 analyze ResizePkg.vhd
 
 if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze ScoreboardGenericPkg.vhd
   analyze ScoreboardPkg_slv.vhd
   analyze ScoreboardPkg_int.vhd
+  analyze ScoreboardPkg_signed.vhd
+  analyze ScoreboardPkg_unsigned.vhd
+  analyze ScoreboardPkg_IntV.vhd
 } else {
-  analyze ScoreboardPkg_slv_c.vhd
-  analyze ScoreboardPkg_int_c.vhd
+  analyze deprecated/ScoreboardPkg_slv_c.vhd
+  analyze deprecated/ScoreboardPkg_int_c.vhd
+  analyze deprecated/ScoreboardPkg_signed_c.vhd
+  analyze deprecated/ScoreboardPkg_unsigned_c.vhd
+  analyze deprecated/ScoreboardPkg_IntV_c.vhd
 }
 
 analyze MemorySupportPkg.vhd
@@ -126,12 +145,12 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   if {$::osvvm::ToolName ne "XSIM"}  {
     analyze MemoryGenericPkg.vhd
   } else {
-    analyze MemoryGenericPkg_xilinx.vhd
+    analyze deprecated/MemoryGenericPkg_xilinx.vhd
   }
   analyze MemoryPkg.vhd
 } else {
-  analyze MemoryPkg_c.vhd
-  analyze MemoryPkg_orig_c.vhd
+  analyze deprecated/MemoryPkg_c.vhd
+  analyze deprecated/MemoryPkg_orig_c.vhd
 }
 
 analyze ReportPkg.vhd

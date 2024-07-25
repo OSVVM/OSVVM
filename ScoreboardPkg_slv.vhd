@@ -51,14 +51,12 @@ library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
  
-use work.TextUtilPkg.all ; 
-
 package ScoreBoardPkg_slv is new work.ScoreboardGenericPkg
   generic map (
     ExpectedType        => std_logic_vector,  
     ActualType          => std_logic_vector,  
 --    Match               => std_match,  -- "=", [std_logic_vector, std_logic_vector return boolean]
     Match               => work.AlertLogPkg.MetaMatch,  -- "=", [std_logic_vector, std_logic_vector return boolean]
-    expected_to_string  => to_hxstring,  --      [std_logic_vector return string] 
-    actual_to_string    => to_hxstring   --      [std_logic_vector return string]  
+    expected_to_string  => work.TextUtilPkg.to_hxstring,  --    [std_logic_vector return string] 
+    actual_to_string    => work.TextUtilPkg.to_hxstring   --    [std_logic_vector return string]  
   ) ;  

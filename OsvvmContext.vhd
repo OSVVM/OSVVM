@@ -16,6 +16,7 @@
 --
 --  Revision History:      
 --    Date      Version    Description
+--    07/2024   2024.07    Added ClockResetPkg, LanguageSupport2019Pkg
 --    01/2023   2023.01    Added OsvvmScriptSettingsPkg
 --    01/2022   2022.01    Added OsvvmTypesPkg
 --    10/2021   2021.10    Added ReportPkg
@@ -63,8 +64,10 @@ context OsvvmContext is
   use OSVVM.ResolutionPkg.all ;
   use OSVVM.ResizePkg.all ;
   use OSVVM.TbUtilPkg.all ;
+  use OSVVM.ClockResetPkg.all ;
   use OSVVM.ReportPkg.all ;
   use OSVVM.OsvvmTypesPkg.all ; 
+  use OSVVM.LanguageSupport2019Pkg.all ; 
 
 end context OsvvmContext ; 
 

@@ -22,6 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    In Yaml reports, print ones with weight = 0 last
+--                         Added IsInitialized
 --    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
 --                         Allows setting constants for all tests rather than using SetReportOptions.  
 --    05/2023   2023.05    Updated InitSeed call in NewID to ensure a unique seed 
@@ -137,6 +139,8 @@ package CoveragePkg is
   type CoverageIDType is record
     ID : integer_max ;
   end record CoverageIDType ;
+  
+  constant COVERAGE_ID_UNINITIALZED : CoverageIdType := (ID => integer'left) ; 
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
@@ -2532,7 +2536,11 @@ package body CoveragePkg is
     impure function IsInitialized (ID : CoverageIDType) return boolean is
     ------------------------------------------------------------
     begin
-      return CovStructPtr(ID.ID).NumBins > 0 ;
+      if ID =  COVERAGE_ID_UNINITIALZED then 
+        return FALSE ; 
+      else 
+        return CovStructPtr(ID.ID).NumBins > 0 ;
+      end if ; 
     end function IsInitialized ;
 
     ------------------------------------------------------------
@@ -5279,7 +5287,7 @@ package body CoveragePkg is
       variable buf : line ;
     begin
       file_open(CovYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
-      swrite(buf, "Version: 1.0" & LF) ;
+      swrite(buf, "Version: ""1.0""" & LF) ;
       swrite(buf, "Coverage: " & to_string(Coverage, 2) ) ;
       writeline(CovYamlFile, buf) ;
       WriteSettingsYaml(CovYamlFile) ;
@@ -5287,7 +5295,16 @@ package body CoveragePkg is
       writeline(CovYamlFile, buf) ;
       for i in 1 to NumItems loop
         if CovStructPtr(i).NumBins >= 1 then
-          WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+          if CovStructPtr(i).CovWeight >= 1 then
+            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+          end if ;
+        end if ;
+      end loop ;
+      for i in 1 to NumItems loop
+        if CovStructPtr(i).NumBins >= 1 then
+          if CovStructPtr(i).CovWeight < 1 then
+            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+          end if ;
         end if ;
       end loop ;
       file_close(CovYamlFile) ;

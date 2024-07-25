@@ -1,6 +1,6 @@
 --
---  File Name:         ScoreBoardPkg_signed.vhd
---  Design Unit Name:  ScoreBoardPkg_signed
+--  File Name:         ScoreBoardPkg_IntV.vhd
+--  Design Unit Name:  ScoreBoardPkg_IntV
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -19,7 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2023   2024.07    Generic Instance of ScoreboardGenericPkg based on ScoreboardPkg_slv
+--    07/2024   2024.07    Initial Version
 --
 --
 --  This file is part of OSVVM.
@@ -39,16 +39,20 @@
 --  limitations under the License.
 --  
 
+use std.textio.all ;
+
 library ieee ;
   use ieee.std_logic_1164.all ;
   use ieee.numeric_std.all ;
+  
+  use work.LanguageSupport2019Pkg.all ;  -- to_string for integer_vector prior to 1076-2019
 
 
-package ScoreBoardPkg_signed is new work.ScoreboardGenericPkg
+package ScoreBoardPkg_IntV is new work.ScoreboardGenericPkg
   generic map (
-    ExpectedType        => signed,
-    ActualType          => signed,
-    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [signed, signed return boolean]
-    expected_to_string  => work.TextUtilPkg.to_hxstring,  --    [signed return string] 
-    actual_to_string    => work.TextUtilPkg.to_hxstring   --    [signed return string]  
+    ExpectedType        => integer_vector,  
+    ActualType          => integer_vector,  
+    Match               => "=",  
+    expected_to_string  => to_string,  
+    actual_to_string    => to_string    
   ) ;  

@@ -1,6 +1,6 @@
 --
---  File Name:         MemoryPkg.vhd
---  Design Unit Name:  MemoryPkg
+--  File Name:         MemoryPkg_orig.vhd
+--  Design Unit Name:  MemoryPkg_orig
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com 
@@ -19,19 +19,24 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    11/2022   2022.11    Rolled back updates to 2021.06 due to support issues
+--    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
+--                         Added IsInitialized
+--    01/2023   2023.01    Updated address checks in MemRead and MemWrite
+--    11/2022   2022.11    Updated default search to PRIVATE_NAME
+--    08/2022   2022.08    Refactored and added generics for base type
+--    02/2022   2022.02    Updated NewID with ReportMode, Search, PrintParent.   Supports searching for Memory models.
 --    06/2021   2021.06    Updated Data Structure, IDs for new use model, and Wrapper Subprograms
 --    01/2020   2020.01    Updated Licenses to Apache
 --    11/2016   2016.11    Refinement to MemRead to return value, X (if X), U (if not initialized)
 --    01/2016   2016.01    Update for buf.all(buf'left)
 --    06/2015   2015.06    Updated for Alerts, ...
---                         Numerous revisions for VHDL Testbenches and Verification
+--    ...       ...        Numerous revisions for VHDL Testbenches and Verification
 --    05/2005   0.1        Initial revision
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2005 - 2021 by SynthWorks Design Inc.  
+--  Copyright (c) 2005 - 2024 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -58,20 +63,34 @@ library IEEE ;
   use work.AlertLogPkg.all ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ; 
+  
+  use work.MemorySupportPkg.all ; 
 
 package MemoryPkg_orig is
+--  generic (
+----    type MemoryBaseType ;
+--    function SizeMemoryBaseType(Size : integer) return integer ; -- is <> ;
+--    function ToMemoryBaseType  (A : std_logic_vector ; Size : integer) return MemoryBaseType ; -- is <> ;
+--    function FromMemoryBaseType(A : MemoryBaseType   ; Size : integer) return std_logic_vector ; -- is <> ;
+--    function InitMemoryBaseType(Size : integer) return MemoryBaseType -- is <> 
+--  ) ;
+
+  alias SizeMemoryBaseType  is SizeMemoryBaseType_orig [integer return integer] ;
+  alias ToMemoryBaseType    is ToMemoryBaseType_orig   [std_logic_vector, integer return MemoryBaseType ] ;
+  alias FromMemoryBaseType  is FromMemoryBaseType_orig [MemoryBaseType,   integer return std_logic_vector ] ;
+  alias InitMemoryBaseType  is InitMemoryBaseType_orig [integer return MemoryBaseType ] ;
+
+  
   type MemoryIDType is record
     ID : integer_max ;
   end record MemoryIDType ; 
+  
+  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'left) ; 
+
   type MemoryIDArrayType is array (integer range <>) of MemoryIDType ;
 
   constant OSVVM_MEMORY_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
   ------------------------------------------------------------
-   --
-   --  Note that ReportMode, Search, and PrintParent are not 
-   --  implemented in this model. 
-   --  They are there to maximize portability with the Generic versions.
-   --
   impure function NewID (
     Name                : String ; 
     AddrWidth           : integer ; 
@@ -82,24 +101,33 @@ package MemoryPkg_orig is
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType ;
 
+  impure function IsInitialized (ID : MemoryIDType) return boolean ;
+
   ------------------------------------------------------------
   procedure MemWrite ( 
     ID    : MemoryIDType ; 
     Addr  : std_logic_vector ;
     Data  : std_logic_vector 
   ) ; 
+  alias Write is MemWrite [MemoryIDType, std_logic_vector, std_logic_vector ] ; 
+  
   procedure MemRead (  
     ID    : in MemoryIDType ;
     Addr  : in  std_logic_vector ;
     Data  : out std_logic_vector 
   ) ; 
+  alias Read is MemRead [MemoryIDType, std_logic_vector, std_logic_vector ] ; 
+  
   impure function MemRead ( 
     ID    : MemoryIDType ; 
     Addr  : std_logic_vector 
   ) return std_logic_vector ; 
+  alias Read is MemRead [MemoryIDType, std_logic_vector return std_logic_vector ] ; 
 
   ------------------------------------------------------------
   procedure MemErase (ID : in MemoryIDType); 
+  procedure deallocate (ID : in MemoryIDType) ;
+  procedure MemoryPkgDeallocate ;
   
   ------------------------------------------------------------
   impure function GetAlertLogID (ID : in MemoryIDType) return AlertLogIDType ;
@@ -179,8 +207,13 @@ package MemoryPkg_orig is
       Name                : String ; 
       AddrWidth           : integer ; 
       DataWidth           : integer ; 
-      ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
+      ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ; 
+      Search              : NameSearchType          := PRIVATE_NAME ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return integer ;
+
+    impure function IsInitialized (ID : MemoryIDType) return boolean ;
 
     ------------------------------------------------------------
     procedure MemWrite ( 
@@ -277,13 +310,16 @@ package MemoryPkg_orig is
     -- memory used by data structure.  
     -- Note, a normal simulator does this for you.  
     -- You only need this if the simulator is broken.
+    procedure deallocate (ID : integer) ; 
     procedure deallocate ; 
 
     ------------------------------------------------------------
+    -- /////////////////////////////////////////
     -- Historical Interface
     --   In the new implementation, these use index 1. 
     --   These are for backward compatibility support
     -- 
+    -- /////////////////////////////////////////
     ------------------------------------------------------------
     procedure MemInit ( AddrWidth, DataWidth  : in  integer ) ;
     
@@ -347,37 +383,32 @@ end MemoryPkg_orig ;
 
 package body MemoryPkg_orig is 
   constant BLOCK_WIDTH : integer := 10 ; 
+  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 24 ; -- 64 M Byte array of pointers
+  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 30 ; -- 4 G Byte Array of pointers - Maximum size supported by type integer
 
   type MemoryPType is protected body
 
-    type MemBlockType    is array (integer range <>) of integer ;
-    type MemBlockPtrType is access MemBlockType ;
-    type MemArrayType    is array (integer range <>) of MemBlockPtrType ;
-    type MemArrayPtrType is access MemArrayType ; 
+    type MemBlockType      is array (integer range <>) of MemoryBaseType ;
+    type MemBlockPtrType   is access MemBlockType ;
+    type MemArrayType      is array (integer range <>) of MemBlockPtrType ;
+    type MemArrayPtrType   is access MemArrayType ; 
     
     type FileFormatType is (BINARY, HEX) ; 
-    
--- Replaced     variable ArrayPtrVar     : MemArrayPtrType := NULL ; 
--- Replaced     variable AddrWidthVar    : integer := -1 ;  -- set by MemInit  -- Replaced by MemStructPtr(ID).AddrWidth
--- Replaced     variable DataWidthVar    : natural := 1 ;   -- set by MemInit  -- Replaced by MemStructPtr(ID).DataWidth
--- Replaced     variable BlockWidthVar  : natural := 0 ;    -- set by MemInit
--- Replaced     
--- Replaced     variable AlertLogIDVar : AlertLogIDType := OSVVM_ALERTLOG_ID ;  -- replaced by 
-    
+        
     type MemStructType is record
-      MemArrayPtr : MemArrayPtrType ; 
-      AddrWidth   : integer ;
-      DataWidth   : natural ;
-      BlockWidth  : natural ; 
-      AlertLogID  : AlertLogIDType ; 
-      Name        : Line ;  -- Implement internally vs NameStorePType
+      MemArrayPtr         : MemArrayPtrType ; 
+      AddrWidth           : integer ;
+      DataWidth           : natural ;
+      BlockWidth          : natural ; 
+      MemoryBaseTypeWidth : natural ; 
+      AlertLogID          : AlertLogIDType ; 
     end record MemStructType ; 
     
     -- New Structure
     type     ItemArrayType    is array (integer range <>) of MemStructType ; 
     type     ItemArrayPtrType is access ItemArrayType ;
     
-    variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, OSVVM_MEMORY_ALERTLOG_ID, NULL)) ;  -- Work around for QS 2020.04 and 2021.02
+    variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, 0, OSVVM_MEMORY_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
     constant MEM_STRUCT_PTR_LEFT : integer := Template'left ; 
     variable MemStructPtr     : ItemArrayPtrType := new ItemArrayType'(Template) ;   
     variable NumItems         : integer := 0 ; 
@@ -404,12 +435,16 @@ package body MemoryPkg_orig is
     procedure GrowNumberItems (
     ------------------------------------------------------------
       variable ItemArrayPtr     : InOut ItemArrayPtrType ;
-      constant NewNumItems      : in integer ;
-      constant CurNumItems      : in integer ;
+      variable NumItems         : InOut integer ;
+      constant GrowAmount       : in integer ;
+--      constant NewNumItems      : in integer ;
+--      constant CurNumItems      : in integer ;
       constant MinNumItems      : in integer 
     ) is
       variable oldItemArrayPtr  : ItemArrayPtrType ;
+      variable NewNumItems : integer ;
     begin
+      NewNumItems := NumItems + GrowAmount ;
       -- Array Allocated in declaration to have a single item, but no items (historical mode)
       -- if ItemArrayPtr = NULL then
       --  ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
@@ -417,30 +452,63 @@ package body MemoryPkg_orig is
       if NewNumItems > ItemArrayPtr'length then
         oldItemArrayPtr := ItemArrayPtr ;
         ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
-        ItemArrayPtr.all(1 to CurNumItems) := oldItemArrayPtr.all(1 to CurNumItems) ;
+        ItemArrayPtr.all(1 to NumItems) := ItemArrayType'(oldItemArrayPtr.all(1 to NumItems)) ;
         deallocate(oldItemArrayPtr) ;
       end if ;
+      NumItems := NewNumItems ; 
     end procedure GrowNumberItems ;  
     
    ------------------------------------------------------------
     -- PT Local 
+    function MaximumAddressWidth (AddrWidth : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return minimum(AddrWidth, MAXIMUM_ADDRESS_WIDTH) ;
+    end function MaximumAddressWidth ; 
+
+   ------------------------------------------------------------
+    -- PT Local 
     procedure MemInit (ID : integer ;  AddrWidth, DataWidth  : integer ) is
     ------------------------------------------------------------
-      constant ADJ_BLOCK_WIDTH : integer := minimum(BLOCK_WIDTH, AddrWidth) ;
+      constant ADJ_BLOCK_WIDTH             : integer := minimum(BLOCK_WIDTH, AddrWidth) ;
+      constant ADJ_ADDR_WDITH              : integer := MaximumAddressWidth(AddrWidth) ; 
+      constant ADJ_ARRAY_OF_POINTERS_WIDTH : integer := ADJ_ADDR_WDITH - ADJ_BLOCK_WIDTH ; 
     begin
       if AddrWidth <= 0 then 
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  AddrWidth = " & to_string(AddrWidth) & " must be > 0.", FAILURE) ; 
         return ; 
       end if ; 
-      if DataWidth <= 0 or DataWidth > 31 then 
-        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(DataWidth) & " must be > 0 and <= 31.", FAILURE) ; 
+      if AddrWidth >= WARNING_AT_ADDRESS_WIDTH then  
+        -- Array of pointers > 64 M words
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & ".") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Internally this creates an array sized 2**" & to_string(ADJ_ARRAY_OF_POINTERS_WIDTH) & ".") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Memories this large may result in poor simulation performance.") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  If you need a memory this large, be sure to file an issue on GitHub/OSVVM/OsvvmLibraries or osvvm.org.") ; 
+
+        if AddrWidth > ADJ_ADDR_WDITH then
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & 
+                                             " was truncated to " & to_string(ADJ_ADDR_WDITH) & ".", ERROR) ; 
+        else 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & " is large and may slow simulation.", WARNING) ; 
+        end if ; 
+      end if ; 
+--      if DataWidth <= 0 or DataWidth > 31 then 
+--        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(DataWidth) & " must be > 0 and <= 31.", FAILURE) ; 
+      if DataWidth <= 0 then 
+        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(DataWidth) & " must be > 0 ", FAILURE) ; 
         return ; 
       end if ; 
 
-      MemStructPtr(ID).AddrWidth   := AddrWidth ; 
-      MemStructPtr(ID).DataWidth   := DataWidth ; 
-      MemStructPtr(ID).BlockWidth  := ADJ_BLOCK_WIDTH ;
-      MemStructPtr(ID).MemArrayPtr := new MemArrayType(0 to 2**(AddrWidth-ADJ_BLOCK_WIDTH)-1) ;  
+      MemStructPtr(ID).AddrWidth           := ADJ_ADDR_WDITH ; 
+      MemStructPtr(ID).DataWidth           := DataWidth ; 
+      MemStructPtr(ID).MemoryBaseTypeWidth := SizeMemoryBaseType(DataWidth) ; 
+      MemStructPtr(ID).BlockWidth          := ADJ_BLOCK_WIDTH ;
+      if ADJ_ARRAY_OF_POINTERS_WIDTH < 31 then 
+        MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to 2**(ADJ_ARRAY_OF_POINTERS_WIDTH)-1) ;  
+      else
+        -- with 32 bit signed numbers, formulating 2**31-1 can be interesting.
+        MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to (2**30-1) + 2**30) ; 
+      end if ; 
     end procedure MemInit ;
     
     ------------------------------------------------------------
@@ -449,34 +517,57 @@ package body MemoryPkg_orig is
       Name                : String ; 
       AddrWidth           : integer ; 
       DataWidth           : integer ; 
-      ParentAlertLogID    : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID
+      ParentID            : AlertLogIDType          := OSVVM_MEMORY_ALERTLOG_ID ;
+      ReportMode          : AlertLogReportModeType  := ENABLED ; 
+      Search              : NameSearchType          := PRIVATE_NAME ;
+      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return integer is 
-      variable NewNumItems : integer ;
-      variable NameID : integer := LocalNameStore.find(Name) ; 
+      variable NameID              : integer ; 
+      variable ResolvedSearch      : NameSearchType ; 
+      variable ResolvedPrintParent : AlertLogPrintParentType ; 
     begin
-      -- Share the memory if they have matching Names
-      if NameID /= ID_NOT_FOUND.ID then 
---! Check that AddrWidth and DataWidth match
---! If AddrWidths are allowed to differ, will need to grow memory size
---! DataWidth must match
---! ParentAlertLogID should match, check it?
-        return NameID ; -- Name IDs are issued sequentially and match MemoryID
+      ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_MEMORY_ALERTLOG_ID, Search) ; 
+      ResolvedPrintParent := ResolvePrintParent(ParentID /= OSVVM_MEMORY_ALERTLOG_ID, PrintParent) ; 
+      
+      NameID := LocalNameStore.find(Name, ParentID, ResolvedSearch) ; 
+
+      -- Share the memory if they match
+      if NameID /= ID_NOT_FOUND.ID then
+        if MemStructPtr(NameID).MemArrayPtr /= NULL then 
+          -- Found ID and structure exists, does structure match?
+          AlertIf(MemStructPtr(NameID).AlertLogID, MaximumAddressWidth(AddrWidth) /= MemStructPtr(NameID).AddrWidth,  
+            "NewID: AddrWidth: " & to_string(MaximumAddressWidth(AddrWidth)) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
+          AlertIf(MemStructPtr(NameID).AlertLogID, DataWidth /= MemStructPtr(NameID).DataWidth,  
+            "NewID: DataWidth: " & to_string(DataWidth) & " /= Existing DataWidth: "  & to_string(MemStructPtr(NameID).DataWidth), FAILURE);
+          -- NameStore IDs are issued sequentially and match MemoryID
+        else 
+          -- Found ID and structure does not exist, Reconstruct Memory
+          MemInit(NameID, AddrWidth, DataWidth) ;
+        end if ; 
+        return NameID ; 
         
       else
-        NewNumItems := NumItems + 1 ; 
-        GrowNumberItems(MemStructPtr, NewNumItems, NumItems, MIN_NUM_ITEMS) ;
-        NumItems  := NewNumItems ;
--- Resolve, use NameStore or local name - currently has both.
-        NameID := LocalNameStore.NewID(Name) ;
-        MemStructPtr(NumItems).Name := new string'(Name) ; 
-  -- Name is for SetAlertLogID + SetName of Memory   
-        MemStructPtr(NumItems).AlertLogID := GetAlertLogID(Name, ParentAlertLogID, CreateHierarchy => FALSE) ;
+        -- Add New Memory to Structure 
+        GrowNumberItems(MemStructPtr, NumItems, GrowAmount => 1, MinNumItems => MIN_NUM_ITEMS) ;
+        -- Create AlertLogID
+        MemStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
+        -- Construct Memory, Reports agains AlertLogID
         MemInit(NumItems, AddrWidth, DataWidth) ;
+        -- Add item to NameStore
+        NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
+        -- Check NameStore Index vs MemoryIndex
         AlertIfNotEqual(MemStructPtr(NumItems).AlertLogID, NameID, NumItems, "MemoryStore, Check Index of LocalNameStore matches MemoryID") ;  
         return NumItems ; 
-      end if ; 
+      end if ;
     end function NewID ;
     
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : MemoryIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= MEMORY_ID_UNINITIALZED ;
+    end function IsInitialized ;
+
     ------------------------------------------------------------
     -- PT Local 
     impure function IdOutOfRange(
@@ -493,31 +584,50 @@ package body MemoryPkg_orig is
     end function IdOutOfRange ; 
 
     ------------------------------------------------------------
+    -- Local
+    -- This is a temporary solution that works around GHDL issues
+    function InitMemoryBlockType(BlockWidth, BaseWidth : integer) return MemBlockType is  
+    ------------------------------------------------------------
+-- This keeps MemoryBaseType from being a generic type
+      constant BaseU : MemoryBaseType(BaseWidth-1 downto 0) := InitMemoryBaseType(BaseWidth) ;
+--!! GHDL Bug     constant BaseU : MemoryBaseType := InitMemoryBaseType(BaseWidth) ;
+    begin
+      return MemBlockType'(0 to 2**BlockWidth-1 => BaseU) ;
+    end function InitMemoryBlockType ; 
+
+    ------------------------------------------------------------
     procedure MemWrite ( 
     ------------------------------------------------------------
       ID    : integer ; 
       Addr  : std_logic_vector ;
       Data  : std_logic_vector 
     ) is 
-      variable BlockWidth : integer ;
+      variable BlockWidth, AddrWidth : integer ;
+      variable MemoryBaseWidth : integer ;
+--      constant BlockWidth : integer := MemStructPtr(ID).BlockWidth;
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
+--      subtype MemBlockSubType is MemBlockType(0 to 2**BlockWidth-1) ;
+      variable MemArrayPtr : MemArrayPtrType ; 
     begin
       if IdOutOfRange(ID, "MemWrite") then 
         return ;
       end if ; 
-      BlockWidth := MemStructPtr(ID).BlockWidth ; 
+      
+      AddrWidth   := MemStructPtr(ID).AddrWidth  ;
+      MemArrayPtr := MemStructPtr(ID).MemArrayPtr ;
       
       -- Check Bounds of Address and if memory is initialized
-      if Addr'length /= MemStructPtr(ID).AddrWidth then
-        if (MemStructPtr(ID).MemArrayPtr = NULL) then 
+      if Addr'length > AddrWidth then
+        if (MemArrayPtr = NULL) then -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Memory not initialized, Write Ignored.", FAILURE) ; 
-        else
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          return ; 
+        elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Address value " & to_hxstring(Addr) & " goes beyond memory address width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          return ; 
         end if ; 
-        return ; 
       end if ; 
-      
+
       -- Check Bounds on Data
       if Data'length /= MemStructPtr(ID).DataWidth then
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemWrite:  Data'length: " & to_string(Data'length) & " /= Memory Data Width: " & to_string(MemStructPtr(ID).DataWidth), FAILURE) ; 
@@ -529,6 +639,8 @@ package body MemoryPkg_orig is
         return ;
       end if ; 
 
+      BlockWidth := MemStructPtr(ID).BlockWidth ; 
+
       -- Slice out upper address to form block address
       if aAddr'high >= BlockWidth then
         BlockAddr := to_integer(aAddr(aAddr'high downto BlockWidth)) ;
@@ -536,20 +648,26 @@ package body MemoryPkg_orig is
         BlockAddr  := 0 ; 
       end if ; 
 
+      MemoryBaseWidth := MemStructPtr(ID).MemoryBaseTypeWidth ; 
+
       -- If empty, allocate a memory block
-      if (MemStructPtr(ID).MemArrayPtr(BlockAddr) = NULL) then 
-          MemStructPtr(ID).MemArrayPtr(BlockAddr) := new MemBlockType(0 to 2**BlockWidth-1) ;
+      if (MemArrayPtr(BlockAddr) = NULL) then 
+        MemArrayPtr(BlockAddr) := new 
+            MemBlockType'(InitMemoryBlockType(BlockWidth, MemoryBaseWidth)) ;
+
+-- Long term, we need the first one to allow transition of MemoryBaseType to a generic.
+--!! GHDL Bug        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+--!! GHDL Bug            MemBlockType'(0 to 2**BlockWidth-1 =>  InitMemoryBaseType(MemoryBaseWidth) ) ;
+--        MemStructPtr(ID).MemArrayPtr(BlockAddr) := new 
+--          MemBlockType(0 to 2**BlockWidth-1)(MemoryBaseWidth-1 downto 0) ;
+--!! GHDL Bug        MemStructPtr(ID).MemArrayPtr(BlockAddr).all := (0 to 2**BlockWidth-1 => InitMemoryBaseType(MemoryBaseWidth));
       end if ; 
 
       -- Address of a word within a block
       WordAddr  := to_integer(aAddr(BlockWidth -1 downto 0)) ;
 
       -- Write to BlockAddr, WordAddr
-      if (Is_X(Data)) then 
-        MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) := -1 ;
-      else
-        MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) := to_integer( Data ) ;
-      end if ;
+      MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data, MemoryBaseWidth) ;
     end procedure MemWrite ; 
 
     ------------------------------------------------------------
@@ -559,30 +677,33 @@ package body MemoryPkg_orig is
       Addr  : in  std_logic_vector ;
       Data  : out std_logic_vector 
     ) is
-      variable BlockWidth : integer ;
+      variable BlockWidth, AddrWidth : integer ;
       variable BlockAddr, WordAddr  : integer ;
       alias aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
     begin
+    
+      Data := (Data'range => 'U') ;  -- Error return value
+
       if IdOutOfRange(ID, "MemRead") then 
         return ;
       end if ; 
-      BlockWidth := MemStructPtr(ID).BlockWidth ;
+      
+      AddrWidth := MemStructPtr(ID).AddrWidth ;
 
       -- Check Bounds of Address and if memory is initialized
-      if Addr'length /= MemStructPtr(ID).AddrWidth then
-        if (MemStructPtr(ID).MemArrayPtr = NULL) then 
+      if Addr'length > AddrWidth then
+        if (MemStructPtr(ID).MemArrayPtr = NULL) then  -- ONLY PT since if ID in range, then MemInit called
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Memory not initialized. Returning U", FAILURE) ; 
-        else
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Addr'length: " & to_string(Addr'length) & " /= Memory Address Width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          return ; 
+        elsif aAddr(aAddr'left downto AddrWidth) /= 0 then
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Address value " & to_hxstring(Addr) & " goes beyond memory address width: " & to_string(MemStructPtr(ID).AddrWidth), FAILURE) ; 
+          return ; 
         end if ; 
-        Data := (Data'range => 'U') ; 
-        return ; 
       end if ; 
       
       -- Check Bounds on Data
       if Data'length /= MemStructPtr(ID).DataWidth then
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemRead:  Data'length: " & to_string(Data'length) & " /= Memory Data Width: " & to_string(MemStructPtr(ID).DataWidth), FAILURE) ; 
-        Data := (Data'range => 'U') ; 
         return ; 
       end if ; 
 
@@ -591,6 +712,8 @@ package body MemoryPkg_orig is
         Data := (Data'range => 'X') ; 
         return ; 
       end if ; 
+
+      BlockWidth := MemStructPtr(ID).BlockWidth ;
 
       -- Slice out upper address to form block address
       if aAddr'high >= BlockWidth then
@@ -607,20 +730,9 @@ package body MemoryPkg_orig is
 
       -- Address of a word within a block
       WordAddr := to_integer(aAddr(BlockWidth -1 downto 0)) ;
+      
+      Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ; 
 
-      if MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) >= 0 then 
-        -- Get the Word from the Array
-        Data := to_slv(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ;
-
-      elsif MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) = -1 then 
-       -- X in Word, return all X
-        Data := (Data'range => 'X') ;
-
-      else 
-       -- Location Uninitialized, return all X
-        Data := (Data'range => 'U') ;
-
-      end if ;
     end procedure MemRead ; 
 
     ------------------------------------------------------------
@@ -630,9 +742,8 @@ package body MemoryPkg_orig is
     ) return std_logic_vector is
     ------------------------------------------------------------
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "MemRead function") ;
-      variable BlockAddr, WordAddr  : integer ;
-      alias    aAddr : std_logic_vector (Addr'length-1 downto 0) is Addr ; 
-      variable Data  : std_logic_vector(MemStructPtr(ID).DataWidth-1 downto 0) ; 
+      constant DATA_WIDTH : integer := MemStructPtr(ID).DataWidth ; 
+      variable Data  : std_logic_vector(DATA_WIDTH-1 downto 0) ; 
     begin
       MemRead(ID, Addr, Data) ; 
       return Data ; 
@@ -659,7 +770,7 @@ package body MemoryPkg_orig is
     ------------------------------------------------------------
     begin
       if IdOutOfRange(ID, "MemErase") then 
-        return -1 ;
+        return ALERTLOG_ID_NOT_FOUND ;
       else
         return MemStructPtr(ID).AlertLogID ; 
       end if ; 
@@ -677,6 +788,7 @@ package body MemoryPkg_orig is
       EndAddr      : std_logic_vector
     ) is
       constant ADDR_WIDTH : integer := MemStructPtr(ID).AddrWidth ;
+      constant DATA_WIDTH : integer := MemStructPtr(ID).DataWidth ; 
 --      constant TemplateRange : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
       -- Format:  
       --  @hh..h     -- Address in hex
@@ -687,7 +799,7 @@ package body MemoryPkg_orig is
       variable Addr             : std_logic_vector(ADDR_WIDTH - 1 downto 0) ;
       variable SmallAddr        : std_logic_vector(ADDR_WIDTH - 1 downto 0) ;
       variable BigAddr          : std_logic_vector(ADDR_WIDTH - 1 downto 0) ;
-      variable Data             : std_logic_vector(MemStructPtr(ID).DataWidth - 1 downto 0) ;
+      variable Data             : std_logic_vector(DATA_WIDTH - 1 downto 0) ;
       variable LineNum          : natural ; 
       variable ItemNum          : natural ; 
       variable AddrInc          : std_logic_vector(ADDR_WIDTH - 1 downto 0) ; 
@@ -696,7 +808,7 @@ package body MemoryPkg_orig is
       variable Empty            : boolean ; 
       variable MultiLineComment : boolean ; 
       variable NextChar         : character ; 
-      variable StrLen           : integer ; 
+      variable StrLen           : integer ;       
     begin
       MultiLineComment := FALSE ; 
       if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
@@ -738,19 +850,19 @@ package body MemoryPkg_orig is
             ReadHexToken(buf, Addr, StrLen) ; 
             exit ReadLineLoop when AlertIf(MemStructPtr(ID).AlertLogID, StrLen = 0, "MemoryPkg.FileReadX: Address length 0 on line: " & to_string(LineNum), FAILURE) ;
             exit ItemLoop when AlertIf(MemStructPtr(ID).AlertLogID, Addr < SmallAddr, 
-                                           "MemoryPkg.FileReadX: Address in file: " & to_hstring(Addr) & 
-                                           " < StartAddr: " & to_hstring(StartAddr) & " on line: " & to_string(LineNum)) ; 
+                                           "MemoryPkg.FileReadX: Address in file: " & to_hxstring(Addr) & 
+                                           " < StartAddr: " & to_hxstring(StartAddr) & " on line: " & to_string(LineNum)) ; 
             exit ItemLoop when AlertIf(MemStructPtr(ID).AlertLogID, Addr > BigAddr, 
-                                           "MemoryPkg.FileReadX: Address in file: " & to_hstring(Addr) & 
-                                           " > EndAddr: " & to_hstring(BigAddr) & " on line: " & to_string(LineNum)) ; 
+                                           "MemoryPkg.FileReadX: Address in file: " & to_hxstring(Addr) & 
+                                           " > EndAddr: " & to_hxstring(BigAddr) & " on line: " & to_string(LineNum)) ; 
           
-          elsif DataFormat = HEX and ishex(NextChar) then 
+          elsif DataFormat = HEX and IsHexOrStdLogic(NextChar) then 
           -- Get Hex Data
             ReadHexToken(buf, data, StrLen) ;
             exit ReadLineLoop when AlertIfNot(MemStructPtr(ID).AlertLogID, StrLen > 0, 
               "MemoryPkg.FileReadH: Error while reading data on line: " & to_string(LineNum) &
               "  Item number: " & to_string(ItemNum), FAILURE) ;
-            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hstring(Addr) & ", Data => " & to_hstring(Data) & ")", DEBUG) ; 
+            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hxstring(Addr) & ", Data => " & to_hxstring(Data) & ")", DEBUG) ; 
             MemWrite(ID, Addr, data) ; 
             Addr := Addr + AddrInc ; 
             
@@ -762,16 +874,21 @@ package body MemoryPkg_orig is
             exit ReadLineLoop when AlertIfNot(MemStructPtr(ID).AlertLogID, StrLen > 0, 
               "MemoryPkg.FileReadB: Error while reading data on line: " & to_string(LineNum) &
               "  Item number: " & to_string(ItemNum), FAILURE) ;
-            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hstring(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
+            log(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  MemWrite(Addr => " & to_hxstring(Addr) & ", Data => " & to_string(Data) & ")", DEBUG) ; 
             MemWrite(ID, Addr, data) ; 
             Addr := Addr + AddrInc ; 
           
           else
-          -- Invalid Text, Issue Warning and skip it
-            Alert(MemStructPtr(ID).AlertLogID,  
-              "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
+            if NextChar = LF or NextChar = CR then 
+              -- If LF or CR, silently skip the character (DOS file in Unix)
+              read(buf, NextChar) ; 
+            else
+              -- invalid Text, issue warning and skip rest of line
+              Alert(MemStructPtr(ID).AlertLogID,  
+                "MemoryPkg.FileReadX: Invalid text on line: " & to_string(LineNum) &
                 "  Item: " & to_string(ItemNum) & ".  Skipping text: " & StripCrLf(buf.all)) ;
-            exit ItemLoop ; 
+              exit ItemLoop ; 
+            end if ; 
           end if ; 
           
         end loop ItemLoop ; 
@@ -807,7 +924,8 @@ package body MemoryPkg_orig is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileReadH ;
@@ -820,8 +938,9 @@ package body MemoryPkg_orig is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileReadH ;    
@@ -849,8 +968,9 @@ package body MemoryPkg_orig is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
-    begin
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
+    begin 
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileReadB ;
 
@@ -862,8 +982,9 @@ package body MemoryPkg_orig is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileReadB ;    
@@ -879,9 +1000,9 @@ package body MemoryPkg_orig is
       StartAddr    : std_logic_vector ; 
       EndAddr      : std_logic_vector
     ) is
-    
-     constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
-     constant BLOCK_WIDTH : integer := MemStructPtr(ID).BlockWidth ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant DATA_WIDTH  : integer := MemStructPtr(ID).DataWidth ; 
+      constant BLOCK_WIDTH : integer := MemStructPtr(ID).BlockWidth ;
       -- Format:  
       --  @hh..h     -- Address in hex
       --  hhhhh      -- data one per line in either hex or binary as specified 
@@ -892,9 +1013,10 @@ package body MemoryPkg_orig is
       variable EndBlockAddr   : natural ;
       variable StartWordAddr  : natural ; 
       variable EndWordAddr    : natural ; 
-      variable Data           : std_logic_vector(MemStructPtr(ID).DataWidth - 1 downto 0) ;
       variable FoundData      : boolean ; 
       variable buf            : line ;
+      variable Data           : std_logic_vector(DATA_WIDTH-1 downto 0) ;
+      constant AllU           : std_logic_vector := (DATA_WIDTH-1 downto 0 => 'U');
       
     begin
       if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
@@ -914,8 +1036,8 @@ package body MemoryPkg_orig is
 
       if StartAddr > EndAddr then 
       -- Only support ascending addresses
-        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  StartAddr: " & to_hstring(StartAddr) & 
-                             " > EndAddr: " & to_hstring(EndAddr), FAILURE) ;
+        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  StartAddr: " & to_hxstring(StartAddr) & 
+                             " > EndAddr: " & to_hxstring(EndAddr), FAILURE) ;
         return ; 
       end if ; 
             
@@ -942,13 +1064,10 @@ package body MemoryPkg_orig is
         end if ; 
         FoundData := FALSE ; 
         WordAddrLoop : for WordAddr in StartWordAddr to EndWordAddr loop 
-          if (MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr) < 0) then 
-            -- X in Word, return all X
-            Data := (Data'range => 'X') ;
+          Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ;
+          if MetaMatch(Data, AllU) then 
             FoundData := FALSE ;
           else 
-            -- Get the Word from the Array
-            Data := to_slv(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ;
             if not FoundData then
               -- Write Address
               write(buf, '@') ; 
@@ -994,7 +1113,8 @@ package body MemoryPkg_orig is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
-      constant EndAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileWriteH ;
@@ -1007,10 +1127,9 @@ package body MemoryPkg_orig is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
--- fails     constant StartAddr : std_logic_vector(MemStructPtr(ID).AddrWidth - 1 downto 0) := (others => '0') ;
--- fails     constant EndAddr   : std_logic_vector(MemStructPtr(ID).AddrWidth - 1 downto 0) := (others => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, HEX, StartAddr, EndAddr) ; 
     end FileWriteH ;    
@@ -1038,7 +1157,8 @@ package body MemoryPkg_orig is
       StartAddr    : std_logic_vector
     ) is
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileWriteB ;
@@ -1051,8 +1171,9 @@ package body MemoryPkg_orig is
       FileName     : string 
     ) is 
       constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
-      constant StartAddr : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '0') ;
-      constant EndAddr   : std_logic_vector := (MemStructPtr(ID).AddrWidth - 1 downto 0 => '1') ;
+      constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
+      constant StartAddr   : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
+      constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ; 
     end FileWriteB ;  
@@ -1082,8 +1203,7 @@ package body MemoryPkg_orig is
     -- Note, a normal simulator does this for you.  
     -- You only need this if the simulator is broken.
     ------------------------------------------------------------
-    -- PT Local
-     procedure deallocate (ID : integer) is 
+    procedure deallocate (ID : integer) is 
     ------------------------------------------------------------
     begin
       MemErase(ID) ; 
@@ -1091,18 +1211,15 @@ package body MemoryPkg_orig is
       MemStructPtr(ID).AddrWidth   := -1 ;
       MemStructPtr(ID).DataWidth   := 1 ;
       MemStructPtr(ID).BlockWidth  := 0 ;
-      deallocate(MemStructPtr(ID).Name) ; 
     end procedure ; 
 
     procedure deallocate is
     begin
-      for ID in MemStructPtr'range loop 
+      for ID in 1 to NumItems loop 
         deallocate(ID) ;
       end loop ;
---! Deallocate not able to be called on MemoryStore - no accessor procedure
---! if make directly visible, then do this, but otherwise no.
---      deallocate(MemStructPtr) ;   
---      NumItems := 0 ; 
+      deallocate(MemStructPtr) ;   
+      NumItems := 0 ; 
     end procedure deallocate ; 
 
 -- /////////////////////////////////////////
@@ -1137,7 +1254,8 @@ package body MemoryPkg_orig is
     ------------------------------------------------------------
     impure function MemRead ( Addr  : std_logic_vector ) return std_logic_vector is
     ------------------------------------------------------------
-      variable Data  : std_logic_vector(MemStructPtr(MEM_STRUCT_PTR_LEFT).DataWidth-1 downto 0) ; 
+      constant DATA_WIDTH : integer := MemStructPtr(MEM_STRUCT_PTR_LEFT).DataWidth ; 
+      variable Data  : std_logic_vector(DATA_WIDTH-1 downto 0) ; 
     begin
       MemRead(MEM_STRUCT_PTR_LEFT, Addr, Data) ; 
       return Data ; 
@@ -1285,11 +1403,6 @@ package body MemoryPkg_orig is
   shared variable MemoryStore : MemoryPType ;
  
    ------------------------------------------------------------
-   --
-   --  Note that ReportMode, Search, and PrintParent are not 
-   --  implemented in this model. 
-   --  They are there to maximize portability with the Generic versions.
-   --
   impure function NewID (
     Name                : String ; 
     AddrWidth           : integer ; 
@@ -1301,9 +1414,16 @@ package body MemoryPkg_orig is
   ) return MemoryIDType is
     variable Result : MemoryIDType ; 
   begin
-    Result.ID := MemoryStore.NewID(Name, AddrWidth, DataWidth, ParentID) ; 
+    Result.ID := MemoryStore.NewID(Name, AddrWidth, DataWidth, ParentID, ReportMode, Search, PrintParent) ; 
     return Result ; 
   end function NewID ; 
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : MemoryIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    return MemoryStore.IsInitialized(ID) ;
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   procedure MemWrite ( 
@@ -1338,6 +1458,18 @@ package body MemoryPkg_orig is
     MemoryStore.MemErase(ID.ID) ; 
   end procedure MemErase ;  
   
+  ------------------------------------------------------------
+  procedure deallocate (ID : in MemoryIDType) is 
+  begin
+    MemoryStore.deallocate(ID.ID) ; 
+  end procedure ; 
+
+  ------------------------------------------------------------
+  procedure MemoryPkgDeallocate is
+  begin
+    MemoryStore.deallocate ; 
+  end procedure MemoryPkgDeallocate ; 
+
   ------------------------------------------------------------
   impure function GetAlertLogID (
     ID : in MemoryIDType

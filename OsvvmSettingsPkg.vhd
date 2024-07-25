@@ -24,6 +24,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Added ALERT_LOG_NOCHECKS_NAME and ALERT_LOG_TIMEOUT_NAME
+--    03/2024   2024.03    Major updates
 --    09/2023   2023.09    Initial
 --
 --  This file is part of OSVVM.
@@ -109,6 +111,9 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_DONE_NAME        : string ;
   constant  ALERT_LOG_PASS_NAME        : string ;
   constant  ALERT_LOG_FAIL_NAME        : string ;
+  
+  constant ALERT_LOG_NOCHECKS_NAME     : string ;
+  constant ALERT_LOG_TIMEOUT_NAME      : string ;
   
   -- Defaults for Stop Counts
   constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer ;  -- OSVVM 0

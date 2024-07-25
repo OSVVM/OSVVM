@@ -19,6 +19,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
+--                         Added IsInitialized
 --    01/2023   2023.01    Updated address checks in MemRead and MemWrite
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    08/2022   2022.08    Refactored and added generics for base type
@@ -77,6 +79,9 @@ package MemoryGenericPkg is
   type MemoryIDType is record
     ID : integer_max ;
   end record MemoryIDType ; 
+  
+  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'left) ; 
+
   type MemoryIDArrayType is array (integer range <>) of MemoryIDType ;
 
   constant OSVVM_MEMORY_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
@@ -90,6 +95,8 @@ package MemoryGenericPkg is
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return MemoryIDType ;
+
+  impure function IsInitialized (ID : MemoryIDType) return boolean ;
 
   ------------------------------------------------------------
   procedure MemWrite ( 
@@ -114,6 +121,8 @@ package MemoryGenericPkg is
 
   ------------------------------------------------------------
   procedure MemErase (ID : in MemoryIDType); 
+  procedure deallocate (ID : in MemoryIDType) ;
+  procedure MemoryPkgDeallocate ;
   
   ------------------------------------------------------------
   impure function GetAlertLogID (ID : in MemoryIDType) return AlertLogIDType ;
@@ -198,6 +207,8 @@ package MemoryGenericPkg is
       Search              : NameSearchType          := PRIVATE_NAME ;
       PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return integer ;
+
+    impure function IsInitialized (ID : MemoryIDType) return boolean ;
 
     ------------------------------------------------------------
     procedure MemWrite ( 
@@ -294,6 +305,7 @@ package MemoryGenericPkg is
     -- memory used by data structure.  
     -- Note, a normal simulator does this for you.  
     -- You only need this if the simulator is broken.
+    procedure deallocate (ID : integer) ; 
     procedure deallocate ; 
 
     ------------------------------------------------------------
@@ -366,6 +378,8 @@ end MemoryGenericPkg ;
 
 package body MemoryGenericPkg is 
   constant BLOCK_WIDTH : integer := 10 ; 
+  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 24 ; -- 64 M Byte array of pointers
+  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 30 ; -- 4 G Byte Array of pointers - Maximum size supported by type integer
 
   type MemoryPType is protected body
 
@@ -441,13 +455,37 @@ package body MemoryGenericPkg is
     
    ------------------------------------------------------------
     -- PT Local 
+    function MaximumAddressWidth (AddrWidth : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return minimum(AddrWidth, MAXIMUM_ADDRESS_WIDTH) ;
+    end function MaximumAddressWidth ; 
+
+   ------------------------------------------------------------
+    -- PT Local 
     procedure MemInit (ID : integer ;  AddrWidth, DataWidth  : integer ) is
     ------------------------------------------------------------
-      constant ADJ_BLOCK_WIDTH : integer := minimum(BLOCK_WIDTH, AddrWidth) ;
+      constant ADJ_BLOCK_WIDTH             : integer := minimum(BLOCK_WIDTH, AddrWidth) ;
+      constant ADJ_ADDR_WDITH              : integer := MaximumAddressWidth(AddrWidth) ; 
+      constant ADJ_ARRAY_OF_POINTERS_WIDTH : integer := ADJ_ADDR_WDITH - ADJ_BLOCK_WIDTH ; 
     begin
       if AddrWidth <= 0 then 
         Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  AddrWidth = " & to_string(AddrWidth) & " must be > 0.", FAILURE) ; 
         return ; 
+      end if ; 
+      if AddrWidth >= WARNING_AT_ADDRESS_WIDTH then  
+        -- Array of pointers > 64 M words
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & ".") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Internally this creates an array sized 2**" & to_string(ADJ_ARRAY_OF_POINTERS_WIDTH) & ".") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Memories this large may result in poor simulation performance.") ; 
+        log(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  If you need a memory this large, be sure to file an issue on GitHub/OSVVM/OsvvmLibraries or osvvm.org.") ; 
+
+        if AddrWidth > ADJ_ADDR_WDITH then
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & 
+                                             " was truncated to " & to_string(ADJ_ADDR_WDITH) & ".", ERROR) ; 
+        else 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.NewID(MemInit):  Requested AddrWidth = " & to_string(AddrWidth) & " is large and may slow simulation.", WARNING) ; 
+        end if ; 
       end if ; 
 --      if DataWidth <= 0 or DataWidth > 31 then 
 --        Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.MemInit/NewID.  DataWidth = " & to_string(DataWidth) & " must be > 0 and <= 31.", FAILURE) ; 
@@ -456,11 +494,16 @@ package body MemoryGenericPkg is
         return ; 
       end if ; 
 
-      MemStructPtr(ID).AddrWidth           := AddrWidth ; 
+      MemStructPtr(ID).AddrWidth           := ADJ_ADDR_WDITH ; 
       MemStructPtr(ID).DataWidth           := DataWidth ; 
       MemStructPtr(ID).MemoryBaseTypeWidth := SizeMemoryBaseType(DataWidth) ; 
       MemStructPtr(ID).BlockWidth          := ADJ_BLOCK_WIDTH ;
-      MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to 2**(AddrWidth-ADJ_BLOCK_WIDTH)-1) ;  
+      if ADJ_ARRAY_OF_POINTERS_WIDTH < 31 then 
+        MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to 2**(ADJ_ARRAY_OF_POINTERS_WIDTH)-1) ;  
+      else
+        -- with 32 bit signed numbers, formulating 2**31-1 can be interesting.
+        MemStructPtr(ID).MemArrayPtr         := new MemArrayType(0 to (2**30-1) + 2**30) ; 
+      end if ; 
     end procedure MemInit ;
     
     ------------------------------------------------------------
@@ -487,8 +530,8 @@ package body MemoryGenericPkg is
       if NameID /= ID_NOT_FOUND.ID then
         if MemStructPtr(NameID).MemArrayPtr /= NULL then 
           -- Found ID and structure exists, does structure match?
-          AlertIf(MemStructPtr(NameID).AlertLogID, AddrWidth /= MemStructPtr(NameID).AddrWidth,  
-            "NewID: AddrWidth: " & to_string(AddrWidth) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
+          AlertIf(MemStructPtr(NameID).AlertLogID, MaximumAddressWidth(AddrWidth) /= MemStructPtr(NameID).AddrWidth,  
+            "NewID: AddrWidth: " & to_string(MaximumAddressWidth(AddrWidth)) & " /= Existing AddrWidth: "  & to_string(MemStructPtr(NameID).AddrWidth), FAILURE);
           AlertIf(MemStructPtr(NameID).AlertLogID, DataWidth /= MemStructPtr(NameID).DataWidth,  
             "NewID: DataWidth: " & to_string(DataWidth) & " /= Existing DataWidth: "  & to_string(MemStructPtr(NameID).DataWidth), FAILURE);
           -- NameStore IDs are issued sequentially and match MemoryID
@@ -513,6 +556,13 @@ package body MemoryGenericPkg is
       end if ;
     end function NewID ;
     
+    ------------------------------------------------------------
+    impure function IsInitialized (ID : MemoryIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= MEMORY_ID_UNINITIALZED ;
+    end function IsInitialized ;
+
     ------------------------------------------------------------
     -- PT Local 
     impure function IdOutOfRange(
@@ -1148,8 +1198,7 @@ package body MemoryGenericPkg is
     -- Note, a normal simulator does this for you.  
     -- You only need this if the simulator is broken.
     ------------------------------------------------------------
-    -- PT Local
-     procedure deallocate (ID : integer) is 
+    procedure deallocate (ID : integer) is 
     ------------------------------------------------------------
     begin
       MemErase(ID) ; 
@@ -1157,18 +1206,15 @@ package body MemoryGenericPkg is
       MemStructPtr(ID).AddrWidth   := -1 ;
       MemStructPtr(ID).DataWidth   := 1 ;
       MemStructPtr(ID).BlockWidth  := 0 ;
---! removed      -- deallocate(MemStructPtr(ID).Name) ; 
     end procedure ; 
 
     procedure deallocate is
     begin
-      for ID in MemStructPtr'range loop 
+      for ID in 1 to NumItems loop 
         deallocate(ID) ;
       end loop ;
---! Deallocate not able to be called on MemoryStore - no accessor procedure
---! if make directly visible, then do this, but otherwise no.
---      deallocate(MemStructPtr) ;   
---      NumItems := 0 ; 
+      deallocate(MemStructPtr) ;   
+      NumItems := 0 ; 
     end procedure deallocate ; 
 
 -- /////////////////////////////////////////
@@ -1368,6 +1414,13 @@ package body MemoryGenericPkg is
   end function NewID ; 
 
   ------------------------------------------------------------
+  impure function IsInitialized (ID : MemoryIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    return MemoryStore.IsInitialized(ID) ;
+  end function IsInitialized ;
+
+  ------------------------------------------------------------
   procedure MemWrite ( 
     ID    : MemoryIDType ; 
     Addr  : std_logic_vector ;
@@ -1400,6 +1453,18 @@ package body MemoryGenericPkg is
     MemoryStore.MemErase(ID.ID) ; 
   end procedure MemErase ;  
   
+  ------------------------------------------------------------
+  procedure deallocate (ID : in MemoryIDType) is 
+  begin
+    MemoryStore.deallocate(ID.ID) ; 
+  end procedure ; 
+
+  ------------------------------------------------------------
+  procedure MemoryPkgDeallocate is
+  begin
+    MemoryStore.deallocate ; 
+  end procedure MemoryPkgDeallocate ; 
+
   ------------------------------------------------------------
   impure function GetAlertLogID (
     ID : in MemoryIDType

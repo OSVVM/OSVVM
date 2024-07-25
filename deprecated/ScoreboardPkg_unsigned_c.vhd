@@ -1,6 +1,6 @@
 --
---  File Name:         ScoreBoardGenericPkg.vhd
---  Design Unit Name:  ScoreBoardGenericPkg
+--  File Name:         ScoreBoardPkg_unsigned.vhd
+--  Design Unit Name:  ScoreBoardPkg_unsigned
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -21,41 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2024   2024.07    Made function generics impure. Added IsInitialized.  Updated Yaml.  
---    05/2023   2023.05    Updated Pop fail on empty error to print tag if a tag is used
---    02/2023   2023.04    Bug fix for Peek with a tag.
---    01/2023   2023.01    OSVVM_RAW_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
---    11/2022   2022.11    Updated default search to PRIVATE_NAME
---    10/2022   2022.10    Added Parent Name to YAML output.
---    09/2022   2022.09    Added FifoCount to YAML output.
---    03/2022   2022.03    Removed deprecated SetAlertLogID in Singleton API
---    02/2022   2022.02    Added WriteScoreboardYaml and GotScoreboards.  Updated NewID with ParentID,
---                         ReportMode, Search, PrintParent.   Supports searching for Scoreboard models..
---    01/2022   2022.01    Added CheckExpected.  Added SetCheckCountZero to ScoreboardPType
---    08/2021   2021.08    Removed SetAlertLogID from singleton public interface - set instead by NewID
---    06/2021   2021.06    Updated Data Structure, IDs for new use model, and Wrapper Subprograms
---    10/2020   2020.10    Added Peek
---    05/2020   2020.05    Updated calls to IncAffirmCount
---                         Overloaded Check with functions that return pass/fail (T/F)
---                         Added GetFifoCount.   Added GetPushCount which is same as GetItemCount
---    01/2020   2020.01    Updated Licenses to Apache
---    04/2018   2018.04    Made Pop Functions Visible.   Prep for AlertLogIDType being a type.
---    05/2017   2017.05    First print Actual then only print Expected if mis-match
---    11/2016   2016.11    Released as part of OSVVM
---    06/2015   2015.06    Added Alerts, SetAlertLogID, Revised LocalPush, GetDropCount,
---                         Deprecated SetFinish and ReportMode - REPORT_NONE, FileOpen
---                         Deallocate, Initialized, Function SetName
---    09/2013   2013.09    Added file handling, Check Count, Finish Status
---                         Find, Flush
---    08/2013   2013.08    Generics:  to_string replaced write, Match replaced check
---                         Added Tags - Experimental
---                         Added Array of Scoreboards
---    08/2012   2012.08    Added Type and Subprogram Generics
---    05/2012   2012.05    Changed FIFO to store pointers to ExpectedType
---                         Allows usage of unconstrained arrays
---    08/2010   2010.08    Added Tailpointer
---    12/2006   2006.12    Initial revision
---
+--    07/2024   2024.07    _c version reconstructed from ScoreboardGenericPkg
 --
 --
 --  This file is part of OSVVM.
@@ -92,25 +58,25 @@ library ieee ;
   use work.NameStorePkg.all ;
   use work.ResolutionPkg.all ;
 
-package ScoreboardGenericPkg is
-  generic (
-    type ExpectedType ;
-    type ActualType ;
-    impure function Match(Actual : ActualType ;                           -- defaults
-                   Expected : ExpectedType) return boolean ;       -- is "=" ;
-    impure function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
-    impure function actual_to_string  (A : ActualType) return string      -- is to_string ;
-  ) ;
+package ScoreBoardPkg_unsigned is
+--  generic (
+--    type ExpectedType ;
+--    type ActualType ;
+--    impure function Match(Actual : ActualType ;                           -- defaults
+--                   Expected : ExpectedType) return boolean ;       -- is "=" ;
+--    impure function expected_to_string(A : ExpectedType) return string ;  -- is to_string ;
+--    impure function actual_to_string  (A : ActualType) return string      -- is to_string ;
+--  ) ;
 
---   --  For a VHDL-2002 package, comment out the generics and
---   --  uncomment the following, it replaces a generic instance of the package.
---   --  As a result, you will have multiple copies of the entire package.
---   --  Inconvenient, but ok as it still works the same.
---   subtype ExpectedType is std_logic_vector ;
---   subtype ActualType   is std_logic_vector ;
---   alias Match is std_match [ActualType, ExpectedType return boolean] ;  -- for std_logic_vector
---   alias expected_to_string is to_hstring [ExpectedType return string];  -- VHDL-2008
---   alias actual_to_string is to_hstring [ActualType return string];  -- VHDL-2008
+   --  For a VHDL-2002 package, comment out the generics and 
+   --  uncomment the following, it replaces a generic instance of the package.
+   --  As a result, you will have multiple copies of the entire package. 
+   --  Inconvenient, but ok as it still works the same.
+  subtype ExpectedType is unsigned ;
+  subtype ActualType   is unsigned ;
+  alias   Match is work.AlertLogPkg.MetaMatch [ExpectedType, ActualType return boolean] ;  
+  alias   expected_to_string is to_hxstring   [ExpectedType return string];  
+  alias   actual_to_string   is to_hxstring   [ActualType   return string];  
 
   -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag
@@ -1001,12 +967,12 @@ package ScoreboardGenericPkg is
   impure function NewID (Name : String; X, Y : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
 
 
-end ScoreboardGenericPkg ;
+end ScoreBoardPkg_unsigned ;
 
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-package body ScoreboardGenericPkg is
+package body ScoreBoardPkg_unsigned is
 
   type ScoreBoardPType is protected body
     type ExpectedPointerType is access ExpectedType ;
@@ -3548,4 +3514,4 @@ package body ScoreboardGenericPkg is
   end function NewID ;
 
 
-end ScoreboardGenericPkg ;
+end ScoreBoardPkg_unsigned ;

@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Added IfElse for std_logic
 --    01/2024   2024.01    Initial revision
 --
 --
@@ -52,6 +53,7 @@ package IfElsePkg is
   --   If condition is true return first parameter otherwise return second
   ------------------------------------------------------------
   function IfElse(Expr : boolean ; A, B : string) return string ; 
+  function IfElse(Expr : boolean ; A, B : std_logic) return std_logic ;
   function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector ;
   function IfElse(Expr : boolean ; A, B : integer) return integer ;
   function IfElse(Expr : boolean ; A, B : boolean) return boolean ;
@@ -75,6 +77,17 @@ package body IfElsePkg is
     end if ; 
   end function IfElse ; 
   
+  ------------------------------------------------------------
+  function IfElse(Expr : boolean ; A, B : std_logic) return std_logic is
+  ------------------------------------------------------------
+  begin
+    if Expr then
+      return A ;
+    else
+      return B ;
+    end if ;
+  end function IfElse ;
+
   ------------------------------------------------------------
   function IfElse(Expr : boolean ; A, B : std_logic_vector) return std_logic_vector is
   ------------------------------------------------------------

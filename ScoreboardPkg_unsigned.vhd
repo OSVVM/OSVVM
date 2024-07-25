@@ -1,6 +1,6 @@
 --
---  File Name:         ScoreBoardPkg_signed.vhd
---  Design Unit Name:  ScoreBoardPkg_signed
+--  File Name:         ScoreBoardPkg_unsigned.vhd
+--  Design Unit Name:  ScoreBoardPkg_unsigned
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -44,11 +44,11 @@ library ieee ;
   use ieee.numeric_std.all ;
 
 
-package ScoreBoardPkg_signed is new work.ScoreboardGenericPkg
+package ScoreBoardPkg_unsigned is new work.ScoreboardGenericPkg
   generic map (
-    ExpectedType        => signed,
-    ActualType          => signed,
-    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [signed, signed return boolean]
-    expected_to_string  => work.TextUtilPkg.to_hxstring,  --    [signed return string] 
-    actual_to_string    => work.TextUtilPkg.to_hxstring   --    [signed return string]  
+    ExpectedType        => unsigned,
+    ActualType          => unsigned,
+    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [unsigned, unsigned return boolean]
+    expected_to_string  => work.TextUtilPkg.to_hxstring,  --    [unsigned return string] 
+    actual_to_string    => work.TextUtilPkg.to_hxstring   --    [unsigned return string]  
   ) ;  

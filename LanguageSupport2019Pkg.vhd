@@ -1,15 +1,18 @@
 --
---  File Name:         ScoreBoardPkg_signed.vhd
---  Design Unit Name:  ScoreBoardPkg_signed
+--  File Name:         LanguageSupport2019Pkg_c.vhd
+--  Design Unit Name:  LanguageSupport2019Pkg
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
 --  Contributor(s):
---     Jim Lewis          email:  jim@synthworks.com
+--     Jim Lewis      jim@synthworks.com
 --
 --
 --  Description:
---    Instance of Generic Package ScoreboardGenericPkg for integer
+--     Abstraction layer around 1076-2019 features to support a 
+--     graceful degradation of capability without breaking the 
+--     code in 2008.
+--          
 --
 --  Developed for:
 --        SynthWorks Design Inc.
@@ -19,7 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2023   2024.07    Generic Instance of ScoreboardGenericPkg based on ScoreboardPkg_slv
+--    07/2024   2024.07    Initial revision
 --
 --
 --  This file is part of OSVVM.
@@ -39,16 +42,23 @@
 --  limitations under the License.
 --  
 
-library ieee ;
-  use ieee.std_logic_1164.all ;
-  use ieee.numeric_std.all ;
+use std.textio.all ;
+library ieee ; 
+use ieee.std_logic_1164.all ; 
+use ieee.numeric_std.all ; 
+
+package LanguageSupport2019Pkg is
+
+  -- implemented directly by 1076-2019
+  -- function to_string ( A : integer_vector) return string ;
+
+end LanguageSupport2019Pkg ;
+  
+--- ///////////////////////////////////////////////////////////////////////////
+--- ///////////////////////////////////////////////////////////////////////////
+--- ///////////////////////////////////////////////////////////////////////////
+
+package body LanguageSupport2019Pkg is
 
 
-package ScoreBoardPkg_signed is new work.ScoreboardGenericPkg
-  generic map (
-    ExpectedType        => signed,
-    ActualType          => signed,
-    Match               => work.AlertLogPkg.MetaMatch,  -- "=", [signed, signed return boolean]
-    expected_to_string  => work.TextUtilPkg.to_hxstring,  --    [signed return string] 
-    actual_to_string    => work.TextUtilPkg.to_hxstring   --    [signed return string]  
-  ) ;  
+end package body LanguageSupport2019Pkg ;

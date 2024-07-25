@@ -27,6 +27,10 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    07/2024   2024.07    Updated PathTail to incorporate for generate indicies in the name.
+--                         Added AffirmIfEqual, AffirmIfNotEqual, AlertIfEqual, AlertIfNotEqual for integer_vector
+--                         Added TimeOut indication to ReportAlerts and WriteAlertYaml.
+--                         Added IsInitialized.
 --    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
 --                         Allows setting constants for all tests rather than using SetAlertLogOptions.  
 --                         Added AffirmIfTranscriptsMatch
@@ -113,6 +117,8 @@ use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
 use work.OsvvmSettingsPkg.all ;
+use work.LanguageSupport2019Pkg.all ; 
+
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -122,6 +128,8 @@ package AlertLogPkg is
 
 --  type   AlertLogIDType       is range integer'low to integer'high ; -- next revision
   subtype  AlertLogIDType       is integer ;
+  constant ALERTLOG_ID_UNINITIALZED : AlertLogIdType := integer'left ; 
+  
   type     AlertLogIDVectorType is array (integer range <>) of AlertLogIDType ;
   type     AlertType            is (FAILURE, ERROR, WARNING) ;  -- NEVER
   subtype  AlertIndexType       is AlertType range FAILURE to WARNING ;
@@ -191,6 +199,7 @@ package AlertLogPkg is
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : character ;         Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : string ;            Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : time ;              Message : string ; Level : AlertType := ERROR ) ;
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ;  L, R : integer_vector ;    Message : string ; Level : AlertType := ERROR ) ;
 
   procedure AlertIfEqual( L, R : boolean ;          Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR ) ;
@@ -202,6 +211,7 @@ package AlertLogPkg is
   procedure AlertIfEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR )  ;
+  procedure AlertIfEqual( L, R : integer_vector ;   Message : string ; Level : AlertType := ERROR ) ;
 
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : boolean ;          Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : std_logic ;        Message : string ; Level : AlertType := ERROR ) ;
@@ -213,6 +223,7 @@ package AlertLogPkg is
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : character ;        Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : string ;           Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : time ;             Message : string ; Level : AlertType := ERROR ) ;
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ;  L, R : integer_vector ;   Message : string ; Level : AlertType := ERROR ) ;
 
   procedure AlertIfNotEqual( L, R : boolean ;          Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( L, R : std_logic ;        Message : string ; Level : AlertType := ERROR ) ;
@@ -224,6 +235,7 @@ package AlertLogPkg is
   procedure AlertIfNotEqual( L, R : character ;        Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( L, R : string ;           Message : string ; Level : AlertType := ERROR ) ;
   procedure AlertIfNotEqual( L, R : time ;             Message : string ; Level : AlertType := ERROR ) ;
+  procedure AlertIfNotEqual( L, R : integer_vector ;   Message : string ; Level : AlertType := ERROR ) ;
 
   ------------------------------------------------------------
   -- Simple Diff for file comparisons
@@ -278,54 +290,58 @@ package AlertLogPkg is
   procedure AffirmError( Message : string ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE );
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE );
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   -- Without AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfEqual( Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE );
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE );
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   -- Without AlertLogID
   ------------------------------------------------------------
-  procedure AffirmIfNotEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : std_logic ;  Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : boolean ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : std_logic ;        Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfNotEqual( Received, Expected : std_logic_vector ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : unsigned ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : signed ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : integer ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : real ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : character ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : string ; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotEqual( Received, Expected : time ; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : unsigned ;         Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : signed ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : integer ;          Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : real ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : character ;        Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : string ;           Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : time ;             Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfNotEqual( Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
   procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
@@ -353,7 +369,8 @@ package AlertLogPkg is
     Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ;
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0) ;
-    ReportAll      : Boolean         := FALSE
+    ReportAll      : Boolean         := FALSE ;
+    TimeOut        : boolean         := FALSE 
   ) ;
 
   procedure ReportNonZeroAlerts (
@@ -368,9 +385,10 @@ package AlertLogPkg is
     Prefix         : string := "" ;
     PrintSettings  : boolean := TRUE ;
     PrintChildren  : boolean := TRUE ;
-    OpenKind       : File_Open_Kind := WRITE_MODE
+    OpenKind       : File_Open_Kind := WRITE_MODE ;
+    TimeOut        : boolean 
   ) ;
-  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) ;
+  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0) ; TimeOut : boolean := FALSE) ;
   procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;  -- Deprecated.  Use WriteAlertSummaryYaml.
 
   ------------------------------------------------------------
@@ -489,6 +507,7 @@ package AlertLogPkg is
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType ;
   impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
+  impure function IsInitialized (ID : AlertLogIDType) return boolean ;
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
   procedure SetAlertLogPrefix(AlertLogID : AlertLogIDType; Name : string ) ;
@@ -614,7 +633,8 @@ package AlertLogPkg is
   procedure ReadLogEnables (FileName : string) ;
 
   -- String Helper Functions -- This should be in a more general string package
-  function PathTail (A : string) return string ;
+  function OldPathTail (A : string) return string ;
+  impure function PathTail (A : string) return string ;
 
   ------------------------------------------------------------
   -- MetaMatch
@@ -728,7 +748,8 @@ package body AlertLogPkg is
       AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
       ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := FALSE ;
-      ReportWhenZero : boolean := TRUE
+      ReportWhenZero : boolean := TRUE ;
+      TimeOut        : boolean := FALSE 
     ) ;
     procedure WriteAlertYaml (
       FileName       : string ;
@@ -736,7 +757,8 @@ package body AlertLogPkg is
       Prefix         : string := "" ;
       PrintSettings  : boolean := TRUE ;
       PrintChildren  : boolean := TRUE ;
-      OpenKind       : File_Open_Kind := WRITE_MODE
+      OpenKind       : File_Open_Kind := WRITE_MODE ;
+      TimeOut        : boolean := FALSE
     ) ;
     procedure WriteRequirementsYaml (
       FileName    : string ;
@@ -812,6 +834,7 @@ package body AlertLogPkg is
     ) return AlertLogIDType ;
     -- impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType; CreateHierarchy : Boolean; DoNotReport : Boolean) return AlertLogIDType ;
     impure function GetReqID(Name : string ; PassedGoal : integer ; ParentID : AlertLogIDType ; CreateHierarchy : Boolean) return AlertLogIDType ;
+    impure function IsInitialized (ID : AlertLogIDType) return boolean ;
     procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
     impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
     procedure Initialize(NewNumAlertLogIDs : AlertLogIDType := MIN_NUM_AL_IDS) ;
@@ -1506,7 +1529,8 @@ package body AlertLogPkg is
       variable TotalErrors              : out integer ;
       variable TotalAlertCount          : out AlertCountType ;
       variable TotalRequirementsPassed  : out integer ;
-      variable TotalRequirementsCount   : out integer
+      variable TotalRequirementsCount   : out integer ;
+      constant TimeOut                  : in  boolean
     ) is
       variable DisabledAlertCount : AlertCountType ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
@@ -1529,6 +1553,10 @@ package body AlertLogPkg is
       if FailOnRequirementErrorsVar then
         TotalErrors := TotalErrors + TotalRequirementErrors ;
       end if ;
+
+      if TimeOut then
+        TotalErrors := TotalErrors + 1 ;
+      end if ; 
 
       -- Set AffirmCount for top level
       AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
@@ -1573,7 +1601,8 @@ package body AlertLogPkg is
       Name                        : string ;
       ExternalErrors              : AlertCountType ;
       variable HasDisabledAlerts  : inout Boolean ;
-      variable TestFailed         : inout Boolean
+      variable TestFailed         : inout Boolean ;
+      TimeOut                     : boolean 
     ) is
 --      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
 --      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
@@ -1606,6 +1635,10 @@ package body AlertLogPkg is
       if FailOnRequirementErrorsVar then
         TotalErrors := TotalErrors + TotalRequirementErrors ;
       end if ;
+      
+      if TimeOut then
+        TotalErrors := TotalErrors + 1 ;
+      end if ; 
 
       TestFailed := TotalErrors /= 0 ;
 
@@ -1619,21 +1652,34 @@ package body AlertLogPkg is
       end if ;
 
       if not TestFailed then
-        write(buf,
---!!          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
---!!          ResolveOsvvmPassName(PassNameVar.GetOpt) & "   " &  -- PassName
-          ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-          ALERT_LOG_PASS_NAME & "   " &  -- PassName
-          Name
-        ) ;
+        if AffirmCheckCountVar = 0 then 
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_NOCHECKS_NAME & "   " &  -- NoChecksName
+            Name
+          ) ;
+        else
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_PASS_NAME & "   " &  -- PassName
+            Name
+          ) ;
+        end if; 
       else
-        write(buf,
---!!          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "   " &  -- DoneName
---!!          ResolveOsvvmFailName(FailNameVar.GetOpt) & "   " &  -- FailName
-          ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-          ALERT_LOG_FAIL_NAME & "   " &  -- FailName
-          Name
-        ) ;
+        if TimeOut then 
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_TIMEOUT_NAME & "   " &  -- TimeOutName
+            Name
+          ) ;
+
+        else
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
+            ALERT_LOG_FAIL_NAME & "   " &  -- FailName
+            Name
+          ) ;
+        end if ;
       end if ;
 --?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
       if TestFailed then
@@ -1760,7 +1806,8 @@ package body AlertLogPkg is
       AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
       ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := FALSE ;
-      ReportWhenZero : boolean := TRUE
+      ReportWhenZero : boolean := TRUE ;
+      TimeOut        : boolean := FALSE 
     ) is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
@@ -1780,7 +1827,8 @@ package body AlertLogPkg is
           Name               => Name,
           ExternalErrors     => ExternalErrors,
           HasDisabledAlerts  => HasDisabledErrors,
-          TestFailed         => TestFailed
+          TestFailed         => TestFailed,
+          TimeOut            => TimeOut
         ) ;
       else
         PrintTopAlerts (
@@ -1788,7 +1836,8 @@ package body AlertLogPkg is
           Name               => AlertLogPtr(localAlertLogID).Name.all,
           ExternalErrors     => ExternalErrors,
           HasDisabledAlerts  => HasDisabledErrors,
-          TestFailed         => TestFailed
+          TestFailed         => TestFailed,
+          TimeOut            => TimeOut
         ) ;
       end if ;
       --Print Hierarchy when enabled and test failed
@@ -1830,7 +1879,8 @@ package body AlertLogPkg is
         Name               => AlertLogPtr(ALERTLOG_BASE_ID).Name.all,
         ExternalErrors     => (0,0,0),
         HasDisabledAlerts  => HasDisabledErrors,
-        TestFailed         => TestFailed
+        TestFailed         => TestFailed,
+        TimeOut            => FALSE
       ) ;
       IterateAndPrintChildren(
         AlertLogID         => REQUIREMENT_ALERTLOG_ID,
@@ -1896,6 +1946,26 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     --  pt local
+    impure function GetTestResultStatus (TotalErrors : integer ; TimeOut : boolean ; TopLevel : boolean) return string is
+    ------------------------------------------------------------
+    begin
+      if TotalErrors = 0 then
+        if TopLevel and AffirmCheckCountVar = 0 then 
+          return "NOCHECKS" ;
+        else
+          return "PASSED" ; 
+        end if; 
+      else
+        if TimeOut then 
+          return "TIMEOUT" ; 
+        else
+          return "FAILED" ; 
+        end if; 
+      end if ;
+    end function GetTestResultStatus ;
+    
+    ------------------------------------------------------------
+    --  pt local
     procedure WriteOneAlertYaml (
     ------------------------------------------------------------
       file TestFile : text ;
@@ -1904,14 +1974,16 @@ package body AlertLogPkg is
       RequirementsPassed   : integer ;
       RequirementsGoal     : integer ;
       FirstPrefix          : string := "" ;
-      Prefix               : string := ""
+      Prefix               : string := "" ;
+      TimeOut              : boolean := FALSE ; 
+      TopLevel             : boolean := FALSE 
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
     begin
       Write(buf,
         FirstPrefix & "Name: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
-        Prefix & "Status: " & IfElse(TotalErrors=0, "PASSED", "FAILED")        & LF  &
+        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut, TopLevel)        & LF  &
         Prefix & "Results: {" &
           "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
           "AlertCount: {" &
@@ -1986,13 +2058,15 @@ package body AlertLogPkg is
           CurID := AlertLogPtr(CurID).SiblingID ;
         end loop ;
         if not FoundChildToReport then 
-          Write(buf, Prefix & "Children: " & """""") ;
+--          Write(buf, Prefix & "Children: " & """""") ;
+          Write(buf, Prefix & "Children: []") ;
           WriteLine(TestFile, buf) ;
         end if ; 
       else
         -- No Children, Print Empty List
 --req tcl 8.6        Write(buf, Prefix & "Children: {}" ) ;
-        Write(buf, Prefix & "Children: " & """""") ;
+--        Write(buf, Prefix & "Children: " & """""") ;
+        Write(buf, Prefix & "Children: []") ;
         WriteLine(TestFile, buf) ;
       end if ;
     end procedure IterateAndWriteChildrenYaml ;
@@ -2032,7 +2106,8 @@ package body AlertLogPkg is
       ExternalErrors : AlertCountType ;
       Prefix         : string ;
       PrintSettings  : boolean ;
-      PrintChildren  : boolean
+      PrintChildren  : boolean ;
+      TimeOut        : boolean 
     ) is
       -- Format:  Action Count min1 max1 min2 max2
       variable TotalErrors : integer ;
@@ -2041,7 +2116,7 @@ package body AlertLogPkg is
       variable buf : line ; 
     begin
       if PrintSettings then
-        write(buf, Prefix & "Version: 1.0") ; 
+        write(buf, Prefix & "Version: ""1.0""") ; 
         WriteLine(TestFile, buf) ; 
       end if ; 
       CalcTopTotalErrors (
@@ -2049,7 +2124,8 @@ package body AlertLogPkg is
         TotalErrors              => TotalErrors            ,
         TotalAlertCount          => TotalAlertCount        ,
         TotalRequirementsPassed  => TotalRequirementsPassed,
-        TotalRequirementsCount   => TotalRequirementsCount
+        TotalRequirementsCount   => TotalRequirementsCount , 
+        TimeOut                  => TimeOut
       ) ;
 
       WriteOneAlertYaml (
@@ -2059,7 +2135,9 @@ package body AlertLogPkg is
         RequirementsPassed       => TotalRequirementsPassed,
         RequirementsGoal         => TotalRequirementsCount,
         FirstPrefix              => Prefix,
-        Prefix                   => Prefix
+        Prefix                   => Prefix,
+        TimeOut                  => TimeOut, 
+        TopLevel                 => TRUE
       ) ;
       if PrintSettings then
         WriteSettingsYaml(
@@ -2085,14 +2163,15 @@ package body AlertLogPkg is
       Prefix         : string := "" ;
       PrintSettings  : boolean := TRUE ;
       PrintChildren  : boolean := TRUE ;
-      OpenKind       : File_Open_Kind := WRITE_MODE
+      OpenKind       : File_Open_Kind := WRITE_MODE ;
+      TimeOut        : boolean := FALSE
     ) is
       file     FileID : text ;
       variable status : file_open_status ;
     begin
       file_open(status, FileID, FileName, OpenKind) ;
       if status = OPEN_OK then
-        WriteAlertYaml(FileID, ExternalErrors, Prefix, PrintSettings, PrintChildren) ;
+        WriteAlertYaml(FileID, ExternalErrors, Prefix, PrintSettings, PrintChildren, TimeOut) ;
         file_close(FileID) ;
       else
         Alert("WriteAlertYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ;
@@ -3440,6 +3519,13 @@ package body AlertLogPkg is
     end function GetReqID ;
 
     ------------------------------------------------------------
+    impure function IsInitialized (ID : AlertLogIDType) return boolean is
+    ------------------------------------------------------------
+    begin
+      return ID /= ALERTLOG_ID_UNINITIALZED ;
+    end function IsInitialized ;
+
+    ------------------------------------------------------------
     procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
@@ -4473,6 +4559,16 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AlertIfEqual ;
 
+  ------------------------------------------------------------
+  procedure AlertIfEqual( AlertLogID : AlertLogIDType ; L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L = R then
+      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfEqual ;
 
   ------------------------------------------------------------
   -- AlertIfEqual without AlertLogID
@@ -4583,6 +4679,17 @@ package body AlertLogPkg is
     if L = R then
       AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits)
                                                            & "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfEqual ;
+
+  ------------------------------------------------------------
+  procedure AlertIfEqual( L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L = R then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4701,6 +4808,17 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
+  ------------------------------------------------------------
+  procedure AlertIfNotEqual( AlertLogID : AlertLogIDType ; L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L /= R then
+      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfNotEqual ;
+
 
   ------------------------------------------------------------
   -- AlertIfNotEqual without AlertLogID
@@ -4814,6 +4932,18 @@ package body AlertLogPkg is
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
+
+  ------------------------------------------------------------
+  procedure AlertIfNotEqual( L, R : integer_vector ; Message : string ; Level : AlertType := ERROR )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    if L /= R then
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+    end if ;
+    -- synthesis translate_on
+  end procedure AlertIfNotEqual ;
+
 
   ------------------------------------------------------------
   -- Local
@@ -5291,6 +5421,18 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
 
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(AlertLogID, Received = Expected,
+      Message & " Received : " & to_string(Received),
+               "= Expected : " & to_string(Expected),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfEqual ;
+
   -- Without AlertLogID
   ------------------------------------------------------------
   procedure AffirmIfEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
@@ -5408,6 +5550,19 @@ package body AlertLogPkg is
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
       Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits),
                 "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfEqual ;
+
+
+  ------------------------------------------------------------
+  procedure AffirmIfEqual( Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
+      Message & " Received : " & to_string(Received),
+               "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5533,6 +5688,18 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
 
+  ------------------------------------------------------------
+  procedure AffirmIfNotEqual( AlertLogID : AlertLogIDType ; Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(AlertLogID, Received /= Expected,
+      Message & " Received : " & to_string(Received),
+               "/= Expected : " & to_string(Expected),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotEqual ;
+
   -- Without AlertLogID
   ------------------------------------------------------------
   procedure AffirmIfNotEqual( Received, Expected : boolean ;  Message : string := "" ; Enable : boolean := FALSE )  is
@@ -5650,6 +5817,18 @@ package body AlertLogPkg is
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
       Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits) &
                 " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      Enable) ;
+    -- synthesis translate_on
+  end procedure AffirmIfNotEqual ;
+
+  ------------------------------------------------------------
+  procedure AffirmIfNotEqual( Received, Expected : integer_vector ; Message : string := "" ; Enable : boolean := FALSE )  is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
+      Message & " Received : " & to_string(Received),
+               "/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -5838,11 +6017,12 @@ package body AlertLogPkg is
     Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ;
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0) ;
-    ReportAll      : Boolean         := FALSE
+    ReportAll      : Boolean         := FALSE ;
+    TimeOut        : boolean         := FALSE 
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE, TimeOut) ;
     -- synthesis translate_on
   end procedure ReportAlerts ;
 
@@ -5855,7 +6035,7 @@ package body AlertLogPkg is
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE, FALSE) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, FALSE, FALSE, FALSE) ;
     -- synthesis translate_on
   end procedure ReportNonZeroAlerts ;
 
@@ -5867,21 +6047,22 @@ package body AlertLogPkg is
     Prefix         : string := "" ;
     PrintSettings  : boolean := TRUE ;
     PrintChildren  : boolean := TRUE ;
-    OpenKind       : File_Open_Kind := WRITE_MODE
+    OpenKind       : File_Open_Kind := WRITE_MODE ;
+    TimeOut        : boolean 
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.WriteAlertYaml(FileName, ExternalErrors, Prefix, PrintSettings, PrintChildren, OpenKind) ;
+    AlertLogStruct.WriteAlertYaml(FileName, ExternalErrors, Prefix, PrintSettings, PrintChildren, OpenKind, TimeOut) ;
     -- synthesis translate_on
   end procedure WriteAlertYaml ;
 
   ------------------------------------------------------------
-  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0)) is
+  procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0) ; TimeOut : boolean := FALSE) is
   ------------------------------------------------------------
     constant RESOLVED_FILE_NAME : string := IfElse(FileName'length = 0, OSVVM_BUILD_YAML_FILE, FileName) ;
   begin
     -- synthesis translate_off
-    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE) ;
+    WriteAlertYaml(FileName => RESOLVED_FILE_NAME, ExternalErrors => ExternalErrors, Prefix => "        ", PrintSettings => FALSE, PrintChildren => FALSE, OpenKind => APPEND_MODE, TimeOut => TimeOut) ;
     -- WriteTestSummary(FileName => OSVVM_BUILD_YAML_FILE, OpenKind => APPEND_MODE, Prefix => "      ", Suffix => "", ExternalErrors => ExternalErrors, WriteFieldName => TRUE) ;
     -- synthesis translate_on
   end procedure WriteAlertSummaryYaml ;
@@ -6429,6 +6610,15 @@ package body AlertLogPkg is
     -- synthesis translate_on
     return result ;
   end function GetReqID ;
+
+  ------------------------------------------------------------
+  impure function IsInitialized (ID : AlertLogIDType) return boolean is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    return AlertLogStruct.IsInitialized(ID) ;
+    -- synthesis translate_on
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) is
@@ -7171,7 +7361,7 @@ package body AlertLogPkg is
   end procedure ReadLogEnables ;
 
   ------------------------------------------------------------
-  function PathTail (A : string) return string is
+  function OldPathTail (A : string) return string is
   ------------------------------------------------------------
     alias aA : string(1 to A'length) is A ;
     variable LenA : integer := A'length ;
@@ -7189,8 +7379,56 @@ package body AlertLogPkg is
       end if ;
     end loop ;
     return aA(1 to LenA) ;
-  end function PathTail ;
+  end function OldPathTail ;
 
+  ------------------------------------------------------------
+  impure function PathTail (A : string) return string is
+  ------------------------------------------------------------
+    alias aA : string(1 to A'length) is A ;
+    variable LenA : integer := A'length ;
+    variable Result : string(1 to A'length) ;
+    variable FoundAtIndex, ResultLength : integer ; 
+    variable FoundLeftParen : boolean := FALSE ; 
+  begin
+    -- Factor out ending ':'
+    if aA(LenA) = ':' then
+      LenA := LenA - 1 ;
+    end if ;
+    -- Find ending characters from right until find ':'
+    ResultLength := LenA ; 
+    FoundAtIndex := 1 ;
+    Result := aA ; 
+    for i in LenA downto 1 loop
+      if aA(i) = ':' then
+        FoundAtIndex := i ;
+        ResultLength := LenA - i ; 
+        Result(1 to ResultLength) := aA(i+1 to LenA) ;
+        exit ;
+      end if ;
+    end loop ;
+    -- Find characters that are within (12) and reformat as _12 at end of string
+    for i in 1 to FoundAtIndex - 1 loop 
+      if aA(i) = '(' then
+        if FoundLeftParen then 
+          Alert("AlertLogPkg.PathTail: found second left parenthese before finding right") ; 
+        end if ; 
+        FoundLeftParen := TRUE ; 
+        ResultLength := ResultLength + 1 ; 
+        Result(ResultLength) := '_' ; 
+      elsif aA(i) = ')' then 
+        if not FoundLeftParen then 
+          Alert("AlertLogPkg.PathTail: found right parenthese before finding left") ; 
+        end if ; 
+        FoundLeftParen := FALSE ;
+      else 
+        if FoundLeftParen then 
+          ResultLength := ResultLength + 1 ; 
+          Result(ResultLength) := aA(i) ; 
+        end if ; 
+      end if; 
+    end loop ; 
+    return Result(1 to ResultLength) ;
+  end function PathTail ;
 
   ------------------------------------------------------------
   -- MetaMatch
