@@ -507,6 +507,7 @@ package AlertLogPkg is
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType ;
   impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
+  impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType ;
   impure function IsInitialized (ID : AlertLogIDType) return boolean ;
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
   impure function GetAlertLogParentID(AlertLogID : AlertLogIDType) return AlertLogIDType ;
@@ -662,18 +663,13 @@ package AlertLogPkg is
   -- synthesis translate_on
 
   --  ------------------------------------------------------------
-  -- Deprecated
-  --
-  -- See NewID - consistency and parameter update.  DoNotReport replaced by ReportMode
-  impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType ;
+  -- deprecated
+  procedure AlertIf( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
+  impure function  AlertIf( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
 
   -- deprecated
-  procedure AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
-  impure function  AlertIf( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
-
-  -- deprecated
-  procedure AlertIfNot( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
-  impure function  AlertIfNot( condition : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  procedure AlertIfNot( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
+  impure function  AlertIfNot( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
 
   -- deprecated
   procedure AffirmIf(
@@ -1300,7 +1296,8 @@ package body AlertLogPkg is
             ) ;
           end if ;
           TranscriptClose ;  -- Close Transcript if open
-          std.env.stop(ErrorCount) ;
+--          std.env.stop(ErrorCount) ;
+          std.env.stop ;
         end if ;
       end if ;
     end procedure alert ;
@@ -1333,7 +1330,8 @@ package body AlertLogPkg is
           writeline(buf) ;
           ReportAlerts(ReportWhenZero => TRUE) ;
           TranscriptClose ;
-          std.env.stop(ErrorCount) ;
+--          std.env.stop(ErrorCount) ;
+          std.env.stop ;
         end if ;
       end if ;
     end procedure IncAlertCount ;
@@ -7515,40 +7513,40 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- deprecated
-  procedure AlertIf( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
+  procedure AlertIf( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
   begin
     -- synthesis translate_off
-    AlertIf( AlertLogID, condition, Message, Level) ;
+    AlertIf( AlertLogID, cond, Message, Level) ;
     -- synthesis translate_on
   end procedure AlertIf ;
 
   ------------------------------------------------------------
   -- deprecated
-  impure function  AlertIf( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function  AlertIf( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
     variable result : boolean ;
   begin
     -- synthesis translate_off
-    result := AlertIf( AlertLogID, condition, Message, Level) ;
+    result := AlertIf( AlertLogID, cond, Message, Level) ;
     -- synthesis translate_on
     return result ;
   end function AlertIf ;
 
   ------------------------------------------------------------
   -- deprecated
-  procedure AlertIfNot( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
+  procedure AlertIfNot( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) is
   begin
     -- synthesis translate_off
-    AlertIfNot( AlertLogID, condition, Message, Level) ;
+    AlertIfNot( AlertLogID, cond, Message, Level) ;
     -- synthesis translate_on
   end procedure AlertIfNot ;
 
   ------------------------------------------------------------
   -- deprecated
-  impure function  AlertIfNot( condition : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function  AlertIfNot( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
     variable result : boolean ;
   begin
     -- synthesis translate_off
-    result := AlertIfNot( AlertLogID, condition, Message, Level) ;
+    result := AlertIfNot( AlertLogID, cond, Message, Level) ;
     -- synthesis translate_on
     return result ;
   end function AlertIfNot ;
