@@ -322,7 +322,7 @@ package body ClockResetPkg is
     constant ClkActive   : in  std_logic := CLK_ACTIVE 
   ) is
   begin
-    wait until EdgeActive(Clk, ClkActive) ;
+    wait until Clk = ClkActive ;
     Reset <= ResetActive after tpd ;
     wait for Period - t_sim_resolution ;
     wait until Clk = ClkActive ;
