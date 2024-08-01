@@ -278,6 +278,7 @@ package TbUtilPkg is
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : time ) ;
   -- resolved_barrier : summing resolution used in conjunction with integer based barriers
   function resolved_barrier ( s : integer_vector ) return integer ;
+  -- integer'low+1 is for Xilinx.   It should be just integer'low
   subtype  BarrierType is resolved_barrier integer range integer'low+1 to integer'high ;
 --  alias    integer_barrier is BarrierType ; 
   subtype  integer_barrier is BarrierType ; 
@@ -937,9 +938,6 @@ package body TbUtilPkg is
     variable result : integer := 0 ;
   begin
     for i in s'RANGE loop
---      if s(i) /= integer'left then
---        result := result + s(i);
---      else
       if s(i) /= 0 then
         result := result + 1;  -- removes the initialization requirement
       end if ;
