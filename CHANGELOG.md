@@ -206,7 +206,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 - Updated Yaml. 
 
 ### MemoryGenericPkg.vhd   2024.07
-- Throw Errors on Address > 41 and warnings if Address > 38
+- Throw Errors on Address > 40 and warnings if Address > 36
 - Added IsInitialized
 
 ### ReportPkg.vhd          2024.07
