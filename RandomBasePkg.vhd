@@ -209,8 +209,8 @@ package body RandomBasePkg is
   impure function GenRandSeed(IV : integer_vector) return RandomSeedType is
   ------------------------------------------------------------
     alias iIV : integer_vector(1 to IV'length) is IV ;
-    variable Seed1 : integer ;
-    variable Seed2 : integer ;
+    variable Seed      : RandomSeedType ; 
+    variable ChurnSeed : real ;
     constant SEED1_MAX : integer := 2147483562 ;
     constant SEED2_MAX : integer := 2147483398 ;
   begin
@@ -225,10 +225,12 @@ package body RandomBasePkg is
     else  -- only use the left two values
       -- mod returns 0 to MAX-1, the -1 adjusts legal values, +1 adjusts them back
       -- 1 <= SEED1 <= 2147483562
-      Seed1 := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
+      Seed(1) := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
      -- 1 <= SEED2 <= 2147483398
-      Seed2 := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
-      return (Seed1, Seed2) ;
+      Seed(2) := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
+      
+      Uniform(ChurnSeed, Seed) ;
+      return Seed ;
     end if ;
   end function GenRandSeed ;
 
@@ -264,11 +266,13 @@ package body RandomBasePkg is
   --  GenRandSeed - Integer
   impure function GenRandSeed(I : integer) return RandomSeedType is
   -----------------------------------------------------------------
-    variable result : RandomSeedType ;
+    variable Seed      : RandomSeedType ; 
+    variable ChurnSeed : real ;
   begin
-    result(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0) mod 2.0 ** 30) ;
-    result(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
-    return result ; -- make value ranges legal
+    Seed(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0) mod 2.0 ** 30) ;
+    Seed(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
+    Uniform(ChurnSeed, Seed) ;
+    return Seed ; 
   end function GenRandSeed ;
 
   -----------------------------------------------------------------
@@ -290,18 +294,20 @@ package body RandomBasePkg is
     constant LEN : integer := S'length ;
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
-    variable result : RandomSeedType ;
+    variable Seed      : RandomSeedType ; 
+    variable ChurnSeed : real ;
     variable temp : real := 5381.0 ;
   begin
     for i in 1 to HALF_LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(1) := (integer(temp) + GetRandomSalt) mod (2**30) ;
+    Seed(1) := (integer(temp) + GetRandomSalt) mod (2**30) ;
     for i in HALF_LEN + 1 to LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(2) := integer(temp) ;
-    return result ;  
+    Seed(2) := integer(temp) ;
+    Uniform(ChurnSeed, Seed) ;
+    return Seed ; 
   end function GenRandSeed ;
   
   -----------------------------------------------------------------

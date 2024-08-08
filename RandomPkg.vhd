@@ -443,11 +443,9 @@ package body RandomPkg is
     ------------------------------------------------------------
     procedure InitSeed (S : string ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
-      variable ChurnSeed : real ;
     begin
       if UseNewSeedMethods then
         RandomSeed := GenRandSeed(S) ;
-        Uniform(ChurnSeed, RandomSeed) ;
       else
         RandomSeed := OldGenRandSeed(S) ;
       end if ;
@@ -456,11 +454,9 @@ package body RandomPkg is
     ------------------------------------------------------------
     procedure InitSeed (I : integer ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
-      variable ChurnSeed : real ;
     begin
       if UseNewSeedMethods then
         RandomSeed := GenRandSeed(I) ;
-        Uniform(ChurnSeed, RandomSeed) ;
       else
         RandomSeed := OldGenRandSeed(I) ;
       end if ;
@@ -469,7 +465,6 @@ package body RandomPkg is
     ------------------------------------------------------------
     procedure InitSeed (T : time ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
-      variable ChurnSeed : real ;
     begin
       -- Allow specification of UseNewSeedMethods 
       -- but ignore it as this is a new method and will churn the seed.
@@ -478,17 +473,14 @@ package body RandomPkg is
       -- Also consider:
       --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
       RandomSeed := GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit) ;
-      Uniform(ChurnSeed, RandomSeed) ;
     end procedure InitSeed ;
 
     ------------------------------------------------------------
     procedure InitSeed (IV : integer_vector ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
-      variable ChurnSeed : real ;
     begin
       if UseNewSeedMethods then
         RandomSeed := GenRandSeed(IV) ;
-        Uniform(ChurnSeed, RandomSeed) ;
       else
         RandomSeed := OldGenRandSeed(IV) ;
       end if ;

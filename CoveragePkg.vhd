@@ -2546,11 +2546,9 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure InitSeed (ID : CoverageIDType; S : string;    UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) is
     ------------------------------------------------------------
-      variable ChurnSeed : integer ;
     begin
       if UseNewSeedMethods then
         CovStructPtr(ID.ID).RV := GenRandSeed(S) ;
-        Uniform(CovStructPtr(ID.ID).RV, ChurnSeed, 0, 1) ;
       else
         CovStructPtr(ID.ID).RV := OldGenRandSeed(S) ;
       end if ;
@@ -2569,11 +2567,9 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure InitSeed (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
-      variable ChurnSeed : integer ;
     begin
       if UseNewSeedMethods then
         CovStructPtr(ID.ID).RV := GenRandSeed(I) ;
-        Uniform(CovStructPtr(ID.ID).RV, ChurnSeed, 0, 1) ;
       else
         CovStructPtr(ID.ID).RV := OldGenRandSeed(I) ;
       end if ;
