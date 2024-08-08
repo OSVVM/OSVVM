@@ -179,4 +179,9 @@ if {$::osvvm::ToolSupportsDeferredConstants}  {
   }
 }
 
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze  RandomPkg2019.vhd
+}
+
+
 analyze OsvvmContext.vhd 
