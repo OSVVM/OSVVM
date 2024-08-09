@@ -276,7 +276,7 @@ package body ClockResetPkg is
   ) is
     variable LastLogTime, ObservedPeriod : time ;
   begin
-    wait until EdgeActive(Clk, ClkActive) ;
+    wait until Clk = ClkActive and Clk'last_value = not ClkActive ;
     log(AlertLogID, ClkName & " first active edge", INFO) ;
     LastLogTime := now ;
     -- Check First HowMany clocks
@@ -322,7 +322,7 @@ package body ClockResetPkg is
     constant ClkActive   : in  std_logic := CLK_ACTIVE 
   ) is
   begin
-    wait until Clk = ClkActive ;
+    wait until Clk = ClkActive and Clk'last_value = not ClkActive ;
     Reset <= ResetActive after tpd ;
     wait for Period - t_sim_resolution ;
     wait until Clk = ClkActive ;

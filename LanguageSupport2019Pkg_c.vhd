@@ -80,7 +80,7 @@ package body LanguageSupport2019Pkg is
     swrite(buf, "(") ; 
     for i in 1 to A'length-1 loop
       write(buf, A(i)) ;
-      swrite(buf, ", ") ;
+      swrite(buf, ",") ;
     end loop ; 
     write(buf, A(A'length)) ;
     swrite(buf, ")") ; 

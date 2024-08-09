@@ -407,8 +407,9 @@ package body MemoryGenericPkg is
     constant MEM_STRUCT_PTR_LEFT : integer := Template'left ; 
     variable MemStructPtr     : ItemArrayPtrType := new ItemArrayType'(Template) ;   
     variable NumItems         : integer := 0 ; 
---    constant MIN_NUM_ITEMS    : integer := 4 ; -- Temporarily small for testing
-    constant MIN_NUM_ITEMS    : integer := 32 ; -- Min amount to resize array
+    constant MIN_INDEX        : integer := 1 ;
+--    constant NUM_ITEMS_TO_ALLOCATE    : integer := 4 ; -- Temporarily small for testing
+    constant NUM_ITEMS_TO_ALLOCATE    : integer := 32 ; -- Min amount to resize array
     variable LocalNameStore   : NameStorePType ; 
     
     ------------------------------------------------------------
@@ -543,7 +544,7 @@ package body MemoryGenericPkg is
         
       else
         -- Add New Memory to Structure 
-        GrowNumberItems(MemStructPtr, NumItems, GrowAmount => 1, MinNumItems => MIN_NUM_ITEMS) ;
+        GrowNumberItems(MemStructPtr, NumItems, GrowAmount => 1, MinNumItems => NUM_ITEMS_TO_ALLOCATE) ;
         -- Create AlertLogID
         MemStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
         -- Construct Memory, Reports agains AlertLogID
@@ -571,9 +572,9 @@ package body MemoryGenericPkg is
       constant Name  : in string
     ) return boolean is 
     begin
-      return AlertIf(OSVVM_MEMORY_ALERTLOG_ID, ID < MemStructPtr'Low or ID > MemStructPtr'High, 
+      return AlertIf(OSVVM_MEMORY_ALERTLOG_ID, ID < MIN_INDEX or ID > MemStructPtr'High, 
          "MemoryPkg." & Name & " ID: " & to_string(ID) & 
-               "is not in the range (" & to_string(MemStructPtr'Low) &
+               "is not in the range (" & to_string(MIN_INDEX) &
                " to " & to_string(MemStructPtr'High) & ")",
          FAILURE ) ;
     end function IdOutOfRange ; 
@@ -1210,11 +1211,13 @@ package body MemoryGenericPkg is
 
     procedure deallocate is
     begin
-      for ID in 1 to NumItems loop 
+      for ID in MemStructPtr'range loop 
         deallocate(ID) ;
       end loop ;
-      deallocate(MemStructPtr) ;   
+-- If this is done, nothing will work after
+--      deallocate(MemStructPtr) ;   
       NumItems := 0 ; 
+--      MemStructPtr := new ItemArrayType'(Template) ;   -- I--
     end procedure deallocate ; 
 
 -- /////////////////////////////////////////
