@@ -1,0 +1,10 @@
+[ip]
+name = "OSVVM"
+version = "2024.7.0"
+description = "OSVVM Utility Library"
+public = ["!/demo", "/"]
+source = { tag = "2024.07", url = "https://github.com/OSVVM/OSVVM/archive/{{orbit.ip.source.tag}}.zip" }
+
+# See more keys and their definitions at https://chaseruskin.github.io/orbit/reference/manifest.html
+
+[dependencies]
