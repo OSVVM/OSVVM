@@ -1,0 +1,33 @@
+name: Test
+on:
+  push:
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    container:
+        image: chaseruskin/groovy-guitar
+    steps:
+      - name: Fetch repository
+        uses: actions/checkout@v3
+
+      - name: Log all tool versions
+        run: |
+          orbit --version  
+          python --version
+          ghdl --version
+        
+      - name: Configure orbit profile
+        run: |
+          git clone https://github.com/hyperspace-labs/orbit-profile.git "$(orbit env ORBIT_HOME)/profiles/hyperspace-labs"
+          pip install -r "$(orbit env ORBIT_HOME)/profiles/hyperspace-labs/requirements.txt"
+          orbit config --append include="profiles/hyperspace-labs/config.toml"
+
+      - name: Test Rand
+        run: orbit test --tb Demo_Rand --target gsim -- --std=08
+
+      - name: Test Alert Global
+        run: orbit test --tb AlertLog_Demo_Global --target gsim -- --std=08
+
+      - name: Test Alert Hierarchy
+        run: orbit test --tb AlertLog_Demo_Hierarchy --target gsim -- --std=08
