@@ -48,7 +48,7 @@
 --                          Better Min, Max error handling in Uniform, FavorBig, FavorSmall, Normal, Poisson
 --    06/2012    2.2        Removed '_' in the name of subprograms FavorBig and FavorSmall
 --    07/2011    2.1        Bug fix to convenience functions for slv, unsigned, and signed.
---    03/2011    2.0        Major clean-up. Moved RandomParmType and control to here
+--    03/2011    2.0        Major clean-up. Moved RandomParamType and control to here
 --    06/2010    1.2        Added Normal and Poisson distributions
 --    02/2009 :  1.0        First Public Released Version
 --    02/25/2009 1.1        Replaced reference to std_2008 with a reference to
@@ -150,13 +150,13 @@ package RandomPkg is
     ------------------------------------------------------------
     --  Setting Randomization Parameters
     ------------------------------------------------------------
-    procedure SetRandomParm (RandomParmIn : RandomParmType) ;
+    procedure SetRandomParm (RandomParmIn : RandomParamType) ;
     procedure SetRandomParm (
       Distribution : RandomDistType ;
       Mean         : Real := 0.0 ;
       Deviation    : Real := 0.0
     ) ;
-    impure function GetRandomParm return RandomParmType ;
+    impure function GetRandomParm return RandomParamType ;
     impure function GetRandomParm return RandomDistType ;
     -- For compatibility with previous version - replace with alias
     procedure SetRandomMode (RandomDistIn : RandomDistType) ;
@@ -466,13 +466,7 @@ package body RandomPkg is
     procedure InitSeed (T : time ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
     begin
-      -- Allow specification of UseNewSeedMethods 
-      -- but ignore it as this is a new method and will churn the seed.
-      -- NVC fatals on the integer conversion time values >= 2**31, hence, the following was removed
-      --      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
-      -- Also consider:
-      --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
-      RandomSeed := GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit) ;
+      RandomSeed := GenRandSeed(T) ;
     end procedure InitSeed ;
 
     ------------------------------------------------------------
@@ -521,10 +515,10 @@ package body RandomPkg is
     ---
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    variable RandomParm : RandomParmType ; -- left most values ok for init
+    variable RandomParm : RandomParamType ; -- left most values ok for init
 
     ------------------------------------------------------------
-    procedure SetRandomParm (RandomParmIn : RandomParmType) is
+    procedure SetRandomParm (RandomParmIn : RandomParamType) is
     ------------------------------------------------------------
     begin
       RandomParm := RandomParmIn ;
@@ -538,12 +532,12 @@ package body RandomPkg is
       Deviation    : Real := 0.0
     ) is
     begin
-      RandomParm := RandomParmType'(Distribution, Mean, Deviation) ;
+      RandomParm := RandomParamType'(Distribution, Mean, Deviation) ;
     end procedure SetRandomParm ;
 
 
     ------------------------------------------------------------
-    impure function GetRandomParm return RandomParmType is
+    impure function GetRandomParm return RandomParamType is
     ------------------------------------------------------------
     begin
       return RandomParm ;
@@ -977,12 +971,12 @@ package body RandomPkg is
     ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
-        when NONE | UNIFORM =>  return LocalUniform(Min, Max) ;
+        when UNIFORM      =>    return LocalUniform(Min, Max) ;
         when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
         when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
-        when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
-        when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
-        when others =>
+        when NORMAL       =>    return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
+        when POISSON      =>    return Poisson(RandomParm.Mean, Min, Max) ;
+        when others  =>
           Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandInt: RandomParm.Distribution not implemented", FAILURE) ;
           return integer'low ;
       end case ;
@@ -1055,12 +1049,12 @@ package body RandomPkg is
     ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
-        when NONE | UNIFORM =>  return LocalUniform(Min, Max) ;
-        when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
-        when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
-        when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
-        when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
-        when others =>
+        when UNIFORM      =>    return  LocalUniform(Min, Max) ;
+        when FAVOR_SMALL  =>    return  FavorSmall(Min, Max) ;
+        when FAVOR_BIG    =>    return  FavorBig (Min, Max) ;
+        when NORMAL       =>    return  Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
+        when POISSON      =>    return  Poisson(RandomParm.Mean, Min, Max) ;
+        when others  =>
           Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandReal: Specified RandomParm.Distribution not implemented", FAILURE) ;
           return real(integer'low) ;
       end case ;
@@ -1137,11 +1131,11 @@ package body RandomPkg is
     ------------------------------------------------------------
     begin
       case RandomParm.Distribution is
-        when NONE | UNIFORM =>  return  LocalUniform(Min, Max, Exclude) ;
+        when UNIFORM      =>    return  LocalUniform(Min, Max, Exclude) ;
         when FAVOR_SMALL  =>    return  FavorSmall(Min, Max, Exclude) ;
         when FAVOR_BIG    =>    return  FavorBig (Min, Max, Exclude) ;
-        when NORMAL =>          return  Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max, Exclude) ;
-        when POISSON =>         return  Poisson(RandomParm.Mean, Min, Max, Exclude) ;
+        when NORMAL       =>    return  Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max, Exclude) ;
+        when POISSON      =>    return  Poisson(RandomParm.Mean, Min, Max, Exclude) ;
         when others =>
           Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.RandInt: Specified RandomParm.Distribution not implemented", FAILURE) ;
           return integer'low ;
