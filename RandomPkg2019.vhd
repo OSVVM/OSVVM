@@ -75,7 +75,8 @@ package RandomPkg2019 is
   type DistType is array (natural range <>) of DistRecType ;
   
   type RandomType is record
-    Seed : RandomSeedType ;
+    Seed  : RandomSeedType ;
+    Param : RandomParamType ;
   end record ; 
 
   -- Weight vectors not indexed by integers
@@ -83,32 +84,45 @@ package RandomPkg2019 is
   type NaturalVSlType   is array (std_logic range <>) of natural;
   type NaturalVBitType  is array (bit range <>) of natural;
   
+  procedure InitSeed  (variable RV : inout RandomType ;  S : string  ) ;
+  procedure InitSeed  (variable RV : inout RandomType ;  I : integer ) ;
+  procedure InitSeed  (variable RV : inout RandomType ;  T : time    ) ;
+  procedure InitSeed  (variable RV : inout RandomType ;  IV : integer_vector) ;
 
   impure function InitSeed  ( S : string  ) return RandomType ;
   impure function InitSeed  ( I : integer ) return RandomType ;
   impure function InitSeed  ( T : time    ) return RandomType ;
   impure function InitSeed  ( IV : integer_vector ) return RandomType ;
   
+  alias InitSeed  is GenRandSeed[string  return RandomSeedType] ;
+  alias InitSeed  is GenRandSeed[integer return RandomSeedType] ;
+  alias InitSeed  is GenRandSeed[time    return RandomSeedType] ;
+  alias InitSeed  is GenRandSeed[integer_vector return RandomSeedType] ;
+  
   -- Save and restore seed values
   impure function SetSeed (RandomSeedIn : RandomSeedType) return RandomType ;
   impure function GetSeed (RV : RandomType)               return RandomSeedType ;
   alias SeedRandom is SetSeed [RandomSeedType return RandomType] ;
   alias SeedRandom is GetSeed [RandomType return RandomSeedType] ;
-  --!! 
-  --!!  ------------------------------------------------------------
-  --!!  --  Setting Randomization Parameters
-  --!!  ------------------------------------------------------------
-  --!!  procedure SetRandomParm (RandomParmIn : RandomParmType) ;
-  --!!  procedure SetRandomParm (
-  --!!    Distribution : RandomDistType ;
-  --!!    Mean         : Real := 0.0 ;
-  --!!    Deviation    : Real := 0.0
-  --!!  ) ;
-  --!!  impure function GetRandomParm return RandomParmType ;
-  --!!  impure function GetRandomParm return RandomDistType ;
-  --!!  -- For compatibility with previous version - replace with alias
-  --!!  procedure SetRandomMode (RandomDistIn : RandomDistType) ;
-  --!!  -- alias SetRandomMode is SetRandomParm [RandomDistType, Real, Real] ;
+  
+  ------------------------------------------------------------
+  --  Setting Randomization Parameters
+  ------------------------------------------------------------
+  procedure SetRandomParam (variable RV : inout RandomType ;  RandomParamIn : RandomParamType) ;
+  procedure SetRandomParam (
+    variable RV  : inout RandomType ;  
+    Distribution : RandomDistType ;
+    Mean         : Real := 0.0 ;
+    Deviation    : Real := 0.0
+  ) ;
+  impure function GetRandomParam (variable RV : inout RandomType) return RandomParamType ;
+  impure function GetRandomParam (variable RV : inout RandomType) return RandomDistType ;
+  -- For compatibility with previous version - replace with alias
+  alias SetRandomParm is SetRandomParam [RandomType, RandomParamType] ;
+  alias SetRandomParm is SetRandomParam [RandomType, RandomDistType, Real, Real] ;
+  alias GetRandomParm is GetRandomParam [RandomType  return RandomParamType] ;
+  alias GetRandomParm is GetRandomParam [RandomType  return RandomDistType] ;
+  alias SetRandomMode is SetRandomParam [RandomType, RandomDistType, Real, Real] ;
 
   --- ///////////////////////////////////////////////////////////////////////////
   ---
@@ -391,42 +405,76 @@ package body RandomPkg2019 is
   ---
   --- ///////////////////////////////////////////////////////////////////////////
   ------------------------------------------------------------
-  impure function InitSeed  ( S : string ) return RandomType is
+  procedure InitSeed  ( variable RV : inout RandomType ; S : string ) is
   ------------------------------------------------------------
   begin
-    return RandomType'(Seed => GenRandSeed(S)) ;    
+    RV.Seed :=  GenRandSeed(S) ;    
+  end procedure InitSeed ;
+
+  ------------------------------------------------------------
+  procedure InitSeed  ( variable RV : inout RandomType ; I : integer ) is
+  ------------------------------------------------------------
+  begin
+    RV.Seed :=  GenRandSeed(I) ;    
+  end procedure InitSeed ;
+  
+  ------------------------------------------------------------
+  procedure InitSeed  ( variable RV : inout RandomType ; T : time    ) is
+  ------------------------------------------------------------
+  begin
+    RV.Seed :=  GenRandSeed(T) ;
+  end procedure InitSeed ;
+
+  ------------------------------------------------------------
+  procedure InitSeed  ( variable RV : inout RandomType ; IV : integer_vector ) is
+  ------------------------------------------------------------
+  begin
+    RV.Seed :=  GenRandSeed(IV) ;    
+  end procedure InitSeed ;
+
+  ------------------------------------------------------------
+  impure function InitSeed  ( S : string ) return RandomType is
+  ------------------------------------------------------------
+    variable RV : RandomType ; 
+  begin
+    RV.Seed  :=  GenRandSeed(S) ; 
+    return RV ;    
   end function InitSeed ;
 
   ------------------------------------------------------------
   impure function InitSeed  ( I : integer ) return RandomType is
   ------------------------------------------------------------
+    variable RV : RandomType ; 
   begin
-    return RandomType'(Seed => GenRandSeed(I)) ;    
+    RV.Seed  :=  GenRandSeed(I) ; 
+    return RV ;    
   end function InitSeed ;
   
   ------------------------------------------------------------
   impure function InitSeed  ( T : time    ) return RandomType is
   ------------------------------------------------------------
+    variable RV : RandomType ; 
   begin
-    -- NVC fatals on the integer conversion time values >= 2**31, hence, the following was removed
-    --      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
-    -- Also consider:
-    --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
-    return RandomType'(Seed => GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit)) ;
+    RV.Seed  :=  GenRandSeed(T) ; 
+    return RV ;    
   end function InitSeed ;
 
   ------------------------------------------------------------
   impure function InitSeed  ( IV : integer_vector ) return RandomType is
   ------------------------------------------------------------
+    variable RV : RandomType ; 
   begin
-    return RandomType'(Seed => GenRandSeed(IV)) ;    
+    RV.Seed  :=  GenRandSeed(IV) ; 
+    return RV ;    
   end function InitSeed ;
 
   ------------------------------------------------------------
   impure function SetSeed (RandomSeedIn : RandomSeedType) return RandomType is
   ------------------------------------------------------------
+    variable RV : RandomType ; 
   begin
-    return RandomType'(Seed => RandomSeedIn) ; 
+    RV.Seed  :=  RandomSeedIn ; 
+    return RV ;    
   end function SetSeed ;
 
   ------------------------------------------------------------
@@ -437,56 +485,45 @@ package body RandomPkg2019 is
   end function GetSeed ;
 
 
---!!  --- ///////////////////////////////////////////////////////////////////////////
---!!  ---
---!!  ---   Setting Randomization Parameters
---!!  ---
---!!  --- ///////////////////////////////////////////////////////////////////////////
---!!  ------------------------------------------------------------
---!!  variable RandomParm : RandomParmType ; -- left most values ok for init
---!!
---!!  ------------------------------------------------------------
---!!  procedure SetRandomParm (RandomParmIn : RandomParmType) is
---!!  ------------------------------------------------------------
---!!  begin
---!!    RandomParm := RandomParmIn ;
---!!  end procedure SetRandomParm ;
---!!
---!!  ------------------------------------------------------------
---!!  procedure SetRandomParm (
---!!  ------------------------------------------------------------
---!!    Distribution : RandomDistType ;
---!!    Mean         : Real := 0.0 ;
---!!    Deviation    : Real := 0.0
---!!  ) is
---!!  begin
---!!    RandomParm := RandomParmType'(Distribution, Mean, Deviation) ;
---!!  end procedure SetRandomParm ;
---!!
---!!
---!!  ------------------------------------------------------------
---!!  impure function GetRandomParm return RandomParmType is
---!!  ------------------------------------------------------------
---!!  begin
---!!    return RandomParm ;
---!!  end function GetRandomParm ;
---!!
---!!
---!!  ------------------------------------------------------------
---!!  impure function GetRandomParm return RandomDistType is
---!!  ------------------------------------------------------------
---!!  begin
---!!    return RandomParm.Distribution ;
---!!  end function GetRandomParm ;
---!!
---!!
---!!  ------------------------------------------------------------
---!!  -- Deprecated.  For compatibility with previous version
---!!  procedure SetRandomMode (RandomDistIn : RandomDistType) is
---!!  ------------------------------------------------------------
---!!  begin
---!!    SetRandomParm(RandomDistIn) ;
---!!  end procedure SetRandomMode ;
+  --- ///////////////////////////////////////////////////////////////////////////
+  ---
+  ---   Setting Randomization Parameters
+  ---
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  procedure SetRandomParam (variable RV : inout RandomType ;  RandomParamIn : RandomParamType) is
+  ------------------------------------------------------------
+  begin
+    RV.Param := RandomParamIn ;
+  end procedure SetRandomParam ;
+
+  ------------------------------------------------------------
+  procedure SetRandomParam (
+  ------------------------------------------------------------
+    variable RV  : inout RandomType ;  
+    Distribution : RandomDistType ;
+    Mean         : Real := 0.0 ;
+    Deviation    : Real := 0.0
+  ) is
+  begin
+    RV.Param := RandomParmType'(Distribution, Mean, Deviation) ;
+  end procedure SetRandomParam ;
+
+  ------------------------------------------------------------
+  impure function GetRandomParam (variable RV : inout RandomType) return RandomParamType is
+  ------------------------------------------------------------
+  begin
+    return RV.Param ;
+  end function GetRandomParam ;
+
+
+  ------------------------------------------------------------
+  impure function GetRandomParam (variable RV : inout RandomType) return RandomDistType is
+  ------------------------------------------------------------
+  begin
+    return RV.Param.Distribution ;
+  end function GetRandomParam ;
+
 
   --- ///////////////////////////////////////////////////////////////////////////
   ---
@@ -900,17 +937,17 @@ package body RandomPkg2019 is
   impure function LocalRandInt (variable RV : inout RandomType ; Min, Max : integer) return integer is
   ------------------------------------------------------------
   begin
-    return LocalUniform(RV, Min, Max) ;
---!     case RandomParm.Distribution is
---!       when NONE | UNIFORM =>  return LocalUniform(Min, Max) ;
---!       when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
---!       when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
---!       when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
---!       when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
---!       when others =>
---!         Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandInt: RandomParm.Distribution not implemented", FAILURE) ;
---!         return integer'low ;
---!     end case ;
+--!!    return LocalUniform(RV, Min, Max) ;
+    case RV.Param.Distribution is
+      when UNIFORM      =>    return  LocalUniform(RV, Min, Max) ;
+      when FAVOR_SMALL  =>    return  FavorSmall  (RV, Min, Max) ;
+      when FAVOR_BIG    =>    return  FavorBig    (RV, Min, Max) ;
+      when NORMAL       =>    return  Normal (RV, RV.Param.Mean, RV.Param.StdDeviation, Min, Max) ;
+      when POISSON      =>    return  Poisson(RV, RV.Param.Mean, Min, Max) ;
+      when others =>
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandInt: RV.Param.Distribution not implemented", FAILURE) ;
+        return integer'low ;
+    end case ;
   end function LocalRandInt ;
   
   ------------------------------------------------------------
@@ -979,17 +1016,17 @@ package body RandomPkg2019 is
   impure function LocalRandReal(variable RV : inout RandomType ; Min, Max : Real) return real is
   ------------------------------------------------------------
   begin
-    return LocalUniform(RV, Min, Max) ;
---!!    case RandomParm.Distribution is
---!!      when NONE | UNIFORM =>  return LocalUniform(Min, Max) ;
---!!      when FAVOR_SMALL  =>    return FavorSmall(Min, Max) ;
---!!      when FAVOR_BIG    =>    return FavorBig (Min, Max) ;
---!!      when NORMAL =>          return Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max) ;
---!!      when POISSON =>         return Poisson(RandomParm.Mean, Min, Max) ;
---!!      when others =>
---!!        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandReal: Specified RandomParm.Distribution not implemented", FAILURE) ;
---!!        return real(integer'low) ;
---!!    end case ;
+--!!    return LocalUniform(RV, Min, Max) ;
+    case RV.Param.Distribution is
+      when UNIFORM      =>    return  LocalUniform(RV, Min, Max) ;
+      when FAVOR_SMALL  =>    return  FavorSmall  (RV, Min, Max) ;
+      when FAVOR_BIG    =>    return  FavorBig    (RV, Min, Max) ;
+      when NORMAL       =>    return  Normal (RV, RV.Param.Mean, RV.Param.StdDeviation, Min, Max) ;
+      when POISSON      =>    return  Poisson(RV, RV.Param.Mean, Min, Max) ;
+      when others =>
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandReal: Specified RV.Param.Distribution not implemented", FAILURE) ;
+        return real(integer'low) ;
+    end case ;
   end function LocalRandReal ;
 
   ------------------------------------------------------------
@@ -1062,17 +1099,17 @@ package body RandomPkg2019 is
   impure function LocalRandInt (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer_vector ) return integer is
   ------------------------------------------------------------
   begin
-    return LocalUniform(RV, Min, Max, Exclude) ;
---!!    case RandomParm.Distribution is
---!!      when NONE | UNIFORM =>  return  LocalUniform(Min, Max, Exclude) ;
---!!      when FAVOR_SMALL  =>    return  FavorSmall(Min, Max, Exclude) ;
---!!      when FAVOR_BIG    =>    return  FavorBig (Min, Max, Exclude) ;
---!!      when NORMAL =>          return  Normal(RandomParm.Mean, RandomParm.StdDeviation, Min, Max, Exclude) ;
---!!      when POISSON =>         return  Poisson(RandomParm.Mean, Min, Max, Exclude) ;
---!!      when others =>
---!!        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandInt: Specified RandomParm.Distribution not implemented", FAILURE) ;
---!!        return integer'low ;
---!!    end case ;
+--!!    return LocalUniform(RV, Min, Max, Exclude) ;
+    case RV.Param.Distribution is
+      when UNIFORM      =>    return  LocalUniform(RV, Min, Max, Exclude) ;
+      when FAVOR_SMALL  =>    return  FavorSmall  (RV, Min, Max, Exclude) ;
+      when FAVOR_BIG    =>    return  FavorBig    (RV, Min, Max, Exclude) ;
+      when NORMAL       =>    return  Normal (RV, RV.Param.Mean, RV.Param.StdDeviation, Min, Max, Exclude) ;
+      when POISSON      =>    return  Poisson(RV, RV.Param.Mean, Min, Max, Exclude) ;
+      when others =>
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandInt: Specified RV.Param.Distribution not implemented", FAILURE) ;
+        return integer'low ;
+    end case ;
   end function LocalRandInt ;
 
   ------------------------------------------------------------
