@@ -215,10 +215,12 @@ package body ClockResetPkg is
     variable BurstLength, ClockVariance : integer ; 
     constant ACTIVE_TIME     : time := Period * DutyCycle ;
     constant INACTIVE_VALUE  : std_logic := not ClkActive ; 
+    variable intCoverID      : CoverageIdType ; 
   begin
-    CoverID <= NewID(Name) ; 
-    wait for 0 ns ;
-    AddCross(CoverID, GenBin(1,20,1), GenBin(900,1100)) ; 
+    intCoverID := NewID(Name) ; 
+    AddCross(intCoverID, GenBin(1,20,1), GenBin(900,1100,1)) ; 
+    -- CoverID initialized after time 0, sim cycle 0 (ie: wait for 0 ns before changing the coverage model)
+    CoverID    <= intCoverID ; 
 
     if Clk = 'U' then 
       Clk <= INACTIVE_VALUE ; 
