@@ -482,14 +482,14 @@ package ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- SetReportMode
-  -- Not AlertFlow
-  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
-  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
-  --     REPORT_NONE:    Deprecated, do not use.
-  -- AlertFlow:
+  -- AlertFlow and Singleton:
   --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, TRUE)
   --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, FALSE)
-  --     REPORT_NONE:    Replaced by AlertLogPkg.SetAlertEnable(AlertLogID, ERROR, FALSE)
+  --     REPORT_NONE:    Replaced by AlertLogPkg.SetPrintCount(AlertLogID, ERROR, 0)
+  -- Not AlertFlow - not for Singleton
+  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
+  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
+  --     REPORT_NONE:    Deprecated, do not use.  ?Replace by AlertLogPkg.SetPrintCount(AlertLogID, ERROR, 0)?
   procedure SetReportMode (
     constant ID           : in  ScoreboardIDType ;
     constant ReportModeIn : in  ScoreboardReportType
@@ -791,7 +791,6 @@ package ScoreboardGenericPkg is
     impure function SetName (Name : String) return string ;
     impure function GetName (DefaultName : string := "Scoreboard") return string ;
 
-
     ------------------------------------------------------------
     -- Scoreboard Introspection
 
@@ -1020,81 +1019,50 @@ package body ScoreboardGenericPkg is
       NextPtr        : ListPointerType ;
     end record ;
 
---!! Replace the following with
---    type ScoreboardRecType is record
---      HeadPointer    : ListPointerType ;
---      TailPointer    : ListPointerType ;
---      PopListPointer : ListPointerType ;
---
---      ErrCnt         : integer ;
---      DropCount      : integer ;
---      ItemNumber     : integer ;
---      PopCount       : integer ;
---      CheckCount     : integer ;
---      AlertLogID     : AlertLogIDType ;
---      Name           : NameStoreIDType ;
---      ReportMode     : ScoreboardReportType ;
---    end record ScoreboardRecType ;
---
---    type ScoreboardRecArrayType is array (integer range <>) of ScoreboardRecType ;
---    type ScoreboardRecArrayPointerType is access ScoreboardRecArrayType ;
---    variable ScoreboardPointer : ScoreboardRecArrayPointerType ;
---
---    -- Alas unfortunately aliases don't word as follows:
---    -- alias HeadPointer(I) is ScoreboardPointer(I).HeadPointer ;
+    type ScoreboardRecType is record
+      HeadPointer    : ListPointerType ;
+      TailPointer    : ListPointerType ;
+      PopListPointer : ListPointerType ;
 
-    type ListArrayType is array (integer range <>) of ListPointerType ;
-    type ListArrayPointerType is access ListArrayType ;
+      ItemNumber     : integer ;
+      ErrorCount     : integer ;
+      DropCount      : integer ;
+      PopCount       : integer ;
+      CheckCount     : integer ;
+      AlertLogID     : AlertLogIDType ;
+    end record ScoreboardRecType ;
 
-    variable ArrayLengthVar  : integer := 1 ;
+    type     ItemArrayType    is array (integer range <>) of ScoreboardRecType ; 
+    type     ItemArrayPtrType is access ItemArrayType ;
+    
+    -- Template and new ItemArray'(Template) initialization support usage as PT.  Not needed for singleton.
+    constant DEFAULT_INDEX    : integer := 1 ;
+    variable Template  : ItemArrayType(DEFAULT_INDEX to DEFAULT_INDEX) := (DEFAULT_INDEX => (NULL, NULL, NULL, 0, 0, 0, 0, 0, OSVVM_SCOREBOARD_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
+    variable SbPointer : ItemArrayPtrType := new ItemArrayType'(Template) ;
 
--- Original Code
---    variable HeadPointer     : ListArrayPointerType := new ListArrayType(1 to 1) ;
---    variable TailPointer     : ListArrayPointerType := new ListArrayType(1 to 1)  ;
---    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
---    variable PopListPointer  : ListArrayPointerType := new ListArrayType(1 to 1) ;
---
--- Legal, but crashes simulator more thoroughly
---    variable HeadPointer     : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
---    variable TailPointer     : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
---    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
---    variable PopListPointer  : ListArrayPointerType := new ListArrayType'(1 => NULL) ;
--- Working work around for QS 2020.04 and 2021.02
-    variable Template : ListArrayType(1 to 1) ;  -- Work around for QS 2020.04 and 2021.02
-
-    variable HeadPointer     : ListArrayPointerType := new ListArrayType'(Template) ;
-    variable TailPointer     : ListArrayPointerType := new ListArrayType'(Template) ;
-    -- PopListPointer needed for Pop to be a function - alternately need 2019 features
-    variable PopListPointer  : ListArrayPointerType := new ListArrayType'(Template) ;
-
-    type IntegerArrayType is array (integer range <>) of Integer ;
-    type IntegerArrayPointerType is access IntegerArrayType ;
-    type AlertLogIDArrayType is array (integer range <>) of AlertLogIDType ;
-    type AlertLogIDArrayPointerType is access AlertLogIDArrayType ;
-
-    variable ErrCntVar       : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable DropCountVar    : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable ItemNumberVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable PopCountVar     : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable CheckCountVar   : IntegerArrayPointerType := new IntegerArrayType'(1 => 0) ;
-    variable AlertLogIDVar   : AlertLogIDArrayPointerType := new AlertLogIDArrayType'(1 => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
-
-    variable NameVar         : NamePType ;
-    variable ReportModeVar   : ScoreboardReportType ;
-    variable FirstIndexVar   : integer := 1 ;
-
-    variable PrintIndexVar   : boolean := TRUE ;
-
-    variable CalledNewID     : boolean := FALSE ;
-    variable LocalNameStore  : NameStorePType ;
-
-    ------------------------------------------------------------
     -- Used by ScoreboardStore
-    variable NumItems       : integer := 0 ;
-    constant MIN_NUM_ITEMS  : integer := 4 ; -- Temporarily small for testing
---    constant MIN_NUM_ITEMS      : integer := 32 ; -- Min amount to resize array
+    variable NumItems         : integer := 0 ; 
+--    constant NUM_ITEMS_TO_ALLOCATE    : integer := 4 ; -- Temporarily small for testing
+    constant NUM_ITEMS_TO_ALLOCATE    : integer := 32 ; -- Min amount to resize array
+    variable LocalNameStore   : NameStorePType ; 
+    variable CalledNewID      : boolean := FALSE ;  -- singleton initialized
+
+    -- MinIndex, MaxIndex - mainly for PT, but usable for both as bounds checking of ID 
+    variable MinIndex         : integer := DEFAULT_INDEX ; 
+    variable MaxIndex         : integer := DEFAULT_INDEX ; 
+    
+    -- PT only 
+    variable ArrayLengthVar   : integer := 1 ; -- only for PT.  Default 1 item in Sb array.
+    variable NameVar          : NamePType ;
+    variable PrintIndexVar    : boolean := TRUE ;
+    
+    -- 
+    variable ReportModeVar   : ScoreboardReportType ;
+
+
 
     ------------------------------------------------------------
+    -- PT Only.   Not for Singleton
     procedure SetPrintIndex (Enable : boolean := TRUE) is
     ------------------------------------------------------------
     begin
@@ -1119,17 +1087,25 @@ package body ScoreboardGenericPkg is
     -- Package Local
     procedure GrowNumberItems (
     ------------------------------------------------------------
+      variable ItemArrayPtr     : InOut ItemArrayPtrType ;
       variable NumItems         : InOut integer ;
       constant GrowAmount       : in integer ;
       constant MinNumItems      : in integer
     ) is
+      variable oldItemArrayPtr  : ItemArrayPtrType ;
       variable NewNumItems : integer ;
     begin
       NewNumItems := NumItems + GrowAmount ;
-      if NewNumItems > HeadPointer'length then
-        SetArrayIndex(1, NormalizeArraySize(NewNumItems, MinNumItems)) ;
+      if ItemArrayPtr = NULL then
+        ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
+      elsif NewNumItems > ItemArrayPtr'length then
+        oldItemArrayPtr := ItemArrayPtr ;
+        ItemArrayPtr := new ItemArrayType(1 to NormalizeArraySize(NewNumItems, MinNumItems)) ;
+        ItemArrayPtr(1 to NumItems) := ItemArrayType'(oldItemArrayPtr(1 to NumItems)) ;
+        deallocate(oldItemArrayPtr) ;
       end if ;
       NumItems := NewNumItems ;
+      MaxIndex := NumItems ; 
     end procedure GrowNumberItems ;
 
     ------------------------------------------------------------
@@ -1144,6 +1120,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable NameID              : integer ;
     begin
+      CalledNewID := TRUE ;
       NameID := LocalNameStore.find(Name, ParentID, Search) ;
 
       -- Share the scoreboards if they match
@@ -1151,12 +1128,13 @@ package body ScoreboardGenericPkg is
         return ScoreboardIDType'(ID => NameID) ;
       else
         -- Resize Data Structure as necessary
-        GrowNumberItems(NumItems, GrowAmount => 1, MinNumItems => MIN_NUM_ITEMS) ;
+        GrowNumberItems(SbPointer, NumItems, GrowAmount => 1, MinNumItems => NUM_ITEMS_TO_ALLOCATE) ;
         -- Create AlertLogID
-        AlertLogIDVar(NumItems) := NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy => FALSE) ;
+        SbPointer(NumItems) := Template(DEFAULT_INDEX) ; 
+        SbPointer(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy => FALSE) ;
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, Search) ;
-        AlertIfNotEqual(AlertLogIDVar(NumItems), NameID, NumItems, "ScoreboardPkg: Index of LocalNameStore /= ScoreboardID") ;
+        AlertIfNotEqual(SbPointer(NumItems).AlertLogID, NameID, NumItems, "ScoreboardPkg: Index of LocalNameStore /= ScoreboardID") ;
         return ScoreboardIDType'(ID => NumItems) ;
       end if ;
     end function LocalNewID ;
@@ -1174,7 +1152,6 @@ package body ScoreboardGenericPkg is
       variable ResolvedSearch      : NameSearchType ;
       variable ResolvedPrintParent : AlertLogPrintParentType ;
     begin
-      CalledNewID := TRUE ;
       SetPrintIndex(FALSE) ;  -- historic, but needed
 
       ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_SCOREBOARD_ALERTLOG_ID, Search) ;
@@ -1200,7 +1177,6 @@ package body ScoreboardGenericPkg is
       variable ResolvedPrintParent : AlertLogPrintParentType ;
 --      variable ArrayParentID       : AlertLogIDType ;
     begin
-      CalledNewID := TRUE ;
       SetPrintIndex(FALSE) ;  -- historic, but needed
 
       ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_SCOREBOARD_ALERTLOG_ID, Search) ;
@@ -1261,7 +1237,6 @@ package body ScoreboardGenericPkg is
       variable ResolvedPrintParent : AlertLogPrintParentType ;
 --      variable ArrayParentID       : AlertLogIDType ;
     begin
-      CalledNewID := TRUE ;
       SetPrintIndex(FALSE) ;
 
       ResolvedSearch      := ResolveSearch     (ParentID /= OSVVM_SCOREBOARD_ALERTLOG_ID, Search) ;
@@ -1339,113 +1314,91 @@ package body ScoreboardGenericPkg is
       return NameVar.Get(DefaultName) ;
     end function GetName ;
 
+--!! TODO.  Replace with SetLogEnable(SBID, PASSED, TRUE/FALSE)
+--!! TODO.  Replace with SetPrintCount(SBID, ERROR, #) ; -- Where 
     ------------------------------------------------------------
+    -- This translates to a class wide operation on all IDs
+    -- Is it supported in the Singleton Interface
     procedure SetReportMode (ReportModeIn : ScoreboardReportType) is
     ------------------------------------------------------------
+      variable SignaledAlert : boolean := FALSE ;
+      variable AlertLogID : AlertLogIDType ;
+
     begin
-      ReportModeVar := ReportModeIn ;
-      if ReportModeVar = REPORT_ALL then
-        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "ScoreboardGenericPkg.SetReportMode: To turn off REPORT_ALL, use osvvm.AlertLogPkg.SetLogEnable(PASSED, FALSE)", WARNING) ;
-        for i in AlertLogIDVar'range loop
-          SetLogEnable(AlertLogIDVar(i), PASSED, TRUE) ;
-        end loop ;
-      end if ;
-      if ReportModeVar = REPORT_NONE then
-        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "ScoreboardGenericPkg.SetReportMode: ReportMode REPORT_NONE has been deprecated and will be removed in next revision.  Please contact OSVVM architect Jim Lewis if you need this capability.", WARNING) ;
-      end if ;
+      -- ReportModeVar := ReportModeIn ;
+      for i in SbPointer'range loop
+        AlertLogID := GetAlertLogID(i) ;
+        if not SignaledAlert then 
+          SignaledAlert := TRUE ; 
+          if AlertLogID = OSVVM_ALERTLOG_ID then 
+            Alert(AlertLogID, "ScoreboardPkg.SetReportMode.  ID = OSVVM_ALERTLOG_ID impacts AlertLog settings beyond just scoreboards.  Use ScoreboardPkg.SetAlertLogID to set a unique id", WARNING) ;
+          end if ; 
+        end if ; 
+        case ReportModeIn is 
+          when REPORT_ALL => 
+            SetLogEnable(AlertLogID, PASSED, TRUE) ;
+            SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
+
+          when REPORT_ERROR =>
+            SetLogEnable(AlertLogID, PASSED, FALSE) ;
+            SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
+            
+          when REPORT_NONE =>
+            SetLogEnable(AlertLogID, PASSED, FALSE) ;
+            SetAlertPrintCount(AlertLogID, ERROR,  0) ; 
+
+        end case ; 
+      end loop ; 
     end procedure SetReportMode ;
 
     ------------------------------------------------------------
     impure function GetReportMode return ScoreboardReportType is
     ------------------------------------------------------------
+    variable LogEnable  : boolean ; 
+    variable PrintCount : integer ; 
+    variable AlertLogID : AlertLogIDType ;
+    variable ReportMode : ScoreboardReportType ;
     begin
-      return ReportModeVar ;
-    end function GetReportMode ;
-
+      AlertLogID := SbPointer(MinIndex).AlertLogID ;
+      LogEnable  := GetLogEnable(AlertLogID, PASSED) ; 
+      PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ; 
+      if LogEnable and PrintCount = integer'high then 
+        return REPORT_ALL ;
+      elsif not LogEnable and PrintCount = integer'high then 
+        return REPORT_ERROR ; 
+      elsif not LogEnable and PrintCount = 0 then
+        return REPORT_NONE ; 
+      else
+        Alert(AlertLogID, "ScoreboardPkg.GetReportMode, Values inconsistent with ScoreboardReportType" & 
+              ".  LogEnable = "  & to_string(LogEnable) & 
+              ".  PrintCount = " & to_string(PrintCount), FAILURE) ;
+        return REPORT_NONE ;  -- value is not correct.  Note FAILURE above
+      end if ; 
+    end function GetReportMode ; 
+    
     ------------------------------------------------------------
     procedure SetArrayIndex(L, R : integer) is
     ------------------------------------------------------------
-      variable OldHeadPointer, OldTailPointer, OldPopListPointer : ListArrayPointerType ;
-      variable OldErrCnt, OldDropCount, OldItemNumber, OldPopCount, OldCheckCount : IntegerArrayPointerType ;
-      variable OldAlertLogIDVar : AlertLogIDArrayPointerType ;
-      variable Min, Max, Len, OldLen, OldMax : integer ;
+      variable OldSbPointer : ItemArrayPtrType ;
+      variable Len, OldLen, AllOfOldSb : integer ;
     begin
-      Min := minimum(L, R) ;
-      Max := maximum(L, R) ;
       OldLen := ArrayLengthVar ;
-      OldMax := Min + ArrayLengthVar - 1 ;
-      Len := Max - Min + 1 ;
-      ArrayLengthVar := Len ;
+      MinIndex := minimum(L, R) ;
+      MaxIndex := maximum(L, R) ;
+      AllOfOldSb := MinIndex + OldLen - 1 ;
+      Len := MaxIndex - MinIndex + 1 ;
+      ArrayLengthVar := Len ; 
       if Len >= OldLen then
-        FirstIndexVar := Min ;
-
-        OldHeadPointer := HeadPointer ;
-        HeadPointer := new ListArrayType(Min to Max) ;
-        if OldHeadPointer /= NULL then
-          HeadPointer(Min to OldMax) := OldHeadPointer.all ; -- (OldHeadPointer'range) ;
-          Deallocate(OldHeadPointer) ;
+        OldSbPointer := SbPointer ;
+        SbPointer := new ItemArrayType'(MinIndex to MaxIndex => Template(DEFAULT_INDEX)) ;
+        if OldSbPointer /= NULL then
+          -- Copy OldHeadPointer number of items
+          SbPointer(MinIndex to AllOfOldSb) := OldSbPointer.all ; 
+          Deallocate(OldSbPointer) ;
         end if ;
-
-        OldTailPointer := TailPointer ;
-        TailPointer := new ListArrayType(Min to Max) ;
-        if OldTailPointer /= NULL then
-          TailPointer(Min to OldMax) := OldTailPointer.all ;
-          Deallocate(OldTailPointer) ;
-        end if ;
-
-        OldPopListPointer := PopListPointer ;
-        PopListPointer := new ListArrayType(Min to Max) ;
-        if OldPopListPointer /= NULL then
-          PopListPointer(Min to OldMax) := OldPopListPointer.all ;
-          Deallocate(OldPopListPointer) ;
-        end if ;
-
-        OldErrCnt := ErrCntVar ;
-        ErrCntVar := new IntegerArrayType'(Min to Max => 0) ;
-        if OldErrCnt /= NULL then
-          ErrCntVar(Min to OldMax) := OldErrCnt.all ;
-          Deallocate(OldErrCnt) ;
-        end if ;
-
-        OldDropCount := DropCountVar ;
-        DropCountVar := new IntegerArrayType'(Min to Max => 0) ;
-        if OldDropCount /= NULL then
-          DropCountVar(Min to OldMax) := OldDropCount.all ;
-          Deallocate(OldDropCount) ;
-        end if ;
-
-        OldItemNumber := ItemNumberVar ;
-        ItemNumberVar := new IntegerArrayType'(Min to Max => 0) ;
-        if OldItemNumber /= NULL then
-          ItemNumberVar(Min to OldMax) := OldItemNumber.all ;
-          Deallocate(OldItemNumber) ;
-        end if ;
-
-        OldPopCount := PopCountVar ;
-        PopCountVar := new IntegerArrayType'(Min to Max => 0) ;
-        if OldPopCount /= NULL then
-          PopCountVar(Min to OldMax) := OldPopCount.all ;
-          Deallocate(OldPopCount) ;
-        end if ;
-
-        OldCheckCount := CheckCountVar ;
-        CheckCountVar := new IntegerArrayType'(Min to Max => 0) ;
-        if OldCheckCount /= NULL then
-          CheckCountVar(Min to OldMax) := OldCheckCount.all ;
-          Deallocate(OldCheckCount) ;
-        end if ;
-
-        OldAlertLogIDVar := AlertLogIDVar ;
-        AlertLogIDVar := new AlertLogIDArrayType'(Min to Max => OSVVM_SCOREBOARD_ALERTLOG_ID) ;
-        if OldAlertLogIDVar /= NULL then
-          AlertLogIDVar(Min to OldMax) := OldAlertLogIDVar.all ;
-          Deallocate(OldAlertLogIDVar) ;
-        end if ;
-
       elsif Len < OldLen then
         report "ScoreboardGenericPkg: SetArrayIndex, new array Length <= current array length"
         severity failure ;
-
       end if ;
     end procedure SetArrayIndex ;
 
@@ -1461,9 +1414,9 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurListPtr, LastListPtr : ListPointerType ;
     begin
-      for Index in HeadPointer'range loop
+      for Index in SbPointer'range loop
       -- Deallocate contents in the scoreboards
-        CurListPtr  := HeadPointer(Index) ;
+        CurListPtr  := SbPointer(Index).HeadPointer ;
         while CurListPtr /= Null loop
           deallocate(CurListPtr.TagPtr) ;
           deallocate(CurListPtr.ExpectedPtr) ;
@@ -1473,9 +1426,9 @@ package body ScoreboardGenericPkg is
         end loop ;
       end loop ;
 
-      for Index in PopListPointer'range loop
+      for Index in SbPointer'range loop
       -- Deallocate PopListPointer - only has single element
-        CurListPtr  := PopListPointer(Index) ;
+        CurListPtr  := SbPointer(Index).PopListPointer ;
         if CurListPtr /= NULL then
           deallocate(CurListPtr.TagPtr) ;
           deallocate(CurListPtr.ExpectedPtr) ;
@@ -1483,23 +1436,16 @@ package body ScoreboardGenericPkg is
         end if ;
       end loop ;
 
-      -- Deallocate arrays of pointers
-      Deallocate(HeadPointer) ;
-      Deallocate(TailPointer) ;
-      Deallocate(PopListPointer) ;
-
-      -- Deallocate supporting arrays
-      Deallocate(ErrCntVar) ;
-      Deallocate(DropCountVar) ;
-      Deallocate(ItemNumberVar) ;
-      Deallocate(PopCountVar) ;
-      Deallocate(CheckCountVar) ;
-      Deallocate(AlertLogIDVar) ;
+      -- Deallocate Array Structure
+      Deallocate(SbPointer) ;
 
       -- Deallocate NameVar - NamePType
       NameVar.Deallocate ;
-
-      ArrayLengthVar := 0 ;
+      
+      -- Set the state s.t. there is nothing in the SB
+      MinIndex       := 0 ;
+      MaxIndex       := 0 ;
+      ArrayLengthVar := 0 ; 
       NumItems       := 0 ;
       CalledNewID    := FALSE ;
     end procedure Deallocate ;
@@ -1516,28 +1462,28 @@ package body ScoreboardGenericPkg is
     impure function GetArrayIndex return integer_vector is
     ------------------------------------------------------------
     begin
-      return (1 => HeadPointer'left, 2 => HeadPointer'right) ;
+      return (1 => SbPointer'left, 2 => SbPointer'right) ;
     end function GetArrayIndex ;
 
     ------------------------------------------------------------
     impure function GetArrayLength return natural is
     ------------------------------------------------------------
     begin
-      return ArrayLengthVar ;  -- HeadPointer'length ;
+      return MaxIndex - MinIndex + 1 ;
     end function GetArrayLength ;
 
     ------------------------------------------------------------
     procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) is
     ------------------------------------------------------------
     begin
-      AlertLogIDVar(Index) := A ;
+      SbPointer(Index).AlertLogID := A ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
     procedure SetAlertLogID (A : AlertLogIDType) is
     ------------------------------------------------------------
     begin
-      AlertLogIDVar(FirstIndexVar) := A ;
+      SbPointer(MinIndex).AlertLogID := A ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
@@ -1546,7 +1492,7 @@ package body ScoreboardGenericPkg is
       variable ReportMode : AlertLogReportModeType ;
     begin
       ReportMode := ENABLED when not DoNotReport else DISABLED ;
-      AlertLogIDVar(Index) := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
+      SbPointer(Index).AlertLogID := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
@@ -1555,21 +1501,21 @@ package body ScoreboardGenericPkg is
       variable ReportMode : AlertLogReportModeType ;
     begin
       ReportMode := ENABLED when not DoNotReport else DISABLED ;
-      AlertLogIDVar(FirstIndexVar) := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
+      SbPointer(MinIndex).AlertLogID := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
     impure function GetAlertLogID(Index : Integer) return AlertLogIDType is
     ------------------------------------------------------------
     begin
-      return AlertLogIDVar(Index) ;
+      return SbPointer(Index).AlertLogID ;
     end function GetAlertLogID ;
 
     ------------------------------------------------------------
     impure function GetAlertLogID return AlertLogIDType is
     ------------------------------------------------------------
     begin
-      return AlertLogIDVar(FirstIndexVar) ;
+      return SbPointer(MinIndex).AlertLogID ;
     end function GetAlertLogID ;
 
     ------------------------------------------------------------
@@ -1579,11 +1525,16 @@ package body ScoreboardGenericPkg is
       constant Name  : in string
     ) return boolean is
     begin
-      return AlertIf(OSVVM_SCOREBOARD_ALERTLOG_ID, Index < HeadPointer'Low or Index > HeadPointer'High,
+      if Index >= MinIndex and Index <= MaxIndex then
+        return FALSE ; 
+      else 
+        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, 
          GetName & " " & Name & " Index: " & to_string(Index) &
-               " is not in the range (" & to_string(HeadPointer'Low) &
-               " to " & to_string(HeadPointer'High) & ")",
+               " is not in the range (" & to_string(MinIndex) &
+               " to " & to_string(MaxIndex) & ")",
          FAILURE ) ;
+        return TRUE ; 
+      end if ; 
     end function LocalOutOfRange ;
 
     ------------------------------------------------------------
@@ -1593,6 +1544,7 @@ package body ScoreboardGenericPkg is
       constant Tag    : in  string ;
       constant Item   : in  ExpectedType
     ) is
+      variable TailPointer : ListPointerType ; 
       variable ExpectedPtr : ExpectedPointerType ;
       variable TagPtr : line ;
     begin
@@ -1600,29 +1552,29 @@ package body ScoreboardGenericPkg is
         return ; -- error reporting in LocalOutOfRange
       end if ;
 
-      ItemNumberVar(Index)  := ItemNumberVar(Index) + 1 ;
+      SbPointer(Index).ItemNumber  := SbPointer(Index).ItemNumber + 1 ;
       ExpectedPtr := new ExpectedType'(Item) ;
       TagPtr := new string'(Tag) ;
 
-      if HeadPointer(Index) = NULL then
+      if SbPointer(Index).HeadPointer = NULL then
         -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
-        -- HeadPointer(Index) := new ListType'(ItemNumberVar(Index), TagPtr, ExpectedPtr, NULL) ;
-        HeadPointer(Index) := new ListType ;
-        HeadPointer(Index).ItemNumber  := ItemNumberVar(Index) ;
-        HeadPointer(Index).TagPtr      := TagPtr ;
-        HeadPointer(Index).ExpectedPtr := ExpectedPtr ;
-        HeadPointer(Index).NextPtr     := NULL ;
-        TailPointer(Index) := HeadPointer(Index) ;
+        -- SbPointer(Index).HeadPointer := new ListType'(SbPointer(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
+        TailPointer := new ListType ; 
+        SbPointer(Index).HeadPointer := TailPointer ;
+        
       else
         -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
-        -- TailPointer(Index).NextPtr := new ListType'(ItemNumberVar(Index), TagPtr, ExpectedPtr, NULL) ;
-        TailPointer(Index).NextPtr := new ListType ;
-        TailPointer(Index).NextPtr.ItemNumber  := ItemNumberVar(Index) ;
-        TailPointer(Index).NextPtr.TagPtr      := TagPtr ;
-        TailPointer(Index).NextPtr.ExpectedPtr := ExpectedPtr ;
-        TailPointer(Index).NextPtr.NextPtr     := NULL ;
-        TailPointer(Index) := TailPointer(Index).NextPtr ;
-      end if ;
+        -- SbPointer(Index).TailPointer.NextPtr := new ListType'(SbPointer(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
+        TailPointer := new ListType ; 
+        SbPointer(Index).TailPointer.NextPtr := TailPointer ;
+      end if ; 
+      
+      TailPointer.ItemNumber  := SbPointer(Index).ItemNumber ;
+      TailPointer.TagPtr      := TagPtr ;
+      TailPointer.ExpectedPtr := ExpectedPtr ;
+      TailPointer.NextPtr     := NULL ;
+      
+      SbPointer(Index).TailPointer := TailPointer ;
     end procedure LocalPush ;
 
     ------------------------------------------------------------
@@ -1664,7 +1616,7 @@ package body ScoreboardGenericPkg is
       constant Item   : in  ExpectedType
     ) is
     begin
-      LocalPush(FirstIndexVar, Tag, Item) ;
+      LocalPush(MinIndex, Tag, Item) ;
     end procedure Push ;
 
     ------------------------------------------------------------
@@ -1672,7 +1624,7 @@ package body ScoreboardGenericPkg is
     procedure Push (Item   : in  ExpectedType) is
     ------------------------------------------------------------
     begin
-      LocalPush(FirstIndexVar, "", Item) ;
+      LocalPush(MinIndex, "", Item) ;
     end procedure Push ;
 
     ------------------------------------------------------------
@@ -1714,7 +1666,7 @@ package body ScoreboardGenericPkg is
       constant Item   : in  ExpectedType
     ) return ExpectedType is
     begin
-      LocalPush(FirstIndexVar, Tag, Item) ;
+      LocalPush(MinIndex, Tag, Item) ;
       return Item ;
     end function Push ;
 
@@ -1723,13 +1675,13 @@ package body ScoreboardGenericPkg is
     impure function Push (Item : ExpectedType) return ExpectedType is
     ------------------------------------------------------------
     begin
-      LocalPush(FirstIndexVar, "", Item) ;
+      LocalPush(MinIndex, "", Item) ;
       return Item ;
     end function Push ;
 
     ------------------------------------------------------------
     -- Local Only
-    -- Pops highest element matching Tag into PopListPointer(Index)
+    -- Pops highest element matching Tag into SbPointer(Index).PopListPointer
     procedure LocalPop (Index : integer ; Tag : string; Name : string)  is
     ------------------------------------------------------------
       variable CurPtr : ListPointerType ;
@@ -1737,39 +1689,39 @@ package body ScoreboardGenericPkg is
       if LocalOutOfRange(Index, "Pop/Check") then
         return ; -- error reporting in LocalOutOfRange
       end if ;
-      if HeadPointer(Index) = NULL then
-        ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+      if SbPointer(Index).HeadPointer = NULL then
+        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
         if tag'length > 0 then 
-          Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
+          Alert(SbPointer(Index).AlertLogID, GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
         else
-          Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ;
+          Alert(SbPointer(Index).AlertLogID, GetName & " Empty during " & Name, FAILURE) ;
         end if ; 
         return ;
       end if ;
-      PopCountVar(Index) := PopCountVar(Index) + 1 ;
+      SbPointer(Index).PopCount := SbPointer(Index).PopCount + 1 ;
       -- deallocate previous pointer
-      if PopListPointer(Index) /= NULL then
-        deallocate(PopListPointer(Index).TagPtr) ;
-        deallocate(PopListPointer(Index).ExpectedPtr) ;
-        deallocate(PopListPointer(Index)) ;
+      if SbPointer(Index).PopListPointer /= NULL then
+        deallocate(SbPointer(Index).PopListPointer.TagPtr) ;
+        deallocate(SbPointer(Index).PopListPointer.ExpectedPtr) ;
+        deallocate(SbPointer(Index).PopListPointer) ;
       end if ;
       -- Descend to find Tag field and extract
-      CurPtr := HeadPointer(Index) ;
+      CurPtr := SbPointer(Index).HeadPointer ;
       if CurPtr.TagPtr.all = Tag then
         -- Non-tagged scoreboards find this one.
-        PopListPointer(Index)  := HeadPointer(Index) ;
-        HeadPointer(Index)     := HeadPointer(Index).NextPtr ;
+        SbPointer(Index).PopListPointer  := SbPointer(Index).HeadPointer ;
+        SbPointer(Index).HeadPointer     := SbPointer(Index).HeadPointer.NextPtr ;
       else
         loop
           if CurPtr.NextPtr = NULL then
-            ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-            Alert(AlertLogIDVar(Index), GetName & " Pop/Check (" & Name & "), tag: " & Tag & " not found", FAILURE) ;
+            SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
+            Alert(SbPointer(Index).AlertLogID, GetName & " Pop/Check (" & Name & "), tag: " & Tag & " not found", FAILURE) ;
             exit ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
-            PopListPointer(Index) := CurPtr.NextPtr ;
+            SbPointer(Index).PopListPointer := CurPtr.NextPtr ;
             CurPtr.NextPtr := CurPtr.NextPtr.NextPtr ;
             if CurPtr.NextPtr = NULL then
-              TailPointer(Index) := CurPtr ;
+              SbPointer(Index).TailPointer := CurPtr ;
             end if ;
             exit ;
           else
@@ -1794,45 +1746,48 @@ package body ScoreboardGenericPkg is
       variable WriteBuf : line ;
       variable PassedFlagEnabled : boolean ;
     begin
-      CheckCountVar(Index) := CheckCountVar(Index) + 1 ;
-      ExpectedPtr := PopListPointer(Index).ExpectedPtr ;
-      CurrentItem := PopListPointer(Index).ItemNumber ;
+      SbPointer(Index).CheckCount := SbPointer(Index).CheckCount + 1 ;
+      ExpectedPtr := SbPointer(Index).PopListPointer.ExpectedPtr ;
+      CurrentItem := SbPointer(Index).PopListPointer.ItemNumber ;
 
-      PassedFlagEnabled := GetLogEnable(AlertLogIDVar(Index), PASSED) ;
+      PassedFlagEnabled := GetLogEnable(SbPointer(Index).AlertLogID, PASSED) ;
 
       if not Match(ActualData, ExpectedPtr.all) then
-        ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
         FoundError := TRUE ;
-        IncAffirmCount(AlertLogIDVar(Index)) ;
+        -- IncAffirmCount(SbPointer(Index).AlertLogID) ;
       else
         FoundError := FALSE ;
+        -- If PassFlagEnabled, will count it in the log later.
         if not PassedFlagEnabled then
-          IncAffirmPassedCount(AlertLogIDVar(Index)) ;
+          IncAffirmPassedCount(SbPointer(Index).AlertLogID) ;
         end if ;
       end if ;
 
---      IncAffirmCount(AlertLogIDVar(Index)) ;
+--      IncAffirmCount(SbPointer(Index).AlertLogID) ;
 
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or PassedFlagEnabled then
-        -- Only used for PT based SB - SetName not accessible.
-        if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
---x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
-          write(WriteBuf, NameVar.Get("Scoreboard")) ;
-          if not (ArrayLengthVar > 1 and PrintIndexVar) then
-            swrite(WriteBuf, "   ") ;
+        -- Only used for PT based SB - Singleton uses AlertLogID name instead
+        if not CalledNewID then 
+          if SbPointer(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
+  --x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+            write(WriteBuf, NameVar.Get("Scoreboard")) ;
+            if not (ArrayLengthVar > 1 and PrintIndexVar) then
+              swrite(WriteBuf, "   ") ;
+            end if ;
+          elsif NameVar.IsSet then 
+  --x          write(WriteBuf, GetName(DefaultName => "")) ;
+            write(WriteBuf, NameVar.Get("")) ;
+            if not (ArrayLengthVar > 1 and PrintIndexVar) then
+              swrite(WriteBuf, "   ") ;
+            end if ;
           end if ;
-        elsif NameVar.IsSet then 
---x          write(WriteBuf, GetName(DefaultName => "")) ;
-          write(WriteBuf, NameVar.Get("")) ;
-          if not (ArrayLengthVar > 1 and PrintIndexVar) then
-            swrite(WriteBuf, "   ") ;
+          -- Only used for PT based SB - Index SB not used in the same way.
+          if ArrayLengthVar > 1 and PrintIndexVar then
+            write(WriteBuf, " (" & to_string(Index) & ")    ") ;
           end if ;
-        end if ;
-        -- Only used for PT based SB - Index SB not used in the same way.
-        if ArrayLengthVar > 1 and PrintIndexVar then
-          write(WriteBuf, " (" & to_string(Index) & ")    ") ;
-        end if ;
+        end if ; 
         if ExpectedInFIFO then
           write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
           if FoundError then
@@ -1844,24 +1799,28 @@ package body ScoreboardGenericPkg is
             write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
           end if ;
         end if ;
---x        if PopListPointer(Index).TagPtr.all /= "" then
-        if PopListPointer(Index).TagPtr.all'length > 0 then
-          write(WriteBuf, "   Tag: " & PopListPointer(Index).TagPtr.all) ;
+--x        if SbPointer(Index).PopListPointer.TagPtr.all /= "" then
+        if SbPointer(Index).PopListPointer.TagPtr.all'length > 0 then
+          write(WriteBuf, "   Tag: " & SbPointer(Index).PopListPointer.TagPtr.all) ;
         end if;
         write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
-        if FoundError then
-          if ReportModeVar /= REPORT_NONE then
-            -- Affirmation Failed
-            Alert(AlertLogIDVar(Index), WriteBuf.all, ERROR) ;
-          else
-            -- Affirmation Failed, but silent, unless in DEBUG mode
-            Log(AlertLogIDVar(Index), "ERROR " & WriteBuf.all, DEBUG) ;
-            IncAlertCount(AlertLogIDVar(Index)) ;  -- Silent Counted Alert
-          end if ;
-        else
-          -- Affirmation passed, PASSED flag increments AffirmCount
-          Log(AlertLogIDVar(Index), WriteBuf.all, PASSED) ;
-        end if ;
+        
+        AffirmIf(SbPointer(Index).AlertLogID, not FoundError, WriteBuf.all) ; 
+        
+--!!        if FoundError then
+--!!          if ReportModeVar /= REPORT_NONE then
+--!!            -- Affirmation Failed
+--!!            Alert(SbPointer(Index).AlertLogID, WriteBuf.all, ERROR) ;
+--!!          else
+--!!            -- Affirmation Failed, but silent, unless in DEBUG mode
+--!!            Log(SbPointer(Index).AlertLogID, "ERROR " & WriteBuf.all, DEBUG) ;
+--!!            IncAlertCount(SbPointer(Index).AlertLogID) ;  -- Silent Counted Alert
+--!!          end if ;
+--!!        else
+--!!          -- Affirmation passed, PASSED flag increments AffirmCount
+--!!          Log(SbPointer(Index).AlertLogID, WriteBuf.all, PASSED) ;
+--!!        end if ;
+
         deallocate(WriteBuf) ;
       end if ;
     end procedure LocalCheck ;
@@ -1908,8 +1867,8 @@ package body ScoreboardGenericPkg is
     ) is
       variable FoundError   : boolean ;
     begin
-      LocalPop(FirstIndexVar, Tag, "Check") ;
-      LocalCheck(FirstIndexVar, ActualData, FoundError) ;
+      LocalPop(MinIndex, Tag, "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -1918,8 +1877,8 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable FoundError   : boolean ;
     begin
-      LocalPop(FirstIndexVar, "", "Check") ;
-      LocalCheck(FirstIndexVar, ActualData, FoundError) ;
+      LocalPop(MinIndex, "", "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -1966,8 +1925,8 @@ package body ScoreboardGenericPkg is
     ) return boolean is
       variable FoundError   : boolean ;
     begin
-      LocalPop(FirstIndexVar, Tag, "Check") ;
-      LocalCheck(FirstIndexVar, ActualData, FoundError) ;
+      LocalPop(MinIndex, Tag, "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
       return not FoundError ;
     end function Check ;
 
@@ -1977,8 +1936,8 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable FoundError   : boolean ;
     begin
-      LocalPop(FirstIndexVar, "", "Check") ;
-      LocalCheck(FirstIndexVar, ActualData, FoundError) ;
+      LocalPop(MinIndex, "", "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
       return not FoundError ;
     end function Check ;
 
@@ -2013,7 +1972,7 @@ package body ScoreboardGenericPkg is
         return ; -- error reporting in LocalOutOfRange
       end if ;
       LocalPop(Index, Tag, "Pop") ;
-      Item := PopListPointer(Index).ExpectedPtr.all ;
+      Item := SbPointer(Index).PopListPointer.ExpectedPtr.all ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -2028,7 +1987,7 @@ package body ScoreboardGenericPkg is
         return ; -- error reporting in LocalOutOfRange
       end if ;
       LocalPop(Index, "", "Pop") ;
-      Item := PopListPointer(Index).ExpectedPtr.all ;
+      Item := SbPointer(Index).PopListPointer.ExpectedPtr.all ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -2039,8 +1998,8 @@ package body ScoreboardGenericPkg is
       variable Item   : out  ExpectedType
     ) is
     begin
-      LocalPop(FirstIndexVar, Tag, "Pop") ;
-      Item := PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      LocalPop(MinIndex, Tag, "Pop") ;
+      Item := SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -2048,8 +2007,8 @@ package body ScoreboardGenericPkg is
     procedure Pop (variable Item : out  ExpectedType) is
     ------------------------------------------------------------
     begin
-      LocalPop(FirstIndexVar, "", "Pop") ;
-      Item := PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      LocalPop(MinIndex, "", "Pop") ;
+      Item := SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -2062,10 +2021,10 @@ package body ScoreboardGenericPkg is
     begin
       if LocalOutOfRange(Index, "Pop") then
         -- error reporting in LocalOutOfRange
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
       LocalPop(Index, Tag, "Pop") ;
-      return PopListPointer(Index).ExpectedPtr.all ;
+      return SbPointer(Index).PopListPointer.ExpectedPtr.all ;
     end function Pop ;
 
     ------------------------------------------------------------
@@ -2075,10 +2034,10 @@ package body ScoreboardGenericPkg is
     begin
       if LocalOutOfRange(Index, "Pop") then
         -- error reporting in LocalOutOfRange
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
       LocalPop(Index, "", "Pop") ;
-      return PopListPointer(Index).ExpectedPtr.all ;
+      return SbPointer(Index).PopListPointer.ExpectedPtr.all ;
     end function Pop ;
 
     ------------------------------------------------------------
@@ -2088,8 +2047,8 @@ package body ScoreboardGenericPkg is
       constant Tag : in  string
     ) return ExpectedType is
     begin
-      LocalPop(FirstIndexVar, Tag, "Pop") ;
-      return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      LocalPop(MinIndex, Tag, "Pop") ;
+      return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
     end function Pop ;
 
     ------------------------------------------------------------
@@ -2097,8 +2056,8 @@ package body ScoreboardGenericPkg is
     impure function Pop return ExpectedType is
     ------------------------------------------------------------
     begin
-      LocalPop(FirstIndexVar, "", "Pop") ;
-      return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+      LocalPop(MinIndex, "", "Pop") ;
+      return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
     end function Pop ;
 
     ------------------------------------------------------------
@@ -2112,21 +2071,21 @@ package body ScoreboardGenericPkg is
 --!!      if LocalOutOfRange(Index, "Peek") then
 --!!        return NULL ; -- error reporting in LocalOutOfRange
 --!!      end if ;
-      if HeadPointer(Index) = NULL then
-        ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-        Alert(AlertLogIDVar(Index), GetName & " Empty during Peek", FAILURE) ;
+      if SbPointer(Index).HeadPointer = NULL then
+        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
+        Alert(SbPointer(Index).AlertLogID, GetName & " Empty during Peek", FAILURE) ;
         return NULL ;
       end if ;
       -- Descend to find Tag field and extract
-      CurPtr := HeadPointer(Index) ;
+      CurPtr := SbPointer(Index).HeadPointer ;
       if CurPtr.TagPtr.all = Tag then
         -- Non-tagged scoreboards find this one.
         return CurPtr ;
       else
         loop
           if CurPtr.NextPtr = NULL then
-            ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-            Alert(AlertLogIDVar(Index), GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
+            SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
+            Alert(SbPointer(Index).AlertLogID, GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
             -- return NULL ;
             exit ; 
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
@@ -2186,7 +2145,7 @@ package body ScoreboardGenericPkg is
     ) is
       variable CurPtr : ListPointerType ;
     begin
-      CurPtr := LocalPeek(FirstIndexVar, Tag) ;
+      CurPtr := LocalPeek(MinIndex, Tag) ;
       if CurPtr /= NULL then
         Item := CurPtr.ExpectedPtr.all ;
       end if ;
@@ -2198,7 +2157,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurPtr : ListPointerType ;
     begin
-      CurPtr := LocalPeek(FirstIndexVar, "") ;
+      CurPtr := LocalPeek(MinIndex, "") ;
       if CurPtr /= NULL then
         Item := CurPtr.ExpectedPtr.all ;
       end if ;
@@ -2215,14 +2174,14 @@ package body ScoreboardGenericPkg is
     begin
       if LocalOutOfRange(Index, "Peek") then
         -- error reporting in LocalOutOfRange
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
       CurPtr := LocalPeek(Index, Tag) ;
       if CurPtr /= NULL then
         return CurPtr.ExpectedPtr.all ;
       else
         -- Already issued failure, continuing for debug only
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
     end function Peek ;
 
@@ -2234,14 +2193,14 @@ package body ScoreboardGenericPkg is
     begin
       if LocalOutOfRange(Index, "Peek") then
         -- error reporting in LocalOutOfRange
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
       CurPtr := LocalPeek(Index, "") ;
       if CurPtr /= NULL then
         return CurPtr.ExpectedPtr.all ;
       else
         -- Already issued failure, continuing for debug only
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
     end function Peek ;
 
@@ -2253,12 +2212,12 @@ package body ScoreboardGenericPkg is
     ) return ExpectedType is
       variable CurPtr : ListPointerType ;
     begin
-      CurPtr := LocalPeek(FirstIndexVar, Tag) ;
+      CurPtr := LocalPeek(MinIndex, Tag) ;
       if CurPtr /= NULL then
         return CurPtr.ExpectedPtr.all ;
       else
         -- Already issued failure, continuing for debug only
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
     end function Peek ;
 
@@ -2268,12 +2227,12 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurPtr : ListPointerType ;
     begin
-      CurPtr := LocalPeek(FirstIndexVar, "") ;
+      CurPtr := LocalPeek(MinIndex, "") ;
       if CurPtr /= NULL then
         return CurPtr.ExpectedPtr.all ;
       else
         -- Already issued failure, continuing for debug only
-        return PopListPointer(FirstIndexVar).ExpectedPtr.all ;
+        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
       end if ;
     end function Peek ;
 
@@ -2283,7 +2242,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurPtr : ListPointerType ;
     begin
-      CurPtr := HeadPointer(Index) ;
+      CurPtr := SbPointer(Index).HeadPointer ;
       while CurPtr /= NULL loop
         if CurPtr.TagPtr.all = Tag then
           return FALSE ;   -- Found Tag
@@ -2298,7 +2257,7 @@ package body ScoreboardGenericPkg is
     impure function Empty (Index  : integer) return boolean is
     ------------------------------------------------------------
     begin
-      return HeadPointer(Index) = NULL ;
+      return SbPointer(Index).HeadPointer = NULL ;
     end function Empty ;
 
     ------------------------------------------------------------
@@ -2307,7 +2266,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurPtr : ListPointerType ;
     begin
-      return Empty(FirstIndexVar, Tag) ;
+      return Empty(MinIndex, Tag) ;
     end function Empty ;
 
     ------------------------------------------------------------
@@ -2315,7 +2274,7 @@ package body ScoreboardGenericPkg is
     impure function Empty return boolean is
     ------------------------------------------------------------
     begin
-      return HeadPointer(FirstIndexVar) = NULL ;
+      return SbPointer(MinIndex).HeadPointer = NULL ;
     end function Empty ;
     
     ------------------------------------------------------------
@@ -2348,7 +2307,7 @@ package body ScoreboardGenericPkg is
       variable EmptyError : Boolean ;
       variable WriteBuf : line ;
     begin
-      if AlertLogIDVar(Index) = OSVVM_SCOREBOARD_ALERTLOG_ID  then
+      if SbPointer(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
 --x        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
         write(WriteBuf, NameVar.Get("Scoreboard")) ;
       else
@@ -2368,19 +2327,19 @@ package body ScoreboardGenericPkg is
         end if ;
       end if ;
       if FinishEmpty then
-        AffirmIf(AlertLogIDVar(Index), Empty(Index), WriteBuf.all & "Checking Empty: " & to_string(Empty(Index)) &
+        AffirmIf(SbPointer(Index).AlertLogID, Empty(Index), WriteBuf.all & "Checking Empty: " & to_string(Empty(Index)) &
                  "  FinishEmpty: " & to_string(FinishEmpty)) ;
         if not Empty(Index) then
           -- Increment internal count on FinishEmpty Error
-          ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+          SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
         end if ;
       end if ;
-      AffirmIf(AlertLogIDVar(Index), CheckCountVar(Index) >= FinishCheckCount, WriteBuf.all &
-                 "Checking CheckCount: " & to_string(CheckCountVar(Index)) &
+      AffirmIf(SbPointer(Index).AlertLogID, SbPointer(Index).CheckCount >= FinishCheckCount, WriteBuf.all &
+                 "Checking CheckCount: " & to_string(SbPointer(Index).CheckCount) &
                  " >= Expected: " & to_string(FinishCheckCount))  ;
-      if not (CheckCountVar(Index) >= FinishCheckCount) then
+      if not (SbPointer(Index).CheckCount >= FinishCheckCount) then
         -- Increment internal count on FinishCheckCount Error
-        ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
       end if ;
       deallocate(WriteBuf) ;
     end procedure CheckFinish ;
@@ -2392,8 +2351,8 @@ package body ScoreboardGenericPkg is
       FinishEmpty        : boolean
     ) is
     begin
-      for AlertLogID in AlertLogIDVar'range loop
-        CheckFinish(AlertLogID, FinishCheckCount, FinishEmpty) ;
+      for Index in SbPointer'range loop
+        CheckFinish(Index, FinishCheckCount, FinishEmpty) ;
       end loop ;
     end procedure CheckFinish ;
 
@@ -2401,7 +2360,7 @@ package body ScoreboardGenericPkg is
     impure function GetErrorCount (Index : integer)  return integer is
     ------------------------------------------------------------
     begin
-      return ErrCntVar(Index) ;
+      return SbPointer(Index).ErrorCount ;
     end function GetErrorCount ;
 
     ------------------------------------------------------------
@@ -2409,7 +2368,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable TotalErrorCount : integer := 0 ;
     begin
-      for Index in AlertLogIDVar'range loop
+      for Index in SbPointer'range loop
         TotalErrorCount := TotalErrorCount + GetErrorCount(Index) ;
       end loop ;
       return TotalErrorCount ;
@@ -2419,128 +2378,128 @@ package body ScoreboardGenericPkg is
     procedure IncErrorCount (Index  : integer) is
     ------------------------------------------------------------
     begin
-      ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-      IncAlertCount(AlertLogIDVar(Index), ERROR) ;
+      SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
+      IncAlertCount(SbPointer(Index).AlertLogID, ERROR) ;
     end IncErrorCount ;
 
     ------------------------------------------------------------
     procedure IncErrorCount is
     ------------------------------------------------------------
     begin
-      ErrCntVar(FirstIndexVar) := ErrCntVar(FirstIndexVar) + 1 ;
-      IncAlertCount(AlertLogIDVar(FirstIndexVar), ERROR) ;
+      SbPointer(MinIndex).ErrorCount := SbPointer(MinIndex).ErrorCount + 1 ;
+      IncAlertCount(SbPointer(MinIndex).AlertLogID, ERROR) ;
     end IncErrorCount ;
 
     ------------------------------------------------------------
     procedure SetErrorCountZero (Index  : integer) is
     ------------------------------------------------------------
     begin
-      ErrCntVar(Index) := 0;
+      SbPointer(Index).ErrorCount := 0;
     end procedure SetErrorCountZero ;
 
     ------------------------------------------------------------
     procedure SetErrorCountZero is
     ------------------------------------------------------------
     begin
-      ErrCntVar(FirstIndexVar) := 0 ;
+      SbPointer(MinIndex).ErrorCount := 0 ;
     end procedure SetErrorCountZero ;
 
     ------------------------------------------------------------
     procedure SetCheckCountZero (Index  : integer) is
     ------------------------------------------------------------
     begin
-      CheckCountVar(Index) := 0;
+      SbPointer(Index).CheckCount := 0;
     end procedure SetCheckCountZero ;
 
     ------------------------------------------------------------
     procedure SetCheckCountZero is
     ------------------------------------------------------------
     begin
-      CheckCountVar(FirstIndexVar) := 0;
+      SbPointer(MinIndex).CheckCount := 0;
     end procedure SetCheckCountZero ;
 
     ------------------------------------------------------------
     impure function GetItemCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
-      return ItemNumberVar(Index) ;
+      return SbPointer(Index).ItemNumber ;
     end function GetItemCount ;
 
     ------------------------------------------------------------
     impure function GetItemCount return integer is
     ------------------------------------------------------------
     begin
-      return ItemNumberVar(FirstIndexVar) ;
+      return SbPointer(MinIndex).ItemNumber ;
     end function GetItemCount ;
 
     ------------------------------------------------------------
     impure function GetPushCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
-      return ItemNumberVar(Index) ;
+      return SbPointer(Index).ItemNumber ;
     end function GetPushCount ;
 
     ------------------------------------------------------------
     impure function GetPushCount return integer is
     ------------------------------------------------------------
     begin
-      return ItemNumberVar(FirstIndexVar) ;
+      return SbPointer(MinIndex).ItemNumber ;
     end function GetPushCount ;
 
     ------------------------------------------------------------
     impure function GetPopCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
-      return PopCountVar(Index) ;
+      return SbPointer(Index).PopCount ;
     end function GetPopCount ;
 
     ------------------------------------------------------------
     impure function GetPopCount return integer is
     ------------------------------------------------------------
     begin
-      return PopCountVar(FirstIndexVar) ;
+      return SbPointer(MinIndex).PopCount ;
     end function GetPopCount ;
 
     ------------------------------------------------------------
     impure function GetFifoCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
-      return ItemNumberVar(Index) - PopCountVar(Index) - DropCountVar(Index) ;
+      return SbPointer(Index).ItemNumber - SbPointer(Index).PopCount - SbPointer(Index).DropCount ;
     end function GetFifoCount ;
 
     ------------------------------------------------------------
     impure function GetFifoCount return integer is
     ------------------------------------------------------------
     begin
-      return GetFifoCount(FirstIndexVar) ;
+      return GetFifoCount(MinIndex) ;
     end function GetFifoCount ;
 
     ------------------------------------------------------------
     impure function GetCheckCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
-      return CheckCountVar(Index) ;
+      return SbPointer(Index).CheckCount ;
     end function GetCheckCount ;
 
     ------------------------------------------------------------
     impure function GetCheckCount return integer is
     ------------------------------------------------------------
     begin
-      return CheckCountVar(FirstIndexVar) ;
+      return SbPointer(MinIndex).CheckCount ;
     end function GetCheckCount ;
 
     ------------------------------------------------------------
     impure function GetDropCount (Index  : integer) return integer is
     ------------------------------------------------------------
     begin
-      return DropCountVar(Index) ;
+      return SbPointer(Index).DropCount ;
     end function GetDropCount ;
 
     ------------------------------------------------------------
     impure function GetDropCount return integer is
     ------------------------------------------------------------
     begin
-      return DropCountVar(FirstIndexVar) ;
+      return SbPointer(MinIndex).DropCount ;
     end function GetDropCount ;
 
     ------------------------------------------------------------
@@ -2552,7 +2511,7 @@ package body ScoreboardGenericPkg is
       FStatus     : boolean := TRUE
     ) is
     begin
-      Alert(AlertLogIDVar(Index), "OSVVM.ScoreboardGenericPkg.SetFinish: Deprecated and removed.  See CheckFinish", ERROR) ;
+      Alert(SbPointer(Index).AlertLogID, "OSVVM.ScoreboardGenericPkg.SetFinish: Deprecated and removed.  See CheckFinish", ERROR) ;
     end procedure SetFinish ;
 
     ------------------------------------------------------------
@@ -2563,7 +2522,7 @@ package body ScoreboardGenericPkg is
       FStatus     : boolean := TRUE
     ) is
     begin
-      SetFinish(FirstIndexVar, FCheckCount, FEmpty, FStatus) ;
+      SetFinish(MinIndex, FCheckCount, FEmpty, FStatus) ;
     end procedure SetFinish ;
 
     ------------------------------------------------------------
@@ -2582,17 +2541,17 @@ package body ScoreboardGenericPkg is
       if LocalOutOfRange(Index, "Find") then
         return integer'left ; -- error reporting in LocalOutOfRange
       end if ;
-      CurPtr := HeadPointer(Index) ;
+      CurPtr := SbPointer(Index).HeadPointer ;
       loop
         if CurPtr = NULL then
           -- Failed to find it
-          ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
+          SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
           if Tag /= "" then
-            Alert(AlertLogIDVar(Index),
+            Alert(SbPointer(Index).AlertLogID,
                   GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
                   ERROR ) ;
           else
-            Alert(AlertLogIDVar(Index),
+            Alert(SbPointer(Index).AlertLogID,
                   GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
                   ERROR ) ;
           end if ;
@@ -2635,7 +2594,7 @@ package body ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer is
     begin
-      return Find(FirstIndexVar, Tag, ActualData) ;
+      return Find(MinIndex, Tag, ActualData) ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2646,7 +2605,7 @@ package body ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer is
     begin
-      return Find(FirstIndexVar, "", ActualData) ;
+      return Find(MinIndex, "", ActualData) ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2663,7 +2622,7 @@ package body ScoreboardGenericPkg is
       if LocalOutOfRange(Index, "Flush") then
         return ; -- error reporting in LocalOutOfRange
       end if ;
-      CurPtr  := HeadPointer(Index) ;
+      CurPtr  := SbPointer(Index).HeadPointer ;
       LastPtr := NULL ;
       loop
         if CurPtr = NULL then
@@ -2673,17 +2632,17 @@ package body ScoreboardGenericPkg is
           if ItemNumber >= CurPtr.ItemNumber then
             -- remove it
             RemovePtr := CurPtr ;
-            if CurPtr = TailPointer(Index) then
-              TailPointer(Index) := LastPtr ;
+            if CurPtr = SbPointer(Index).TailPointer then
+              SbPointer(Index).TailPointer := LastPtr ;
             end if ;
-            if CurPtr = HeadPointer(Index) then
-              HeadPointer(Index) := CurPtr.NextPtr ;
+            if CurPtr = SbPointer(Index).HeadPointer then
+              SbPointer(Index).HeadPointer := CurPtr.NextPtr ;
             else -- if LastPtr /= NULL then
               LastPtr.NextPtr := LastPtr.NextPtr.NextPtr ;
             end if ;
             CurPtr := CurPtr.NextPtr ;
             -- LastPtr := LastPtr ; -- no change
-            DropCountVar(Index) := DropCountVar(Index) + 1 ;
+            SbPointer(Index).DropCount := SbPointer(Index).DropCount + 1 ;
             deallocate(RemovePtr.TagPtr) ;
             deallocate(RemovePtr.ExpectedPtr) ;
             deallocate(RemovePtr) ;
@@ -2708,7 +2667,7 @@ package body ScoreboardGenericPkg is
       constant ItemNumber  :  in  integer
     ) is
     begin
-      Flush(FirstIndexVar, Tag, ItemNumber) ;
+      Flush(MinIndex, Tag, ItemNumber) ;
     end procedure Flush ;
 
     ------------------------------------------------------------
@@ -2724,22 +2683,22 @@ package body ScoreboardGenericPkg is
       if LocalOutOfRange(Index, "Find") then
         return ; -- error reporting in LocalOutOfRange
       end if ;
-      CurPtr  := HeadPointer(Index) ;
+      CurPtr  := SbPointer(Index).HeadPointer ;
       loop
         if CurPtr = NULL then
           -- Done
           return ;
         elsif ItemNumber >= CurPtr.ItemNumber then
           -- Descend, Check Tail, Deallocate
-          HeadPointer(Index) := HeadPointer(Index).NextPtr ;
-          if CurPtr = TailPointer(Index) then
-            TailPointer(Index) := NULL ;
+          SbPointer(Index).HeadPointer := SbPointer(Index).HeadPointer.NextPtr ;
+          if CurPtr = SbPointer(Index).TailPointer then
+            SbPointer(Index).TailPointer := NULL ;
           end if ;
-          DropCountVar(Index) := DropCountVar(Index) + 1 ;
+          SbPointer(Index).DropCount := SbPointer(Index).DropCount + 1 ;
           deallocate(CurPtr.TagPtr) ;
           deallocate(CurPtr.ExpectedPtr) ;
           deallocate(CurPtr) ;
-          CurPtr := HeadPointer(Index) ;
+          CurPtr := SbPointer(Index).HeadPointer ;
         else
           -- Done
           return ;
@@ -2755,7 +2714,7 @@ package body ScoreboardGenericPkg is
       constant ItemNumber  :  in  integer
     ) is
     begin
-      Flush(FirstIndexVar, ItemNumber) ;
+      Flush(MinIndex, ItemNumber) ;
     end procedure Flush ;
 
 
@@ -2774,22 +2733,23 @@ package body ScoreboardGenericPkg is
       variable buf       : line ;
       constant NAME_PREFIX : string := "  " ;
     begin
-      write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(AlertLogIDVar(Index))) & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(AlertLogIDVar(Index)))) & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ItemCount:    " & to_string(ItemNumberVar(Index))  & LF) ;
-      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(ErrCntVar(Index))      & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsChecked: " & to_string(CheckCountVar(Index))  & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsPopped:  " & to_string(PopCountVar(Index))    & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsDropped: " & to_string(DropCountVar(Index))   & LF) ;
+      write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(SbPointer(Index).AlertLogID)) & '"' & LF) ;
+      write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(SbPointer(Index).AlertLogID))) & '"' & LF) ;
+      write(buf, NAME_PREFIX & "  ItemCount:    " & to_string(SbPointer(Index).ItemNumber)  & LF) ;
+      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(SbPointer(Index).ErrorCount)      & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsChecked: " & to_string(SbPointer(Index).CheckCount)  & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsPopped:  " & to_string(SbPointer(Index).PopCount)    & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsDropped: " & to_string(SbPointer(Index).DropCount)   & LF) ;
       write(buf, NAME_PREFIX & "  FifoCount: "    & to_string(GetFifoCount(Index))   ) ;
---      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(ItemNumberVar(Index))       & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(ErrCntVar(Index))           & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(CheckCountVar(Index))       & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(PopCountVar(Index))         & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(DropCountVar(Index))        & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(SbPointer(Index).ItemNumber)       & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(SbPointer(Index).ErrorCount)           & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(SbPointer(Index).CheckCount)       & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(SbPointer(Index).PopCount)         & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(SbPointer(Index).DropCount)        & '"' & LF) ;
 --      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteScoreboardYaml ;
+    
 
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
@@ -2801,7 +2761,7 @@ package body ScoreboardGenericPkg is
       variable buf : line ;
     begin
       file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
-      if AlertLogIDVar = NULL or AlertLogIDVar'length <= 0 then
+      if SbPointer = NULL or SbPointer'length <= 0 then
         Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
         return ;
       end if ;
@@ -2817,7 +2777,7 @@ package body ScoreboardGenericPkg is
         end loop ;
       else
         -- Used by PT method, but not singleton
-        for i in AlertLogIDVar'range loop
+        for i in SbPointer'range loop
           WriteScoreboardYaml(i, SbYamlFile) ;
         end loop ;
       end if ;
@@ -2863,7 +2823,7 @@ package body ScoreboardGenericPkg is
     impure function GetItemNumber return integer is
     ------------------------------------------------------------
     begin
-      return GetItemCount(FirstIndexVar) ;
+      return GetItemCount(MinIndex) ;
     end GetItemNumber ;
 
     ------------------------------------------------------------
@@ -3465,33 +3425,66 @@ package body ScoreboardGenericPkg is
   end procedure CheckFinish ;
 
 
-
   ------------------------------------------------------------
   -- SetReportMode
-  -- Not AlertFlow
-  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
-  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
-  --     REPORT_NONE:    Deprecated, do not use.
-  -- AlertFlow:
-  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, TRUE)
-  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, FALSE)
-  --     REPORT_NONE:    Replaced by AlertLogPkg.SetAlertEnable(AlertLogID, ERROR, FALSE)
+  --   Translates ScoreboardReportType into calls to SetLogEnable and SetAlertPrintCount
+  --   Recommendation, you may use those settings directly instead, but 
+  --   if you do, do not use GetReportMode.
+  --   
   procedure SetReportMode (
     constant ID           : in  ScoreboardIDType ;
     constant ReportModeIn : in  ScoreboardReportType
   ) is
+    variable AlertLogID : AlertLogIDType ;
   begin
---    ScoreboardStore.SetReportMode(ID.ID, ReportModeIn) ;
-	ScoreboardStore.SetReportMode(ReportModeIn) ;
+    AlertLogID := ScoreboardStore.GetAlertLogID(ID.ID) ;
+    case ReportModeIn is 
+      when REPORT_ALL => 
+        SetLogEnable(AlertLogID, PASSED, TRUE) ;
+        SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
+        
+      when REPORT_ERROR =>
+        SetLogEnable(AlertLogID, PASSED, FALSE) ;
+        SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
+        
+      when REPORT_NONE =>
+        SetLogEnable(AlertLogID, PASSED, FALSE) ;
+        SetAlertPrintCount(AlertLogID, ERROR,  0) ; 
+
+    end case ; 
   end procedure SetReportMode ;
 
+  ------------------------------------------------------------
+  -- GetReportMode
+  --   A FAILURE is generated if PrintCount is other than 0 or integer'high
+  --   Take care if SetAlertPrintCount is called for this ID or all IDs
+  --   after the call to SetReportMode.
+  --
   impure function GetReportMode (
     constant ID           : in  ScoreboardIDType
   ) return ScoreboardReportType is
+    variable LogEnable  : boolean ; 
+    variable PrintCount : integer ; 
+    variable AlertLogID : AlertLogIDType ;
+    variable ReportMode : ScoreboardReportType ;
   begin
---    return ScoreboardStore.GetReportMode(ID.ID) ;
-	return ScoreboardStore.GetReportMode ;
-  end function GetReportMode ;
+    AlertLogID := ScoreboardStore.GetAlertLogID(ID.ID) ;
+    LogEnable  := GetLogEnable(AlertLogID, PASSED) ; 
+    PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ; 
+    if LogEnable and PrintCount = integer'high then 
+      return REPORT_ALL ;
+    elsif not LogEnable and PrintCount = integer'high then 
+      return REPORT_ERROR ; 
+    elsif not LogEnable and PrintCount = 0 then
+      return REPORT_NONE ; 
+    else
+      Alert(AlertLogID, "ScoreboardPkg.GetReportMode, Values inconsistent with ScoreboardReportType" & 
+            ".  LogEnable = "  & to_string(LogEnable) & 
+            ".  PrintCount = " & to_string(PrintCount), FAILURE) ;
+      return REPORT_NONE ;  -- value is not correct.  Note FAILURE above
+    end if ; 
+  end function GetReportMode ; 
+
 
   --==========================================================
   --!! Deprecated Subprograms

@@ -147,7 +147,7 @@ package AlertLogPkg is
   constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := ALERTLOG_BASE_ID + 3 ;
   -- May have its own ID or OSVVM_ALERTLOG_ID as default - most scoreboards allocate their own ID
   constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
-  constant  OSVVM_COV_ALERTLOG_ID          : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  constant  OSVVM_COVERAGE_ALERTLOG_ID          : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- Same as ALERTLOG_DEFAULT_ID
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
@@ -3213,6 +3213,11 @@ package body AlertLogPkg is
         CalcJustifyOneLevel(OSVVM_SCOREBOARD_ALERTLOG_ID) ; 
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
+      if OSVVM_COVERAGE_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
+        NewAlertLogRec(OSVVM_COVERAGE_ALERTLOG_ID, "Coverage", ALERTLOG_BASE_ID) ;
+        CalcJustifyOneLevel(OSVVM_COVERAGE_ALERTLOG_ID) ; 
+        NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
+      end if ;     
     end procedure LocalInitialize ;
 
     ------------------------------------------------------------
