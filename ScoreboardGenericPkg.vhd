@@ -53,7 +53,7 @@
 --    08/2012   2012.08    Added Type and Subprogram Generics
 --    05/2012   2012.05    Changed FIFO to store pointers to ExpectedType
 --                         Allows usage of unconstrained arrays
---    08/2010   2010.08    Added Tailpointer
+--    08/2010   2010.08    Added Tail Pointer
 --    12/2006   2006.12    Initial revision
 --
 --
@@ -112,7 +112,6 @@ package ScoreboardGenericPkg is
 --   alias expected_to_string is to_hstring [ExpectedType return string];  -- VHDL-2008
 --   alias actual_to_string is to_hstring [ActualType return string];  -- VHDL-2008
 
-  -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag
   type ScoreboardReportType is (REPORT_ERROR, REPORT_ALL, REPORT_NONE) ;   -- replaced by affirmations
 
@@ -188,7 +187,6 @@ package ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
-
   -- Simple Scoreboard, no tag
   procedure Push (
     constant ID     : in  ScoreboardIDType ;
@@ -201,6 +199,21 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string ;
     constant Item   : in  ExpectedType
   ) ;
+
+  ------------------------------------------------------------
+  -- Push as a function
+  -- Simple Scoreboard, no tag
+  impure function Push (
+    constant ID     : in  ScoreboardIDType ;
+    constant Item   : in  ExpectedType
+  ) return ExpectedType ;
+
+  -- Simple Tagged Scoreboard
+  impure function Push (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    constant Item   : in  ExpectedType
+  ) return ExpectedType ;
 
   ------------------------------------------------------------
   -- Check received item with item in the scoreboard/FIFO
@@ -339,45 +352,84 @@ package ScoreboardGenericPkg is
   
   impure function AllScoreboardsEmpty return boolean ;                     -- All scoreboards in the singleton
 
---  -- Simple
---  impure function ScoreboardEmpty (
---    constant ID     : in  ScoreboardIDType
---  ) return boolean ;
---  -- Tagged
---  impure function ScoreboardEmpty (
---    constant ID     : in  ScoreboardIDType ;
---    constant Tag    : in  string
---  ) return boolean ;                    -- Simple, Tagged
---
---  impure function Empty (
---    constant ID     : in  ScoreboardIDType
---  ) return boolean ;
---  -- Tagged
---  impure function Empty (
---    constant ID     : in  ScoreboardIDType ;
---    constant Tag    : in  string
---  ) return boolean ;                    -- Simple, Tagged
 
---!!  ------------------------------------------------------------
---!!  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
---!!  procedure SetAlertLogID(
---!!    constant ID              : in  ScoreboardIDType ;
---!!    constant Name            : in  string ;
---!!    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ;
---!!    constant CreateHierarchy : in  Boolean := TRUE ;
---!!    constant DoNotReport     : in  Boolean := FALSE
---!!  ) ;
---!!
---!!  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
---!!  procedure SetAlertLogID (
---!!    constant ID     : in  ScoreboardIDType ;
---!!    constant A      : AlertLogIDType
---!!  ) ;
-
+  ------------------------------------------------------------
+  -- GetAlertLogID - Get the AlertLogID of a scoreboard set by NewID
+  --    SetAlertLogID not for singletons since it is already set.
   impure function GetAlertLogID (
     constant ID     : in  ScoreboardIDType
   ) return AlertLogIDType ;
 
+
+  ------------------------------------------------------------
+  -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
+  -- Find returns integer'left if no match found
+  -- Also See Flush.  Flush will drop items up through the ItemNumber
+
+  -- Simple Scoreboard
+  impure function Find (
+    constant ID          : in  ScoreboardIDType ;
+    constant ActualData  :  in  ActualType
+  ) return integer ;
+
+  -- Tagged Scoreboard
+  impure function Find (
+    constant ID          : in  ScoreboardIDType ;
+    constant Tag         :  in  string;
+    constant ActualData  :  in  ActualType
+  ) return integer ;
+
+  ------------------------------------------------------------
+  -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
+  -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
+
+  -- Simple Scoreboards
+  procedure Flush (
+    constant ID          :  in  ScoreboardIDType ;
+    constant ItemNumber  :  in  integer
+  ) ;
+
+  -- Tagged Scoreboards - only removes items that also match the tag
+  procedure Flush (
+    constant ID          :  in  ScoreboardIDType ;
+    constant Tag         :  in  string ;
+    constant ItemNumber  :  in  integer
+  ) ;
+
+  ------------------------------------------------------------
+  -- FindAndDelete - Targeted at out of order scoreboards
+  -- Tagged Scoreboards - must find ActualData and matching Tag
+  procedure FindAndDelete (
+    constant ID          :  in  ScoreboardIDType ;
+    constant Tag         :  in  string ;
+    constant ActualData  :  in  ActualType
+  ) ;
+  
+  -- Ignores tag to determine match
+  procedure FindAndDelete (
+    constant ID          :  in  ScoreboardIDType ;
+    constant ActualData  :  in  ActualType
+  ) ;
+
+  ------------------------------------------------------------
+  -- FindAndFlush - Targeted at in order scoreboards that drop values
+  -- Removes values if the tag matches up to the value found
+  procedure FindAndFlush (
+    constant ID          :  in  ScoreboardIDType ;
+    constant Tag         :  in  string ;
+    constant ActualData  :  in  ActualType
+  ) ;
+  
+  -- Removes all values up to the value found
+  procedure FindAndFlush (
+    constant ID          :  in  ScoreboardIDType ;
+    constant ActualData  :  in  ActualType
+  ) ;
+
+  ------------------------------------------------------------
+  -- Writing YAML Reports
+  impure function GotScoreboards return boolean ;
+  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE; FileNameIsBaseName : boolean := SCOREBOARD_YAML_IS_BASE_FILE_NAME) ;
 
   ------------------------------------------------------------
   -- Scoreboard Introspection
@@ -411,94 +463,28 @@ package ScoreboardGenericPkg is
     constant ID     : in  ScoreboardIDType
   ) return integer ;   -- Simple, with or without tags
 
-  ------------------------------------------------------------
-  -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
-  -- Find returns integer'left if no match found
-  -- Also See Flush.  Flush will drop items up through the ItemNumber
-
-  -- Simple Scoreboard
-  impure function Find (
-    constant ID          : in  ScoreboardIDType ;
-    constant ActualData  :  in  ActualType
-  ) return integer ;
-
-  -- Tagged Scoreboard
-  impure function Find (
-    constant ID          : in  ScoreboardIDType ;
-    constant Tag         :  in  string;
-    constant ActualData  :  in  ActualType
-  ) return integer ;
-
-  ------------------------------------------------------------
-  -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
-  -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
-
-  -- Simple Scoreboards
-  procedure Flush (
-    constant ID          : in  ScoreboardIDType ;
-    constant ItemNumber  :  in  integer
-  ) ;
-
-  -- Tagged Scoreboards - only removes items that also match the tag
-  procedure Flush (
-    constant ID          : in  ScoreboardIDType ;
-    constant Tag         :  in  string ;
-    constant ItemNumber  :  in  integer
-  ) ;
-
-  ------------------------------------------------------------
-  -- Writing YAML Reports
-  impure function GotScoreboards return boolean ;
-  procedure WriteScoreboardYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE; FileNameIsBaseName : boolean := SCOREBOARD_YAML_IS_BASE_FILE_NAME) ;
 
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and
   -- another simulation is started, a simulator will release all allocated items.
-  procedure Deallocate (
-    constant ID     : in  ScoreboardIDType
-  ) ;  -- Deletes all allocated items
-  procedure Initialize (
-    constant ID     : in  ScoreboardIDType
-  ) ;  -- Creates initial data structure if it was destroyed with Deallocate
+  -- Deallocate - Deletes all allocated items
+  procedure Deallocate (constant ID : in  ScoreboardIDType) ;  
+  -- Initialize - reCreates initial data structure if it was destroyed with Deallocate
+  procedure Initialize (constant ID : in  ScoreboardIDType) ;  
 
-  ------------------------------------------------------------
-  -- Get error count
-  -- Deprecated, replaced by usage of Alerts
-  -- AlertFLow:      Instead use AlertLogPkg.ReportAlerts or AlertLogPkg.GetAlertCount
-  -- Not AlertFlow:  use GetErrorCount to get total error count
 
-  -- Scoreboards, with or without tag
-  impure function GetErrorCount(
-    constant ID     : in  ScoreboardIDType
-  ) return integer ;
-
-  ------------------------------------------------------------
-  procedure CheckFinish (
-  ------------------------------------------------------------
-    ID                 : ScoreboardIDType ;
-    FinishCheckCount   : integer ;
-    FinishEmpty        : boolean
-  ) ;
-
-  ------------------------------------------------------------
-  -- SetReportMode
-  -- AlertFlow and Singleton:
-  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, TRUE)
-  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, FALSE)
-  --     REPORT_NONE:    Replaced by AlertLogPkg.SetPrintCount(AlertLogID, ERROR, 0)
-  -- Not AlertFlow - not for Singleton
-  --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
-  --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
-  --     REPORT_NONE:    Deprecated, do not use.  ?Replace by AlertLogPkg.SetPrintCount(AlertLogID, ERROR, 0)?
-  procedure SetReportMode (
-    constant ID           : in  ScoreboardIDType ;
-    constant ReportModeIn : in  ScoreboardReportType
-  ) ;
-  impure function GetReportMode (
-    constant ID           : in  ScoreboardIDType
-    ) return ScoreboardReportType ;
-
+  -------------------------------------------------------------------------------------------------
+  --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  ScoreBoardPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  ScoreBoardPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  ScoreBoardPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  -------------------------------------------------------------------------------------------------
   type ScoreBoardPType is protected
+
+    ------------------------------------------------------------
+    -- /////////////////////////////////////////
+    --  Used for constructing a Scoreboard in the Singleton Data Structure
+    -- /////////////////////////////////////////
+    ------------------------------------------------------------
 
     ------------------------------------------------------------
     -- Used by Scoreboard Store
@@ -558,6 +544,230 @@ package ScoreboardGenericPkg is
     impure function IsInitialized (ID : ScoreboardIDType) return boolean ;
 
     ------------------------------------------------------------
+    -- /////////////////////////////////////////
+    --  Methods for Singleton and Arrays of Scoreboards - unless noted as Singleton only
+    -- /////////////////////////////////////////
+    ------------------------------------------------------------
+
+    ------------------------------------------------------------
+    -- Push item into the scoreboard/FIFO
+    -- Scoreboard no tag
+    procedure Push (
+      constant Index  : in  integer ;
+      constant Item   : in  ExpectedType
+    ) ;
+
+    -- Tagged Scoreboard
+    procedure Push (
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      constant Item   : in  ExpectedType
+    ) ;
+
+    ------------------------------------------------------------
+    -- Check received item against scoreboard/FIFO
+    -- Scoreboard no tag
+    procedure Check (
+      constant Index        : in  integer ;
+      constant ActualData   : in ActualType
+    ) ;
+
+    -- Tagged Scoreboard
+    procedure Check (
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) ;
+
+    -- Scoreboard no tag
+    impure function Check (
+      constant Index        : in  integer ;
+      constant ActualData   : in ActualType
+    ) return boolean ;
+
+    -- Tagged Scoreboard
+    impure function Check (
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean ;
+
+    -------------------------------
+    -- Tagged Scoreboards - Singleton Only
+    impure function CheckExpected (
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ExpectedData : in  ActualType
+    ) return boolean ;
+
+
+    ------------------------------------------------------------
+    -- Pop the top item (FIFO) from the scoreboard/FIFO
+    -- Scoreboard no tag
+    procedure Pop (
+      constant Index : in   integer ;
+      variable Item : out  ExpectedType
+    ) ;
+
+    -- Tagged Scoreboard
+    procedure Pop (
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      variable Item   : out  ExpectedType
+    ) ;
+
+    ------------------------------------------------------------
+    -- Pop as a function
+    -- Caution:  Not supported by older simulators (@2013)
+    -- Scoreboard no tag
+      impure function Pop (Index : integer) return ExpectedType ;
+
+    -- Tagged Scoreboard
+      impure function Pop (
+        constant Index  : in  integer ;
+        constant Tag    : in  string
+      ) return ExpectedType ;
+
+    ------------------------------------------------------------
+    -- Peek at the top item (FIFO) from the scoreboard/FIFO
+    -- Scoreboard no tag
+    procedure Peek (
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      variable Item   : out ExpectedType
+    ) ;
+
+    -- Tagged Scoreboard
+    procedure Peek (
+      constant Index  : in  integer ;
+      variable Item   : out  ExpectedType
+    ) ;
+
+    ------------------------------------------------------------
+    -- Peek as a function
+    -- Scoreboard no tag
+    impure function Peek (Index : integer) return ExpectedType ;
+
+    -- Tagged Scoreboard
+    impure function Peek (
+      constant Index  : in  integer ;
+      constant Tag    : in  string
+    ) return ExpectedType ;
+
+    ------------------------------------------------------------
+    -- Empty - check to see if scoreboard is empty
+    impure function Empty (Index  : integer) return boolean ;                -- Array
+    impure function Empty (Index  : integer; Tag : String) return boolean ;  -- Array, Tagged
+    
+    -- Empty for all scoreboards in the singleton
+    impure function AllScoreboardsEmpty return boolean ; 
+    
+    ------------------------------------------------------------
+    -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
+    -- Find returns integer'left if no match found
+    -- Also See Flush.  Flush will drop items up through the ItemNumber
+    -- Scoreboard no tag
+    impure function Find (
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) return integer ;
+
+    -- Tagged Scoreboard
+    impure function Find (
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string;
+      constant ActualData  :  in  ActualType
+    ) return integer ;
+    
+    ------------------------------------------------------------
+    -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
+    -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
+    -- Scoreboard no tag
+    procedure Flush (
+      constant Index       :  in  integer ;
+      constant ItemNumber  :  in  integer
+    ) ;
+
+    -- Tagged Scoreboard - only removes items that also match the tag
+    procedure Flush (
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
+      constant ItemNumber  :  in  integer
+    ) ;
+
+    ------------------------------------------------------------
+    -- FindAndDelete - Targeted at out of order scoreboards
+    -- Tagged Scoreboards - must find ActualData and matching Tag
+    procedure FindAndDelete (
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType
+    ) ;
+    
+    -- Ignores tag to determine match
+    procedure FindAndDelete (
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) ;
+
+    ------------------------------------------------------------
+    -- FindAndFlush - Targeted at in order scoreboards that drop values
+    -- Removes values if the tag matches up to the value found
+    procedure FindAndFlush (
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType
+    ) ;
+    
+    -- Removes all values up to the value found
+    procedure FindAndFlush (
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) ;
+
+    ------------------------------------------------------------
+    -- Writing YAML Reports
+    impure function GotScoreboards return boolean ;
+    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) ;
+
+    ------------------------------------------------------------
+    -- GetAlertLogID - get the AlertLogID set by NewID
+    --   Note SetAlertID not for singletons since it is already set
+    impure function GetAlertLogID(Index : Integer) return AlertLogIDType ;
+
+    ------------------------------------------------------------
+    -- Scoreboard Introspection
+    -- Note Scoreboard Reports automatically done by OSVVM contain all of this information
+    -- Number of items put into scoreboard
+    impure function GetItemCount (Index  : integer) return integer ; 
+    impure function GetPushCount (Index  : integer) return integer ; 
+    -- Number of items removed from scoreboard by pop or check
+    impure function GetPopCount (Index  : integer) return integer ;
+    -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
+    impure function GetFifoCount (Index  : integer) return integer ;
+    -- Number of items checked by scoreboard
+    impure function GetCheckCount (Index  : integer) return integer ; 
+    -- Number of items dropped by scoreboard.  See Find/Flush
+    impure function GetDropCount (Index  : integer) return integer ;  
+
+    ------------------------------------------------------------
+    -- Generally these are not required.  When a simulation ends and
+    -- another simulation is started, a simulator will release all allocated items.
+    procedure Deallocate ;  -- Deletes all allocated items
+    procedure Initialize ;  -- Creates initial data structure if it was destroyed with Deallocate
+
+
+  ------------------------------------------------------------
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  -- Compatibility Methods - Allows ScoreboardGenericPkg to Work as a PT still
+  --    Please use the singleton for new stuff - it is easier ...
+  --    The PT is soft deprecated.   It will not get future enhancements that the Singleton does.
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  ------------------------------------------------------------
+
+    ------------------------------------------------------------
     -- Emulate arrays of scoreboards
     procedure SetArrayIndex(L, R : integer) ;  -- supports integer indices
     procedure SetArrayIndex(R : natural) ;     -- indicies 1 to R
@@ -565,8 +775,7 @@ package ScoreboardGenericPkg is
     impure function GetArrayLength return natural ;
 
     ------------------------------------------------------------
-    -- Push items into the scoreboard/FIFO
-
+    -- Push item into the scoreboard/FIFO
     -- Simple Scoreboard, no tag
     procedure Push (Item   : in  ExpectedType) ;
 
@@ -576,67 +785,13 @@ package ScoreboardGenericPkg is
       constant Item   : in  ExpectedType
     ) ;
 
-    -- Array of Scoreboards, no tag
-    procedure Push (
-      constant Index  : in  integer ;
-      constant Item   : in  ExpectedType
-    ) ;
-
-    -- Array of Tagged Scoreboards
-    procedure Push (
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      constant Item   : in  ExpectedType
-    ) ;
-
---    ------------------------------------------------------------
---    -- Push items into the scoreboard/FIFO
---    -- Function form supports chaining of operations
---    -- In 2013, this caused overloading issues in some simulators, will retest later
---
---      -- Simple Scoreboard, no tag
---      impure function Push (Item : ExpectedType) return ExpectedType ;
---
---      -- Simple Tagged Scoreboard
---      impure function Push (
---        constant Tag    : in  string ;
---        constant Item   : in  ExpectedType
---      ) return ExpectedType ;
---
---      -- Array of Scoreboards, no tag
---      impure function Push (
---        constant Index  : in  integer ;
---        constant Item   : in  ExpectedType
---      ) return ExpectedType ;
---
---      -- Array of Tagged Scoreboards
---      impure function Push (
---        constant Index  : in  integer ;
---        constant Tag    : in  string ;
---        constant Item   : in  ExpectedType
---      ) return ExpectedType ; -- for chaining of operations
-
     ------------------------------------------------------------
     -- Check received item with item in the scoreboard/FIFO
-
     -- Simple Scoreboard, no tag
     procedure Check (ActualData : ActualType) ;
 
     -- Simple Tagged Scoreboard
     procedure Check (
-      constant Tag          : in  string ;
-      constant ActualData   : in  ActualType
-    ) ;
-
-    -- Array of Scoreboards, no tag
-    procedure Check (
-      constant Index        : in  integer ;
-      constant ActualData   : in ActualType
-    ) ;
-
-    -- Array of Tagged Scoreboards
-    procedure Check (
-      constant Index        : in  integer ;
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) ;
@@ -650,31 +805,8 @@ package ScoreboardGenericPkg is
       constant ActualData   : in  ActualType
     ) return boolean ;
 
-    -- Array of Scoreboards, no tag
-    impure function Check (
-      constant Index        : in  integer ;
-      constant ActualData   : in ActualType
-    ) return boolean ;
-
-    -- Array of Tagged Scoreboards
-    impure function Check (
-      constant Index        : in  integer ;
-      constant Tag          : in  string ;
-      constant ActualData   : in  ActualType
-    ) return boolean ;
-
-    -------------------------------
-    -- Array of Tagged Scoreboards
-    impure function CheckExpected (
-      constant Index        : in  integer ;
-      constant Tag          : in  string ;
-      constant ExpectedData : in  ActualType
-    ) return boolean ;
-
-
     ------------------------------------------------------------
     -- Pop the top item (FIFO) from the scoreboard/FIFO
-
     -- Simple Scoreboard, no tag
     procedure Pop (variable Item : out  ExpectedType) ;
 
@@ -684,57 +816,19 @@ package ScoreboardGenericPkg is
       variable Item   : out  ExpectedType
     ) ;
 
-    -- Array of Scoreboards, no tag
-    procedure Pop (
-      constant Index : in   integer ;
-      variable Item : out  ExpectedType
-    ) ;
-
-    -- Array of Tagged Scoreboards
-    procedure Pop (
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      variable Item   : out  ExpectedType
-    ) ;
-
     ------------------------------------------------------------
-    -- Pop the top item (FIFO) from the scoreboard/FIFO
-    -- Caution:  this did not work in older simulators (@2013)
+    -- Pop as a function
+    -- Caution:  Not supported by older simulators (@2013)
+    -- Simple Scoreboard, no tag
+    impure function Pop return ExpectedType ;
 
-      -- Simple Scoreboard, no tag
-      impure function Pop return ExpectedType ;
-
-      -- Simple Tagged Scoreboard
-      impure function Pop (
-        constant Tag : in  string
-      ) return ExpectedType ;
-
-      -- Array of Scoreboards, no tag
-      impure function Pop (Index : integer) return ExpectedType ;
-
-      -- Array of Tagged Scoreboards
-      impure function Pop (
-        constant Index  : in  integer ;
-        constant Tag    : in  string
-      ) return ExpectedType ;
-
+    -- Simple Tagged Scoreboard
+    impure function Pop (
+      constant Tag : in  string
+    ) return ExpectedType ;
 
     ------------------------------------------------------------
     -- Peek at the top item (FIFO) from the scoreboard/FIFO
-
-    -- Array of Tagged Scoreboards
-    procedure Peek (
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      variable Item   : out ExpectedType
-    ) ;
-
-    -- Array of Scoreboards, no tag
-    procedure Peek (
-      constant Index  : in  integer ;
-      variable Item   : out  ExpectedType
-    ) ;
-
     -- Simple Tagged Scoreboard
     procedure Peek (
       constant Tag    : in  string ;
@@ -745,82 +839,24 @@ package ScoreboardGenericPkg is
     procedure Peek (variable Item : out  ExpectedType) ;
 
     ------------------------------------------------------------
-    -- Peek at the top item (FIFO) from the scoreboard/FIFO
-    -- Caution:  this did not work in older simulators (@2013)
-
-    -- Array of Tagged Scoreboards
-    impure function Peek (
-      constant Index  : in  integer ;
-      constant Tag    : in  string
-    ) return ExpectedType ;
-
-    -- Array of Scoreboards, no tag
-    impure function Peek (Index : integer) return ExpectedType ;
+    -- Peek as a function
+    -- Simple Scoreboard, no tag
+    impure function Peek return ExpectedType ;
 
     -- Simple Tagged Scoreboard
     impure function Peek (
       constant Tag : in  string
     ) return ExpectedType ;
 
-    -- Simple Scoreboard, no tag
-    impure function Peek return ExpectedType ;
-
     ------------------------------------------------------------
     -- Empty - check to see if scoreboard is empty
     impure function Empty return boolean ;                                   -- Simple
     impure function Empty (Tag : String) return boolean ;                    -- Simple, Tagged
-    impure function Empty (Index  : integer) return boolean ;                -- Array
-    impure function Empty (Index  : integer; Tag : String) return boolean ;  -- Array, Tagged
-    impure function AllScoreboardsEmpty return boolean ;                     -- All scoreboards in the singleton
-
-    ------------------------------------------------------------
-    -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
-    -- ReportMode := ENABLED when not DoNotReport else DISABLED ;
-    procedure SetAlertLogID(Index : Integer; Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) ;
-    procedure SetAlertLogID(Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) ;
-    -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
-    procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) ;
-    procedure SetAlertLogID (A : AlertLogIDType) ;
-    impure function GetAlertLogID(Index : Integer) return AlertLogIDType ;
-    impure function GetAlertLogID return AlertLogIDType ;
-
-    ------------------------------------------------------------
-    -- Set a scoreboard name.
-    -- Used when scoreboard AlertLogID is shared between different sources.
-    procedure SetName (Name : String) ;
-    impure function SetName (Name : String) return string ;
-    impure function GetName (DefaultName : string := "Scoreboard") return string ;
-
-    ------------------------------------------------------------
-    -- Scoreboard Introspection
-
-    -- Number of items put into scoreboard
-    impure function GetItemCount return integer ;                      -- Simple, with or without tags
-    impure function GetItemCount (Index  : integer) return integer ;   -- Arrays, with or without tags
-    impure function GetPushCount return integer ;                      -- Simple, with or without tags
-    impure function GetPushCount (Index  : integer) return integer ;   -- Arrays, with or without tags
-
-    -- Number of items removed from scoreboard by pop or check
-    impure function GetPopCount (Index  : integer) return integer ;
-    impure function GetPopCount return integer ;
-
-    -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
-    impure function GetFifoCount (Index  : integer) return integer ;
-    impure function GetFifoCount return integer ;
-
-    -- Number of items checked by scoreboard
-    impure function GetCheckCount return integer ;                     -- Simple, with or without tags
-    impure function GetCheckCount (Index  : integer) return integer ;  -- Arrays, with or without tags
-
-    -- Number of items dropped by scoreboard.  See Find/Flush
-    impure function GetDropCount return integer ;                      -- Simple, with or without tags
-    impure function GetDropCount (Index  : integer) return integer ;   -- Arrays, with or without tags
 
     ------------------------------------------------------------
     -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
     -- Find returns integer'left if no match found
     -- Also See Flush.  Flush will drop items up through the ItemNumber
-
     -- Simple Scoreboard
     impure function Find (
       constant ActualData  :  in  ActualType
@@ -832,23 +868,9 @@ package ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer ;
 
-    -- Array of Simple Scoreboards
-    impure function Find (
-      constant Index       :  in  integer ;
-      constant ActualData  :  in  ActualType
-    ) return integer ;
-
-    -- Array of Tagged Scoreboards
-    impure function Find (
-      constant Index       :  in  integer ;
-      constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
-    ) return integer ;
-
     ------------------------------------------------------------
     -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
     -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
-
     -- Simple Scoreboard
     procedure Flush (
       constant ItemNumber  :  in  integer
@@ -860,30 +882,45 @@ package ScoreboardGenericPkg is
       constant ItemNumber  :  in  integer
     ) ;
 
-    -- Array of Simple Scoreboards
-    procedure Flush (
-      constant Index       :  in  integer ;
-      constant ItemNumber  :  in  integer
-    ) ;
-
-    -- Array of Tagged Scoreboards - only removes items that also match the tag
-    procedure Flush (
-      constant Index       :  in  integer ;
-      constant Tag         :  in  string ;
-      constant ItemNumber  :  in  integer
-    ) ;
+    ------------------------------------------------------------
+    -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
+    -- ReportMode := ENABLED when not DoNotReport else DISABLED ;
+    procedure SetAlertLogID(Index : Integer; Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) ;
+    procedure SetAlertLogID(Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) ;
+    -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
+    procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) ;
+    procedure SetAlertLogID (A : AlertLogIDType) ;
+    impure function GetAlertLogID return AlertLogIDType ;
 
     ------------------------------------------------------------
-    -- Writing YAML Reports
-    impure function GotScoreboards return boolean ;
-    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) ;
+    -- Scoreboard Introspection
+    -- Number of items put into scoreboard
+    impure function GetItemCount return integer ;
+    impure function GetPushCount return integer ;
+    -- Number of items removed from scoreboard by pop or check
+    impure function GetPopCount return integer ;
+    -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
+    impure function GetFifoCount return integer ;
+    -- Number of items checked by scoreboard
+    impure function GetCheckCount return integer ; 
+    -- Number of items dropped by scoreboard.  See Find/Flush
+    impure function GetDropCount return integer ; 
+
 
     ------------------------------------------------------------
-    -- Generally these are not required.  When a simulation ends and
-    -- another simulation is started, a simulator will release all allocated items.
-    procedure Deallocate ;  -- Deletes all allocated items
-    procedure Initialize ;  -- Creates initial data structure if it was destroyed with Deallocate
+    -- Set a scoreboard name.
+    -- Used when scoreboard AlertLogID is shared between different sources.
+    procedure SetName (Name : String) ;
+    impure function SetName (Name : String) return string ;
+    impure function GetName (DefaultName : string := "Scoreboard") return string ;
 
+    ------------------------------------------------------------
+    -- /////////////////////////////////////////
+    -- /////////////////////////////////////////
+    -- Deprecated.  Supported only for backward compatibility.   
+    -- /////////////////////////////////////////
+    -- /////////////////////////////////////////
+    ------------------------------------------------------------
 
     ------------------------------------------------------------
     ------------------------------------------------------------
@@ -934,6 +971,17 @@ package ScoreboardGenericPkg is
     procedure SetCheckCountZero (Index  : integer) ;   -- Arrays, with or without tags
 
     ------------------------------------------------------------
+    -- SetReportMode - deprecated
+    --   Instead use:
+    --      AlertLogPkg.SetLogEnable(ID, PASSED, TRUE)  for REPORT_ALL
+    --      AlertLogPkg.SetLogEnable(ID, PASSED, FALSE) for REPORT_ERROR and REPORT_NONE
+    --   and 
+    --      AlertLogPkg.SetAlertPrintCount(ID, integer'high)  for REPORT_ALL and REPORT_ERROR
+    --      AlertLogPkg.SetAlertPrintCount(ID, 0) for REPORT_NONE
+    -- 
+    procedure SetReportMode (ReportModeIn : ScoreboardReportType) ;
+    impure function GetReportMode return ScoreboardReportType ;
+
     ------------------------------------------------------------
     -- Deprecated.  Names changed.  Maintained for backward compatibility  - would prefer an alias
     ------------------------------------------------------------
@@ -959,36 +1007,54 @@ package ScoreboardGenericPkg is
     ) ;
 
     ------------------------------------------------------------
-    -- SetReportMode
-    -- Not AlertFlow
-    --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(PASSED, TRUE)
-    --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(PASSED, FALSE)
-    --     REPORT_NONE:    Deprecated, do not use.
-    -- AlertFlow:
-    --     REPORT_ALL:     Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, TRUE)
-    --     REPORT_ERROR:   Replaced by AlertLogPkg.SetLogEnable(AlertLogID, PASSED, FALSE)
-    --     REPORT_NONE:    Replaced by AlertLogPkg.SetAlertEnable(AlertLogID, ERROR, FALSE)
-    procedure SetReportMode (ReportModeIn : ScoreboardReportType) ;
-    impure function GetReportMode return ScoreboardReportType ;
-
     ------------------------------------------------------------
-    ------------------------------------------------------------
---    -- Deprecated Interface to NewID
---    impure function NewID (Name : String; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType ;
---    -- Vector: 1 to Size
---    impure function NewID (Name : String; Size : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
---    -- Vector: X(X'Left) to X(X'Right)
---    impure function NewID (Name : String; X : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
---    -- Matrix: 1 to X, 1 to Y
---    impure function NewID (Name : String; X, Y : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
---    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
---    impure function NewID (Name : String; X, Y : integer_vector; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType ;
 
 
   end protected ScoreBoardPType ;
 
+
   ------------------------------------------------------------
-  -- Deprecated Interface to NewID
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  -- Deprecated.  Supported only for backward compatibility. 
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  ------------------------------------------------------------
+  
+  ------------------------------------------------------------
+  -- GetErrorCount - Deprecated, replaced by usage of Alerts
+  --   Use AlertLogPkg.GetAlertCount(AlertLogID)
+  impure function GetErrorCount(
+    constant ID     : in  ScoreboardIDType
+  ) return integer ;
+
+  ------------------------------------------------------------
+  procedure CheckFinish (
+  ------------------------------------------------------------
+    ID                 : ScoreboardIDType ;
+    FinishCheckCount   : integer ;
+    FinishEmpty        : boolean
+  ) ;
+
+  ------------------------------------------------------------
+  -- SetReportMode - deprecated
+  --   Instead use:
+  --      AlertLogPkg.SetLogEnable(ID, PASSED, TRUE)  for REPORT_ALL
+  --      AlertLogPkg.SetLogEnable(ID, PASSED, FALSE) for REPORT_ERROR and REPORT_NONE
+  --   and 
+  --      AlertLogPkg.SetAlertPrintCount(ID, integer'high)  for REPORT_ALL and REPORT_ERROR
+  --      AlertLogPkg.SetAlertPrintCount(ID, 0) for REPORT_NONE
+  -- 
+  procedure SetReportMode (
+    constant ID           : in  ScoreboardIDType ;
+    constant ReportModeIn : in  ScoreboardReportType
+  ) ;
+  impure function GetReportMode (
+    constant ID           : in  ScoreboardIDType
+    ) return ScoreboardReportType ;
+
+
+  -- Deprecated Interface to NewID - these remap to the current NewID 
   impure function NewID (Name : String; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType ;
   -- Vector: 1 to Size
   impure function NewID (Name : String; Size : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
@@ -1008,21 +1074,21 @@ end ScoreboardGenericPkg ;
 package body ScoreboardGenericPkg is
 
   type ScoreBoardPType is protected body
-    type ExpectedPointerType is access ExpectedType ;
+    type ExpectedPtrType is access ExpectedType ;
 
     type ListType ;
-    type ListPointerType is access ListType ;
+    type ListPtrType is access ListType ;
     type ListType is record
       ItemNumber     : integer ;
       TagPtr         : line ;
-      ExpectedPtr    : ExpectedPointerType ;
-      NextPtr        : ListPointerType ;
+      ExpectedPtr    : ExpectedPtrType ;
+      NextPtr        : ListPtrType ;
     end record ;
 
     type ScoreboardRecType is record
-      HeadPointer    : ListPointerType ;
-      TailPointer    : ListPointerType ;
-      PopListPointer : ListPointerType ;
+      HeadPtr        : ListPtrType ;
+      TailPtr        : ListPtrType ;
+      PopListPtr     : ListPtrType ;
 
       ItemNumber     : integer ;
       ErrorCount     : integer ;
@@ -1038,7 +1104,7 @@ package body ScoreboardGenericPkg is
     -- Template and new ItemArray'(Template) initialization support usage as PT.  Not needed for singleton.
     constant DEFAULT_INDEX    : integer := 1 ;
     variable Template  : ItemArrayType(DEFAULT_INDEX to DEFAULT_INDEX) := (DEFAULT_INDEX => (NULL, NULL, NULL, 0, 0, 0, 0, 0, OSVVM_SCOREBOARD_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
-    variable SbPointer : ItemArrayPtrType := new ItemArrayType'(Template) ;
+    variable SbPtr : ItemArrayPtrType := new ItemArrayType'(Template) ;
 
     -- Used by ScoreboardStore
     variable NumItems         : integer := 0 ; 
@@ -1056,10 +1122,6 @@ package body ScoreboardGenericPkg is
     variable NameVar          : NamePType ;
     variable PrintIndexVar    : boolean := TRUE ;
     
-    -- 
-    variable ReportModeVar   : ScoreboardReportType ;
-
-
 
     ------------------------------------------------------------
     -- PT Only.   Not for Singleton
@@ -1128,13 +1190,13 @@ package body ScoreboardGenericPkg is
         return ScoreboardIDType'(ID => NameID) ;
       else
         -- Resize Data Structure as necessary
-        GrowNumberItems(SbPointer, NumItems, GrowAmount => 1, MinNumItems => NUM_ITEMS_TO_ALLOCATE) ;
+        GrowNumberItems(SbPtr, NumItems, GrowAmount => 1, MinNumItems => NUM_ITEMS_TO_ALLOCATE) ;
         -- Create AlertLogID
-        SbPointer(NumItems) := Template(DEFAULT_INDEX) ; 
-        SbPointer(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy => FALSE) ;
+        SbPtr(NumItems) := Template(DEFAULT_INDEX) ; 
+        SbPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy => FALSE) ;
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, Search) ;
-        AlertIfNotEqual(SbPointer(NumItems).AlertLogID, NameID, NumItems, "ScoreboardPkg: Index of LocalNameStore /= ScoreboardID") ;
+        AlertIfNotEqual(SbPtr(NumItems).AlertLogID, NameID, NumItems, "ScoreboardPkg: Index of LocalNameStore /= ScoreboardID") ;
         return ScoreboardIDType'(ID => NumItems) ;
       end if ;
     end function LocalNewID ;
@@ -1293,6 +1355,1503 @@ package body ScoreboardGenericPkg is
     end function IsInitialized ;
 
     ------------------------------------------------------------
+    impure function LocalOutOfRange(
+    ------------------------------------------------------------
+      constant Index : in integer ;
+      constant Name  : in string
+    ) return boolean is
+    begin
+      if Index >= MinIndex and Index <= MaxIndex then
+        return FALSE ; 
+      else 
+        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, 
+         GetName & " " & Name & " Index: " & to_string(Index) &
+               " is not in the range (" & to_string(MinIndex) &
+               " to " & to_string(MaxIndex) & ")",
+         FAILURE ) ;
+        return TRUE ; 
+      end if ; 
+    end function LocalOutOfRange ;
+
+    ------------------------------------------------------------
+    procedure LocalPush (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      constant Item   : in  ExpectedType
+    ) is
+      variable TailPtr : ListPtrType ; 
+      variable ExpectedPtr : ExpectedPtrType ;
+      variable TagPtr : line ;
+    begin
+      if LocalOutOfRange(Index, "Push") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+
+      SbPtr(Index).ItemNumber  := SbPtr(Index).ItemNumber + 1 ;
+      ExpectedPtr := new ExpectedType'(Item) ;
+      TagPtr := new string'(Tag) ;
+
+      if SbPtr(Index).HeadPtr = NULL then
+        -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
+        -- SbPtr(Index).HeadPtr := new ListType'(SbPtr(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
+        TailPtr := new ListType ; 
+        SbPtr(Index).HeadPtr := TailPtr ;
+        
+      else
+        -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
+        -- SbPtr(Index).TailPtr.NextPtr := new ListType'(SbPtr(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
+        TailPtr := new ListType ; 
+        SbPtr(Index).TailPtr.NextPtr := TailPtr ;
+      end if ; 
+      
+      TailPtr.ItemNumber  := SbPtr(Index).ItemNumber ;
+      TailPtr.TagPtr      := TagPtr ;
+      TailPtr.ExpectedPtr := ExpectedPtr ;
+      TailPtr.NextPtr     := NULL ;
+      
+      SbPtr(Index).TailPtr := TailPtr ;
+    end procedure LocalPush ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    procedure Push (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      constant Item   : in  ExpectedType
+    ) is
+      variable ExpectedPtr : ExpectedPtrType ;
+      variable TagPtr : line ;
+    begin
+      LocalPush(Index, Tag, Item) ;
+    end procedure Push ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    procedure Push (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Item   : in  ExpectedType
+    ) is
+    begin
+      LocalPush(Index, "", Item) ;
+    end procedure Push ;
+
+--!!    ------------------------------------------------------------
+--!!    -- Array of Tagged Scoreboards
+--!!    impure function Push (
+--!!    ------------------------------------------------------------
+--!!      constant Index  : in  integer ;
+--!!      constant Tag    : in  string ;
+--!!      constant Item   : in  ExpectedType
+--!!    ) return ExpectedType is
+--!!    begin
+--!!      LocalPush(Index, Tag, Item) ;
+--!!      return Item ;
+--!!    end function Push ;
+--!!
+--!!    ------------------------------------------------------------
+--!!    -- Array of Scoreboards, no tag
+--!!    impure function Push (
+--!!    ------------------------------------------------------------
+--!!      constant Index  : in  integer ;
+--!!      constant Item   : in  ExpectedType
+--!!    ) return ExpectedType is
+--!!    begin
+--!!      LocalPush(Index, "", Item) ;
+--!!      return Item ;
+--!!    end function Push ;
+
+    ------------------------------------------------------------
+    -- Local Only
+    -- Pops highest element matching Tag into SbPtr(Index).PopListPtr
+    procedure LocalPop (Index : integer ; Tag : string; Name : string)  is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Pop/Check") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      if SbPtr(Index).HeadPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        if tag'length > 0 then 
+          Alert(SbPtr(Index).AlertLogID, GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
+        else
+          Alert(SbPtr(Index).AlertLogID, GetName & " Empty during " & Name, FAILURE) ;
+        end if ; 
+        return ;
+      end if ;
+      SbPtr(Index).PopCount := SbPtr(Index).PopCount + 1 ;
+      -- deallocate previous pointer
+      if SbPtr(Index).PopListPtr /= NULL then
+        deallocate(SbPtr(Index).PopListPtr.TagPtr) ;
+        deallocate(SbPtr(Index).PopListPtr.ExpectedPtr) ;
+        deallocate(SbPtr(Index).PopListPtr) ;
+      end if ;
+      -- Descend to find Tag field and extract
+      CurPtr := SbPtr(Index).HeadPtr ;
+      if CurPtr.TagPtr.all = Tag then
+        -- Non-tagged scoreboards find this one.
+        SbPtr(Index).PopListPtr  := SbPtr(Index).HeadPtr ;
+        SbPtr(Index).HeadPtr     := SbPtr(Index).HeadPtr.NextPtr ;
+      else
+        loop
+          if CurPtr.NextPtr = NULL then
+            SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+            Alert(SbPtr(Index).AlertLogID, GetName & " Pop/Check (" & Name & "), tag: " & Tag & " not found", FAILURE) ;
+            exit ;
+          elsif CurPtr.NextPtr.TagPtr.all = Tag then
+            SbPtr(Index).PopListPtr := CurPtr.NextPtr ;
+            CurPtr.NextPtr := CurPtr.NextPtr.NextPtr ;
+            if CurPtr.NextPtr = NULL then
+              SbPtr(Index).TailPtr := CurPtr ;
+            end if ;
+            exit ;
+          else
+            CurPtr := CurPtr.NextPtr ;
+          end if ;
+        end loop ;
+      end if ;
+    end procedure LocalPop ;
+
+
+    ------------------------------------------------------------
+    -- Local Only
+    procedure LocalCheck (
+    ------------------------------------------------------------
+      constant Index          : in    integer ;
+      constant ActualData     : in    ActualType ;
+      variable FoundError     : inout boolean ;
+      constant ExpectedInFIFO : in    boolean := TRUE
+    ) is
+      variable ExpectedPtr    : ExpectedPtrType ;
+      variable CurrentItem  : integer ;
+      variable WriteBuf : line ;
+      variable PassedFlagEnabled : boolean ;
+    begin
+      SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
+      ExpectedPtr := SbPtr(Index).PopListPtr.ExpectedPtr ;
+      CurrentItem := SbPtr(Index).PopListPtr.ItemNumber ;
+
+      PassedFlagEnabled := GetLogEnable(SbPtr(Index).AlertLogID, PASSED) ;
+
+      if not Match(ActualData, ExpectedPtr.all) then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        FoundError := TRUE ;
+        -- IncAffirmCount(SbPtr(Index).AlertLogID) ;
+      else
+        FoundError := FALSE ;
+        -- If PassFlagEnabled, will count it in the log later.
+        if not PassedFlagEnabled then
+          IncAffirmPassedCount(SbPtr(Index).AlertLogID) ;
+        end if ;
+      end if ;
+
+--      IncAffirmCount(SbPtr(Index).AlertLogID) ;
+
+--      if FoundError or ReportModeVar = REPORT_ALL then
+      if FoundError or PassedFlagEnabled then
+        -- Only used for PT based SB - Singleton uses AlertLogID name instead
+        if not CalledNewID then 
+          if SbPtr(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
+  --x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+            write(WriteBuf, NameVar.Get("Scoreboard")) ;
+            if not (ArrayLengthVar > 1 and PrintIndexVar) then
+              swrite(WriteBuf, "   ") ;
+            end if ;
+          elsif NameVar.IsSet then 
+  --x          write(WriteBuf, GetName(DefaultName => "")) ;
+            write(WriteBuf, NameVar.Get("")) ;
+            if not (ArrayLengthVar > 1 and PrintIndexVar) then
+              swrite(WriteBuf, "   ") ;
+            end if ;
+          end if ;
+          -- Only used for PT based SB - Index SB not used in the same way.
+          if ArrayLengthVar > 1 and PrintIndexVar then
+            write(WriteBuf, " (" & to_string(Index) & ")    ") ;
+          end if ;
+        end if ; 
+        if ExpectedInFIFO then
+          write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
+          if FoundError then
+            write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
+          end if ;
+        else
+          write(WriteBuf, "Received: " & expected_to_string(ExpectedPtr.all)) ;
+          if FoundError then
+            write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
+          end if ;
+        end if ;
+--x        if SbPtr(Index).PopListPtr.TagPtr.all /= "" then
+        if SbPtr(Index).PopListPtr.TagPtr.all'length > 0 then
+          write(WriteBuf, "   Tag: " & SbPtr(Index).PopListPtr.TagPtr.all) ;
+        end if;
+        write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
+        
+        AffirmIf(SbPtr(Index).AlertLogID, not FoundError, WriteBuf.all) ; 
+        
+--!!        if FoundError then
+--!!          if ReportModeVar /= REPORT_NONE then
+--!!            -- Affirmation Failed
+--!!            Alert(SbPtr(Index).AlertLogID, WriteBuf.all, ERROR) ;
+--!!          else
+--!!            -- Affirmation Failed, but silent, unless in DEBUG mode
+--!!            Log(SbPtr(Index).AlertLogID, "ERROR " & WriteBuf.all, DEBUG) ;
+--!!            IncAlertCount(SbPtr(Index).AlertLogID) ;  -- Silent Counted Alert
+--!!          end if ;
+--!!        else
+--!!          -- Affirmation passed, PASSED flag increments AffirmCount
+--!!          Log(SbPtr(Index).AlertLogID, WriteBuf.all, PASSED) ;
+--!!        end if ;
+
+        deallocate(WriteBuf) ;
+      end if ;
+    end procedure LocalCheck ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    procedure Check (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Check") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, Tag, "Check") ;
+      LocalCheck(Index, ActualData, FoundError) ;
+    end procedure Check ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    procedure Check (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant ActualData   : in  ActualType
+    ) is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Check") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, "", "Check") ;
+      LocalCheck(Index, ActualData, FoundError) ;
+    end procedure Check ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    impure function Check (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, Tag, "Check") ;
+      LocalCheck(Index, ActualData, FoundError) ;
+      return not FoundError ;
+    end function Check ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    impure function Check (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant ActualData   : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, "", "Check") ;
+      LocalCheck(Index, ActualData, FoundError) ;
+      return not FoundError ;
+    end function Check ;
+
+    ------------------------------------------------------------
+    -- Singleton only.  Index. Tag.
+    impure function CheckExpected (
+    ------------------------------------------------------------
+      constant Index        : in  integer ;
+      constant Tag          : in  string ;
+      constant ExpectedData : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      if LocalOutOfRange(Index, "Function Check") then
+        return FALSE ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, Tag, "Check") ;
+      LocalCheck(Index, ExpectedData, FoundError, ExpectedInFIFO => FALSE) ;
+      return not FoundError ;
+    end function CheckExpected ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    procedure Pop (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      variable Item   : out  ExpectedType
+    ) is
+    begin
+      if LocalOutOfRange(Index, "Pop") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, Tag, "Pop") ;
+      Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+    end procedure Pop ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    procedure Pop (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      variable Item   : out  ExpectedType
+    ) is
+    begin
+      if LocalOutOfRange(Index, "Pop") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      LocalPop(Index, "", "Pop") ;
+      Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+    end procedure Pop ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    impure function Pop (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string
+    ) return ExpectedType is
+    begin
+      if LocalOutOfRange(Index, "Pop") then
+        -- error reporting in LocalOutOfRange
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+      LocalPop(Index, Tag, "Pop") ;
+      return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+    end function Pop ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    impure function Pop (Index : integer) return ExpectedType is
+    ------------------------------------------------------------
+    begin
+      if LocalOutOfRange(Index, "Pop") then
+        -- error reporting in LocalOutOfRange
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+      LocalPop(Index, "", "Pop") ;
+      return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+    end function Pop ;
+
+    ------------------------------------------------------------
+    -- Local Only similar to LocalPop
+    -- Returns a pointer to the highest element matching Tag
+    impure function LocalPeek (Index : integer ; Tag : string) return ListPtrType is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+--!! LocalPeek does this, but so do each of the indexed calls
+--!!      if LocalOutOfRange(Index, "Peek") then
+--!!        return NULL ; -- error reporting in LocalOutOfRange
+--!!      end if ;
+      if SbPtr(Index).HeadPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        Alert(SbPtr(Index).AlertLogID, GetName & " Empty during Peek", FAILURE) ;
+        return NULL ;
+      end if ;
+      -- Descend to find Tag field and extract
+      CurPtr := SbPtr(Index).HeadPtr ;
+      if CurPtr.TagPtr.all = Tag then
+        -- Non-tagged scoreboards find this one.
+        return CurPtr ;
+      else
+        loop
+          if CurPtr.NextPtr = NULL then
+            SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+            Alert(SbPtr(Index).AlertLogID, GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
+            -- return NULL ;
+            exit ; 
+          elsif CurPtr.NextPtr.TagPtr.all = Tag then
+            -- return CurPtr.NextPtr ;
+            exit ; 
+          else
+            CurPtr := CurPtr.NextPtr ;
+          end if ;
+        end loop ;
+      end if ;
+      return CurPtr.NextPtr ;
+    end function LocalPeek ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    procedure Peek (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string ;
+      variable Item   : out ExpectedType
+    ) is
+      variable CurPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      CurPtr := LocalPeek(Index, Tag) ;
+      if CurPtr /= NULL then
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ;
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    procedure Peek (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      variable Item   : out  ExpectedType
+    ) is
+      variable CurPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      CurPtr := LocalPeek(Index, "") ;
+      if CurPtr /= NULL then
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ;
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    impure function Peek (
+    ------------------------------------------------------------
+      constant Index  : in  integer ;
+      constant Tag    : in  string
+    ) return ExpectedType is
+      variable CurPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then
+        -- error reporting in LocalOutOfRange
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+      CurPtr := LocalPeek(Index, Tag) ;
+      if CurPtr /= NULL then
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    impure function Peek (Index : integer) return ExpectedType is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Peek") then
+        -- error reporting in LocalOutOfRange
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+      CurPtr := LocalPeek(Index, "") ;
+      if CurPtr /= NULL then
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    impure function Empty (Index  : integer; Tag : String) return boolean is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      CurPtr := SbPtr(Index).HeadPtr ;
+      while CurPtr /= NULL loop
+        if CurPtr.TagPtr.all = Tag then
+          return FALSE ;   -- Found Tag
+        end if ;
+        CurPtr := CurPtr.NextPtr ;
+      end loop ;
+      return TRUE ;  -- Tag not found
+    end function Empty ;
+
+    ------------------------------------------------------------
+    -- Scoreboards, no tag
+    impure function Empty (Index  : integer) return boolean is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).HeadPtr = NULL ;
+    end function Empty ;
+
+    ------------------------------------------------------------
+    impure function AllScoreboardsEmpty return boolean is
+    -- All scoreboards in the singleton.  Not for PT
+    ------------------------------------------------------------
+      variable AllEmpty : boolean := FALSE ; 
+    begin
+      if CalledNewID then
+        -- Is a singleton 
+        for i in 1 to NumItems loop
+          AllEmpty := Empty(i) ; 
+          exit when not AllEmpty ; 
+        end loop ;
+        return AllEmpty ; 
+      else
+        -- singleton not initialized.  Return TRUE as all are indeed empty.
+        alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "AllScoreboardsEmpty: Scoreboard is either a PT or not initialized") ;
+        return TRUE ; 
+      end if ;
+    end function AllScoreboardsEmpty ;
+
+    ------------------------------------------------------------
+    -- Find using Tag.
+    procedure LocalFind (
+    ------------------------------------------------------------
+      variable FindPtr       : inout ListPtrType ;
+      variable FindParentPtr : inout ListPtrType ;
+      constant Index         : in    integer ;
+      constant Tag           : in    string;
+      constant ActualData    : in    ActualType ;
+      constant Name          : in    String
+    ) is
+    begin
+      if LocalOutOfRange(Index, Name) then
+        FindPtr       := NULL ;
+        FindParentPtr := NULL ; 
+        return ; 
+      end if ;
+      FindParentPtr := NULL ; 
+      FindPtr := SbPtr(Index).HeadPtr ;
+      loop
+        if FindPtr = NULL then
+          -- Failed to find it
+          exit ;
+
+        elsif FindPtr.TagPtr.all = Tag and
+          Match(ActualData, FindPtr.ExpectedPtr.all) then
+          exit ; 
+
+        else  -- Descend
+          FindParentPtr := FindPtr ; 
+          FindPtr := FindPtr.NextPtr ;
+        end if ;
+      end loop ;
+    end procedure LocalFind ;
+    
+    ------------------------------------------------------------
+    -- No Tag - search without using tag.
+    procedure LocalFind (
+    ------------------------------------------------------------
+      variable FindPtr       : inout ListPtrType ;
+      variable FindParentPtr : inout ListPtrType ;
+      constant Index         : in    integer ;
+      constant ActualData    : in    ActualType ;
+      constant Name          : in    String
+    ) is
+    begin
+      if LocalOutOfRange(Index, Name) then
+        FindPtr       := NULL ;
+        FindParentPtr := NULL ; 
+        return ; 
+      end if ;
+      FindParentPtr := NULL ; 
+      FindPtr := SbPtr(Index).HeadPtr ;
+      loop
+        if FindPtr = NULL then
+          -- Failed to find it
+--          SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+--          Alert(SbPtr(Index).AlertLogID,
+--                GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
+--                ERROR ) ;
+          exit ;
+
+        elsif Match(ActualData, FindPtr.ExpectedPtr.all) then
+          exit ; 
+
+        else  -- Descend
+          FindParentPtr := FindPtr ; 
+          FindPtr := FindPtr.NextPtr ;
+        end if ;
+      end loop ;
+    end procedure LocalFind ;
+    
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    -- Find Element with Matching Tag and ActualData
+    -- Returns integer'left if no match found
+    impure function Find (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string;
+      constant ActualData  :  in  ActualType
+    ) return integer is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin
+--!!        if LocalOutOfRange(Index, "Find") then
+--!!          return integer'left ; -- error reporting in LocalOutOfRange
+--!!        end if ;
+--!!        CurPtr := SbPtr(Index).HeadPtr ;
+--!!        loop
+--!!          if CurPtr = NULL then
+--!!            -- Failed to find it
+--!!            SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+--!!            if Tag /= "" then
+--!!              Alert(SbPtr(Index).AlertLogID,
+--!!                    GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
+--!!                    ERROR ) ;
+--!!            else
+--!!              Alert(SbPtr(Index).AlertLogID,
+--!!                    GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
+--!!                    ERROR ) ;
+--!!            end if ;
+--!!  --          return integer'left ;
+--!!            LocalItemNumber := integer'left ;
+--!!            exit ;
+--!!  
+--!!          elsif CurPtr.TagPtr.all = Tag and
+--!!            Match(ActualData, CurPtr.ExpectedPtr.all) then
+--!!            -- Found it.  Return Index.
+--!!  --          return CurPtr.ItemNumber ;
+--!!            LocalItemNumber := CurPtr.ItemNumber ;
+--!!            exit ; 
+--!!  
+--!!          else  -- Descend
+--!!            CurPtr := CurPtr.NextPtr ;
+--!!          end if ;
+--!!        end loop ;
+--!!        return LocalItemNumber ; 
+      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "Find") ; 
+
+      if FindPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        Alert(SbPtr(Index).AlertLogID, 
+                  "Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData)) ; 
+        return integer'low ; 
+      else
+        -- Found it somewhere else in the List
+        return FindPtr.ItemNumber ; 
+      end if ; 
+    end function Find ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboards
+    -- Find Element with Matching ActualData
+    impure function Find (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) return integer is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin
+--      return Find(Index, "", ActualData) ;
+      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "Find") ; 
+
+      if FindPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        Alert(SbPtr(Index).AlertLogID, 
+                  "Did not find Actual Data: " & actual_to_string(ActualData)) ; 
+        return integer'low ; 
+      else
+        -- Found it somewhere else in the List
+        return FindPtr.ItemNumber ; 
+      end if ; 
+    end function Find ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards
+    -- Flush Remove elements with tag whose itemNumber is <= ItemNumber parameter
+    procedure Flush (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
+      constant ItemNumber  :  in  integer
+    ) is
+      variable CurPtr, RemovePtr, LastPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Flush") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      CurPtr  := SbPtr(Index).HeadPtr ;
+      LastPtr := NULL ;
+      loop
+        if CurPtr = NULL then
+          -- Done
+          return ;
+        elsif CurPtr.TagPtr.all = Tag then
+          if ItemNumber >= CurPtr.ItemNumber then
+            -- remove it
+            RemovePtr := CurPtr ;
+            if CurPtr = SbPtr(Index).TailPtr then
+              SbPtr(Index).TailPtr := LastPtr ;
+            end if ;
+            if CurPtr = SbPtr(Index).HeadPtr then
+              SbPtr(Index).HeadPtr := CurPtr.NextPtr ;
+            else -- if LastPtr /= NULL then
+              LastPtr.NextPtr := LastPtr.NextPtr.NextPtr ;
+            end if ;
+            CurPtr := CurPtr.NextPtr ;
+            -- LastPtr := LastPtr ; -- no change
+            SbPtr(Index).DropCount := SbPtr(Index).DropCount + 1 ;
+            deallocate(RemovePtr.TagPtr) ;
+            deallocate(RemovePtr.ExpectedPtr) ;
+            deallocate(RemovePtr) ;
+          else
+            -- Done
+            return ;
+          end if ;
+        else
+          -- Descend
+          LastPtr := CurPtr ;
+          CurPtr  := CurPtr.NextPtr ;
+        end if ;
+      end loop ;
+    end procedure Flush ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboards
+    -- Flush - Remove Elements upto and including the one with ItemNumber
+    procedure Flush (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant ItemNumber  :  in  integer
+    ) is
+      variable CurPtr : ListPtrType ;
+    begin
+      if LocalOutOfRange(Index, "Find") then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      CurPtr  := SbPtr(Index).HeadPtr ;
+      loop
+        if CurPtr = NULL then
+          -- Done
+          return ;
+        elsif ItemNumber >= CurPtr.ItemNumber then
+          -- Descend, Check Tail, Deallocate
+          SbPtr(Index).HeadPtr := SbPtr(Index).HeadPtr.NextPtr ;
+          if CurPtr = SbPtr(Index).TailPtr then
+            SbPtr(Index).TailPtr := NULL ;
+          end if ;
+          SbPtr(Index).DropCount := SbPtr(Index).DropCount + 1 ;
+          deallocate(CurPtr.TagPtr) ;
+          deallocate(CurPtr.ExpectedPtr) ;
+          deallocate(CurPtr) ;
+          CurPtr := SbPtr(Index).HeadPtr ;
+        else
+          -- Done
+          return ;
+        end if ;
+      end loop ;
+    end procedure Flush ;
+    
+    ------------------------------------------------------------
+    -- Tagged Scoreboards 
+    -- Find Element with Matching Tag and ActualData and Delete it
+    procedure FindAndDelete (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType
+    ) is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin
+      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndDelete") ; 
+
+      if FindPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
+              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag & "  was not found." ) ;
+      else
+        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
+              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag ) ;
+        -- Update counts
+        SbPtr(Index).PopCount   := SbPtr(Index).PopCount + 1 ;
+        SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
+        -- Found it somewhere else in the List
+        if FindParentPtr = NULL then
+          -- Found at HeadPtr.  Adjust HeadPtr and TailPtr
+          SbPtr(Index).HeadPtr := FindPtr.NextPtr ; 
+          if FindPtr.NextPtr = NULL or SbPtr(Index).HeadPtr.NextPtr = NULL then
+            -- Adjust tail pointer - for 0 or 1 item in FIFO
+            SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ; 
+          end if ; 
+        else 
+          -- Not found at HeadPtr.  Adjust TailPtr
+          if FindPtr.NextPtr = NULL then
+            -- Adjust tail pointer
+            SbPtr(Index).TailPtr := FindParentPtr ; 
+          end if ; 
+        end if ; 
+        -- DeleteCell(FindPtr)
+        deallocate(FindPtr.TagPtr) ;
+        deallocate(FindPtr.ExpectedPtr) ;
+        deallocate(FindPtr) ;
+      end if ; 
+    end procedure FindAndDelete ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard no tag
+    -- Find Element with Matching Tag and ActualData
+    -- Returns integer'left if no match found
+    procedure FindAndDelete (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin 
+      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndDelete") ; 
+
+      if FindPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
+              "Received: " & actual_to_string(ActualData) & "  was not found." ) ;
+      else
+        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
+              "Received: " & actual_to_string(ActualData) ) ;
+        -- Update counts
+        SbPtr(Index).PopCount   := SbPtr(Index).PopCount + 1 ;
+        SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
+        -- Remove it from the list
+        if FindParentPtr = NULL then
+          -- Found at HeadPtr.  Adjust HeadPtr and TailPtr
+          SbPtr(Index).HeadPtr := FindPtr.NextPtr ; 
+          if FindPtr.NextPtr = NULL or SbPtr(Index).HeadPtr.NextPtr = NULL then
+            -- Adjust tail pointer - for 0 or 1 item in FIFO
+            SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ; 
+          end if ; 
+        else 
+          -- Not found at HeadPtr.  Adjust TailPtr
+          if FindPtr.NextPtr = NULL then
+            -- Adjust tail pointer
+            SbPtr(Index).TailPtr := FindParentPtr ; 
+          end if ; 
+        end if ; 
+        -- DeleteCell(FindPtr)
+        deallocate(FindPtr.TagPtr) ;
+        deallocate(FindPtr.ExpectedPtr) ;
+        deallocate(FindPtr) ;
+      end if ; 
+    end procedure FindAndDelete ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards 
+    -- Find Element with Matching Tag and ActualData and Delete it
+    procedure FindAndFlush (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType
+    ) is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin
+      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndFlush") ; 
+
+      if FindPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
+              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag & "  was not found." ) ;
+      else
+        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
+              "Flush up to Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag ) ;
+        Flush(Index, Tag, FindPtr.ItemNumber) ;
+      end if ; 
+    end procedure FindAndFlush ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard no tag
+    -- Find Element with Matching Tag and ActualData
+    -- Returns integer'left if no match found
+    procedure FindAndFlush (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin 
+      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndFlush") ; 
+
+      if FindPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
+              "Received: " & actual_to_string(ActualData) & "  was not found." ) ;
+      else
+        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
+              "Flush up to Received: " & actual_to_string(ActualData)) ;
+        Flush(Index, FindPtr.ItemNumber) ;
+      end if ; 
+    end procedure FindAndFlush ;
+
+    ------------------------------------------------------------
+    impure function GotScoreboards return boolean is
+    ------------------------------------------------------------
+    begin
+      return CalledNewID ;
+    end function GotScoreboards ;
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteScoreboardYaml (Index : integer; file CovYamlFile : text) is
+    ------------------------------------------------------------
+      variable buf       : line ;
+      constant NAME_PREFIX : string := "  " ;
+    begin
+      write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(SbPtr(Index).AlertLogID)) & '"' & LF) ;
+      write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(SbPtr(Index).AlertLogID))) & '"' & LF) ;
+      write(buf, NAME_PREFIX & "  ItemCount:    " & to_string(SbPtr(Index).ItemNumber)  & LF) ;
+      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(SbPtr(Index).ErrorCount)      & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsChecked: " & to_string(SbPtr(Index).CheckCount)  & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsPopped:  " & to_string(SbPtr(Index).PopCount)    & LF) ;
+      write(buf, NAME_PREFIX & "  ItemsDropped: " & to_string(SbPtr(Index).DropCount)   & LF) ;
+      write(buf, NAME_PREFIX & "  FifoCount: "    & to_string(GetFifoCount(Index))   ) ;
+--      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(SbPtr(Index).ItemNumber)       & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(SbPtr(Index).ErrorCount)           & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(SbPtr(Index).CheckCount)       & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(SbPtr(Index).PopCount)         & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(SbPtr(Index).DropCount)        & '"' & LF) ;
+--      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
+      writeline(CovYamlFile, buf) ;
+    end procedure WriteScoreboardYaml ;
+    
+    ------------------------------------------------------------
+    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
+    ------------------------------------------------------------
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
+                                              IfElse(FileNameIsBaseName, OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
+--x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      file SbYamlFile : text ;
+      variable buf : line ;
+    begin
+      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
+      if SbPtr = NULL or SbPtr'length <= 0 then
+        Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
+        return ;
+      end if ;
+
+      swrite(buf, "Version: ""1.1""" & LF) ;
+      swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
+      swrite(buf, "Scoreboards: ") ;
+      writeline(SbYamlFile, buf) ;
+      if CalledNewID then
+        -- Used by singleton
+        for i in 1 to NumItems loop
+          WriteScoreboardYaml(i, SbYamlFile) ;
+        end loop ;
+      else
+        -- Used by PT method, but not singleton
+        for i in SbPtr'range loop
+          WriteScoreboardYaml(i, SbYamlFile) ;
+        end loop ;
+      end if ;
+      file_close(SbYamlFile) ;
+    end procedure WriteScoreboardYaml ;
+    
+    ------------------------------------------------------------
+    impure function GetAlertLogID(Index : Integer) return AlertLogIDType is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).AlertLogID ;
+    end function GetAlertLogID ;
+
+    ------------------------------------------------------------
+    impure function GetItemCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).ItemNumber ;
+    end function GetItemCount ;
+
+    ------------------------------------------------------------
+    impure function GetPushCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).ItemNumber ;
+    end function GetPushCount ;
+
+    ------------------------------------------------------------
+    impure function GetPopCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).PopCount ;
+    end function GetPopCount ;
+
+    ------------------------------------------------------------
+    impure function GetFifoCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).ItemNumber - SbPtr(Index).PopCount - SbPtr(Index).DropCount ;
+    end function GetFifoCount ;
+
+    ------------------------------------------------------------
+    impure function GetCheckCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).CheckCount ;
+    end function GetCheckCount ;
+
+    ------------------------------------------------------------
+    impure function GetDropCount (Index  : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).DropCount ;
+    end function GetDropCount ;
+    
+    ------------------------------------------------------------
+    procedure Deallocate is
+    ------------------------------------------------------------
+      variable CurListPtr, LastListPtr : ListPtrType ;
+    begin
+      for Index in SbPtr'range loop
+      -- Deallocate contents in the scoreboards
+        CurListPtr  := SbPtr(Index).HeadPtr ;
+        while CurListPtr /= Null loop
+          deallocate(CurListPtr.TagPtr) ;
+          deallocate(CurListPtr.ExpectedPtr) ;
+          LastListPtr := CurListPtr ;
+          CurListPtr := CurListPtr.NextPtr ;
+          Deallocate(LastListPtr) ;
+        end loop ;
+      end loop ;
+
+      for Index in SbPtr'range loop
+      -- Deallocate PopListPtr - only has single element
+        CurListPtr  := SbPtr(Index).PopListPtr ;
+        if CurListPtr /= NULL then
+          deallocate(CurListPtr.TagPtr) ;
+          deallocate(CurListPtr.ExpectedPtr) ;
+          deallocate(CurListPtr) ;
+        end if ;
+      end loop ;
+
+      -- Deallocate Array Structure
+      Deallocate(SbPtr) ;
+
+      -- Deallocate NameVar - NamePType
+      NameVar.Deallocate ;
+      
+      -- Set the state s.t. there is nothing in the SB
+      MinIndex       := 0 ;
+      MaxIndex       := 0 ;
+      ArrayLengthVar := 0 ; 
+      NumItems       := 0 ;
+      CalledNewID    := FALSE ;
+    end procedure Deallocate ;
+
+    ------------------------------------------------------------
+    -- Construct initial data structure
+    procedure Initialize is
+    ------------------------------------------------------------
+    begin
+      SetArrayIndex(1, 1) ;
+    end procedure Initialize ;
+
+  ------------------------------------------------------------
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  -- Compatibility Methods - Allows ScoreboardGenericPkg to Work as a PT still
+  --    Please use the singleton for new stuff - it is easier ...
+  --    The PT is soft deprecated.   It will not get future enhancements that the Singleton does.
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  ------------------------------------------------------------
+
+    ------------------------------------------------------------
+    procedure SetArrayIndex(L, R : integer) is
+    ------------------------------------------------------------
+      variable OldSbPtr : ItemArrayPtrType ;
+      variable Len, OldLen, AllOfOldSb : integer ;
+    begin
+      OldLen := ArrayLengthVar ;
+      MinIndex := minimum(L, R) ;
+      MaxIndex := maximum(L, R) ;
+      AllOfOldSb := MinIndex + OldLen - 1 ;
+      Len := MaxIndex - MinIndex + 1 ;
+      ArrayLengthVar := Len ; 
+      if Len >= OldLen then
+        OldSbPtr := SbPtr ;
+        SbPtr := new ItemArrayType'(MinIndex to MaxIndex => Template(DEFAULT_INDEX)) ;
+        if OldSbPtr /= NULL then
+          -- Copy OldHeadPtr number of items
+          SbPtr(MinIndex to AllOfOldSb) := OldSbPtr.all ; 
+          Deallocate(OldSbPtr) ;
+        end if ;
+      elsif Len < OldLen then
+        report "ScoreboardGenericPkg: SetArrayIndex, new array Length <= current array length"
+        severity failure ;
+      end if ;
+    end procedure SetArrayIndex ;
+
+    ------------------------------------------------------------
+    procedure SetArrayIndex(R : natural) is
+    ------------------------------------------------------------
+    begin
+      SetArrayIndex(1, R) ;
+    end procedure SetArrayIndex ;
+
+    ------------------------------------------------------------
+    impure function GetArrayIndex return integer_vector is
+    ------------------------------------------------------------
+    begin
+      return (1 => SbPtr'left, 2 => SbPtr'right) ;
+    end function GetArrayIndex ;
+
+    ------------------------------------------------------------
+    impure function GetArrayLength return natural is
+    ------------------------------------------------------------
+    begin
+      return MaxIndex - MinIndex + 1 ;
+    end function GetArrayLength ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    procedure Push (
+    ------------------------------------------------------------
+      constant Tag    : in  string ;
+      constant Item   : in  ExpectedType
+    ) is
+    begin
+      LocalPush(MinIndex, Tag, Item) ;
+    end procedure Push ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    procedure Push (Item   : in  ExpectedType) is
+    ------------------------------------------------------------
+    begin
+      LocalPush(MinIndex, "", Item) ;
+    end procedure Push ;
+
+--!!    ------------------------------------------------------------
+--!!    -- Simple Tagged Scoreboard
+--!!    impure function Push (
+--!!    ------------------------------------------------------------
+--!!      constant Tag    : in  string ;
+--!!      constant Item   : in  ExpectedType
+--!!    ) return ExpectedType is
+--!!    begin
+--!!      LocalPush(MinIndex, Tag, Item) ;
+--!!      return Item ;
+--!!    end function Push ;
+--!!
+--!!    ------------------------------------------------------------
+--!!    -- Simple Scoreboard, no tag
+--!!    impure function Push (Item : ExpectedType) return ExpectedType is
+--!!    ------------------------------------------------------------
+--!!    begin
+--!!      LocalPush(MinIndex, "", Item) ;
+--!!      return Item ;
+--!!    end function Push ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    procedure Check (
+    ------------------------------------------------------------
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) is
+      variable FoundError   : boolean ;
+    begin
+      LocalPop(MinIndex, Tag, "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
+    end procedure Check ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    procedure Check (ActualData : ActualType) is
+    ------------------------------------------------------------
+      variable FoundError   : boolean ;
+    begin
+      LocalPop(MinIndex, "", "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
+    end procedure Check ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    impure function Check (
+    ------------------------------------------------------------
+      constant Tag          : in  string ;
+      constant ActualData   : in  ActualType
+    ) return boolean is
+      variable FoundError   : boolean ;
+    begin
+      LocalPop(MinIndex, Tag, "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
+      return not FoundError ;
+    end function Check ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    impure function Check (ActualData : ActualType) return boolean is
+    ------------------------------------------------------------
+      variable FoundError   : boolean ;
+    begin
+      LocalPop(MinIndex, "", "Check") ;
+      LocalCheck(MinIndex, ActualData, FoundError) ;
+      return not FoundError ;
+    end function Check ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    procedure Pop (
+    ------------------------------------------------------------
+      constant Tag    : in  string ;
+      variable Item   : out  ExpectedType
+    ) is
+    begin
+      LocalPop(MinIndex, Tag, "Pop") ;
+      Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+    end procedure Pop ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    procedure Pop (variable Item : out  ExpectedType) is
+    ------------------------------------------------------------
+    begin
+      LocalPop(MinIndex, "", "Pop") ;
+      Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+    end procedure Pop ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    impure function Pop (
+    ------------------------------------------------------------
+      constant Tag : in  string
+    ) return ExpectedType is
+    begin
+      LocalPop(MinIndex, Tag, "Pop") ;
+      return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+    end function Pop ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    impure function Pop return ExpectedType is
+    ------------------------------------------------------------
+    begin
+      LocalPop(MinIndex, "", "Pop") ;
+      return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+    end function Pop ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    procedure Peek (
+    ------------------------------------------------------------
+      constant Tag    : in  string ;
+      variable Item   : out  ExpectedType
+    ) is
+      variable CurPtr : ListPtrType ;
+    begin
+      CurPtr := LocalPeek(MinIndex, Tag) ;
+      if CurPtr /= NULL then
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ;
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    procedure Peek (variable Item : out  ExpectedType) is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      CurPtr := LocalPeek(MinIndex, "") ;
+      if CurPtr /= NULL then
+        Item := CurPtr.ExpectedPtr.all ;
+      end if ;
+    end procedure Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    impure function Peek (
+    ------------------------------------------------------------
+      constant Tag : in  string
+    ) return ExpectedType is
+      variable CurPtr : ListPtrType ;
+    begin
+      CurPtr := LocalPeek(MinIndex, Tag) ;
+      if CurPtr /= NULL then
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    impure function Peek return ExpectedType is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      CurPtr := LocalPeek(MinIndex, "") ;
+      if CurPtr /= NULL then
+        return CurPtr.ExpectedPtr.all ;
+      else
+        -- Already issued failure, continuing for debug only
+        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ;
+    end function Peek ;
+
+    ------------------------------------------------------------
+    -- Simple Tagged Scoreboard
+    impure function Empty (Tag : String) return boolean is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      return Empty(MinIndex, Tag) ;
+    end function Empty ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard, no tag
+    impure function Empty return boolean is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).HeadPtr = NULL ;
+    end function Empty ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboard
+    -- Find Element with Matching ActualData
+    impure function Find (
+    ------------------------------------------------------------
+      constant Tag         :  in  string;
+      constant ActualData  :  in  ActualType
+    ) return integer is
+    begin
+      return Find(MinIndex, Tag, ActualData) ;
+    end function Find ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard
+    -- Find Element with Matching ActualData
+    impure function Find (
+    ------------------------------------------------------------
+      constant ActualData  :  in  ActualType
+    ) return integer is
+    begin
+      return Find(MinIndex, "", ActualData) ;
+    end function Find ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboard
+    -- Flush Remove elements with tag whose itemNumber is <= ItemNumber parameter
+    procedure Flush (
+    ------------------------------------------------------------
+      constant Tag         :  in  string ;
+      constant ItemNumber  :  in  integer
+    ) is
+    begin
+      Flush(MinIndex, Tag, ItemNumber) ;
+    end procedure Flush ;
+
+    ------------------------------------------------------------
+    -- Simple Scoreboard
+    -- Flush - Remove Elements upto and including the one with ItemNumber
+    procedure Flush (
+    ------------------------------------------------------------
+      constant ItemNumber  :  in  integer
+    ) is
+    begin
+      Flush(MinIndex, ItemNumber) ;
+    end procedure Flush ;
+    
+    ------------------------------------------------------------
+    procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) is
+    ------------------------------------------------------------
+    begin
+      SbPtr(Index).AlertLogID := A ;
+    end procedure SetAlertLogID ;
+
+    ------------------------------------------------------------
+    procedure SetAlertLogID (A : AlertLogIDType) is
+    ------------------------------------------------------------
+    begin
+      SbPtr(MinIndex).AlertLogID := A ;
+    end procedure SetAlertLogID ;
+
+    ------------------------------------------------------------
+    procedure SetAlertLogID(Index : Integer; Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) is
+    ------------------------------------------------------------
+      variable ReportMode : AlertLogReportModeType ;
+    begin
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;
+      SbPtr(Index).AlertLogID := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
+    end procedure SetAlertLogID ;
+
+    ------------------------------------------------------------
+    procedure SetAlertLogID(Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) is
+    ------------------------------------------------------------
+      variable ReportMode : AlertLogReportModeType ;
+    begin
+      ReportMode := ENABLED when not DoNotReport else DISABLED ;
+      SbPtr(MinIndex).AlertLogID := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
+    end procedure SetAlertLogID ;
+
+    ------------------------------------------------------------
+    impure function GetAlertLogID return AlertLogIDType is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).AlertLogID ;
+    end function GetAlertLogID ;
+
+    ------------------------------------------------------------
+    impure function GetItemCount return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).ItemNumber ;
+    end function GetItemCount ;
+
+    ------------------------------------------------------------
+    impure function GetPushCount return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).ItemNumber ;
+    end function GetPushCount ;
+
+    ------------------------------------------------------------
+    impure function GetPopCount return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).PopCount ;
+    end function GetPopCount ;
+
+    ------------------------------------------------------------
+    impure function GetFifoCount return integer is
+    ------------------------------------------------------------
+    begin
+      return GetFifoCount(MinIndex) ;
+    end function GetFifoCount ;
+
+    ------------------------------------------------------------
+    impure function GetCheckCount return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).CheckCount ;
+    end function GetCheckCount ;
+
+    ------------------------------------------------------------
+    impure function GetDropCount return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(MinIndex).DropCount ;
+    end function GetDropCount ;
+
+    ------------------------------------------------------------
     procedure SetName (Name : String) is
     ------------------------------------------------------------
     begin
@@ -1314,11 +2873,136 @@ package body ScoreboardGenericPkg is
       return NameVar.Get(DefaultName) ;
     end function GetName ;
 
---!! TODO.  Replace with SetLogEnable(SBID, PASSED, TRUE/FALSE)
---!! TODO.  Replace with SetPrintCount(SBID, ERROR, #) ; -- Where 
+  ------------------------------------------------------------
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  -- Deprecated.  Supported only for backward compatibility. 
+  -- /////////////////////////////////////////
+  -- /////////////////////////////////////////
+  ------------------------------------------------------------
     ------------------------------------------------------------
-    -- This translates to a class wide operation on all IDs
-    -- Is it supported in the Singleton Interface
+    procedure CheckFinish (
+    ------------------------------------------------------------
+      Index              : integer ;
+      FinishCheckCount   : integer ;
+      FinishEmpty        : boolean
+    ) is
+      variable EmptyError : Boolean ;
+      variable WriteBuf : line ;
+    begin
+      if SbPtr(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
+--x        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
+        write(WriteBuf, NameVar.Get("Scoreboard")) ;
+      else
+--x        write(WriteBuf, GetName(DefaultName => "")) ;
+        write(WriteBuf, NameVar.Get("")) ; 
+      end if ;
+      if ArrayLengthVar > 1 then
+--x        if WriteBuf.all /= "" then
+        if WriteBuf.all'length > 0 then
+          swrite(WriteBuf, " ") ;
+        end if ;
+        write(WriteBuf, "Index(" & to_string(Index) & "),  ") ;
+      else
+--x        if WriteBuf.all /= "" then
+        if WriteBuf.all'length > 0 then
+          swrite(WriteBuf, ",  ") ;
+        end if ;
+      end if ;
+      if FinishEmpty then
+        AffirmIf(SbPtr(Index).AlertLogID, Empty(Index), WriteBuf.all & "Checking Empty: " & to_string(Empty(Index)) &
+                 "  FinishEmpty: " & to_string(FinishEmpty)) ;
+        if not Empty(Index) then
+          -- Increment internal count on FinishEmpty Error
+          SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        end if ;
+      end if ;
+      AffirmIf(SbPtr(Index).AlertLogID, SbPtr(Index).CheckCount >= FinishCheckCount, WriteBuf.all &
+                 "Checking CheckCount: " & to_string(SbPtr(Index).CheckCount) &
+                 " >= Expected: " & to_string(FinishCheckCount))  ;
+      if not (SbPtr(Index).CheckCount >= FinishCheckCount) then
+        -- Increment internal count on FinishCheckCount Error
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+      end if ;
+      deallocate(WriteBuf) ;
+    end procedure CheckFinish ;
+
+    ------------------------------------------------------------
+    procedure CheckFinish (
+    ------------------------------------------------------------
+      FinishCheckCount   : integer ;
+      FinishEmpty        : boolean
+    ) is
+    begin
+      for Index in SbPtr'range loop
+        CheckFinish(Index, FinishCheckCount, FinishEmpty) ;
+      end loop ;
+    end procedure CheckFinish ;
+
+    ------------------------------------------------------------
+    impure function GetErrorCount (Index : integer)  return integer is
+    ------------------------------------------------------------
+    begin
+      return SbPtr(Index).ErrorCount ;
+    end function GetErrorCount ;
+
+    ------------------------------------------------------------
+    impure function GetErrorCount return integer is
+    ------------------------------------------------------------
+      variable TotalErrorCount : integer := 0 ;
+    begin
+      for Index in SbPtr'range loop
+        TotalErrorCount := TotalErrorCount + GetErrorCount(Index) ;
+      end loop ;
+      return TotalErrorCount ;
+    end function GetErrorCount ;
+
+    ------------------------------------------------------------
+    procedure IncErrorCount (Index  : integer) is
+    ------------------------------------------------------------
+    begin
+      SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+      IncAlertCount(SbPtr(Index).AlertLogID, ERROR) ;
+    end IncErrorCount ;
+
+    ------------------------------------------------------------
+    procedure IncErrorCount is
+    ------------------------------------------------------------
+    begin
+      SbPtr(MinIndex).ErrorCount := SbPtr(MinIndex).ErrorCount + 1 ;
+      IncAlertCount(SbPtr(MinIndex).AlertLogID, ERROR) ;
+    end IncErrorCount ;
+
+    ------------------------------------------------------------
+    procedure SetErrorCountZero (Index  : integer) is
+    ------------------------------------------------------------
+    begin
+      SbPtr(Index).ErrorCount := 0;
+    end procedure SetErrorCountZero ;
+
+    ------------------------------------------------------------
+    procedure SetErrorCountZero is
+    ------------------------------------------------------------
+    begin
+      SbPtr(MinIndex).ErrorCount := 0 ;
+    end procedure SetErrorCountZero ;
+
+    ------------------------------------------------------------
+    procedure SetCheckCountZero (Index  : integer) is
+    ------------------------------------------------------------
+    begin
+      SbPtr(Index).CheckCount := 0;
+    end procedure SetCheckCountZero ;
+
+    ------------------------------------------------------------
+    procedure SetCheckCountZero is
+    ------------------------------------------------------------
+    begin
+      SbPtr(MinIndex).CheckCount := 0;
+    end procedure SetCheckCountZero ;
+
+
+    ------------------------------------------------------------
     procedure SetReportMode (ReportModeIn : ScoreboardReportType) is
     ------------------------------------------------------------
       variable SignaledAlert : boolean := FALSE ;
@@ -1326,7 +3010,7 @@ package body ScoreboardGenericPkg is
 
     begin
       -- ReportModeVar := ReportModeIn ;
-      for i in SbPointer'range loop
+      for i in SbPtr'range loop
         AlertLogID := GetAlertLogID(i) ;
         if not SignaledAlert then 
           SignaledAlert := TRUE ; 
@@ -1359,7 +3043,7 @@ package body ScoreboardGenericPkg is
     variable AlertLogID : AlertLogIDType ;
     variable ReportMode : ScoreboardReportType ;
     begin
-      AlertLogID := SbPointer(MinIndex).AlertLogID ;
+      AlertLogID := SbPtr(MinIndex).AlertLogID ;
       LogEnable  := GetLogEnable(AlertLogID, PASSED) ; 
       PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ; 
       if LogEnable and PrintCount = integer'high then 
@@ -1376,1420 +3060,6 @@ package body ScoreboardGenericPkg is
       end if ; 
     end function GetReportMode ; 
     
-    ------------------------------------------------------------
-    procedure SetArrayIndex(L, R : integer) is
-    ------------------------------------------------------------
-      variable OldSbPointer : ItemArrayPtrType ;
-      variable Len, OldLen, AllOfOldSb : integer ;
-    begin
-      OldLen := ArrayLengthVar ;
-      MinIndex := minimum(L, R) ;
-      MaxIndex := maximum(L, R) ;
-      AllOfOldSb := MinIndex + OldLen - 1 ;
-      Len := MaxIndex - MinIndex + 1 ;
-      ArrayLengthVar := Len ; 
-      if Len >= OldLen then
-        OldSbPointer := SbPointer ;
-        SbPointer := new ItemArrayType'(MinIndex to MaxIndex => Template(DEFAULT_INDEX)) ;
-        if OldSbPointer /= NULL then
-          -- Copy OldHeadPointer number of items
-          SbPointer(MinIndex to AllOfOldSb) := OldSbPointer.all ; 
-          Deallocate(OldSbPointer) ;
-        end if ;
-      elsif Len < OldLen then
-        report "ScoreboardGenericPkg: SetArrayIndex, new array Length <= current array length"
-        severity failure ;
-      end if ;
-    end procedure SetArrayIndex ;
-
-    ------------------------------------------------------------
-    procedure SetArrayIndex(R : natural) is
-    ------------------------------------------------------------
-    begin
-      SetArrayIndex(1, R) ;
-    end procedure SetArrayIndex ;
-
-    ------------------------------------------------------------
-    procedure Deallocate is
-    ------------------------------------------------------------
-      variable CurListPtr, LastListPtr : ListPointerType ;
-    begin
-      for Index in SbPointer'range loop
-      -- Deallocate contents in the scoreboards
-        CurListPtr  := SbPointer(Index).HeadPointer ;
-        while CurListPtr /= Null loop
-          deallocate(CurListPtr.TagPtr) ;
-          deallocate(CurListPtr.ExpectedPtr) ;
-          LastListPtr := CurListPtr ;
-          CurListPtr := CurListPtr.NextPtr ;
-          Deallocate(LastListPtr) ;
-        end loop ;
-      end loop ;
-
-      for Index in SbPointer'range loop
-      -- Deallocate PopListPointer - only has single element
-        CurListPtr  := SbPointer(Index).PopListPointer ;
-        if CurListPtr /= NULL then
-          deallocate(CurListPtr.TagPtr) ;
-          deallocate(CurListPtr.ExpectedPtr) ;
-          deallocate(CurListPtr) ;
-        end if ;
-      end loop ;
-
-      -- Deallocate Array Structure
-      Deallocate(SbPointer) ;
-
-      -- Deallocate NameVar - NamePType
-      NameVar.Deallocate ;
-      
-      -- Set the state s.t. there is nothing in the SB
-      MinIndex       := 0 ;
-      MaxIndex       := 0 ;
-      ArrayLengthVar := 0 ; 
-      NumItems       := 0 ;
-      CalledNewID    := FALSE ;
-    end procedure Deallocate ;
-
-    ------------------------------------------------------------
-    -- Construct initial data structure
-    procedure Initialize is
-    ------------------------------------------------------------
-    begin
-      SetArrayIndex(1, 1) ;
-    end procedure Initialize ;
-
-    ------------------------------------------------------------
-    impure function GetArrayIndex return integer_vector is
-    ------------------------------------------------------------
-    begin
-      return (1 => SbPointer'left, 2 => SbPointer'right) ;
-    end function GetArrayIndex ;
-
-    ------------------------------------------------------------
-    impure function GetArrayLength return natural is
-    ------------------------------------------------------------
-    begin
-      return MaxIndex - MinIndex + 1 ;
-    end function GetArrayLength ;
-
-    ------------------------------------------------------------
-    procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) is
-    ------------------------------------------------------------
-    begin
-      SbPointer(Index).AlertLogID := A ;
-    end procedure SetAlertLogID ;
-
-    ------------------------------------------------------------
-    procedure SetAlertLogID (A : AlertLogIDType) is
-    ------------------------------------------------------------
-    begin
-      SbPointer(MinIndex).AlertLogID := A ;
-    end procedure SetAlertLogID ;
-
-    ------------------------------------------------------------
-    procedure SetAlertLogID(Index : Integer; Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) is
-    ------------------------------------------------------------
-      variable ReportMode : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;
-      SbPointer(Index).AlertLogID := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
-    end procedure SetAlertLogID ;
-
-    ------------------------------------------------------------
-    procedure SetAlertLogID(Name : string; ParentID : AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) is
-    ------------------------------------------------------------
-      variable ReportMode : AlertLogReportModeType ;
-    begin
-      ReportMode := ENABLED when not DoNotReport else DISABLED ;
-      SbPointer(MinIndex).AlertLogID := NewID(Name, ParentID, ReportMode => ReportMode, PrintParent => PRINT_NAME, CreateHierarchy => CreateHierarchy) ;
-    end procedure SetAlertLogID ;
-
-    ------------------------------------------------------------
-    impure function GetAlertLogID(Index : Integer) return AlertLogIDType is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).AlertLogID ;
-    end function GetAlertLogID ;
-
-    ------------------------------------------------------------
-    impure function GetAlertLogID return AlertLogIDType is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).AlertLogID ;
-    end function GetAlertLogID ;
-
-    ------------------------------------------------------------
-    impure function LocalOutOfRange(
-    ------------------------------------------------------------
-      constant Index : in integer ;
-      constant Name  : in string
-    ) return boolean is
-    begin
-      if Index >= MinIndex and Index <= MaxIndex then
-        return FALSE ; 
-      else 
-        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, 
-         GetName & " " & Name & " Index: " & to_string(Index) &
-               " is not in the range (" & to_string(MinIndex) &
-               " to " & to_string(MaxIndex) & ")",
-         FAILURE ) ;
-        return TRUE ; 
-      end if ; 
-    end function LocalOutOfRange ;
-
-    ------------------------------------------------------------
-    procedure LocalPush (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      constant Item   : in  ExpectedType
-    ) is
-      variable TailPointer : ListPointerType ; 
-      variable ExpectedPtr : ExpectedPointerType ;
-      variable TagPtr : line ;
-    begin
-      if LocalOutOfRange(Index, "Push") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-
-      SbPointer(Index).ItemNumber  := SbPointer(Index).ItemNumber + 1 ;
-      ExpectedPtr := new ExpectedType'(Item) ;
-      TagPtr := new string'(Tag) ;
-
-      if SbPointer(Index).HeadPointer = NULL then
-        -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
-        -- SbPointer(Index).HeadPointer := new ListType'(SbPointer(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
-        TailPointer := new ListType ; 
-        SbPointer(Index).HeadPointer := TailPointer ;
-        
-      else
-        -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
-        -- SbPointer(Index).TailPointer.NextPtr := new ListType'(SbPointer(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
-        TailPointer := new ListType ; 
-        SbPointer(Index).TailPointer.NextPtr := TailPointer ;
-      end if ; 
-      
-      TailPointer.ItemNumber  := SbPointer(Index).ItemNumber ;
-      TailPointer.TagPtr      := TagPtr ;
-      TailPointer.ExpectedPtr := ExpectedPtr ;
-      TailPointer.NextPtr     := NULL ;
-      
-      SbPointer(Index).TailPointer := TailPointer ;
-    end procedure LocalPush ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    procedure Push (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      constant Item   : in  ExpectedType
-    ) is
-      variable ExpectedPtr : ExpectedPointerType ;
-      variable TagPtr : line ;
-    begin
-      if LocalOutOfRange(Index, "Push") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPush(Index, Tag, Item) ;
-    end procedure Push ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    procedure Push (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Item   : in  ExpectedType
-    ) is
-    begin
-      if LocalOutOfRange(Index, "Push") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPush(Index, "", Item) ;
-    end procedure Push ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    procedure Push (
-    ------------------------------------------------------------
-      constant Tag    : in  string ;
-      constant Item   : in  ExpectedType
-    ) is
-    begin
-      LocalPush(MinIndex, Tag, Item) ;
-    end procedure Push ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    procedure Push (Item   : in  ExpectedType) is
-    ------------------------------------------------------------
-    begin
-      LocalPush(MinIndex, "", Item) ;
-    end procedure Push ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    impure function Push (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      constant Item   : in  ExpectedType
-    ) return ExpectedType is
-    begin
-      if LocalOutOfRange(Index, "Push") then
-        return Item ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPush(Index, Tag, Item) ;
-      return Item ;
-    end function Push ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    impure function Push (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Item   : in  ExpectedType
-    ) return ExpectedType is
-    begin
-      if LocalOutOfRange(Index, "Push") then
-        return Item ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPush(Index, "", Item) ;
-      return Item ;
-    end function Push ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    impure function Push (
-    ------------------------------------------------------------
-      constant Tag    : in  string ;
-      constant Item   : in  ExpectedType
-    ) return ExpectedType is
-    begin
-      LocalPush(MinIndex, Tag, Item) ;
-      return Item ;
-    end function Push ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    impure function Push (Item : ExpectedType) return ExpectedType is
-    ------------------------------------------------------------
-    begin
-      LocalPush(MinIndex, "", Item) ;
-      return Item ;
-    end function Push ;
-
-    ------------------------------------------------------------
-    -- Local Only
-    -- Pops highest element matching Tag into SbPointer(Index).PopListPointer
-    procedure LocalPop (Index : integer ; Tag : string; Name : string)  is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Pop/Check") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      if SbPointer(Index).HeadPointer = NULL then
-        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-        if tag'length > 0 then 
-          Alert(SbPointer(Index).AlertLogID, GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
-        else
-          Alert(SbPointer(Index).AlertLogID, GetName & " Empty during " & Name, FAILURE) ;
-        end if ; 
-        return ;
-      end if ;
-      SbPointer(Index).PopCount := SbPointer(Index).PopCount + 1 ;
-      -- deallocate previous pointer
-      if SbPointer(Index).PopListPointer /= NULL then
-        deallocate(SbPointer(Index).PopListPointer.TagPtr) ;
-        deallocate(SbPointer(Index).PopListPointer.ExpectedPtr) ;
-        deallocate(SbPointer(Index).PopListPointer) ;
-      end if ;
-      -- Descend to find Tag field and extract
-      CurPtr := SbPointer(Index).HeadPointer ;
-      if CurPtr.TagPtr.all = Tag then
-        -- Non-tagged scoreboards find this one.
-        SbPointer(Index).PopListPointer  := SbPointer(Index).HeadPointer ;
-        SbPointer(Index).HeadPointer     := SbPointer(Index).HeadPointer.NextPtr ;
-      else
-        loop
-          if CurPtr.NextPtr = NULL then
-            SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-            Alert(SbPointer(Index).AlertLogID, GetName & " Pop/Check (" & Name & "), tag: " & Tag & " not found", FAILURE) ;
-            exit ;
-          elsif CurPtr.NextPtr.TagPtr.all = Tag then
-            SbPointer(Index).PopListPointer := CurPtr.NextPtr ;
-            CurPtr.NextPtr := CurPtr.NextPtr.NextPtr ;
-            if CurPtr.NextPtr = NULL then
-              SbPointer(Index).TailPointer := CurPtr ;
-            end if ;
-            exit ;
-          else
-            CurPtr := CurPtr.NextPtr ;
-          end if ;
-        end loop ;
-      end if ;
-    end procedure LocalPop ;
-
-
-    ------------------------------------------------------------
-    -- Local Only
-    procedure LocalCheck (
-    ------------------------------------------------------------
-      constant Index          : in    integer ;
-      constant ActualData     : in    ActualType ;
-      variable FoundError     : inout boolean ;
-      constant ExpectedInFIFO : in    boolean := TRUE
-    ) is
-      variable ExpectedPtr    : ExpectedPointerType ;
-      variable CurrentItem  : integer ;
-      variable WriteBuf : line ;
-      variable PassedFlagEnabled : boolean ;
-    begin
-      SbPointer(Index).CheckCount := SbPointer(Index).CheckCount + 1 ;
-      ExpectedPtr := SbPointer(Index).PopListPointer.ExpectedPtr ;
-      CurrentItem := SbPointer(Index).PopListPointer.ItemNumber ;
-
-      PassedFlagEnabled := GetLogEnable(SbPointer(Index).AlertLogID, PASSED) ;
-
-      if not Match(ActualData, ExpectedPtr.all) then
-        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-        FoundError := TRUE ;
-        -- IncAffirmCount(SbPointer(Index).AlertLogID) ;
-      else
-        FoundError := FALSE ;
-        -- If PassFlagEnabled, will count it in the log later.
-        if not PassedFlagEnabled then
-          IncAffirmPassedCount(SbPointer(Index).AlertLogID) ;
-        end if ;
-      end if ;
-
---      IncAffirmCount(SbPointer(Index).AlertLogID) ;
-
---      if FoundError or ReportModeVar = REPORT_ALL then
-      if FoundError or PassedFlagEnabled then
-        -- Only used for PT based SB - Singleton uses AlertLogID name instead
-        if not CalledNewID then 
-          if SbPointer(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
-  --x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
-            write(WriteBuf, NameVar.Get("Scoreboard")) ;
-            if not (ArrayLengthVar > 1 and PrintIndexVar) then
-              swrite(WriteBuf, "   ") ;
-            end if ;
-          elsif NameVar.IsSet then 
-  --x          write(WriteBuf, GetName(DefaultName => "")) ;
-            write(WriteBuf, NameVar.Get("")) ;
-            if not (ArrayLengthVar > 1 and PrintIndexVar) then
-              swrite(WriteBuf, "   ") ;
-            end if ;
-          end if ;
-          -- Only used for PT based SB - Index SB not used in the same way.
-          if ArrayLengthVar > 1 and PrintIndexVar then
-            write(WriteBuf, " (" & to_string(Index) & ")    ") ;
-          end if ;
-        end if ; 
-        if ExpectedInFIFO then
-          write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
-          if FoundError then
-            write(WriteBuf, "   Expected: " & expected_to_string(ExpectedPtr.all)) ;
-          end if ;
-        else
-          write(WriteBuf, "Received: " & expected_to_string(ExpectedPtr.all)) ;
-          if FoundError then
-            write(WriteBuf, "   Expected: " & actual_to_string(ActualData)) ;
-          end if ;
-        end if ;
---x        if SbPointer(Index).PopListPointer.TagPtr.all /= "" then
-        if SbPointer(Index).PopListPointer.TagPtr.all'length > 0 then
-          write(WriteBuf, "   Tag: " & SbPointer(Index).PopListPointer.TagPtr.all) ;
-        end if;
-        write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
-        
-        AffirmIf(SbPointer(Index).AlertLogID, not FoundError, WriteBuf.all) ; 
-        
---!!        if FoundError then
---!!          if ReportModeVar /= REPORT_NONE then
---!!            -- Affirmation Failed
---!!            Alert(SbPointer(Index).AlertLogID, WriteBuf.all, ERROR) ;
---!!          else
---!!            -- Affirmation Failed, but silent, unless in DEBUG mode
---!!            Log(SbPointer(Index).AlertLogID, "ERROR " & WriteBuf.all, DEBUG) ;
---!!            IncAlertCount(SbPointer(Index).AlertLogID) ;  -- Silent Counted Alert
---!!          end if ;
---!!        else
---!!          -- Affirmation passed, PASSED flag increments AffirmCount
---!!          Log(SbPointer(Index).AlertLogID, WriteBuf.all, PASSED) ;
---!!        end if ;
-
-        deallocate(WriteBuf) ;
-      end if ;
-    end procedure LocalCheck ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    procedure Check (
-    ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant Tag          : in  string ;
-      constant ActualData   : in  ActualType
-    ) is
-      variable FoundError   : boolean ;
-    begin
-      if LocalOutOfRange(Index, "Check") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, Tag, "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
-    end procedure Check ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    procedure Check (
-    ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant ActualData   : in  ActualType
-    ) is
-      variable FoundError   : boolean ;
-    begin
-      if LocalOutOfRange(Index, "Check") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, "", "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
-    end procedure Check ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    procedure Check (
-    ------------------------------------------------------------
-      constant Tag          : in  string ;
-      constant ActualData   : in  ActualType
-    ) is
-      variable FoundError   : boolean ;
-    begin
-      LocalPop(MinIndex, Tag, "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
-    end procedure Check ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    procedure Check (ActualData : ActualType) is
-    ------------------------------------------------------------
-      variable FoundError   : boolean ;
-    begin
-      LocalPop(MinIndex, "", "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
-    end procedure Check ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    impure function Check (
-    ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant Tag          : in  string ;
-      constant ActualData   : in  ActualType
-    ) return boolean is
-      variable FoundError   : boolean ;
-    begin
-      if LocalOutOfRange(Index, "Function Check") then
-        return FALSE ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, Tag, "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
-      return not FoundError ;
-    end function Check ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    impure function Check (
-    ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant ActualData   : in  ActualType
-    ) return boolean is
-      variable FoundError   : boolean ;
-    begin
-      if LocalOutOfRange(Index, "Function Check") then
-        return FALSE ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, "", "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
-      return not FoundError ;
-    end function Check ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    impure function Check (
-    ------------------------------------------------------------
-      constant Tag          : in  string ;
-      constant ActualData   : in  ActualType
-    ) return boolean is
-      variable FoundError   : boolean ;
-    begin
-      LocalPop(MinIndex, Tag, "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
-      return not FoundError ;
-    end function Check ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    impure function Check (ActualData : ActualType) return boolean is
-    ------------------------------------------------------------
-      variable FoundError   : boolean ;
-    begin
-      LocalPop(MinIndex, "", "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
-      return not FoundError ;
-    end function Check ;
-
-    ------------------------------------------------------------
-    -- Scoreboard Store.  Index. Tag.
-    impure function CheckExpected (
-    ------------------------------------------------------------
-      constant Index        : in  integer ;
-      constant Tag          : in  string ;
-      constant ExpectedData : in  ActualType
-    ) return boolean is
-      variable FoundError   : boolean ;
-    begin
-      if LocalOutOfRange(Index, "Function Check") then
-        return FALSE ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, Tag, "Check") ;
-      LocalCheck(Index, ExpectedData, FoundError, ExpectedInFIFO => FALSE) ;
-      return not FoundError ;
-    end function CheckExpected ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    procedure Pop (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      variable Item   : out  ExpectedType
-    ) is
-    begin
-      if LocalOutOfRange(Index, "Pop") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, Tag, "Pop") ;
-      Item := SbPointer(Index).PopListPointer.ExpectedPtr.all ;
-    end procedure Pop ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    procedure Pop (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      variable Item   : out  ExpectedType
-    ) is
-    begin
-      if LocalOutOfRange(Index, "Pop") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, "", "Pop") ;
-      Item := SbPointer(Index).PopListPointer.ExpectedPtr.all ;
-    end procedure Pop ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    procedure Pop (
-    ------------------------------------------------------------
-      constant Tag    : in  string ;
-      variable Item   : out  ExpectedType
-    ) is
-    begin
-      LocalPop(MinIndex, Tag, "Pop") ;
-      Item := SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-    end procedure Pop ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    procedure Pop (variable Item : out  ExpectedType) is
-    ------------------------------------------------------------
-    begin
-      LocalPop(MinIndex, "", "Pop") ;
-      Item := SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-    end procedure Pop ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    impure function Pop (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string
-    ) return ExpectedType is
-    begin
-      if LocalOutOfRange(Index, "Pop") then
-        -- error reporting in LocalOutOfRange
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-      LocalPop(Index, Tag, "Pop") ;
-      return SbPointer(Index).PopListPointer.ExpectedPtr.all ;
-    end function Pop ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    impure function Pop (Index : integer) return ExpectedType is
-    ------------------------------------------------------------
-    begin
-      if LocalOutOfRange(Index, "Pop") then
-        -- error reporting in LocalOutOfRange
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-      LocalPop(Index, "", "Pop") ;
-      return SbPointer(Index).PopListPointer.ExpectedPtr.all ;
-    end function Pop ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    impure function Pop (
-    ------------------------------------------------------------
-      constant Tag : in  string
-    ) return ExpectedType is
-    begin
-      LocalPop(MinIndex, Tag, "Pop") ;
-      return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-    end function Pop ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    impure function Pop return ExpectedType is
-    ------------------------------------------------------------
-    begin
-      LocalPop(MinIndex, "", "Pop") ;
-      return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-    end function Pop ;
-
-    ------------------------------------------------------------
-    -- Local Only similar to LocalPop
-    -- Returns a pointer to the highest element matching Tag
-    impure function LocalPeek (Index : integer ; Tag : string) return ListPointerType is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
---!! LocalPeek does this, but so do each of the indexed calls
---!!      if LocalOutOfRange(Index, "Peek") then
---!!        return NULL ; -- error reporting in LocalOutOfRange
---!!      end if ;
-      if SbPointer(Index).HeadPointer = NULL then
-        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-        Alert(SbPointer(Index).AlertLogID, GetName & " Empty during Peek", FAILURE) ;
-        return NULL ;
-      end if ;
-      -- Descend to find Tag field and extract
-      CurPtr := SbPointer(Index).HeadPointer ;
-      if CurPtr.TagPtr.all = Tag then
-        -- Non-tagged scoreboards find this one.
-        return CurPtr ;
-      else
-        loop
-          if CurPtr.NextPtr = NULL then
-            SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-            Alert(SbPointer(Index).AlertLogID, GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
-            -- return NULL ;
-            exit ; 
-          elsif CurPtr.NextPtr.TagPtr.all = Tag then
-            -- return CurPtr.NextPtr ;
-            exit ; 
-          else
-            CurPtr := CurPtr.NextPtr ;
-          end if ;
-        end loop ;
-      end if ;
-      return CurPtr.NextPtr ;
-    end function LocalPeek ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    procedure Peek (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string ;
-      variable Item   : out ExpectedType
-    ) is
-      variable CurPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Peek") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      CurPtr := LocalPeek(Index, Tag) ;
-      if CurPtr /= NULL then
-        Item := CurPtr.ExpectedPtr.all ;
-      end if ;
-    end procedure Peek ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    procedure Peek (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      variable Item   : out  ExpectedType
-    ) is
-      variable CurPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Peek") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      CurPtr := LocalPeek(Index, "") ;
-      if CurPtr /= NULL then
-        Item := CurPtr.ExpectedPtr.all ;
-      end if ;
-    end procedure Peek ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    procedure Peek (
-    ------------------------------------------------------------
-      constant Tag    : in  string ;
-      variable Item   : out  ExpectedType
-    ) is
-      variable CurPtr : ListPointerType ;
-    begin
-      CurPtr := LocalPeek(MinIndex, Tag) ;
-      if CurPtr /= NULL then
-        Item := CurPtr.ExpectedPtr.all ;
-      end if ;
-    end procedure Peek ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    procedure Peek (variable Item : out  ExpectedType) is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
-      CurPtr := LocalPeek(MinIndex, "") ;
-      if CurPtr /= NULL then
-        Item := CurPtr.ExpectedPtr.all ;
-      end if ;
-    end procedure Peek ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    impure function Peek (
-    ------------------------------------------------------------
-      constant Index  : in  integer ;
-      constant Tag    : in  string
-    ) return ExpectedType is
-      variable CurPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Peek") then
-        -- error reporting in LocalOutOfRange
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-      CurPtr := LocalPeek(Index, Tag) ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-    end function Peek ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    impure function Peek (Index : integer) return ExpectedType is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Peek") then
-        -- error reporting in LocalOutOfRange
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-      CurPtr := LocalPeek(Index, "") ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-    end function Peek ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    impure function Peek (
-    ------------------------------------------------------------
-      constant Tag : in  string
-    ) return ExpectedType is
-      variable CurPtr : ListPointerType ;
-    begin
-      CurPtr := LocalPeek(MinIndex, Tag) ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-    end function Peek ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    impure function Peek return ExpectedType is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
-      CurPtr := LocalPeek(MinIndex, "") ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPointer(MinIndex).PopListPointer.ExpectedPtr.all ;
-      end if ;
-    end function Peek ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    impure function Empty (Index  : integer; Tag : String) return boolean is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
-      CurPtr := SbPointer(Index).HeadPointer ;
-      while CurPtr /= NULL loop
-        if CurPtr.TagPtr.all = Tag then
-          return FALSE ;   -- Found Tag
-        end if ;
-        CurPtr := CurPtr.NextPtr ;
-      end loop ;
-      return TRUE ;  -- Tag not found
-    end function Empty ;
-
-    ------------------------------------------------------------
-    -- Array of Scoreboards, no tag
-    impure function Empty (Index  : integer) return boolean is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).HeadPointer = NULL ;
-    end function Empty ;
-
-    ------------------------------------------------------------
-    -- Simple Tagged Scoreboard
-    impure function Empty (Tag : String) return boolean is
-    ------------------------------------------------------------
-      variable CurPtr : ListPointerType ;
-    begin
-      return Empty(MinIndex, Tag) ;
-    end function Empty ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard, no tag
-    impure function Empty return boolean is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).HeadPointer = NULL ;
-    end function Empty ;
-    
-    ------------------------------------------------------------
-    impure function AllScoreboardsEmpty return boolean is
-    -- All scoreboards in the singleton.  Not for PT
-    ------------------------------------------------------------
-      variable AllEmpty : boolean := FALSE ; 
-    begin
-      if CalledNewID then
-        -- Is a singleton 
-        for i in 1 to NumItems loop
-          AllEmpty := Empty(i) ; 
-          exit when not AllEmpty ; 
-        end loop ;
-        return AllEmpty ; 
-      else
-        -- singleton not initialized.  Return TRUE as all are indeed empty.
-        alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "AllScoreboardsEmpty: Scoreboard is either a PT or not initialized") ;
-        return TRUE ; 
-      end if ;
-    end function AllScoreboardsEmpty ;
-    
-    ------------------------------------------------------------
-    procedure CheckFinish (
-    ------------------------------------------------------------
-      Index              : integer ;
-      FinishCheckCount   : integer ;
-      FinishEmpty        : boolean
-    ) is
-      variable EmptyError : Boolean ;
-      variable WriteBuf : line ;
-    begin
-      if SbPointer(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
---x        write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
-        write(WriteBuf, NameVar.Get("Scoreboard")) ;
-      else
---x        write(WriteBuf, GetName(DefaultName => "")) ;
-        write(WriteBuf, NameVar.Get("")) ; 
-      end if ;
-      if ArrayLengthVar > 1 then
---x        if WriteBuf.all /= "" then
-        if WriteBuf.all'length > 0 then
-          swrite(WriteBuf, " ") ;
-        end if ;
-        write(WriteBuf, "Index(" & to_string(Index) & "),  ") ;
-      else
---x        if WriteBuf.all /= "" then
-        if WriteBuf.all'length > 0 then
-          swrite(WriteBuf, ",  ") ;
-        end if ;
-      end if ;
-      if FinishEmpty then
-        AffirmIf(SbPointer(Index).AlertLogID, Empty(Index), WriteBuf.all & "Checking Empty: " & to_string(Empty(Index)) &
-                 "  FinishEmpty: " & to_string(FinishEmpty)) ;
-        if not Empty(Index) then
-          -- Increment internal count on FinishEmpty Error
-          SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-        end if ;
-      end if ;
-      AffirmIf(SbPointer(Index).AlertLogID, SbPointer(Index).CheckCount >= FinishCheckCount, WriteBuf.all &
-                 "Checking CheckCount: " & to_string(SbPointer(Index).CheckCount) &
-                 " >= Expected: " & to_string(FinishCheckCount))  ;
-      if not (SbPointer(Index).CheckCount >= FinishCheckCount) then
-        -- Increment internal count on FinishCheckCount Error
-        SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-      end if ;
-      deallocate(WriteBuf) ;
-    end procedure CheckFinish ;
-
-    ------------------------------------------------------------
-    procedure CheckFinish (
-    ------------------------------------------------------------
-      FinishCheckCount   : integer ;
-      FinishEmpty        : boolean
-    ) is
-    begin
-      for Index in SbPointer'range loop
-        CheckFinish(Index, FinishCheckCount, FinishEmpty) ;
-      end loop ;
-    end procedure CheckFinish ;
-
-    ------------------------------------------------------------
-    impure function GetErrorCount (Index : integer)  return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).ErrorCount ;
-    end function GetErrorCount ;
-
-    ------------------------------------------------------------
-    impure function GetErrorCount return integer is
-    ------------------------------------------------------------
-      variable TotalErrorCount : integer := 0 ;
-    begin
-      for Index in SbPointer'range loop
-        TotalErrorCount := TotalErrorCount + GetErrorCount(Index) ;
-      end loop ;
-      return TotalErrorCount ;
-    end function GetErrorCount ;
-
-    ------------------------------------------------------------
-    procedure IncErrorCount (Index  : integer) is
-    ------------------------------------------------------------
-    begin
-      SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-      IncAlertCount(SbPointer(Index).AlertLogID, ERROR) ;
-    end IncErrorCount ;
-
-    ------------------------------------------------------------
-    procedure IncErrorCount is
-    ------------------------------------------------------------
-    begin
-      SbPointer(MinIndex).ErrorCount := SbPointer(MinIndex).ErrorCount + 1 ;
-      IncAlertCount(SbPointer(MinIndex).AlertLogID, ERROR) ;
-    end IncErrorCount ;
-
-    ------------------------------------------------------------
-    procedure SetErrorCountZero (Index  : integer) is
-    ------------------------------------------------------------
-    begin
-      SbPointer(Index).ErrorCount := 0;
-    end procedure SetErrorCountZero ;
-
-    ------------------------------------------------------------
-    procedure SetErrorCountZero is
-    ------------------------------------------------------------
-    begin
-      SbPointer(MinIndex).ErrorCount := 0 ;
-    end procedure SetErrorCountZero ;
-
-    ------------------------------------------------------------
-    procedure SetCheckCountZero (Index  : integer) is
-    ------------------------------------------------------------
-    begin
-      SbPointer(Index).CheckCount := 0;
-    end procedure SetCheckCountZero ;
-
-    ------------------------------------------------------------
-    procedure SetCheckCountZero is
-    ------------------------------------------------------------
-    begin
-      SbPointer(MinIndex).CheckCount := 0;
-    end procedure SetCheckCountZero ;
-
-    ------------------------------------------------------------
-    impure function GetItemCount (Index  : integer) return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).ItemNumber ;
-    end function GetItemCount ;
-
-    ------------------------------------------------------------
-    impure function GetItemCount return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).ItemNumber ;
-    end function GetItemCount ;
-
-    ------------------------------------------------------------
-    impure function GetPushCount (Index  : integer) return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).ItemNumber ;
-    end function GetPushCount ;
-
-    ------------------------------------------------------------
-    impure function GetPushCount return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).ItemNumber ;
-    end function GetPushCount ;
-
-    ------------------------------------------------------------
-    impure function GetPopCount (Index  : integer) return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).PopCount ;
-    end function GetPopCount ;
-
-    ------------------------------------------------------------
-    impure function GetPopCount return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).PopCount ;
-    end function GetPopCount ;
-
-    ------------------------------------------------------------
-    impure function GetFifoCount (Index  : integer) return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).ItemNumber - SbPointer(Index).PopCount - SbPointer(Index).DropCount ;
-    end function GetFifoCount ;
-
-    ------------------------------------------------------------
-    impure function GetFifoCount return integer is
-    ------------------------------------------------------------
-    begin
-      return GetFifoCount(MinIndex) ;
-    end function GetFifoCount ;
-
-    ------------------------------------------------------------
-    impure function GetCheckCount (Index  : integer) return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).CheckCount ;
-    end function GetCheckCount ;
-
-    ------------------------------------------------------------
-    impure function GetCheckCount return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).CheckCount ;
-    end function GetCheckCount ;
-
-    ------------------------------------------------------------
-    impure function GetDropCount (Index  : integer) return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(Index).DropCount ;
-    end function GetDropCount ;
-
-    ------------------------------------------------------------
-    impure function GetDropCount return integer is
-    ------------------------------------------------------------
-    begin
-      return SbPointer(MinIndex).DropCount ;
-    end function GetDropCount ;
-
-    ------------------------------------------------------------
-    procedure SetFinish (
-    ------------------------------------------------------------
-      Index       : integer ;
-      FCheckCount : integer ;
-      FEmpty      : boolean := TRUE;
-      FStatus     : boolean := TRUE
-    ) is
-    begin
-      Alert(SbPointer(Index).AlertLogID, "OSVVM.ScoreboardGenericPkg.SetFinish: Deprecated and removed.  See CheckFinish", ERROR) ;
-    end procedure SetFinish ;
-
-    ------------------------------------------------------------
-    procedure SetFinish (
-    ------------------------------------------------------------
-      FCheckCount : integer ;
-      FEmpty      : boolean := TRUE;
-      FStatus     : boolean := TRUE
-    ) is
-    begin
-      SetFinish(MinIndex, FCheckCount, FEmpty, FStatus) ;
-    end procedure SetFinish ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    -- Find Element with Matching Tag and ActualData
-    -- Returns integer'left if no match found
-    impure function Find (
-    ------------------------------------------------------------
-      constant Index       :  in  integer ;
-      constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
-    ) return integer is
-      variable CurPtr : ListPointerType ;
-      variable LocalItemNumber : integer := integer'left ; 
-    begin
-      if LocalOutOfRange(Index, "Find") then
-        return integer'left ; -- error reporting in LocalOutOfRange
-      end if ;
-      CurPtr := SbPointer(Index).HeadPointer ;
-      loop
-        if CurPtr = NULL then
-          -- Failed to find it
-          SbPointer(Index).ErrorCount := SbPointer(Index).ErrorCount + 1 ;
-          if Tag /= "" then
-            Alert(SbPointer(Index).AlertLogID,
-                  GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
-                  ERROR ) ;
-          else
-            Alert(SbPointer(Index).AlertLogID,
-                  GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
-                  ERROR ) ;
-          end if ;
---          return integer'left ;
-          LocalItemNumber := integer'left ;
-          exit ;
-
-        elsif CurPtr.TagPtr.all = Tag and
-          Match(ActualData, CurPtr.ExpectedPtr.all) then
-          -- Found it.  Return Index.
---          return CurPtr.ItemNumber ;
-          LocalItemNumber := CurPtr.ItemNumber ;
-          exit ; 
-
-        else  -- Descend
-          CurPtr := CurPtr.NextPtr ;
-        end if ;
-      end loop ;
-      return LocalItemNumber ; 
-    end function Find ;
-
-    ------------------------------------------------------------
-    -- Array of Simple Scoreboards
-    -- Find Element with Matching ActualData
-    impure function Find (
-    ------------------------------------------------------------
-      constant Index       :  in  integer ;
-      constant ActualData  :  in  ActualType
-    ) return integer is
-    begin
-      return Find(Index, "", ActualData) ;
-    end function Find ;
-
-    ------------------------------------------------------------
-    -- Tagged Scoreboard
-    -- Find Element with Matching ActualData
-    impure function Find (
-    ------------------------------------------------------------
-      constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
-    ) return integer is
-    begin
-      return Find(MinIndex, Tag, ActualData) ;
-    end function Find ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard
-    -- Find Element with Matching ActualData
-    impure function Find (
-    ------------------------------------------------------------
-      constant ActualData  :  in  ActualType
-    ) return integer is
-    begin
-      return Find(MinIndex, "", ActualData) ;
-    end function Find ;
-
-    ------------------------------------------------------------
-    -- Array of Tagged Scoreboards
-    -- Flush Remove elements with tag whose itemNumber is <= ItemNumber parameter
-    procedure Flush (
-    ------------------------------------------------------------
-      constant Index       :  in  integer ;
-      constant Tag         :  in  string ;
-      constant ItemNumber  :  in  integer
-    ) is
-      variable CurPtr, RemovePtr, LastPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Flush") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      CurPtr  := SbPointer(Index).HeadPointer ;
-      LastPtr := NULL ;
-      loop
-        if CurPtr = NULL then
-          -- Done
-          return ;
-        elsif CurPtr.TagPtr.all = Tag then
-          if ItemNumber >= CurPtr.ItemNumber then
-            -- remove it
-            RemovePtr := CurPtr ;
-            if CurPtr = SbPointer(Index).TailPointer then
-              SbPointer(Index).TailPointer := LastPtr ;
-            end if ;
-            if CurPtr = SbPointer(Index).HeadPointer then
-              SbPointer(Index).HeadPointer := CurPtr.NextPtr ;
-            else -- if LastPtr /= NULL then
-              LastPtr.NextPtr := LastPtr.NextPtr.NextPtr ;
-            end if ;
-            CurPtr := CurPtr.NextPtr ;
-            -- LastPtr := LastPtr ; -- no change
-            SbPointer(Index).DropCount := SbPointer(Index).DropCount + 1 ;
-            deallocate(RemovePtr.TagPtr) ;
-            deallocate(RemovePtr.ExpectedPtr) ;
-            deallocate(RemovePtr) ;
-          else
-            -- Done
-            return ;
-          end if ;
-        else
-          -- Descend
-          LastPtr := CurPtr ;
-          CurPtr  := CurPtr.NextPtr ;
-        end if ;
-      end loop ;
-    end procedure Flush ;
-
-    ------------------------------------------------------------
-    -- Tagged Scoreboard
-    -- Flush Remove elements with tag whose itemNumber is <= ItemNumber parameter
-    procedure Flush (
-    ------------------------------------------------------------
-      constant Tag         :  in  string ;
-      constant ItemNumber  :  in  integer
-    ) is
-    begin
-      Flush(MinIndex, Tag, ItemNumber) ;
-    end procedure Flush ;
-
-    ------------------------------------------------------------
-    -- Array of Simple Scoreboards
-    -- Flush - Remove Elements upto and including the one with ItemNumber
-    procedure Flush (
-    ------------------------------------------------------------
-      constant Index       :  in  integer ;
-      constant ItemNumber  :  in  integer
-    ) is
-      variable CurPtr : ListPointerType ;
-    begin
-      if LocalOutOfRange(Index, "Find") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      CurPtr  := SbPointer(Index).HeadPointer ;
-      loop
-        if CurPtr = NULL then
-          -- Done
-          return ;
-        elsif ItemNumber >= CurPtr.ItemNumber then
-          -- Descend, Check Tail, Deallocate
-          SbPointer(Index).HeadPointer := SbPointer(Index).HeadPointer.NextPtr ;
-          if CurPtr = SbPointer(Index).TailPointer then
-            SbPointer(Index).TailPointer := NULL ;
-          end if ;
-          SbPointer(Index).DropCount := SbPointer(Index).DropCount + 1 ;
-          deallocate(CurPtr.TagPtr) ;
-          deallocate(CurPtr.ExpectedPtr) ;
-          deallocate(CurPtr) ;
-          CurPtr := SbPointer(Index).HeadPointer ;
-        else
-          -- Done
-          return ;
-        end if ;
-      end loop ;
-    end procedure Flush ;
-
-    ------------------------------------------------------------
-    -- Simple Scoreboard
-    -- Flush - Remove Elements upto and including the one with ItemNumber
-    procedure Flush (
-    ------------------------------------------------------------
-      constant ItemNumber  :  in  integer
-    ) is
-    begin
-      Flush(MinIndex, ItemNumber) ;
-    end procedure Flush ;
-
-
-    ------------------------------------------------------------
-    impure function GotScoreboards return boolean is
-    ------------------------------------------------------------
-    begin
-      return CalledNewID ;
-    end function GotScoreboards ;
-
-
-    ------------------------------------------------------------
-    --  pt local
-    procedure WriteScoreboardYaml (Index : integer; file CovYamlFile : text) is
-    ------------------------------------------------------------
-      variable buf       : line ;
-      constant NAME_PREFIX : string := "  " ;
-    begin
-      write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(SbPointer(Index).AlertLogID)) & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(SbPointer(Index).AlertLogID))) & '"' & LF) ;
-      write(buf, NAME_PREFIX & "  ItemCount:    " & to_string(SbPointer(Index).ItemNumber)  & LF) ;
-      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(SbPointer(Index).ErrorCount)      & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsChecked: " & to_string(SbPointer(Index).CheckCount)  & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsPopped:  " & to_string(SbPointer(Index).PopCount)    & LF) ;
-      write(buf, NAME_PREFIX & "  ItemsDropped: " & to_string(SbPointer(Index).DropCount)   & LF) ;
-      write(buf, NAME_PREFIX & "  FifoCount: "    & to_string(GetFifoCount(Index))   ) ;
---      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(SbPointer(Index).ItemNumber)       & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(SbPointer(Index).ErrorCount)           & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(SbPointer(Index).CheckCount)       & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(SbPointer(Index).PopCount)         & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(SbPointer(Index).DropCount)        & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
-      writeline(CovYamlFile, buf) ;
-    end procedure WriteScoreboardYaml ;
-    
-
-    ------------------------------------------------------------
-    procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
-    ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
-                                              IfElse(FileNameIsBaseName, OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
---x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
-      file SbYamlFile : text ;
-      variable buf : line ;
-    begin
-      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
-      if SbPointer = NULL or SbPointer'length <= 0 then
-        Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
-        return ;
-      end if ;
-
-      swrite(buf, "Version: ""1.1""" & LF) ;
-      swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
-      swrite(buf, "Scoreboards: ") ;
-      writeline(SbYamlFile, buf) ;
-      if CalledNewID then
-        -- Used by singleton
-        for i in 1 to NumItems loop
-          WriteScoreboardYaml(i, SbYamlFile) ;
-        end loop ;
-      else
-        -- Used by PT method, but not singleton
-        for i in SbPointer'range loop
-          WriteScoreboardYaml(i, SbYamlFile) ;
-        end loop ;
-      end if ;
-      file_close(SbYamlFile) ;
-    end procedure WriteScoreboardYaml ;
-
-    ------------------------------------------------------------
-    ------------------------------------------------------------
-    -- Remaining Deprecated.
-    ------------------------------------------------------------
-    ------------------------------------------------------------
-
     ------------------------------------------------------------
     -- Deprecated.  Maintained for backward compatibility.
     -- Use TranscriptPkg.TranscriptOpen
@@ -2845,63 +3115,41 @@ package body ScoreboardGenericPkg is
       return GetName("Scoreboard") ;
     end function GetMessage ;
 
---!!    ------------------------------------------------------------
---!!    -- Deprecated Call to NewID, refactored to call new version of NewID
---!!    impure function NewID (Name : String ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType is
---!!    ------------------------------------------------------------
---!!      variable ReportMode : AlertLogReportModeType ;
---!!    begin
---!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;
---!!      return NewID(Name, ParentAlertLogID, ReportMode => ReportMode) ;
---!!    end function NewID ;
---!!
---!!    ------------------------------------------------------------
---!!    -- Deprecated Call to NewID, refactored to call new version of NewID
---!!    -- Vector: 1 to Size
---!!    impure function NewID (Name : String ; Size : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
---!!    ------------------------------------------------------------
---!!      variable ReportMode : AlertLogReportModeType ;
---!!    begin
---!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;
---!!      return NewID(Name, (1, Size) , ParentAlertLogID, ReportMode => ReportMode) ;
---!!    end function NewID ;
---!!
---!!    ------------------------------------------------------------
---!!    -- Deprecated Call to NewID, refactored to call new version of NewID
---!!    -- Vector: X(X'Left) to X(X'Right)
---!!    impure function NewID (Name : String ; X : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType is
---!!    ------------------------------------------------------------
---!!      variable ReportMode     : AlertLogReportModeType ;
---!!    begin
---!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;
---!!      return NewID(Name, X, ParentAlertLogID, ReportMode => ReportMode) ;
---!!    end function NewID ;
---!!
---!!    ------------------------------------------------------------
---!!    -- Deprecated Call to NewID, refactored to call new version of NewID
---!!    -- Matrix: 1 to X, 1 to Y
---!!    impure function NewID (Name : String ; X, Y : positive ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
---!!    ------------------------------------------------------------
---!!      variable ReportMode     : AlertLogReportModeType ;
---!!    begin
---!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;
---!!      return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ;
---!!    end function NewID ;
---!!
---!!    ------------------------------------------------------------
---!!    -- Deprecated Call to NewID, refactored to call new version of NewID
---!!    -- Matrix: X(X'Left) to X(X'Right), Y(Y'Left) to Y(Y'Right)
---!!    impure function NewID (Name : String ; X, Y : integer_vector ; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIdMatrixType is
---!!    ------------------------------------------------------------
---!!      variable ReportMode     : AlertLogReportModeType ;
---!!    begin
---!!      ReportMode := ENABLED when not DoNotReport else DISABLED ;
---!!      return NewID(Name, X, Y, ParentAlertLogID, ReportMode => ReportMode) ;
---!!    end function NewID ;
+    ------------------------------------------------------------
+    procedure SetFinish ( -- Replaced by CheckFinish
+    ------------------------------------------------------------
+      Index       : integer ;
+      FCheckCount : integer ;
+      FEmpty      : boolean := TRUE;
+      FStatus     : boolean := TRUE
+    ) is
+    begin
+      Alert(SbPtr(Index).AlertLogID, "OSVVM.ScoreboardGenericPkg.SetFinish: Deprecated and removed.  See CheckFinish", ERROR) ;
+    end procedure SetFinish ;
 
+    ------------------------------------------------------------
+    procedure SetFinish ( -- Replaced by CheckFinish
+    ------------------------------------------------------------
+      FCheckCount : integer ;
+      FEmpty      : boolean := TRUE;
+      FStatus     : boolean := TRUE
+    ) is
+    begin
+      SetFinish(MinIndex, FCheckCount, FEmpty, FStatus) ;
+    end procedure SetFinish ;
   end protected body ScoreBoardPType ;
+  ------------------------------------------------------------------------------------------
+  --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  ScoreBoardPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  ScoreBoardPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  ------------------------------------------------------------------------------------------
 
+  ------------------------------------------------------------
+  -- /////////////////////////////////////////
+  -- Singleton Data Structure
+  -- /////////////////////////////////////////
+  ------------------------------------------------------------
   shared variable ScoreboardStore : ScoreBoardPType ;
+
 
   ------------------------------------------------------------
   -- Used by Scoreboard Store
@@ -3007,10 +3255,33 @@ package body ScoreboardGenericPkg is
   begin
     ScoreboardStore.Push(ID.ID, Tag, Item) ;
   end procedure Push ;
+  
+  ------------------------------------------------------------
+  -- Push as a function
+  -- Simple Scoreboard, no tag
+  impure function Push (
+  ------------------------------------------------------------
+    constant ID     : in  ScoreboardIDType ;
+    constant Item   : in  ExpectedType
+  ) return ExpectedType is
+  begin
+    ScoreboardStore.Push(ID.ID, Item) ;
+    return Item ;
+  end function Push ;
+
+  -- Simple Tagged Scoreboard
+  impure function Push (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string ;
+    constant Item   : in  ExpectedType
+  ) return ExpectedType is
+  begin
+    ScoreboardStore.Push(ID.ID, Tag, Item) ;
+    return Item ;
+  end function Push ;
 
   ------------------------------------------------------------
   -- Check received item with item in the scoreboard/FIFO
-
   -- Simple Scoreboard, no tag
   procedure Check (
     constant ID           : in  ScoreboardIDType ;
@@ -3093,7 +3364,6 @@ package body ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- Pop the top item (FIFO) from the scoreboard/FIFO
-
   -- Simple Scoreboard, no tag
   procedure Pop (
     constant ID     : in  ScoreboardIDType ;
@@ -3113,11 +3383,8 @@ package body ScoreboardGenericPkg is
     ScoreboardStore.Pop(ID.ID, Tag, Item) ;
   end procedure Pop ;
 
-
   ------------------------------------------------------------
-  -- Pop the top item (FIFO) from the scoreboard/FIFO
-  -- Caution:  this did not work in older simulators (@2013)
-
+  -- Pop as a function
   -- Simple Scoreboard, no tag
   impure function Pop (
     constant ID     : in  ScoreboardIDType
@@ -3135,10 +3402,8 @@ package body ScoreboardGenericPkg is
     return ScoreboardStore.Pop(ID.ID, Tag) ;
   end function Pop ;
 
-
   ------------------------------------------------------------
   -- Peek at the top item (FIFO) from the scoreboard/FIFO
-
   -- Simple Tagged Scoreboard
   procedure Peek (
     constant ID     : in  ScoreboardIDType ;
@@ -3159,17 +3424,13 @@ package body ScoreboardGenericPkg is
   end procedure Peek ;
 
   ------------------------------------------------------------
-  -- Peek at the top item (FIFO) from the scoreboard/FIFO
-  -- Caution:  this did not work in older simulators (@2013)
-
+  -- Peek as a function
   -- Tagged Scoreboards
   impure function Peek (
     constant ID     : in  ScoreboardIDType ;
     constant Tag    : in  string
   ) return ExpectedType is
   begin
---      return ScoreboardStore.Peek(Tag) ;
---    log("Issues compiling return later");
     return ScoreboardStore.Peek(Index => ID.ID, Tag => Tag) ;
   end function Peek ;
 
@@ -3205,61 +3466,6 @@ package body ScoreboardGenericPkg is
   begin
     return ScoreboardStore.AllScoreboardsEmpty ;
   end function AllScoreboardsEmpty ; 
-
---!!   --
---!!   --  impure function ScoreboardEmpty (
---!!   --    constant ID     : in  ScoreboardIDType
---!!   --  ) return boolean is
---!!   --  begin
---!!   --    return ScoreboardStore.Empty(ID.ID) ;
---!!   --  end function ScoreboardEmpty ;
---!!   --
---!!   --  -- Tagged
---!!   --  impure function ScoreboardEmpty (
---!!   --    constant ID     : in  ScoreboardIDType ;
---!!   --    constant Tag    : in  string
---!!   --  ) return boolean is
---!!   --  begin
---!!   --    return ScoreboardStore.Empty(ID.ID, Tag) ;
---!!   --  end function ScoreboardEmpty ;
---!!   --
---!!   --  impure function Empty (
---!!   --    constant ID     : in  ScoreboardIDType
---!!   --  ) return boolean is
---!!   --  begin
---!!   --    return ScoreboardStore.Empty(ID.ID) ;
---!!   --  end function Empty ;
---!!   --
---!!   --  -- Tagged
---!!   --  impure function Empty (
---!!   --    constant ID     : in  ScoreboardIDType ;
---!!   --    constant Tag    : in  string
---!!   --  ) return boolean is
---!!   --  begin
---!!   --    return ScoreboardStore.Empty(ID.ID, Tag) ;
---!!   --  end function Empty ;
-
---!!  ------------------------------------------------------------
---!!  -- SetAlertLogID - associate an AlertLogID with a scoreboard to allow integrated error reporting
---!!  procedure SetAlertLogID(
---!!    constant ID              : in  ScoreboardIDType ;
---!!    constant Name            : in  string ;
---!!    constant ParentID        : in  AlertLogIDType := OSVVM_SCOREBOARD_ALERTLOG_ID ;
---!!    constant CreateHierarchy : in  Boolean := TRUE ;
---!!    constant DoNotReport     : in  Boolean := FALSE
---!!  ) is
---!!  begin
---!!    ScoreboardStore.SetAlertLogID(ID.ID, Name, ParentID, CreateHierarchy, DoNotReport) ;
---!!  end procedure SetAlertLogID ;
---!!
---!!  -- Use when an AlertLogID is used by multiple items (Model or other Scoreboards).  See also AlertLogPkg.GetAlertLogID
---!!  procedure SetAlertLogID (
---!!    constant ID     : in  ScoreboardIDType ;
---!!    constant A      : AlertLogIDType
---!!  ) is
---!!  begin
---!!    ScoreboardStore.SetAlertLogID(ID.ID, A) ;
---!!  end procedure SetAlertLogID ;
 
   impure function GetAlertLogID (
     constant ID     : in  ScoreboardIDType
@@ -3367,6 +3573,51 @@ package body ScoreboardGenericPkg is
     ScoreboardStore.Flush(ID.ID, Tag, ItemNumber) ;
   end procedure Flush ;
 
+    ------------------------------------------------------------
+    -- Tagged Scoreboards 
+    procedure FindAndDelete (
+    ------------------------------------------------------------
+      constant ID          :  in  ScoreboardIDType ;
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType
+    ) is
+  begin
+    ScoreboardStore.FindAndDelete(ID.ID, Tag, ActualData) ;
+  end procedure FindAndDelete ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard no tag
+    procedure FindAndDelete (
+    ------------------------------------------------------------
+      constant ID          :  in  ScoreboardIDType ;
+      constant ActualData  :  in  ActualType
+    ) is
+  begin
+    ScoreboardStore.FindAndDelete(ID.ID, ActualData) ;
+  end procedure FindAndDelete ;
+
+    ------------------------------------------------------------
+    -- Tagged Scoreboards 
+    procedure FindAndFlush (
+    ------------------------------------------------------------
+      constant ID          :  in  ScoreboardIDType ;
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType
+    ) is
+  begin
+    ScoreboardStore.FindAndFlush(ID.ID, Tag, ActualData) ;
+  end procedure FindAndFlush ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard no tag
+    procedure FindAndFlush (
+    ------------------------------------------------------------
+      constant ID          :  in  ScoreboardIDType ;
+      constant ActualData  :  in  ActualType
+    ) is
+  begin
+    ScoreboardStore.FindAndFlush(ID.ID, ActualData) ;
+  end procedure FindAndFlush ;
 
   ------------------------------------------------------------
   -- Scoreboard YAML Reports
