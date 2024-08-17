@@ -1438,39 +1438,15 @@ package body ScoreboardGenericPkg is
       LocalPush(Index, "", Item) ;
     end procedure Push ;
 
---!!    ------------------------------------------------------------
---!!    -- Array of Tagged Scoreboards
---!!    impure function Push (
---!!    ------------------------------------------------------------
---!!      constant Index  : in  integer ;
---!!      constant Tag    : in  string ;
---!!      constant Item   : in  ExpectedType
---!!    ) return ExpectedType is
---!!    begin
---!!      LocalPush(Index, Tag, Item) ;
---!!      return Item ;
---!!    end function Push ;
---!!
---!!    ------------------------------------------------------------
---!!    -- Array of Scoreboards, no tag
---!!    impure function Push (
---!!    ------------------------------------------------------------
---!!      constant Index  : in  integer ;
---!!      constant Item   : in  ExpectedType
---!!    ) return ExpectedType is
---!!    begin
---!!      LocalPush(Index, "", Item) ;
---!!      return Item ;
---!!    end function Push ;
-
     ------------------------------------------------------------
     -- Local Only
     -- Pops highest element matching Tag into SbPtr(Index).PopListPtr
-    procedure LocalPop (Index : integer ; Tag : string; Name : string)  is
+    procedure LocalPop (Index : integer ; Tag : string; Name : string; Found : out boolean)  is
     ------------------------------------------------------------
       variable CurPtr : ListPtrType ;
     begin
-      if LocalOutOfRange(Index, "Pop/Check") then
+      Found := FALSE ;
+      if LocalOutOfRange(Index, Name) then
         return ; -- error reporting in LocalOutOfRange
       end if ;
       if SbPtr(Index).HeadPtr = NULL then
@@ -1495,13 +1471,15 @@ package body ScoreboardGenericPkg is
         -- Non-tagged scoreboards find this one.
         SbPtr(Index).PopListPtr  := SbPtr(Index).HeadPtr ;
         SbPtr(Index).HeadPtr     := SbPtr(Index).HeadPtr.NextPtr ;
+        Found := TRUE ;
       else
         loop
           if CurPtr.NextPtr = NULL then
             SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-            Alert(SbPtr(Index).AlertLogID, GetName & " Pop/Check (" & Name & "), tag: " & Tag & " not found", FAILURE) ;
+            AffirmIf(SbPtr(Index).AlertLogID, FALSE, Name & "   Tag: " & Tag & " not found", ERROR) ;
             exit ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
+            Found := TRUE ;
             SbPtr(Index).PopListPtr := CurPtr.NextPtr ;
             CurPtr.NextPtr := CurPtr.NextPtr.NextPtr ;
             if CurPtr.NextPtr = NULL then
@@ -1515,20 +1493,49 @@ package body ScoreboardGenericPkg is
       end if ;
     end procedure LocalPop ;
 
-
+    ------------------------------------------------------------
+    -- Local Only
+    -- Pops highest element matching Tag into SbPtr(Index).PopListPtr
+    procedure LocalPop (Index : integer ; Name : string; Found : out boolean)  is
+    ------------------------------------------------------------
+      variable CurPtr : ListPtrType ;
+    begin
+      Found := FALSE ;
+      if LocalOutOfRange(Index, Name) then
+        return ; -- error reporting in LocalOutOfRange
+      end if ;
+      if SbPtr(Index).HeadPtr = NULL then
+        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+        Alert(SbPtr(Index).AlertLogID, GetName & " Empty during " & Name, FAILURE) ;
+        return ;
+      end if ;
+      SbPtr(Index).PopCount := SbPtr(Index).PopCount + 1 ;
+      -- deallocate previous pointer
+      if SbPtr(Index).PopListPtr /= NULL then
+        deallocate(SbPtr(Index).PopListPtr.TagPtr) ;
+        deallocate(SbPtr(Index).PopListPtr.ExpectedPtr) ;
+        deallocate(SbPtr(Index).PopListPtr) ;
+      end if ;
+      SbPtr(Index).PopListPtr  := SbPtr(Index).HeadPtr ;
+      SbPtr(Index).HeadPtr     := SbPtr(Index).HeadPtr.NextPtr ;
+      Found := TRUE ;
+    end procedure LocalPop ;
+    
+    
     ------------------------------------------------------------
     -- Local Only
     procedure LocalCheck (
     ------------------------------------------------------------
       constant Index          : in    integer ;
       constant ActualData     : in    ActualType ;
-      variable FoundError     : inout boolean ;
+      variable Found          : inout boolean ;
       constant ExpectedInFIFO : in    boolean := TRUE
     ) is
       variable ExpectedPtr    : ExpectedPtrType ;
       variable CurrentItem  : integer ;
       variable WriteBuf : line ;
       variable PassedFlagEnabled : boolean ;
+      variable FoundError : boolean ; 
     begin
       SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
       ExpectedPtr := SbPtr(Index).PopListPtr.ExpectedPtr ;
@@ -1547,6 +1554,7 @@ package body ScoreboardGenericPkg is
           IncAffirmPassedCount(SbPtr(Index).AlertLogID) ;
         end if ;
       end if ;
+      Found := not FoundError ; 
 
 --      IncAffirmCount(SbPtr(Index).AlertLogID) ;
 
@@ -1590,20 +1598,6 @@ package body ScoreboardGenericPkg is
         write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
         
         AffirmIf(SbPtr(Index).AlertLogID, not FoundError, WriteBuf.all) ; 
-        
---!!        if FoundError then
---!!          if ReportModeVar /= REPORT_NONE then
---!!            -- Affirmation Failed
---!!            Alert(SbPtr(Index).AlertLogID, WriteBuf.all, ERROR) ;
---!!          else
---!!            -- Affirmation Failed, but silent, unless in DEBUG mode
---!!            Log(SbPtr(Index).AlertLogID, "ERROR " & WriteBuf.all, DEBUG) ;
---!!            IncAlertCount(SbPtr(Index).AlertLogID) ;  -- Silent Counted Alert
---!!          end if ;
---!!        else
---!!          -- Affirmation passed, PASSED flag increments AffirmCount
---!!          Log(SbPtr(Index).AlertLogID, WriteBuf.all, PASSED) ;
---!!        end if ;
 
         deallocate(WriteBuf) ;
       end if ;
@@ -1617,13 +1611,12 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) is
-      variable FoundError   : boolean ;
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Check") then
-        return ; -- error reporting in LocalOutOfRange
+      LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then 
+        LocalCheck(Index, ActualData, found) ;
       end if ;
-      LocalPop(Index, Tag, "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -1633,13 +1626,12 @@ package body ScoreboardGenericPkg is
       constant Index        : in  integer ;
       constant ActualData   : in  ActualType
     ) is
-      variable FoundError   : boolean ;
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Check") then
-        return ; -- error reporting in LocalOutOfRange
+      LocalPop(Index, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then 
+        LocalCheck(Index, ActualData, found) ;
       end if ;
-      LocalPop(Index, "", "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -1650,14 +1642,13 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) return boolean is
-      variable FoundError   : boolean ;
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Function Check") then
-        return FALSE ; -- error reporting in LocalOutOfRange
+      LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then 
+        LocalCheck(Index, ActualData, found) ;
       end if ;
-      LocalPop(Index, Tag, "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
-      return not FoundError ;
+      return found ;
     end function Check ;
 
     ------------------------------------------------------------
@@ -1667,14 +1658,13 @@ package body ScoreboardGenericPkg is
       constant Index        : in  integer ;
       constant ActualData   : in  ActualType
     ) return boolean is
-      variable FoundError   : boolean ;
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Function Check") then
-        return FALSE ; -- error reporting in LocalOutOfRange
+      LocalPop(Index, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then 
+        LocalCheck(Index, ActualData, found) ;
       end if ;
-      LocalPop(Index, "", "Check") ;
-      LocalCheck(Index, ActualData, FoundError) ;
-      return not FoundError ;
+      return found ;
     end function Check ;
 
     ------------------------------------------------------------
@@ -1685,14 +1675,13 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ExpectedData : in  ActualType
     ) return boolean is
-      variable FoundError   : boolean ;
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Function Check") then
-        return FALSE ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, Tag, "Check") ;
-      LocalCheck(Index, ExpectedData, FoundError, ExpectedInFIFO => FALSE) ;
-      return not FoundError ;
+      LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ExpectedData), found) ;
+      if found then 
+        LocalCheck(Index, ExpectedData, found, ExpectedInFIFO => FALSE) ;
+      end if ; 
+      return found ;
     end function CheckExpected ;
 
     ------------------------------------------------------------
@@ -1703,12 +1692,12 @@ package body ScoreboardGenericPkg is
       constant Tag    : in  string ;
       variable Item   : out  ExpectedType
     ) is
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Pop") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, Tag, "Pop") ;
-      Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+      LocalPop(Index, Tag, "Pop", found) ;
+      if found then
+        Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+      end if ; 
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -1718,12 +1707,12 @@ package body ScoreboardGenericPkg is
       constant Index  : in  integer ;
       variable Item   : out  ExpectedType
     ) is
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Pop") then
-        return ; -- error reporting in LocalOutOfRange
-      end if ;
-      LocalPop(Index, "", "Pop") ;
-      Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+      LocalPop(Index, "Pop", found) ;
+      if found then
+        Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+      end if ; 
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -1733,12 +1722,9 @@ package body ScoreboardGenericPkg is
       constant Index  : in  integer ;
       constant Tag    : in  string
     ) return ExpectedType is
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Pop") then
-        -- error reporting in LocalOutOfRange
-        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ;
-      LocalPop(Index, Tag, "Pop") ;
+      LocalPop(Index, "Pop", found) ;
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -1746,12 +1732,9 @@ package body ScoreboardGenericPkg is
     -- Scoreboards, no tag
     impure function Pop (Index : integer) return ExpectedType is
     ------------------------------------------------------------
+      variable found : boolean ; 
     begin
-      if LocalOutOfRange(Index, "Pop") then
-        -- error reporting in LocalOutOfRange
-        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ;
-      LocalPop(Index, "", "Pop") ;
+      LocalPop(Index, "Pop", found) ;
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -2175,10 +2158,10 @@ package body ScoreboardGenericPkg is
       if FindPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
         AffirmIf( SbPtr(Index).AlertLogID, FALSE,
-              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag & "  was not found." ) ;
+              "Received: " & actual_to_string(ActualData) & "   Tag: " & Tag & "  was not found." ) ;
       else
         AffirmIf( SbPtr(Index).AlertLogID, TRUE,
-              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag ) ;
+              "Received: " & actual_to_string(ActualData) & "   Tag: " & Tag & "   Item Number: " & to_string(FindPtr.ItemNumber) ) ;
         -- Update counts
         SbPtr(Index).PopCount   := SbPtr(Index).PopCount + 1 ;
         SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
@@ -2191,7 +2174,8 @@ package body ScoreboardGenericPkg is
             SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ; 
           end if ; 
         else 
-          -- Not found at HeadPtr.  Adjust TailPtr
+          -- Not found at HeadPtr.  Remove it from the list.
+          FindParentPtr.NextPtr := FindPtr.NextPtr ; 
           if FindPtr.NextPtr = NULL then
             -- Adjust tail pointer
             SbPtr(Index).TailPtr := FindParentPtr ; 
@@ -2224,7 +2208,7 @@ package body ScoreboardGenericPkg is
               "Received: " & actual_to_string(ActualData) & "  was not found." ) ;
       else
         AffirmIf( SbPtr(Index).AlertLogID, TRUE,
-              "Received: " & actual_to_string(ActualData) ) ;
+              "Received: " & actual_to_string(ActualData) & "   Item Number: " & to_string(FindPtr.ItemNumber)) ;
         -- Update counts
         SbPtr(Index).PopCount   := SbPtr(Index).PopCount + 1 ;
         SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
@@ -2237,7 +2221,8 @@ package body ScoreboardGenericPkg is
             SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ; 
           end if ; 
         else 
-          -- Not found at HeadPtr.  Adjust TailPtr
+          -- Not found at HeadPtr.  Remove it from the list.
+          FindParentPtr.NextPtr := FindPtr.NextPtr ; 
           if FindPtr.NextPtr = NULL then
             -- Adjust tail pointer
             SbPtr(Index).TailPtr := FindParentPtr ; 
@@ -2538,27 +2523,6 @@ package body ScoreboardGenericPkg is
       LocalPush(MinIndex, "", Item) ;
     end procedure Push ;
 
---!!    ------------------------------------------------------------
---!!    -- Simple Tagged Scoreboard
---!!    impure function Push (
---!!    ------------------------------------------------------------
---!!      constant Tag    : in  string ;
---!!      constant Item   : in  ExpectedType
---!!    ) return ExpectedType is
---!!    begin
---!!      LocalPush(MinIndex, Tag, Item) ;
---!!      return Item ;
---!!    end function Push ;
---!!
---!!    ------------------------------------------------------------
---!!    -- Simple Scoreboard, no tag
---!!    impure function Push (Item : ExpectedType) return ExpectedType is
---!!    ------------------------------------------------------------
---!!    begin
---!!      LocalPush(MinIndex, "", Item) ;
---!!      return Item ;
---!!    end function Push ;
-
     ------------------------------------------------------------
     -- Simple Tagged Scoreboard
     procedure Check (
@@ -2566,20 +2530,24 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) is
-      variable FoundError   : boolean ;
+      variable found   : boolean ;
     begin
-      LocalPop(MinIndex, Tag, "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
+      LocalPop(MinIndex, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then
+        LocalCheck(MinIndex, ActualData, found) ;
+      end if ; 
     end procedure Check ;
 
     ------------------------------------------------------------
     -- Simple Scoreboard, no tag
     procedure Check (ActualData : ActualType) is
     ------------------------------------------------------------
-      variable FoundError   : boolean ;
+      variable found   : boolean ;
     begin
-      LocalPop(MinIndex, "", "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
+      LocalPop(MinIndex, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then
+        LocalCheck(MinIndex, ActualData, found) ;
+      end if ; 
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -2589,22 +2557,26 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) return boolean is
-      variable FoundError   : boolean ;
+      variable found   : boolean ;
     begin
-      LocalPop(MinIndex, Tag, "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
-      return not FoundError ;
+      LocalPop(MinIndex, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then
+        LocalCheck(MinIndex, ActualData, found) ;
+      end if ; 
+      return found ;
     end function Check ;
 
     ------------------------------------------------------------
     -- Simple Scoreboard, no tag
     impure function Check (ActualData : ActualType) return boolean is
     ------------------------------------------------------------
-      variable FoundError   : boolean ;
+      variable found   : boolean ;
     begin
-      LocalPop(MinIndex, "", "Check") ;
-      LocalCheck(MinIndex, ActualData, FoundError) ;
-      return not FoundError ;
+      LocalPop(MinIndex, "Check   Received: " & actual_to_string(ActualData), found) ;
+      if found then
+        LocalCheck(MinIndex, ActualData, found) ;
+      end if ; 
+      return found ;
     end function Check ;
 
     ------------------------------------------------------------
@@ -2614,18 +2586,24 @@ package body ScoreboardGenericPkg is
       constant Tag    : in  string ;
       variable Item   : out  ExpectedType
     ) is
+      variable found : boolean ; 
     begin
-      LocalPop(MinIndex, Tag, "Pop") ;
-      Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      LocalPop(MinIndex, Tag, "Pop", found) ;
+      if found then
+        Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ; 
     end procedure Pop ;
 
     ------------------------------------------------------------
     -- Simple Scoreboard, no tag
     procedure Pop (variable Item : out  ExpectedType) is
     ------------------------------------------------------------
+      variable found : boolean ; 
     begin
-      LocalPop(MinIndex, "", "Pop") ;
-      Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      LocalPop(MinIndex, "Pop", found) ;
+      if found then
+        Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
+      end if ; 
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -2634,8 +2612,9 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       constant Tag : in  string
     ) return ExpectedType is
+      variable found : boolean ; 
     begin
-      LocalPop(MinIndex, Tag, "Pop") ;
+      LocalPop(MinIndex, Tag, "Pop", found) ;
       return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -2643,8 +2622,9 @@ package body ScoreboardGenericPkg is
     -- Simple Scoreboard, no tag
     impure function Pop return ExpectedType is
     ------------------------------------------------------------
+      variable found : boolean ; 
     begin
-      LocalPop(MinIndex, "", "Pop") ;
+      LocalPop(MinIndex, "Pop", found) ;
       return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
