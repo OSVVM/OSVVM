@@ -4448,7 +4448,18 @@ package body AlertLogPkg is
     return not condition ;
   end function AlertIfNot ;
 
-
+  ------------------------------------------------------------
+  -- AddSpaceIfNotEmpty - package local function
+  --
+  function AddSpaceIfNotEmpty (S : string) return string is 
+  begin
+    if S'length > 0 then
+      return S & " " ; 
+    else
+      return "" ; 
+    end if ; 
+  end function AddSpaceIfNotEmpty ;
+  
   ------------------------------------------------------------
   -- AlertIfEqual with AlertLogID
   ------------------------------------------------------------
@@ -4457,7 +4468,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4468,7 +4479,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4479,7 +4490,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4490,7 +4501,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4501,7 +4512,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4512,7 +4523,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4523,7 +4534,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4534,7 +4545,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4545,7 +4556,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4556,7 +4567,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits)
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits)
                                                      & "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
@@ -4568,7 +4579,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4581,7 +4592,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4592,7 +4603,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4603,7 +4614,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4614,7 +4625,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4625,7 +4636,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4636,7 +4647,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4647,7 +4658,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4658,7 +4669,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4669,7 +4680,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4680,7 +4691,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits)
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits)
                                                            & "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
@@ -4692,7 +4703,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4706,7 +4717,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4717,7 +4728,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4728,7 +4739,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4739,7 +4750,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if  not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4750,7 +4761,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4761,7 +4772,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4772,7 +4783,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4783,7 +4794,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4794,7 +4805,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4805,7 +4816,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) &
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) &
                                                         "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
@@ -4817,7 +4828,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4831,7 +4842,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4842,7 +4853,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4853,7 +4864,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4864,7 +4875,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4875,7 +4886,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if not MetaMatch(L, R) then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_hxstring(L) & "   R = " & to_hxstring(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4886,7 +4897,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4897,7 +4908,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4908,7 +4919,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4919,7 +4930,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & L & "   R = " & R, Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & L & "   R = " & R, Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4930,7 +4941,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) &
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L, GetOsvvmDefaultTimeUnits) &
                                                               "   R = " & to_string(R, GetOsvvmDefaultTimeUnits), Level) ;
     end if ;
     -- synthesis translate_on
@@ -4942,7 +4953,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, Message & " L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L) & "   R = " & to_string(R), Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -4996,16 +5007,16 @@ package body AlertLogPkg is
 
 --      if Buf1.all /= Buf2.all then  -- fails when use Windows file in Unix
       if LocalDiff(Buf1.all, Buf2.all) then
-        AlertLogStruct.Alert(AlertLogID , Message & " File miscompare on line " & to_string(LineCount), Level) ;
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File miscompare on line " & to_string(LineCount), Level) ;
         exit ReadLoop ;
       end if ;
     end loop ReadLoop ;
     if File1Done /= File2Done then
       if not File1Done then
-        AlertLogStruct.Alert(AlertLogID , Message & " File1 longer than File2 " & to_string(LineCount), Level) ;
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File1 longer than File2 " & to_string(LineCount), Level) ;
       end if ;
       if not File2Done then
-        AlertLogStruct.Alert(AlertLogID , Message & " File2 longer than File1 " & to_string(LineCount), Level) ;
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File2 longer than File1 " & to_string(LineCount), Level) ;
       end if ;
     end if;
     if File1Done and File2Done then
@@ -5023,21 +5034,20 @@ package body AlertLogPkg is
   ------------------------------------------------------------
     file FileID1, FileID2 : text ;
     variable status1, status2 : file_open_status ;
-    constant RESOLVED_MESSAGE : string := IfElse(Message = "", "", Message & " ") ;
   begin
     -- synthesis translate_off
     Valid := FALSE ;
     file_open(status1, FileID1, Name1, READ_MODE) ;
     file_open(status2, FileID2, Name2, READ_MODE) ;
     if status1 = OPEN_OK and status2 = OPEN_OK then
-      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, RESOLVED_MESSAGE & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
+      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, AddSpaceIfNotEmpty(Message) & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
 
     else
       if status1 /= OPEN_OK then
-        AlertLogStruct.Alert(AlertLogID , RESOLVED_MESSAGE & "File, " & Name1 & ", did not open", Level) ;
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File, " & Name1 & ", did not open", Level) ;
       end if ;
       if status2 /= OPEN_OK then
-        AlertLogStruct.Alert(AlertLogID , RESOLVED_MESSAGE & "File, " & Name2 & ", did not open", Level) ;
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File, " & Name2 & ", did not open", Level) ;
       end if ;
     end if;
     -- synthesis translate_on
@@ -5310,7 +5320,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5322,7 +5332,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5334,7 +5344,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5346,7 +5356,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5358,7 +5368,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5370,7 +5380,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5382,7 +5392,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received, 4),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4),
       "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
@@ -5394,7 +5404,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5406,7 +5416,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & Received,
+      AddSpaceIfNotEmpty(Message) & "Received : " & Received,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5418,7 +5428,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received, GetOsvvmDefaultTimeUnits),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, GetOsvvmDefaultTimeUnits),
                "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
@@ -5430,7 +5440,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
                "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5443,7 +5453,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5455,7 +5465,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5467,7 +5477,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5479,7 +5489,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5491,7 +5501,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5503,7 +5513,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5515,7 +5525,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received, 4),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4),
       "= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
@@ -5527,7 +5537,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5539,7 +5549,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & Received,
+      AddSpaceIfNotEmpty(Message) & "Received : " & Received,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5551,7 +5561,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits),
+      AddSpaceIfNotEmpty(Message) & "Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits),
                 "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
@@ -5564,7 +5574,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
                "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5577,7 +5587,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5589,7 +5599,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " ?/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5601,7 +5611,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5613,7 +5623,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5625,7 +5635,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5637,7 +5647,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5649,7 +5659,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & to_string(Received, 4) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4) &
       " /= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
@@ -5661,7 +5671,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5673,7 +5683,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & Received &
+      AddSpaceIfNotEmpty(Message) & "Received : " & Received &
       " /= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5685,7 +5695,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & to_string(Received, GetOsvvmDefaultTimeUnits) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, GetOsvvmDefaultTimeUnits) &
               " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
@@ -5697,7 +5707,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
                "/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5710,7 +5720,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5722,7 +5732,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " ?/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5734,7 +5744,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5746,7 +5756,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5758,7 +5768,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      Message & " Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5770,7 +5780,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5782,7 +5792,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : " & to_string(Received, 4) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4) &
       " /= Expected : " & to_string(Expected, 4),
       Enable) ;
     -- synthesis translate_on
@@ -5794,7 +5804,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5806,7 +5816,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : " & Received &
+      AddSpaceIfNotEmpty(Message) & "Received : " & Received &
       " /= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5818,7 +5828,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits) &
+      AddSpaceIfNotEmpty(Message) & "Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits) &
                 " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
@@ -5830,7 +5840,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      Message & " Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
                "/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5845,7 +5855,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
     if Valid then
-      AlertLogStruct.Log(AlertLogID, Message & " " & Name1 & "  " & Name2, PASSED, Enable) ;
+      AlertLogStruct.Log(AlertLogID, AddSpaceIfNotEmpty(Message) & Name1 & "  " & Name2, PASSED, Enable) ;
     else
       AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
       -- Alert already signaled by LocalAlertIfDiff
@@ -5907,8 +5917,6 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AffirmIfTranscriptsMatch ;
 
-
-
   ------------------------------------------------------------
 -- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
   procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
@@ -5919,7 +5927,7 @@ package body AlertLogPkg is
     -- synthesis translate_off
     LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
     if Valid then
-      AlertLogStruct.Log(AlertLogID, Message & " " & Name1 & " = " & Name2, PASSED, Enable) ;
+      AlertLogStruct.Log(AlertLogID, AddSpaceIfNotEmpty(Message) & Name1 & " = " & Name2, PASSED, Enable) ;
     else
       AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
       -- Alert already signaled by LocalAlertIfDiff
