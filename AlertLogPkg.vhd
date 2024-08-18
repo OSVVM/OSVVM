@@ -239,11 +239,14 @@ package AlertLogPkg is
 
   ------------------------------------------------------------
   -- Simple Diff for file comparisons
-  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) ;
-  procedure AlertIfDiff (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) ;
-  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ;
-  procedure AlertIfDiff (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ;
-
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ) ;
+  procedure AlertIfFilesNotMatch (                              Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ) ;
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ;
+  procedure AlertIfFilesNotMatch (                              file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[AlertLogIDType, string, string, string, AlertType] ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[                string, string, string, AlertType] ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[AlertLogIDType, text,   text,   string, AlertType] ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[                text,   text,   string, AlertType] ;
   ------------------------------------------------------------
   ------------------------------------------------------------
   ------------------------------------------------------------
@@ -344,17 +347,22 @@ package AlertLogPkg is
   procedure AffirmIfNotEqual( Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfFilesMatch (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfFilesMatch (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) ;
   procedure AffirmIfTranscriptsMatch (PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) ;
+  -- Renamed AffirmIfNotDiff to AffirmIfFilesMatch as naming is clear.  Soft deprecate (name will remain supported via alias)
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[AlertLogIDType, string, string, string, boolean] ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[                string, string, string, boolean] ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[AlertLogIDType, text,   text,   string, boolean] ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[                text,   text,   string, boolean] ;
 -- Deprecated as they are misnamed - should be AffirmIfNotDiff
-  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[AlertLogIDType, string, string, string, boolean] ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[                string, string, string, boolean] ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[AlertLogIDType, text,   text,   string, boolean] ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[                text,   text,   string, boolean] ;
 
   ------------------------------------------------------------
   -- Support for Specification / Requirements Tracking
@@ -4989,7 +4997,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- Local
-  procedure LocalAlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string ; Level : AlertType ; Valid : out boolean ) is
+  procedure LocalAlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string ; Level : AlertType ; Valid : out boolean ) is
   ------------------------------------------------------------
     variable Buf1, Buf2 : line ;
     variable File1Done, File2Done : boolean ;
@@ -5025,11 +5033,11 @@ package body AlertLogPkg is
       Valid := FALSE ;
     end if ;
     -- synthesis translate_on
-  end procedure LocalAlertIfDiff ;
+  end procedure LocalAlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
   -- Local
-  procedure LocalAlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string ; Level : AlertType ; Valid : out boolean ) is
+  procedure LocalAlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string ; Level : AlertType ; Valid : out boolean ) is
   -- Open files and call AlertIfDiff[text, ...]
   ------------------------------------------------------------
     file FileID1, FileID2 : text ;
@@ -5040,7 +5048,7 @@ package body AlertLogPkg is
     file_open(status1, FileID1, Name1, READ_MODE) ;
     file_open(status2, FileID2, Name2, READ_MODE) ;
     if status1 = OPEN_OK and status2 = OPEN_OK then
-      LocalAlertIfDiff (AlertLogID, FileID1, FileID2, AddSpaceIfNotEmpty(Message) & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
+      LocalAlertIfFilesNotMatch (AlertLogID, FileID1, FileID2, AddSpaceIfNotEmpty(Message) & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
 
     else
       if status1 /= OPEN_OK then
@@ -5051,49 +5059,48 @@ package body AlertLogPkg is
       end if ;
     end if;
     -- synthesis translate_on
-  end procedure LocalAlertIfDiff ;
+  end procedure LocalAlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is
-  -- Open files and call AlertIfDiff[text, ...]
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, Level, Valid) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, Name1, Name2, Message, Level, Valid) ;
     -- synthesis translate_on
-  end procedure AlertIfDiff ;
+  end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfDiff (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfDiff (ALERT_DEFAULT_ID, Name1, Name2, Message, Level, Valid) ;
+    LocalAlertIfFilesNotMatch (ALERT_DEFAULT_ID, Name1, Name2, Message, Level, Valid) ;
     -- synthesis translate_on
-  end procedure AlertIfDiff ;
+  end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is
   -- Simple diff.
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfDiff (AlertLogID, File1, File2, Message, Level, Valid ) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, File1, File2, Message, Level, Valid ) ;
     -- synthesis translate_on
-  end procedure AlertIfDiff ;
+  end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfDiff (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfDiff (ALERT_DEFAULT_ID, File1, File2, Message, Level, Valid ) ;
+    LocalAlertIfFilesNotMatch (ALERT_DEFAULT_ID, File1, File2, Message, Level, Valid ) ;
     -- synthesis translate_on
-  end procedure AlertIfDiff ;
+  end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
   procedure AffirmIf(
@@ -5847,133 +5854,76 @@ package body AlertLogPkg is
   end procedure AffirmIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
   -- Open files and call AffirmIfNotDiff[text, ...]
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
     if Valid then
       AlertLogStruct.Log(AlertLogID, AddSpaceIfNotEmpty(Message) & Name1 & "  " & Name2, PASSED, Enable) ;
     else
       AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
-      -- Alert already signaled by LocalAlertIfDiff
+      -- Alert already signaled by LocalAlertIfFilesNotMatch
     end if ;
     -- synthesis translate_on
-  end procedure AffirmIfNotDiff ;
+  end procedure AffirmIfFilesMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfNotDiff(ALERT_DEFAULT_ID, Name1, Name2, Message, Enable) ;
+    AffirmIfFilesMatch(ALERT_DEFAULT_ID, Name1, Name2, Message, Enable) ;
     -- synthesis translate_on
-  end procedure AffirmIfNotDiff ;
+  end procedure AffirmIfFilesMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
   -- Simple diff.
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfDiff (AlertLogID, File1, File2, Message, ERROR, Valid ) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, File1, File2, Message, ERROR, Valid ) ;
     if Valid then
       AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ;
     else
       AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
-      -- Alert already signaled by LocalAlertIfDiff
+      -- Alert already signaled by LocalAlertIfFilesNotMatch
     end if ;
     -- synthesis translate_on
-  end procedure AffirmIfNotDiff ;
+  end procedure AffirmIfFilesMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfNotDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfNotDiff(ALERT_DEFAULT_ID, File1, File2, Message, Enable) ;
+    AffirmIfFilesMatch(ALERT_DEFAULT_ID, File1, File2, Message, Enable) ;
     -- synthesis translate_on
-  end procedure AffirmIfNotDiff ;
+  end procedure AffirmIfFilesMatch ;
   
   ------------------------------------------------------------
   procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfNotDiff(AlertLogID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable) ;
+    AffirmIfFilesMatch(AlertLogID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfTranscriptsMatch ;
-
 
   ------------------------------------------------------------
   procedure AffirmIfTranscriptsMatch (PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfNotDiff(ALERT_DEFAULT_ID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable) ;
+    AffirmIfFilesMatch(ALERT_DEFAULT_ID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfTranscriptsMatch ;
 
   ------------------------------------------------------------
--- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
-  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
-  -- Open files and call AffirmIfDiff[text, ...]
-  ------------------------------------------------------------
-    variable Valid : boolean ;
-  begin
-    -- synthesis translate_off
-    LocalAlertIfDiff (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
-    if Valid then
-      AlertLogStruct.Log(AlertLogID, AddSpaceIfNotEmpty(Message) & Name1 & " = " & Name2, PASSED, Enable) ;
-    else
-      AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
-      -- Alert already signaled by LocalAlertIfDiff
-    end if ;
-    -- synthesis translate_on
-  end procedure AffirmIfDiff ;
-
-  ------------------------------------------------------------
--- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
-  procedure AffirmIfDiff (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
-  ------------------------------------------------------------
-  begin
-    -- synthesis translate_off
-    AffirmIfDiff(ALERT_DEFAULT_ID, Name1, Name2, Message, Enable) ;
-    -- synthesis translate_on
-  end procedure AffirmIfDiff ;
-
-  ------------------------------------------------------------
--- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
-  procedure AffirmIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
-  -- Simple diff.
-  ------------------------------------------------------------
-    variable Valid : boolean ;
-  begin
-    -- synthesis translate_off
-    LocalAlertIfDiff (AlertLogID, File1, File2, Message, ERROR, Valid ) ;
-    if Valid then
-      AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ;
-    else
-      AlertLogStruct.IncAffirmCount(AlertLogID) ;  -- count the affirmation
-      -- Alert already signaled by LocalAlertIfDiff
-    end if ;
-    -- synthesis translate_on
-  end procedure AffirmIfDiff ;
-
-  ------------------------------------------------------------
--- DEPRECATED - naming polarity is incorrect.   Should be AffirmIfNotDiff
-  procedure AffirmIfDiff (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
-  ------------------------------------------------------------
-  begin
-    -- synthesis translate_off
-    AffirmIfDiff(ALERT_DEFAULT_ID, File1, File2, Message, Enable) ;
-    -- synthesis translate_on
-  end procedure AffirmIfDiff ;
-
-
   -- Support for Specification / Requirements Tracking
   ------------------------------------------------------------
   procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) is
