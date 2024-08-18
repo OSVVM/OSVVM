@@ -1724,7 +1724,7 @@ package body ScoreboardGenericPkg is
     ) return ExpectedType is
       variable found : boolean ; 
     begin
-      LocalPop(Index, "Pop", found) ;
+      LocalPop(Index, Tag, "Pop", found) ;
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
