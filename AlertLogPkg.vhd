@@ -147,7 +147,7 @@ package AlertLogPkg is
   constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := ALERTLOG_BASE_ID + 3 ;
   -- May have its own ID or OSVVM_ALERTLOG_ID as default - most scoreboards allocate their own ID
   constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
-  constant  OSVVM_COVERAGE_ALERTLOG_ID          : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  constant  OSVVM_COVERAGE_ALERTLOG_ID     : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- Same as ALERTLOG_DEFAULT_ID
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
@@ -239,14 +239,18 @@ package AlertLogPkg is
 
   ------------------------------------------------------------
   -- Simple Diff for file comparisons
-  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ) ;
-  procedure AlertIfFilesNotMatch (                              Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ) ;
-  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ;
-  procedure AlertIfFilesNotMatch (                              file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) ;
-  alias AlertIfDiff is AlertIfFilesNotMatch[AlertLogIDType, string, string, string, AlertType] ;
-  alias AlertIfDiff is AlertIfFilesNotMatch[                string, string, string, AlertType] ;
-  alias AlertIfDiff is AlertIfFilesNotMatch[AlertLogIDType, text,   text,   string, AlertType] ;
-  alias AlertIfDiff is AlertIfFilesNotMatch[                text,   text,   string, AlertType] ;
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ;  IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AlertIfFilesNotMatch (                              Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ;  IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ;  IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AlertIfFilesNotMatch (                              file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ;  IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AlertIfDiff (                              Name1, Name2 : string;    Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AlertIfDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AlertIfDiff (                              file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[AlertLogIDType, string, string, string, AlertType, boolean, boolean] ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[                string, string, string, AlertType, boolean, boolean] ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[AlertLogIDType, text,   text,   string, AlertType, boolean, boolean] ;
+  alias AlertIfDiff is AlertIfFilesNotMatch[                text,   text,   string, AlertType, boolean, boolean] ;
   ------------------------------------------------------------
   ------------------------------------------------------------
   ------------------------------------------------------------
@@ -347,22 +351,26 @@ package AlertLogPkg is
   procedure AffirmIfNotEqual( Received, Expected : integer_vector ;   Message : string := "" ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
-  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfFilesMatch (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfFilesMatch (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfTranscriptsMatch (PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) ;
+  procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AffirmIfTranscriptsMatch (                              PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ;       Name1, Name2 : string;           Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AffirmIfFilesMatch (                                    Name1, Name2 : string;           Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ;  file File1, File2 : text;             Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  procedure AffirmIfFilesMatch (                               file File1, File2 : text;             Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
   -- Renamed AffirmIfNotDiff to AffirmIfFilesMatch as naming is clear.  Soft deprecate (name will remain supported via alias)
-  alias AffirmIfNotDiff is AffirmIfFilesMatch[AlertLogIDType, string, string, string, boolean] ;
-  alias AffirmIfNotDiff is AffirmIfFilesMatch[                string, string, string, boolean] ;
-  alias AffirmIfNotDiff is AffirmIfFilesMatch[AlertLogIDType, text,   text,   string, boolean] ;
-  alias AffirmIfNotDiff is AffirmIfFilesMatch[                text,   text,   string, boolean] ;
--- Deprecated as they are misnamed - should be AffirmIfNotDiff
-  alias AffirmIfDiff is AffirmIfFilesMatch[AlertLogIDType, string, string, string, boolean] ;
-  alias AffirmIfDiff is AffirmIfFilesMatch[                string, string, string, boolean] ;
-  alias AffirmIfDiff is AffirmIfFilesMatch[AlertLogIDType, text,   text,   string, boolean] ;
-  alias AffirmIfDiff is AffirmIfFilesMatch[                text,   text,   string, boolean] ;
+--  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ;      Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AffirmIfNotDiff (                                   Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AffirmIfNotDiff (AlertLogID : AlertLogIDType ; file File1, File2 : text;   Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+--  procedure AffirmIfNotDiff (                              file File1, File2 : text;   Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[AlertLogIDType, string, string, string, boolean, boolean, boolean] ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[                string, string, string, boolean, boolean, boolean] ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[AlertLogIDType, text,   text,   string, boolean, boolean, boolean] ;
+  alias AffirmIfNotDiff is AffirmIfFilesMatch[                text,   text,   string, boolean, boolean, boolean] ;
+  -- Deprecated as they are misnamed - should be AffirmIfNotDiff
+  alias AffirmIfDiff is AffirmIfFilesMatch[AlertLogIDType, string, string, string, boolean, boolean, boolean] ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[                string, string, string, boolean, boolean, boolean] ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[AlertLogIDType, text,   text,   string, boolean, boolean, boolean] ;
+  alias AffirmIfDiff is AffirmIfFilesMatch[                text,   text,   string, boolean, boolean, boolean] ;
 
   ------------------------------------------------------------
   -- Support for Specification / Requirements Tracking
@@ -4966,68 +4974,68 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
 
-
   ------------------------------------------------------------
   -- Local
-  function LocalDiff (Line1, Line2 : string) return boolean is
-  -- Simple diff.  Move to string handling functions?
+  function LocalDiff ( S1, S2 : string; IgnoreSpaces : boolean) return boolean is
   ------------------------------------------------------------
-    alias aLine1 : string (1 to Line1'length) is Line1 ;
-    alias aLine2 : string (1 to Line2'length) is Line2 ;
-    variable EndLine1 : integer := Line1'length;
-    variable EndLine2 : integer := Line2'length;
+    variable vS1 : string (1 to S1'length) ;
+    variable vS2 : string (1 to S2'length) ;
+    variable LenS1 : integer := S1'length;
+    variable LenS2 : integer := S2'length;
   begin
-    -- Strip off any windows or unix end of line characters
-    for i in Line1'length downto 1 loop
-      exit when aLine1(i) /= LF and aLine1(i) /= CR ;
-      EndLine1 := i - 1;
-    end loop ;
-    for i in Line2'length downto 1 loop
-      exit when aLine2(i) /= LF and aLine2(i) /= CR ;
-      EndLine2 := i - 1;
-    end loop ;
+    vS1 := S1 ; 
+    vS2 := S2 ; 
+    if IgnoreSpaces then
+      RemoveSpace(vS1, LenS1) ; 
+      RemoveSpace(vS2, LenS2) ; 
+    else
+      -- only required for non-compliant simulators - X
+      RemoveCrLf(vS1, LenS1) ; 
+      RemoveCrLf(vS2, LenS2) ; 
+    end if ; 
     
---q    return aLine1(1 to EndLine1) /= aLine2(1 to EndLine2) ;
-    if EndLine1 = 0 and EndLine2 = 0 then 
+--q    return aS1(1 to EndLine1) /= aS2(1 to EndLine2) ;
+    if LenS1 = 0 and LenS2 = 0 then 
       return FALSE ; 
     else
-      return aLine1(1 to EndLine1) /= aLine2(1 to EndLine2) ;
+      return vS1(1 to LenS1) /= vS2(1 to LenS2) ;
     end if ; 
   end function LocalDiff ;
 
   ------------------------------------------------------------
   -- Local
-  procedure LocalAlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string ; Level : AlertType ; Valid : out boolean ) is
+  procedure LocalAlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string ; Level : AlertType ; Valid : out boolean ; IgnoreSpaces : boolean ; IgnoreEmptyLines : boolean ) is
   ------------------------------------------------------------
     variable Buf1, Buf2 : line ;
-    variable File1Done, File2Done : boolean ;
-    variable LineCount : integer := 0 ;
+    variable EndOfFile1, EndOfFile2 : boolean ;
+    variable LineCount1, LineCount2 : integer := 0 ;
+--!! Change these to input parameters    
+--    variable IgnoreEmptyLines, IgnoreSpaces : boolean := FALSE ; 
   begin
     -- synthesis translate_off
     ReadLoop : loop
-      File1Done := EndFile(File1) ;
-      File2Done := EndFile(File2) ;
-      exit ReadLoop when File1Done or File2Done ;
-
-      ReadLine(File1, Buf1) ;
-      ReadLine(File2, Buf2) ;
-      LineCount := LineCount + 1 ;
-
---      if Buf1.all /= Buf2.all then  -- fails when use Windows file in Unix
-      if LocalDiff(Buf1.all, Buf2.all) then
-        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File miscompare on line " & to_string(LineCount), Level) ;
+      GetLine(File1, Buf1, LineCount1, EndOfFile1, IgnoreEmptyLines) ; 
+      GetLine(File2, Buf2, LineCount2, EndOfFile2, IgnoreEmptyLines) ; 
+      
+      exit ReadLoop when EndOfFile1 or EndOfFile2 ; 
+      
+--!! if IgnoreEmptyLines, then the LineCount can be different and still compare.  Update messages below that report LineCount?  Different Reporting for IgnoreEmptyLines?
+--!!
+      if LocalDiff(Buf1.all, Buf2.all, IgnoreSpaces) then
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File miscompare on line " & to_string(LineCount1), Level) ;
         exit ReadLoop ;
       end if ;
     end loop ReadLoop ;
-    if File1Done /= File2Done then
-      if not File1Done then
-        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File1 longer than File2 " & to_string(LineCount), Level) ;
+    
+    if EndOfFile1 /= EndOfFile2 then
+      if not EndOfFile1 then
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File1 longer than File2 " & to_string(LineCount2), Level) ;
       end if ;
-      if not File2Done then
-        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File2 longer than File1 " & to_string(LineCount), Level) ;
+      if not EndOfFile2 then
+        AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File2 longer than File1 " & to_string(LineCount1), Level) ;
       end if ;
     end if;
-    if File1Done and File2Done then
+    if EndOfFile1 and EndOfFile2 then
       Valid := TRUE ;
     else
       Valid := FALSE ;
@@ -5037,7 +5045,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- Local
-  procedure LocalAlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string ; Level : AlertType ; Valid : out boolean ) is
+  procedure LocalAlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string ; Level : AlertType ; Valid : out boolean ; IgnoreSpaces : boolean ; IgnoreEmptyLines : boolean ) is
   -- Open files and call AlertIfDiff[text, ...]
   ------------------------------------------------------------
     file FileID1, FileID2 : text ;
@@ -5048,7 +5056,7 @@ package body AlertLogPkg is
     file_open(status1, FileID1, Name1, READ_MODE) ;
     file_open(status2, FileID2, Name2, READ_MODE) ;
     if status1 = OPEN_OK and status2 = OPEN_OK then
-      LocalAlertIfFilesNotMatch (AlertLogID, FileID1, FileID2, AddSpaceIfNotEmpty(Message) & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid) ;
+      LocalAlertIfFilesNotMatch (AlertLogID, FileID1, FileID2, AddSpaceIfNotEmpty(Message) & "diff " & Name1 & "  " & Name2 & ", ", Level, Valid, IgnoreSpaces, IgnoreEmptyLines ) ;
 
     else
       if status1 /= OPEN_OK then
@@ -5062,43 +5070,43 @@ package body AlertLogPkg is
   end procedure LocalAlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfFilesNotMatch (AlertLogID, Name1, Name2, Message, Level, Valid) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, Name1, Name2, Message, Level, Valid, IgnoreSpaces, IgnoreEmptyLines) ;
     -- synthesis translate_on
   end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfFilesNotMatch (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (Name1, Name2 : string; Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfFilesNotMatch (ALERT_DEFAULT_ID, Name1, Name2, Message, Level, Valid) ;
+    LocalAlertIfFilesNotMatch (ALERT_DEFAULT_ID, Name1, Name2, Message, Level, Valid, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   -- Simple diff.
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfFilesNotMatch (AlertLogID, File1, File2, Message, Level, Valid ) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, File1, File2, Message, Level, Valid, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AlertIfFilesNotMatch ;
 
   ------------------------------------------------------------
-  procedure AlertIfFilesNotMatch (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ) is
+  procedure AlertIfFilesNotMatch (file File1, File2 : text; Message : string := "" ; Level : AlertType := ERROR ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfFilesNotMatch (ALERT_DEFAULT_ID, File1, File2, Message, Level, Valid ) ;
+    LocalAlertIfFilesNotMatch (ALERT_DEFAULT_ID, File1, File2, Message, Level, Valid, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AlertIfFilesNotMatch ;
 
@@ -5854,13 +5862,13 @@ package body AlertLogPkg is
   end procedure AffirmIfNotEqual ;
 
   ------------------------------------------------------------
-  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   -- Open files and call AffirmIfNotDiff[text, ...]
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfFilesNotMatch (AlertLogID, Name1, Name2, Message, ERROR, Valid) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, Name1, Name2, Message, ERROR, Valid, IgnoreSpaces, IgnoreEmptyLines ) ;
     if Valid then
       AlertLogStruct.Log(AlertLogID, AddSpaceIfNotEmpty(Message) & Name1 & "  " & Name2, PASSED, Enable) ;
     else
@@ -5871,22 +5879,22 @@ package body AlertLogPkg is
   end procedure AffirmIfFilesMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfFilesMatch (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (Name1, Name2 : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfFilesMatch(ALERT_DEFAULT_ID, Name1, Name2, Message, Enable) ;
+    AffirmIfFilesMatch(ALERT_DEFAULT_ID, Name1, Name2, Message, Enable, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AffirmIfFilesMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (AlertLogID : AlertLogIDType ; file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   -- Simple diff.
   ------------------------------------------------------------
     variable Valid : boolean ;
   begin
     -- synthesis translate_off
-    LocalAlertIfFilesNotMatch (AlertLogID, File1, File2, Message, ERROR, Valid ) ;
+    LocalAlertIfFilesNotMatch (AlertLogID, File1, File2, Message, ERROR, Valid, IgnoreSpaces, IgnoreEmptyLines ) ;
     if Valid then
       AlertLogStruct.Log(AlertLogID, Message, PASSED, Enable) ;
     else
@@ -5897,29 +5905,29 @@ package body AlertLogPkg is
   end procedure AffirmIfFilesMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfFilesMatch (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfFilesMatch (file File1, File2 : text; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfFilesMatch(ALERT_DEFAULT_ID, File1, File2, Message, Enable) ;
+    AffirmIfFilesMatch(ALERT_DEFAULT_ID, File1, File2, Message, Enable, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AffirmIfFilesMatch ;
   
   ------------------------------------------------------------
-  procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfFilesMatch(AlertLogID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable) ;
+    AffirmIfFilesMatch(AlertLogID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AffirmIfTranscriptsMatch ;
 
   ------------------------------------------------------------
-  procedure AffirmIfTranscriptsMatch (PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ) is
+  procedure AffirmIfTranscriptsMatch (PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AffirmIfFilesMatch(ALERT_DEFAULT_ID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable) ;
+    AffirmIfFilesMatch(ALERT_DEFAULT_ID, OSVVM_RAW_OUTPUT_DIRECTORY & GetTranscriptName, PathToValidatedResults & '/' & GetTranscriptName, Message, Enable, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AffirmIfTranscriptsMatch ;
 
