@@ -97,6 +97,10 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_TIME_LAST      : boolean ; 
   constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT  : integer ;     -- Historic 0
   
+  -- File Match/Diff controls
+  constant  ALERT_LOG_IGNORE_SPACES           : boolean ; 
+  constant  ALERT_LOG_IGNORE_EMPTY_LINES     : boolean ; 
+  
   -- Boolean controls to print or not print fields in Alert/Log
   constant  ALERT_LOG_WRITE_ERRORCOUNT     : boolean ;  -- prefix message with # of errors - requested by Marco for Mike P.
   constant  ALERT_LOG_WRITE_NAME           : boolean ;   -- Print Alert
