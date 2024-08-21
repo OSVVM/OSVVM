@@ -2727,14 +2727,14 @@ package body CoveragePkg is
       variable Dimensions : integer := 0 ;
     begin
       -- Support names for up to a cross of 20
-      for i in 1 to 20 loop
+      for CrossNum in 1 to 20 loop
         if CovStructPtr(ID.ID).FieldName /= NULL then
-          for i in 1 to CovStructPtr(ID.ID).FieldName'length loop
-            deallocate (CovStructPtr(ID.ID).FieldName(i)) ;
+          for Field in 1 to CovStructPtr(ID.ID).FieldName'length loop
+            deallocate (CovStructPtr(ID.ID).FieldName(Field)) ;
           end loop ;
           deallocate (CovStructPtr(ID.ID).FieldName) ;
         end if;
-        case i is
+        case CrossNum is
           when  1 =>  NamePtr := NewNamePtr(Name1) ;
           when  2 =>  NamePtr := NewNamePtr(Name2) ;
           when  3 =>  NamePtr := NewNamePtr(Name3) ;
@@ -2757,8 +2757,8 @@ package body CoveragePkg is
           when 20 =>  NamePtr := NewNamePtr(Name20) ;
         end case ;
         exit when NamePtr = NULL ;
-        FieldNameArray(i) := NamePtr ;
-        Dimensions := i ;
+        FieldNameArray(CrossNum) := NamePtr ;
+        Dimensions := CrossNum ;
       end loop ;
       CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray(1 to Dimensions)) ;
       -- Check that Dimensions match bin dimensions
