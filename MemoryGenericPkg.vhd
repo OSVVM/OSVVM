@@ -572,11 +572,23 @@ package body MemoryGenericPkg is
       constant Name  : in string
     ) return boolean is 
     begin
-      return AlertIf(OSVVM_MEMORY_ALERTLOG_ID, ID < MIN_INDEX or ID > MemStructPtr'High, 
-         "MemoryPkg." & Name & " ID: " & to_string(ID) & 
-               "is not in the range (" & to_string(MIN_INDEX) &
-               " to " & to_string(MemStructPtr'High) & ")",
-         FAILURE ) ;
+      if ID < MIN_INDEX or ID > MemStructPtr'High then 
+        if ID = integer'left then 
+          Alert(OSVVM_MEMORY_ALERTLOG_ID, "MemoryPkg." & Name & " ID not initialized yet.  " &
+            "Either a call to NewID or wait for 0 ns (to allow for signal update) is needed. ",
+             FAILURE ) ;
+        else 
+          Alert(OSVVM_MEMORY_ALERTLOG_ID,  
+             "MemoryPkg." & Name & " ID: " & to_string_max(ID) & 
+                   " is not in the range (" & to_string(MIN_INDEX) &
+                   " to " & to_string(MemStructPtr'High) & ")",
+             FAILURE ) ;
+        end if ; 
+        return TRUE ;
+      else
+        -- valid ID
+        return FALSE ; 
+      end if; 
     end function IdOutOfRange ; 
 
     ------------------------------------------------------------

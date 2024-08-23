@@ -133,6 +133,7 @@ use work.NameStorePkg.all ;
 use work.MessageListPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.VendorCovApiPkg.all ;
+use work.LanguageSupport2019Pkg.all ;
 
 package CoveragePkg is
 
@@ -156,7 +157,7 @@ package CoveragePkg is
   type RangeArrayType is array (integer range <>) of RangeType ;
   constant ALL_RANGE : RangeArrayType := (1=>(Integer'left, Integer'right)) ;
 
-  procedure write ( file f :  text ;  BinVal : RangeArrayType ) ;
+--!!  procedure write ( file f :  text ;  BinVal : RangeArrayType ) ;
   procedure write ( variable buf : inout line ; constant BinVal : in RangeArrayType) ;
 
   -- CovBinBaseType.action values.
@@ -1770,29 +1771,30 @@ package body CoveragePkg is
   ------------------------------------------------------------
     alias iCovPoint : integer_vector(1 to CovPoint'length) is CovPoint ;
   begin
-    write(buf, "(" & integer'image(iCovPoint(1)) ) ;
+    write(buf, "(" & to_string_max(iCovPoint(1)) ) ;
     for i in 2 to iCovPoint'right loop
-      write(buf, "," & integer'image(iCovPoint(i)) ) ;
+      write(buf, "," & to_string_max(iCovPoint(i)) ) ;
     end loop ;
     swrite(buf, ")") ;
   end procedure write ;
 
-  ------------------------------------------------------------
-  procedure write ( file f :  text ;  BinVal : RangeArrayType ) is
-  -- called by WriteBin and WriteCovHoles
-  ------------------------------------------------------------
-  begin
-    for i in BinVal'range loop
-      if BinVal(i).min = BinVal(i).max then
-        write(f, "(" & integer'image(BinVal(i).min) & ") " ) ;
-      elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
-        write(f, "(ALL) " ) ;
-      else
-        write(f, "(" & integer'image(BinVal(i).min) & " to " &
-                       integer'image(BinVal(i).max) & ") " ) ;
-      end if ;
-    end loop ;
-  end procedure write ;
+--!!   ------------------------------------------------------------
+--!! --?? Is this still used?  Probably not. Remove if not used.
+--!!   procedure write ( file f :  text ;  BinVal : RangeArrayType ) is
+--!!   -- called by WriteBin and WriteCovHoles
+--!!   ------------------------------------------------------------
+--!!   begin
+--!!     for i in BinVal'range loop
+--!!       if BinVal(i).min = BinVal(i).max then
+--!!         write(f, "(" & to_string_max(BinVal(i).min) & ") " ) ;
+--!!       elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
+--!!         write(f, "(ALL) " ) ;
+--!!       else
+--!!         write(f, "(" & to_string_max(BinVal(i).min) & " to " &
+--!!                        to_string_max(BinVal(i).max) & ") " ) ;
+--!!       end if ;
+--!!     end loop ;
+--!!   end procedure write ;
 
   ------------------------------------------------------------
   procedure write (
@@ -1805,12 +1807,12 @@ package body CoveragePkg is
   begin
     for i in BinVal'range loop
       if BinVal(i).min = BinVal(i).max then
-        write(buf, "(" & integer'image(BinVal(i).min) & ") " ) ;
-      elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
+        write(buf, "(" & to_string_max(BinVal(i).min) & ") " ) ;
+      elsif  (BinVal(i).min = integer'low) and (BinVal(i).max = integer'high) then
         swrite(buf, "(ALL) " ) ;
       else
-        write(buf, "(" & integer'image(BinVal(i).min) & " to " &
-                       integer'image(BinVal(i).max) & ") " ) ;
+        write(buf, "(" & to_string_max(BinVal(i).min) & " to " &
+                       to_string_max(BinVal(i).max) & ") " ) ;
       end if ;
     end loop ;
   end procedure write ;

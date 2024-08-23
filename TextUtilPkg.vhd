@@ -90,6 +90,12 @@ package TextUtilPkg is
   function to_hxstring ( A : signed) return string ;
 
   ------------------------------------------------------------
+  -- to_string_max
+  --   If value is integer'high or integer'low, return that instead of the string
+  ------------------------------------------------------------
+  function to_string_max ( I : integer) return string ;
+
+  ------------------------------------------------------------
   -- Justify
   --   w/ Fill Character
   --   w/o Fill character, Parameter order & names sensible
@@ -508,6 +514,21 @@ package body TextUtilPkg is
   begin
     return local_to_hxstring(std_ulogic_vector(A), IsSigned => TRUE) ;
   end function to_hxstring ;
+
+  ------------------------------------------------------------
+  -- to_string_max
+  --   If value is integer'high or integer'low, return that instead of the string
+  ------------------------------------------------------------
+  function to_string_max ( I : integer) return string is
+  begin
+    if I = integer'high then 
+      return "integer'high" ; 
+    elsif I = integer'low then 
+      return "integer'low" ; 
+    else 
+      return to_string(I) ;
+    end if ; 
+  end function to_string_max ;
 
   ------------------------------------------------------------
   -- Justify
