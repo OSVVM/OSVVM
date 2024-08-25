@@ -58,6 +58,7 @@ context OsvvmContext is
   use OSVVM.SortListPkg_int.all ;
   use OSVVM.RandomBasePkg.all ;
   use OSVVM.RandomPkg.all ;
+  use OSVVM.RandomPkg2019.all ;     -- for non-2019 tools this is empty
   use OSVVM.CoveragePkg.all ;
   use OSVVM.DelayCoveragePkg.all ;
   use OSVVM.MemoryPkg.all ;
@@ -67,7 +68,7 @@ context OsvvmContext is
   use OSVVM.ClockResetPkg.all ;
   use OSVVM.ReportPkg.all ;
   use OSVVM.OsvvmTypesPkg.all ; 
-  use OSVVM.LanguageSupport2019Pkg.all ; 
+  use OSVVM.LanguageSupport2019Pkg.all ;  -- for non-2019 tools this has stub subprograms that allow a graceful degradation of 2019 features
 
 end context OsvvmContext ; 
 
