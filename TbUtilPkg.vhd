@@ -295,11 +295,21 @@ package TbUtilPkg is
   ------------------------------------------------------------
   -- Predefined barrier signals
   ------------------------------------------------------------
-  signal OsvvmTestInit  : BarrierType ; 
-  signal OsvvmResetDone : BarrierType ; 
-  signal OsvvmTestDone  : BarrierType ; 
-  signal TestDone       : BarrierType ; 
-  signal OsvvmVcInit    : BarrierType ; 
+  type PredefinedBarrierType is record 
+    ResetStarted   : BarrierType ; 
+    ResetDone      : BarrierType ; 
+    TestInit       : BarrierType ; 
+    TestDone       : BarrierType ; 
+    VcInit         : BarrierType ; 
+  end record PredefinedBarrierType ; 
+  signal Barrier : PredefinedBarrierType ;
+  
+  alias OsvvmResetStarted  : BarrierType is Barrier.ResetStarted ; 
+  alias OsvvmResetDone     : BarrierType is Barrier.ResetDone ; 
+  alias OsvvmTestInit      : BarrierType is Barrier.TestInit ; 
+  alias OsvvmTestDone      : BarrierType is Barrier.TestDone ; 
+  alias TestDone           : BarrierType is Barrier.TestDone ; 
+  alias OsvvmVcInit        : BarrierType is Barrier.VcInit ; 
 
   ------------------------------------------------------------
   -- WaitForClock
