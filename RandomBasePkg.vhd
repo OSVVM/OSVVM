@@ -39,7 +39,7 @@
 --    5/2013     2013.05    No Changes
 --    4/2013     2013.04    No Changes
 --    03/01/2011 2.0        STANDARD VERSION
---                          Fixed abstraction by moving RandomParmType to RandomPkg.vhd 
+--                          Fixed abstraction by moving RandomParamType to RandomPkg.vhd 
 --    02/25/2009 1.1        Replaced reference to std_2008 with a reference 
 --                          to ieee_proposed.standard_additions.all ;
 --    02/2009:   1.0        First Public Released Version
@@ -112,6 +112,7 @@ package RandomBasePkg is
   impure function  OldGenRandSeed(IV : integer_vector) return RandomSeedType ;
   impure function  GenRandSeed   (I  : integer) return RandomSeedType ;
   impure function  OldGenRandSeed(I  : integer) return RandomSeedType ;
+  impure function  GenRandSeed   (T  : Time) return RandomSeedType ;
   impure function  GenRandSeed   (S  : string)  return RandomSeedType ;
   impure function  OldGenRandSeed(S  : string)  return RandomSeedType ;
   procedure SetRandomSalt (I : integer) ; 
@@ -131,13 +132,15 @@ package RandomBasePkg is
 
   -----------------------------------------------------------------
   --- Distribution Types and read/write procedures
-  type RandomDistType is (NONE, UNIFORM, FAVOR_SMALL, FAVOR_BIG, NORMAL, POISSON) ;
+  type RandomDistType is (UNIFORM, FAVOR_SMALL, FAVOR_BIG, NORMAL, POISSON) ;
 
-  type RandomParmType is record
+  type RandomParamType is record
     Distribution : RandomDistType ;
     Mean         : Real ; -- also used as probability of success
     StdDeviation : Real ; -- also used as number of trials for binomial
   end record ;
+  
+  subtype RandomParmType is RandomParamType ;  -- backward compatibility
 
   -----------------------------------------------------------------
   -- RandomParm IO
@@ -145,10 +148,10 @@ package RandomBasePkg is
   procedure write(variable L : inout line ; A : RandomDistType ) ;
   procedure read (variable L : inout line ; A : out RandomDistType ; good : out boolean ) ;
   procedure read (variable L : inout line ; A : out RandomDistType ) ;
-  function to_string(A : RandomParmType) return string ;
-  procedure write(variable L : inout line ; A : RandomParmType ) ;
-  procedure read (variable L : inout line ; A : out RandomParmType ; good : out boolean ) ;
-  procedure read (variable L : inout line ; A : out RandomParmType ) ;
+  function to_string(A : RandomParamType) return string ;
+  procedure write(variable L : inout line ; A : RandomParamType ) ;
+  procedure read (variable L : inout line ; A : out RandomParamType ; good : out boolean ) ;
+  procedure read (variable L : inout line ; A : out RandomParamType ) ;
 
   -----------------------------------------------------------------
   ---  Randomization Support
@@ -209,8 +212,8 @@ package body RandomBasePkg is
   impure function GenRandSeed(IV : integer_vector) return RandomSeedType is
   ------------------------------------------------------------
     alias iIV : integer_vector(1 to IV'length) is IV ;
-    variable Seed1 : integer ;
-    variable Seed2 : integer ;
+    variable Seed      : RandomSeedType ; 
+    variable ChurnSeed : real ;
     constant SEED1_MAX : integer := 2147483562 ;
     constant SEED2_MAX : integer := 2147483398 ;
   begin
@@ -225,10 +228,12 @@ package body RandomBasePkg is
     else  -- only use the left two values
       -- mod returns 0 to MAX-1, the -1 adjusts legal values, +1 adjusts them back
       -- 1 <= SEED1 <= 2147483562
-      Seed1 := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
+      Seed(1) := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
      -- 1 <= SEED2 <= 2147483398
-      Seed2 := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
-      return (Seed1, Seed2) ;
+      Seed(2) := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
+      
+      Uniform(ChurnSeed, Seed) ;
+      return Seed ;
     end if ;
   end function GenRandSeed ;
 
@@ -264,11 +269,13 @@ package body RandomBasePkg is
   --  GenRandSeed - Integer
   impure function GenRandSeed(I : integer) return RandomSeedType is
   -----------------------------------------------------------------
-    variable result : RandomSeedType ;
+    variable Seed      : RandomSeedType ; 
+    variable ChurnSeed : real ;
   begin
-    result(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0) mod 2.0 ** 30) ;
-    result(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
-    return result ; -- make value ranges legal
+    Seed(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0) mod 2.0 ** 30) ;
+    Seed(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
+    Uniform(ChurnSeed, Seed) ;
+    return Seed ; 
   end function GenRandSeed ;
 
   -----------------------------------------------------------------
@@ -282,6 +289,18 @@ package body RandomBasePkg is
   end function OldGenRandSeed ;
 
   -----------------------------------------------------------------
+  --  GenRandSeed - Time
+  impure function GenRandSeed(T : Time) return RandomSeedType is
+  -----------------------------------------------------------------
+  begin
+    -- NVC fatals on the integer conversion time values >= 2**31, hence, the following was removed
+    --      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
+    -- Also consider:
+    --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
+    return GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit ) ; 
+  end function GenRandSeed ;
+
+  -----------------------------------------------------------------
   --  GenRandSeed - String
   --    usage:  RV.GenRandSeed(RV'instance_path));
   --    hash based on DJBX33A
@@ -290,18 +309,20 @@ package body RandomBasePkg is
     constant LEN : integer := S'length ;
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
-    variable result : RandomSeedType ;
+    variable Seed      : RandomSeedType ; 
+    variable ChurnSeed : real ;
     variable temp : real := 5381.0 ;
   begin
     for i in 1 to HALF_LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(1) := (integer(temp) + GetRandomSalt) mod (2**30) ;
+    Seed(1) := (integer(temp) + GetRandomSalt) mod (2**30) ;
     for i in HALF_LEN + 1 to LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    result(2) := integer(temp) ;
-    return result ;  
+    Seed(2) := integer(temp) ;
+    Uniform(ChurnSeed, Seed) ;
+    return Seed ; 
   end function GenRandSeed ;
   
   -----------------------------------------------------------------
@@ -440,7 +461,7 @@ package body RandomBasePkg is
   end procedure read ;
   
   -----------------------------------------------------------------
-  --  RandomParmType IO
+  --  RandomParamType IO
   -- 
   -----------------------------------------------------------------
   function to_string(A : RandomDistType) return string is
@@ -478,7 +499,7 @@ package body RandomBasePkg is
   end procedure read ;
 
   -----------------------------------------------------------------
-  function to_string(A : RandomParmType) return string is
+  function to_string(A : RandomParamType) return string is
   -----------------------------------------------------------------
   begin
     return RandomDistType'image(A.Distribution) & " " &
@@ -486,14 +507,14 @@ package body RandomBasePkg is
   end function to_string ;
 
   -----------------------------------------------------------------
-  procedure write(variable L : inout line ; A : RandomParmType ) is
+  procedure write(variable L : inout line ; A : RandomParamType ) is
   -----------------------------------------------------------------
   begin
     write(L, to_string(A)) ;
   end procedure write ;
 
   -----------------------------------------------------------------
-  procedure read(variable L : inout line ; A : out RandomParmType ; good : out boolean ) is
+  procedure read(variable L : inout line ; A : out RandomParamType ; good : out boolean ) is
   -----------------------------------------------------------------
     variable strval : string(1 to 40) ;
     variable len    : natural ;
@@ -516,12 +537,12 @@ package body RandomBasePkg is
   end procedure read ;
 
   -----------------------------------------------------------------
-  procedure read(variable L : inout line ; A : out RandomParmType ) is
+  procedure read(variable L : inout line ; A : out RandomParamType ) is
   -----------------------------------------------------------------
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
-      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomParmType] failed", FAILURE) ; 
+      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomParamType] failed", FAILURE) ; 
   end procedure read ;
 
 

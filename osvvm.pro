@@ -95,7 +95,7 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
 if {$::osvvm::VhdlVersion >= 2019}  {
   analyze LanguageSupport2019Pkg.vhd
 } else {
-  analyze LanguageSupport2019Pkg_c.vhd
+  analyze deprecated/LanguageSupport2019Pkg_c.vhd
 }
 
 analyze TranscriptPkg.vhd
@@ -178,5 +178,12 @@ if {$::osvvm::ToolSupportsDeferredConstants}  {
     analyze OsvvmSettingsPkg_default.vhd
   }
 }
+
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze  RandomPkg2019.vhd
+} else {
+  analyze  deprecated/RandomPkg2019_c.vhd
+}
+
 
 analyze OsvvmContext.vhd 

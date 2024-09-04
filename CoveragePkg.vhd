@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Updated reporting for integer'high and integer'low
 --    07/2024   2024.07    In Yaml reports, print ones with weight = 0 last
 --                         Added IsInitialized
 --    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
@@ -133,6 +134,7 @@ use work.NameStorePkg.all ;
 use work.MessageListPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.VendorCovApiPkg.all ;
+use work.LanguageSupport2019Pkg.all ;
 
 package CoveragePkg is
 
@@ -144,7 +146,7 @@ package CoveragePkg is
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
-  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_COV_ALERTLOG_ID ;
+-- Merged the two constants in AlertLogPkg  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_COV_ALERTLOG_ID ;
 
   -- CovPType allocates bins that are multiples of MIN_NUM_BINS
   constant MIN_NUM_BINS : integer := 2**7 ;  -- power of 2
@@ -156,7 +158,7 @@ package CoveragePkg is
   type RangeArrayType is array (integer range <>) of RangeType ;
   constant ALL_RANGE : RangeArrayType := (1=>(Integer'left, Integer'right)) ;
 
-  procedure write ( file f :  text ;  BinVal : RangeArrayType ) ;
+--!!  procedure write ( file f :  text ;  BinVal : RangeArrayType ) ;
   procedure write ( variable buf : inout line ; constant BinVal : in RangeArrayType) ;
 
   -- CovBinBaseType.action values.
@@ -1770,29 +1772,30 @@ package body CoveragePkg is
   ------------------------------------------------------------
     alias iCovPoint : integer_vector(1 to CovPoint'length) is CovPoint ;
   begin
-    write(buf, "(" & integer'image(iCovPoint(1)) ) ;
+    write(buf, "(" & to_string_max(iCovPoint(1)) ) ;
     for i in 2 to iCovPoint'right loop
-      write(buf, "," & integer'image(iCovPoint(i)) ) ;
+      write(buf, "," & to_string_max(iCovPoint(i)) ) ;
     end loop ;
     swrite(buf, ")") ;
   end procedure write ;
 
-  ------------------------------------------------------------
-  procedure write ( file f :  text ;  BinVal : RangeArrayType ) is
-  -- called by WriteBin and WriteCovHoles
-  ------------------------------------------------------------
-  begin
-    for i in BinVal'range loop
-      if BinVal(i).min = BinVal(i).max then
-        write(f, "(" & integer'image(BinVal(i).min) & ") " ) ;
-      elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
-        write(f, "(ALL) " ) ;
-      else
-        write(f, "(" & integer'image(BinVal(i).min) & " to " &
-                       integer'image(BinVal(i).max) & ") " ) ;
-      end if ;
-    end loop ;
-  end procedure write ;
+--!!   ------------------------------------------------------------
+--!! --?? Is this still used?  Probably not. Remove if not used.
+--!!   procedure write ( file f :  text ;  BinVal : RangeArrayType ) is
+--!!   -- called by WriteBin and WriteCovHoles
+--!!   ------------------------------------------------------------
+--!!   begin
+--!!     for i in BinVal'range loop
+--!!       if BinVal(i).min = BinVal(i).max then
+--!!         write(f, "(" & to_string_max(BinVal(i).min) & ") " ) ;
+--!!       elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
+--!!         write(f, "(ALL) " ) ;
+--!!       else
+--!!         write(f, "(" & to_string_max(BinVal(i).min) & " to " &
+--!!                        to_string_max(BinVal(i).max) & ") " ) ;
+--!!       end if ;
+--!!     end loop ;
+--!!   end procedure write ;
 
   ------------------------------------------------------------
   procedure write (
@@ -1805,12 +1808,12 @@ package body CoveragePkg is
   begin
     for i in BinVal'range loop
       if BinVal(i).min = BinVal(i).max then
-        write(buf, "(" & integer'image(BinVal(i).min) & ") " ) ;
-      elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
+        write(buf, "(" & to_string_max(BinVal(i).min) & ") " ) ;
+      elsif  (BinVal(i).min = integer'low) and (BinVal(i).max = integer'high) then
         swrite(buf, "(ALL) " ) ;
       else
-        write(buf, "(" & integer'image(BinVal(i).min) & " to " &
-                       integer'image(BinVal(i).max) & ") " ) ;
+        write(buf, "(" & to_string_max(BinVal(i).min) & " to " &
+                       to_string_max(BinVal(i).max) & ") " ) ;
       end if ;
     end loop ;
   end procedure write ;
@@ -2546,11 +2549,9 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure InitSeed (ID : CoverageIDType; S : string;    UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) is
     ------------------------------------------------------------
-      variable ChurnSeed : integer ;
     begin
       if UseNewSeedMethods then
         CovStructPtr(ID.ID).RV := GenRandSeed(S) ;
-        Uniform(CovStructPtr(ID.ID).RV, ChurnSeed, 0, 1) ;
       else
         CovStructPtr(ID.ID).RV := OldGenRandSeed(S) ;
       end if ;
@@ -2569,11 +2570,9 @@ package body CoveragePkg is
     ------------------------------------------------------------
     procedure InitSeed (ID : CoverageIDType; I : integer; UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
-      variable ChurnSeed : integer ;
     begin
       if UseNewSeedMethods then
         CovStructPtr(ID.ID).RV := GenRandSeed(I) ;
-        Uniform(CovStructPtr(ID.ID).RV, ChurnSeed, 0, 1) ;
       else
         CovStructPtr(ID.ID).RV := OldGenRandSeed(I) ;
       end if ;
@@ -2731,14 +2730,14 @@ package body CoveragePkg is
       variable Dimensions : integer := 0 ;
     begin
       -- Support names for up to a cross of 20
-      for i in 1 to 20 loop
+      for CrossNum in 1 to 20 loop
         if CovStructPtr(ID.ID).FieldName /= NULL then
-          for i in 1 to CovStructPtr(ID.ID).FieldName'length loop
-            deallocate (CovStructPtr(ID.ID).FieldName(i)) ;
+          for Field in 1 to CovStructPtr(ID.ID).FieldName'length loop
+            deallocate (CovStructPtr(ID.ID).FieldName(Field)) ;
           end loop ;
           deallocate (CovStructPtr(ID.ID).FieldName) ;
         end if;
-        case i is
+        case CrossNum is
           when  1 =>  NamePtr := NewNamePtr(Name1) ;
           when  2 =>  NamePtr := NewNamePtr(Name2) ;
           when  3 =>  NamePtr := NewNamePtr(Name3) ;
@@ -2761,8 +2760,8 @@ package body CoveragePkg is
           when 20 =>  NamePtr := NewNamePtr(Name20) ;
         end case ;
         exit when NamePtr = NULL ;
-        FieldNameArray(i) := NamePtr ;
-        Dimensions := i ;
+        FieldNameArray(CrossNum) := NamePtr ;
+        Dimensions := CrossNum ;
       end loop ;
       CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray(1 to Dimensions)) ;
       -- Check that Dimensions match bin dimensions
@@ -9113,7 +9112,7 @@ package body CoveragePkg is
     variable iCovBin : CovBinType(1 to NumBin) ;
     variable TotalBins : integer ; -- either real or integer
     variable rMax, rCurMin, rNumItemsInBin, rRemainingBins : real ; -- must be real
-    variable iCurMin, iCurMax : integer ;
+    variable iCurMin, iCurMax, NegMaxMinus1, RemainingBins, NumItemsInBin : integer ;
   begin
     if Min > Max then
       -- Similar to NULL ranges.  Only generate report warning.
@@ -9141,16 +9140,15 @@ package body CoveragePkg is
       ) ;
       return iCovBin ;
 
-    else
-      -- Using type real to work around issues with integer sizing
+    elsif Min >= integer'low/2 and Max <= integer'high/2 then 
+      -- Do calculations in type integer
       iCurMin := Min ;
-      rCurMin := real(iCurMin) ;
-      rMax    := real(Max) ;
-      rRemainingBins :=  (minimum( real(NumBin), rMax - rCurMin + 1.0 )) ;
-      TotalBins := integer(rRemainingBins)  ;
+      NegMaxMinus1 := -Max - 1 ; 
+      RemainingBins := - maximum(-NumBin, NegMaxMinus1 + Min) ; -- Keep addition in bounds of type integer
+      TotalBins := RemainingBins ; 
       for i in iCovBin'range loop
-        rNumItemsInBin := trunc((rMax - rCurMin + 1.0) / rRemainingBins) ; -- Max - Min can be larger than integer range.
-        iCurMax := iCurMin - integer(-rNumItemsInBin + 1.0) ;  -- Keep: the "minus negative" works around a simulator bounds issue found in 2015.06
+        NumItemsInBin := ((iCurMin + NegMaxMinus1) / RemainingBins) ;  -- Keep addition in bounds of type integer
+        iCurMax := iCurMin - NumItemsInBin - 1 ;  -- NumItemsInBin is negative
         iCovBin(i) := (
           BinVal   => (1 => (iCurMin, iCurMax)),
           Action   => Action,
@@ -9158,14 +9156,53 @@ package body CoveragePkg is
           Weight   => Weight,
           AtLeast  => AtLeast
         ) ;
-        rRemainingBins := rRemainingBins - 1.0 ;
-        exit when rRemainingBins = 0.0 ;
+        RemainingBins := RemainingBins - 1 ;
         iCurMin := iCurMax + 1 ;
-        rCurMin := real(iCurMin) ;
+        if RemainingBins = 1 then 
+          iCovBin(i+1) := (
+            BinVal   => (1 => (iCurMin, Max)),
+            Action   => Action,
+            Count    => 0,
+            Weight   => Weight,
+            AtLeast  => AtLeast
+          ) ;
+          exit ; 
+        end if ; 
       end loop ;
       return iCovBin(1 to TotalBins) ;
-
-    end if ;
+    else
+      iCurMin := Min ;
+      NegMaxMinus1 := -Max - 1 ; 
+      RemainingBins := NumBin ; 
+      TotalBins := 0 ; 
+      for i in iCovBin'range loop
+        NumItemsInBin :=  iCurMin/RemainingBins + NegMaxMinus1/RemainingBins + ((iCurMin rem RemainingBins + NegMaxMinus1 rem RemainingBins) / RemainingBins) ;  -- handling for large numbers
+        RemainingBins := RemainingBins - 1 ;
+        iCurMax := iCurMin - NumItemsInBin - 1 ;  -- NumItemsInBin is negative
+        next when iCurMax < iCurMin ;  -- NumBin/RemainingBins is too large, try again with a smaller value
+        TotalBins := TotalBins + 1 ;
+        iCovBin(TotalBins) := (
+          BinVal   => (1 => (iCurMin, iCurMax)),
+          Action   => Action,
+          Count    => 0,
+          Weight   => Weight,
+          AtLeast  => AtLeast
+        ) ;
+        iCurMin := iCurMax + 1 ;
+        if RemainingBins = 1 then 
+          TotalBins := TotalBins + 1 ;
+          iCovBin(TotalBins) := (
+            BinVal   => (1 => (iCurMin, Max)),
+            Action   => Action,
+            Count    => 0,
+            Weight   => Weight,
+            AtLeast  => AtLeast
+          ) ;
+          exit ; 
+        end if ; 
+      end loop ;
+      return iCovBin(1 to TotalBins) ;
+    end if ; 
   end function MakeBin ;
 
 
@@ -9260,8 +9297,15 @@ package body CoveragePkg is
   function GenBin ( Min, Max : integer) return CovBinType is
   ------------------------------------------------------------
   begin
-    -- create a separate CovBin for each value
-    -- AtLeast and Weight = 1 (must use longer version to specify)
+    -- create a separate CovBin for each value in the range Min to Max
+    if Min < integer'low/2 or Max > integer'high/2 then 
+      report LF & LF & "GenBin/IllegalBin/IgnoreBIn(" & to_string_max(min) & ", " & to_string_max(max) & ")  is likely an error." & LF &
+             "If the Max-Min+1 does not fit in an integer, you simulator may stop after these messages with a range constraint." & LF &
+             "In the event your code does not have constraint issues, to avoid this message with large numbers specify the number of bins you want.  Such as:" & LF &
+             "GenBin(" & to_string_max(min) & ", " & to_string_max(max) & ", 5)" & LF & LF  
+        severity WARNING ;
+    end if ; 
+
     return  MakeBin(
               Min      => Min,
               Max      => Max,

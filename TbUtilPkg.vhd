@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
 --    07/2024   2024.07    Added pre-defined barriers:  
 --                             OsvvmTestInit, OsvvmResetDone, OsvvmVcInit, 
 --                             OsvvmTestDone, TestDone
@@ -278,6 +279,7 @@ package TbUtilPkg is
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : time ) ;
   -- resolved_barrier : summing resolution used in conjunction with integer based barriers
   function resolved_barrier ( s : integer_vector ) return integer ;
+  -- integer'low+1 is for Xilinx.   It should be just integer'low
   subtype  BarrierType is resolved_barrier integer range integer'low+1 to integer'high ;
 --  alias    integer_barrier is BarrierType ; 
   subtype  integer_barrier is BarrierType ; 
@@ -294,11 +296,21 @@ package TbUtilPkg is
   ------------------------------------------------------------
   -- Predefined barrier signals
   ------------------------------------------------------------
-  signal OsvvmTestInit  : BarrierType ; 
-  signal OsvvmResetDone : BarrierType ; 
-  signal OsvvmTestDone  : BarrierType ; 
-  signal TestDone       : BarrierType ; 
-  signal OsvvmVcInit    : BarrierType ; 
+  type PredefinedBarrierType is record 
+    ResetStarted   : BarrierType ; 
+    ResetDone      : BarrierType ; 
+    TestInit       : BarrierType ; 
+    TestDone       : BarrierType ; 
+    VcInit         : BarrierType ; 
+  end record PredefinedBarrierType ; 
+  signal Barrier : PredefinedBarrierType ;
+  
+  alias OsvvmResetStarted  : BarrierType is Barrier.ResetStarted ; 
+  alias OsvvmResetDone     : BarrierType is Barrier.ResetDone ; 
+  alias OsvvmTestInit      : BarrierType is Barrier.TestInit ; 
+  alias OsvvmTestDone      : BarrierType is Barrier.TestDone ; 
+  alias TestDone           : BarrierType is Barrier.TestDone ; 
+  alias OsvvmVcInit        : BarrierType is Barrier.VcInit ; 
 
   ------------------------------------------------------------
   -- WaitForClock
@@ -937,9 +949,6 @@ package body TbUtilPkg is
     variable result : integer := 0 ;
   begin
     for i in s'RANGE loop
---      if s(i) /= integer'left then
---        result := result + s(i);
---      else
       if s(i) /= 0 then
         result := result + 1;  -- removes the initialization requirement
       end if ;

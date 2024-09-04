@@ -215,10 +215,12 @@ package body ClockResetPkg is
     variable BurstLength, ClockVariance : integer ; 
     constant ACTIVE_TIME     : time := Period * DutyCycle ;
     constant INACTIVE_VALUE  : std_logic := not ClkActive ; 
+    variable intCoverID      : CoverageIdType ; 
   begin
-    CoverID <= NewID(Name) ; 
-    wait for 0 ns ;
-    AddCross(CoverID, GenBin(1,20,1), GenBin(900,1100)) ; 
+    intCoverID := NewID(Name) ; 
+    AddCross(intCoverID, GenBin(1,20,1), GenBin(900,1100,1)) ; 
+    -- CoverID initialized after time 0, sim cycle 0 (ie: wait for 0 ns before changing the coverage model)
+    CoverID    <= intCoverID ; 
 
     if Clk = 'U' then 
       Clk <= INACTIVE_VALUE ; 
@@ -276,7 +278,7 @@ package body ClockResetPkg is
   ) is
     variable LastLogTime, ObservedPeriod : time ;
   begin
-    wait until EdgeActive(Clk, ClkActive) ;
+    wait until Clk = ClkActive and Clk'last_value = not ClkActive ;
     log(AlertLogID, ClkName & " first active edge", INFO) ;
     LastLogTime := now ;
     -- Check First HowMany clocks
@@ -322,7 +324,7 @@ package body ClockResetPkg is
     constant ClkActive   : in  std_logic := CLK_ACTIVE 
   ) is
   begin
-    wait until EdgeActive(Clk, ClkActive) ;
+    wait until Clk = ClkActive and Clk'last_value = not ClkActive ;
     Reset <= ResetActive after tpd ;
     wait for Period - t_sim_resolution ;
     wait until Clk = ClkActive ;

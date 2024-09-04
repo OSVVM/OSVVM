@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Updated reporting for integer'high and integer'low
 --    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
 --                         Added IsInitialized
 --    01/2023   2023.01    Updated address checks in MemRead and MemWrite
@@ -404,11 +405,12 @@ package body MemoryGenericPkg is
     type     ItemArrayPtrType is access ItemArrayType ;
     
     variable Template         : ItemArrayType(1 to 1) := (1 => (NULL, -1, 1, 0, 0, OSVVM_MEMORY_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
-    constant MEM_STRUCT_PTR_LEFT : integer := Template'left ; 
     variable MemStructPtr     : ItemArrayPtrType := new ItemArrayType'(Template) ;   
+    constant MIN_INDEX        : integer := 1 ;
+    constant PT_ID            : integer := MIN_INDEX ; 
     variable NumItems         : integer := 0 ; 
---    constant MIN_NUM_ITEMS    : integer := 4 ; -- Temporarily small for testing
-    constant MIN_NUM_ITEMS    : integer := 32 ; -- Min amount to resize array
+--    constant NUM_ITEMS_TO_ALLOCATE    : integer := 4 ; -- Temporarily small for testing
+    constant NUM_ITEMS_TO_ALLOCATE    : integer := 32 ; -- Min amount to resize array
     variable LocalNameStore   : NameStorePType ; 
     
     ------------------------------------------------------------
@@ -543,7 +545,7 @@ package body MemoryGenericPkg is
         
       else
         -- Add New Memory to Structure 
-        GrowNumberItems(MemStructPtr, NumItems, GrowAmount => 1, MinNumItems => MIN_NUM_ITEMS) ;
+        GrowNumberItems(MemStructPtr, NumItems, GrowAmount => 1, MinNumItems => NUM_ITEMS_TO_ALLOCATE) ;
         -- Create AlertLogID
         MemStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
         -- Construct Memory, Reports agains AlertLogID
@@ -571,11 +573,23 @@ package body MemoryGenericPkg is
       constant Name  : in string
     ) return boolean is 
     begin
-      return AlertIf(OSVVM_MEMORY_ALERTLOG_ID, ID < MemStructPtr'Low or ID > MemStructPtr'High, 
-         "MemoryPkg." & Name & " ID: " & to_string(ID) & 
-               "is not in the range (" & to_string(MemStructPtr'Low) &
-               " to " & to_string(MemStructPtr'High) & ")",
-         FAILURE ) ;
+      if ID < MIN_INDEX or ID > MemStructPtr'High then 
+        if ID = integer'left then 
+          Alert(OSVVM_MEMORY_ALERTLOG_ID, "MemoryPkg." & Name & " ID not initialized yet.  " &
+            "Either a call to NewID or wait for 0 ns (to allow for signal update) is needed. ",
+             FAILURE ) ;
+        else 
+          Alert(OSVVM_MEMORY_ALERTLOG_ID,  
+             "MemoryPkg." & Name & " ID: " & to_string_max(ID) & 
+                   " is not in the range (" & to_string(MIN_INDEX) &
+                   " to " & to_string(MemStructPtr'High) & ")",
+             FAILURE ) ;
+        end if ; 
+        return TRUE ;
+      else
+        -- valid ID
+        return FALSE ; 
+      end if; 
     end function IdOutOfRange ; 
 
     ------------------------------------------------------------
@@ -1210,11 +1224,13 @@ package body MemoryGenericPkg is
 
     procedure deallocate is
     begin
-      for ID in 1 to NumItems loop 
+      for ID in MemStructPtr'range loop 
         deallocate(ID) ;
       end loop ;
-      deallocate(MemStructPtr) ;   
+-- If this is done, nothing will work after
+--      deallocate(MemStructPtr) ;   
       NumItems := 0 ; 
+--      MemStructPtr := new ItemArrayType'(Template) ;   -- I--
     end procedure deallocate ; 
 
 -- /////////////////////////////////////////
@@ -1226,14 +1242,14 @@ package body MemoryGenericPkg is
     procedure MemInit ( AddrWidth, DataWidth  : in  integer ) is
     ------------------------------------------------------------
     begin
-      MemInit(MEM_STRUCT_PTR_LEFT, AddrWidth, DataWidth) ;
+      MemInit(PT_ID, AddrWidth, DataWidth) ;
     end procedure MemInit ;
 
     ------------------------------------------------------------
     procedure MemWrite (  Addr, Data  : in  std_logic_vector ) is 
     ------------------------------------------------------------
     begin
-      MemWrite(MEM_STRUCT_PTR_LEFT, Addr, Data) ; 
+      MemWrite(PT_ID, Addr, Data) ; 
     end procedure MemWrite ; 
 
     ------------------------------------------------------------
@@ -1243,16 +1259,16 @@ package body MemoryGenericPkg is
       Data  : Out  std_logic_vector 
     ) is
     begin
-      MemRead(MEM_STRUCT_PTR_LEFT, Addr, Data) ; 
+      MemRead(PT_ID, Addr, Data) ; 
     end procedure MemRead ; 
 
     ------------------------------------------------------------
     impure function MemRead ( Addr  : std_logic_vector ) return std_logic_vector is
     ------------------------------------------------------------
-      constant DATA_WIDTH : integer := MemStructPtr(MEM_STRUCT_PTR_LEFT).DataWidth ; 
+      constant DATA_WIDTH : integer := MemStructPtr(PT_ID).DataWidth ; 
       variable Data  : std_logic_vector(DATA_WIDTH-1 downto 0) ; 
     begin
-      MemRead(MEM_STRUCT_PTR_LEFT, Addr, Data) ; 
+      MemRead(PT_ID, Addr, Data) ; 
       return Data ; 
     end function MemRead ; 
 
@@ -1260,21 +1276,21 @@ package body MemoryGenericPkg is
     procedure SetAlertLogID (A : AlertLogIDType) is
     ------------------------------------------------------------
     begin
-      MemStructPtr(MEM_STRUCT_PTR_LEFT).AlertLogID  := A ;
+      MemStructPtr(PT_ID).AlertLogID  := A ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
     procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := OSVVM_MEMORY_ALERTLOG_ID ; CreateHierarchy : Boolean := TRUE) is
     ------------------------------------------------------------
     begin
-      MemStructPtr(MEM_STRUCT_PTR_LEFT).AlertLogID := GetAlertLogID(Name, ParentID, CreateHierarchy) ;
+      MemStructPtr(PT_ID).AlertLogID := GetAlertLogID(Name, ParentID, CreateHierarchy) ;
     end procedure SetAlertLogID ;
     
     ------------------------------------------------------------
     impure function GetAlertLogID return AlertLogIDType is
     ------------------------------------------------------------
     begin
-      return MemStructPtr(MEM_STRUCT_PTR_LEFT).AlertLogID ; 
+      return MemStructPtr(PT_ID).AlertLogID ; 
     end function GetAlertLogID ;
       
     ------------------------------------------------------------
@@ -1286,7 +1302,7 @@ package body MemoryGenericPkg is
       EndAddr      : std_logic_vector
     ) is
     begin
-      FileReadH(MEM_STRUCT_PTR_LEFT, FileName, StartAddr, EndAddr) ; 
+      FileReadH(PT_ID, FileName, StartAddr, EndAddr) ; 
     end FileReadH ;
     
     ------------------------------------------------------------
@@ -1294,7 +1310,7 @@ package body MemoryGenericPkg is
     -- Hexadecimal File Read 
     ------------------------------------------------------------
     begin
-      FileReadH(MEM_STRUCT_PTR_LEFT, FileName, StartAddr) ; 
+      FileReadH(PT_ID, FileName, StartAddr) ; 
     end FileReadH ;
 
     ------------------------------------------------------------
@@ -1302,7 +1318,7 @@ package body MemoryGenericPkg is
     -- Hexadecimal File Read 
     ------------------------------------------------------------
     begin
-      FileReadH(MEM_STRUCT_PTR_LEFT, FileName) ; 
+      FileReadH(PT_ID, FileName) ; 
     end FileReadH ;    
     
      ------------------------------------------------------------
@@ -1314,7 +1330,7 @@ package body MemoryGenericPkg is
       EndAddr      : std_logic_vector
     ) is
     begin
-      FileReadB(MEM_STRUCT_PTR_LEFT, FileName, StartAddr, EndAddr) ; 
+      FileReadB(PT_ID, FileName, StartAddr, EndAddr) ; 
     end FileReadB ;
     
     ------------------------------------------------------------
@@ -1322,7 +1338,7 @@ package body MemoryGenericPkg is
     -- Binary File Read 
     ------------------------------------------------------------
     begin
-      FileReadB(MEM_STRUCT_PTR_LEFT, FileName, StartAddr) ; 
+      FileReadB(PT_ID, FileName, StartAddr) ; 
     end FileReadB ;
 
     ------------------------------------------------------------
@@ -1330,7 +1346,7 @@ package body MemoryGenericPkg is
     -- Binary File Read 
     ------------------------------------------------------------
     begin
-      FileReadB(MEM_STRUCT_PTR_LEFT, FileName) ; 
+      FileReadB(PT_ID, FileName) ; 
     end FileReadB ;    
 
     ------------------------------------------------------------
@@ -1342,7 +1358,7 @@ package body MemoryGenericPkg is
       EndAddr      : std_logic_vector
     ) is
     begin
-      FileWriteH(MEM_STRUCT_PTR_LEFT, FileName, StartAddr, EndAddr) ; 
+      FileWriteH(PT_ID, FileName, StartAddr, EndAddr) ; 
     end FileWriteH ;
     
     ------------------------------------------------------------
@@ -1350,7 +1366,7 @@ package body MemoryGenericPkg is
     -- Hexadecimal File Write 
     ------------------------------------------------------------
     begin
-      FileWriteH(MEM_STRUCT_PTR_LEFT, FileName, StartAddr) ; 
+      FileWriteH(PT_ID, FileName, StartAddr) ; 
     end FileWriteH ;
 
     ------------------------------------------------------------
@@ -1358,7 +1374,7 @@ package body MemoryGenericPkg is
     -- Hexadecimal File Write 
     ------------------------------------------------------------
     begin
-      FileWriteH(MEM_STRUCT_PTR_LEFT, FileName) ; 
+      FileWriteH(PT_ID, FileName) ; 
     end FileWriteH ;    
     
      ------------------------------------------------------------
@@ -1370,7 +1386,7 @@ package body MemoryGenericPkg is
       EndAddr      : std_logic_vector
     ) is
     begin
-      FileWriteB(MEM_STRUCT_PTR_LEFT, FileName, StartAddr, EndAddr) ; 
+      FileWriteB(PT_ID, FileName, StartAddr, EndAddr) ; 
     end FileWriteB ;
     
     ------------------------------------------------------------
@@ -1378,7 +1394,7 @@ package body MemoryGenericPkg is
     -- Binary File Write 
     ------------------------------------------------------------
     begin
-      FileWriteB(MEM_STRUCT_PTR_LEFT, FileName, StartAddr) ; 
+      FileWriteB(PT_ID, FileName, StartAddr) ; 
     end FileWriteB ;
 
     ------------------------------------------------------------
@@ -1386,7 +1402,7 @@ package body MemoryGenericPkg is
     -- Binary File Write 
     ------------------------------------------------------------
     begin
-      FileWriteB(MEM_STRUCT_PTR_LEFT, FileName) ; 
+      FileWriteB(PT_ID, FileName) ; 
     end FileWriteB ;        
   end protected body MemoryPType ;
  
