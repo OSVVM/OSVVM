@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Updated reporting for integer'high and integer'low
 --    07/2024   2024.07    In Yaml reports, print ones with weight = 0 last
 --                         Added IsInitialized
 --    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 

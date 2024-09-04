@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Updated reporting for integer'high and integer'low
 --    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
 --                         Added IsInitialized
 --    01/2023   2023.01    Updated address checks in MemRead and MemWrite

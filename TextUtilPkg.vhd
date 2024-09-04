@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Added to_string_max, RemoveSpace, RermoveCrLf, GetLine
 --    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
 --                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
 --                         These updates are only so OSVVM can work with non-compilant (1076) tools.

@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
 --    07/2024   2024.07    Added pre-defined barriers:  
 --                             OsvvmTestInit, OsvvmResetDone, OsvvmVcInit, 
 --                             OsvvmTestDone, TestDone

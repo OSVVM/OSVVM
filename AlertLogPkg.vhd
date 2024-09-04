@@ -27,6 +27,9 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2024   2024.09    Added AffirmIfFilesMatch (renames AffirmIfNotDiff) and AlertIfFilesNotMatch (renames AlertIfDiff).  
+--                         Above file compares support IgnoreSpaces and IgnoreEmptyLines
+--                         Moved GetAlertLogId out of deprecated.
 --    07/2024   2024.07    Updated PathTail to incorporate for generate indicies in the name.
 --                         Added AffirmIfEqual, AffirmIfNotEqual, AlertIfEqual, AlertIfNotEqual for integer_vector
 --                         Added TimeOut indication to ReportAlerts and WriteAlertYaml.

@@ -152,7 +152,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If exist OsvvmSettingsPkg_local.vhd                |          |
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | 2024.03  |
+  |     OsvvmSettingsPkg_default.vhd                   | ** 2024.09 **  |
   | If version >= 2019                                 |          |
   |     RandomPkg2019.vhd                              | ** 2024.09 **  |
   | If version < 2019                                  |          |
@@ -187,8 +187,8 @@ Added RemoveSpace, RermoveCrLf, GetLine to support file compares.
 ### MemoryGeneric.vhd, CoveragePkg.vhd                         2024.09
 - updated reporting of largest integer (32 vs 64 bits).
 
-### TbUtilPkg.vhd                          2024.09
-- Added RandomPkg2019 and LanguageSupport2019Pkg
+### OsvvmContext.vhd                          2024.09
+- Added RandomPkg2019 
 
 
 
