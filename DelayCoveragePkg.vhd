@@ -446,7 +446,8 @@ package body DelayCoveragePkg is
       SingletonArrayPtr(ID.ID).BurstLengthCov := ID.BurstLengthCov ; 
       SingletonArrayPtr(ID.ID).BurstDelayCov  := ID.BurstDelayCov  ; 
       SingletonArrayPtr(ID.ID).BeatDelayCov   := ID.BeatDelayCov   ; 
-      SingletonArrayPtr(ID.ID).BurstLength    := 0 ; 
+--      SingletonArrayPtr(ID.ID).BurstLength    := 0 ; 
+      SingletonArrayPtr(ID.ID).BurstLength    := ToRandPoint(ID.BurstLengthCov, (1 => (Min => 0, Max => 5))) ;  -- start with beat delay (1 to 5) vs burst delay (0)
     end procedure SetDelayCoverage ;
 
 
