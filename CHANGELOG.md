@@ -105,7 +105,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If version >= 2019                                 |          |
   |     LanguageSupport2019Pkg.vhd                     | 2024.07  |
   | If version < 2019                                  |          |
-  |     LanguageSupport2019Pkg_c.vhd                   | 2024.07  |
+  |     deprecated/LanguageSupport2019Pkg_c.vhd        | 2024.07  |
   | TranscriptPkg.vhd                                  | 2023.01  |
   | AlertLogPkg.vhd                                    | ** 2024.09 ** |
   | TbUtilPkg.vhd                                      | ** 2024.09 **  |
@@ -436,7 +436,7 @@ Added Parent Name to YAML output.
 Changed PRIVATE to PRIVATE_NAME to avoid VHDL-2019 issue.
 
 ### MemorySupportPkg.vhd, MemoryGenericPkg.vhd, MemoryPkg.vhd, MemoryPkg_c.vhd  2022.10
-Minor teaks for code quality improvement.
+Minor tweaks for code quality improvement.
 Working toward MemoryBaseType being a generic. Waiting on GHDL release update.
 
 ### ScoreboardGenericPkg.vhd  2022.10
