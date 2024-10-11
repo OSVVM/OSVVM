@@ -54,6 +54,8 @@ library osvvm
 # Analyze package declarations
 analyze IfElsePkg.vhd
 
+
+
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
 analyze OsvvmSettingsPkg.vhd
 if {!$::osvvm::ToolSupportsDeferredConstants}  {
@@ -92,13 +94,16 @@ if {$::osvvm::ToolVendor eq "Aldec"}  {
   analyze VendorCovApiPkg.vhd
 }
 
+analyze TranscriptPkg.vhd
+
 if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze FileLinePathPkg.vhd
   analyze LanguageSupport2019Pkg.vhd
 } else {
+  analyze deprecated/FileLinePathPkg_c.vhd
   analyze deprecated/LanguageSupport2019Pkg_c.vhd
 }
 
-analyze TranscriptPkg.vhd
 analyze AlertLogPkg.vhd
 
 analyze TbUtilPkg.vhd
