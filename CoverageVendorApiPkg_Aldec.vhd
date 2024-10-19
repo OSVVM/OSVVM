@@ -1,6 +1,6 @@
 --
---  File Name:         VendorCovApiPkg_Aldec.vhd
---  Design Unit Name:  VendorCovApiPkg
+--  File Name:         CoverageVendorApiPkg_Aldec.vhd
+--  Design Unit Name:  CoverageVendorApiPkg
 --  Revision:          ALDEC VERSION
 --
 --  Maintainer:
@@ -13,6 +13,7 @@
 --
 --  Revision History:      For more details, see CoveragePkg_release_notes.pdf
 --    Date      Version    Description
+--    11/2024   2024.11    Added INIT_VENDOR_COV_HANDLE to initialize VendorCovHandle in CoveragePkg
 --    01/2020   2020.01    Updated Licenses to Apache
 --    12/2016   2016.11a   Fixed an issue with attributes
 --    11/2016   2016.11    Initial revision
@@ -35,9 +36,10 @@
 --  limitations under the License.
 --  
 
-package VendorCovApiPkg is
+package CoverageVendorApiPkg is
 
   subtype VendorCovHandleType is integer;
+  constant INIT_VENDOR_COV_HANDLE : VendorCovHandleType := 0 ;
 
   -- Types for how coverage bins are represented.  Matches OSVVM types.
   type VendorCovRangeType is record
@@ -83,7 +85,7 @@ package VendorCovApiPkg is
 
 end package;
 
-package body VendorCovApiPkg is
+package body CoverageVendorApiPkg is
    -- Replace any existing package body for this package 
     
-end package body VendorCovApiPkg ;
+end package body CoverageVendorApiPkg ;

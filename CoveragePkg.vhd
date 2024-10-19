@@ -63,7 +63,7 @@
 --                         Removed Deprecated procedure Increment - see TbUtilPkg as it moved there
 --    05/2017   2017.05    Updated WriteBin name printing
 --                         ClearCov (deprecates SetCovZero)
---    11/2016   2016.11    Added VendorCovApiPkg and calls to bind it in.
+--    11/2016   2016.11    Added CoverageVendorApiPkg and calls to bind it in.
 --    03/2016   2016.03    Added GetBinName(Index) to retrieve a bin's name
 --    01/2016   2016.01    Fixes for pure functions.  Added bounds checking on ICover
 --    06/2015   2015.06    AddCross[CovMatrix?Type], Mirroring for WriteBin
@@ -133,7 +133,7 @@ use work.NamePkg.all ;
 use work.NameStorePkg.all ;
 use work.MessageListPkg.all ;
 use work.OsvvmGlobalPkg.all ;
-use work.VendorCovApiPkg.all ;
+use work.CoverageVendorApiPkg.all ;
 use work.LanguageSupport2019Pkg.all ;
 
 package CoveragePkg is
@@ -2277,7 +2277,7 @@ package body CoveragePkg is
         TCoverValuePtr     =>  NULL,
 
         CovMessage         =>  NULL,
-        VendorCovHandle    =>  0,
+        VendorCovHandle    =>  INIT_VENDOR_COV_HANDLE,
 
         --  Statistics and History
         ItemCount          =>  0,   -- Count of randomizations
@@ -3350,7 +3350,7 @@ package body CoveragePkg is
 --      CovStructPtr(Index) := COV_STRUCT_INIT ;
 
       CovStructPtr(Index).BinValLength       := 1 ;
-      CovStructPtr(Index).VendorCovHandle    := 0 ;
+      CovStructPtr(Index).VendorCovHandle    := INIT_VENDOR_COV_HANDLE ;
       CovStructPtr(Index).ItemCount          := 0 ;
       CovStructPtr(Index).LastIndex          := 1 ;
       CovStructPtr(Index).LastStimGenIndex   := 1 ;

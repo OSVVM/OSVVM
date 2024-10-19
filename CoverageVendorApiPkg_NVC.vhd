@@ -1,5 +1,5 @@
 --
---  File Name:         CoverageVendorApiPkg_default.vhd
+--  File Name:         CoverageVendorApiPkg_NVC.vhd
 --  Design Unit Name:  CoverageVendorApiPkg
 --  Revision:          STANDARD VERSION
 --
@@ -17,14 +17,12 @@
 --
 --  Revision History:      For more details, see CoveragePkg_release_notes.pdf
 --    Date      Version    Description
---    11/2024   2024.11    Added INIT_VENDOR_COV_HANDLE to initialize VendorCovHandle in CoveragePkg
---    01/2020   2020.01    Updated Licenses to Apache
---    11/2016   2016.11    Initial revision
+--    11/2024   2024.11    Initial revision - derived from CoverageVendorApiPkg_default
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2016 - 2020 by SynthWorks Design Inc.  
+--  Copyright (c) 2016 - 2024 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -43,9 +41,8 @@
 package CoverageVendorApiPkg is
 
   subtype VendorCovHandleType is integer;
-  constant INIT_VENDOR_COV_HANDLE : VendorCovHandleType := 0 ;
+  impure function INIT_VENDOR_COV_HANDLE return VendorCovHandleType ;
   
-    
     -- Types for how coverage bins are represented.  Matches OSVVM types.
   type VendorCovRangeType is record
       min: integer;
@@ -82,6 +79,12 @@ package CoverageVendorApiPkg is
 end package;
 
 package body CoverageVendorApiPkg is
+
+  impure function INIT_VENDOR_COV_HANDLE return VendorCovHandleType IS
+  begin
+    return 0 ; 
+  end function INIT_VENDOR_COV_HANDLE ; 
+
   --  Create Initial Data Structure for Point/Item Functional Coverage Model
   --  Sets initial name of the coverage model if available
 	impure function VendorCovPointCreate( name: string ) return VendorCovHandleType is
