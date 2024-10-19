@@ -87,11 +87,13 @@ analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
 analyze OsvvmGlobalPkg.vhd
 
-# Compile VendorCovApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
+# Compile CoverageVendorApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile VendorCovApiPkg.vhd
 if {$::osvvm::ToolVendor eq "Aldec"}  {
-  analyze VendorCovApiPkg_Aldec.vhd
+  analyze CoverageVendorApiPkg_Aldec.vhd
+} elseif {$::osvvm::ToolVendor eq "NVC"}  {
+  analyze CoverageVendorApiPkg_NVC.vhd
 } else {
-  analyze VendorCovApiPkg.vhd
+  analyze CoverageVendorApiPkg_default.vhd
 }
 
 analyze TranscriptPkg.vhd
