@@ -135,24 +135,25 @@ package body CoverageVendorApiPkg is
   --  It is important to maintain an index that corresponds to the order the bins were entered as
   --  that is used when coverage is recorded.
   procedure VendorCovBinAdd(obj: inout VendorCovHandleType; bins: VendorCovRangeArrayType; Action: integer; atleast: integer; name: string )is
-    variable item       : t_item_handle;
-    variable ranges     : t_item_range_array(1 to bins'length);
-    variable exclude    : boolean;
+    variable item           : t_item_handle;
+    variable ranges         : t_item_range_array(1 to bins'length);
+    variable atleast_valid  : natural;
    begin
     for i in 1 to bins'length loop
       ranges(i).min := t_item_range_value(bins(i).min);
       ranges(i).max := t_item_range_value(bins(i).max);
     end loop;
 
-      exclude := false;
-    if (action = COV_IGNORE or action = COV_ILLEGAL) then
-      exclude := true;
+    if (action = COV_IGNORE or action = COV_ILLEGAL or atleast < 0) then
+      atleast_valid := 0;
+    else
+      atleast_valid := atleast;
     end if;
 
     if name = "" then
-      add_cover_item(obj, item, "__OSVVM_COVER_BIN", atleast, exclude, ranges);
+      add_cover_item(obj, item, "__OSVVM_COVER_BIN", atleast_valid, ranges);
     else
-      add_cover_item(obj, item, name, atleast, exclude, ranges);
+      add_cover_item(obj, item, name, atleast_valid, ranges);
     end if;
   end procedure VendorCovBinAdd ;
 
