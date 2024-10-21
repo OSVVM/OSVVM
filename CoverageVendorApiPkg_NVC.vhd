@@ -92,7 +92,7 @@ package body CoverageVendorApiPkg is
 
   --  Create Initial Data Structure for Point/Item Functional Coverage Model
   --  Sets initial name of the coverage model if available
-	impure function VendorCovPointCreate( name: string ) return VendorCovHandleType is
+  impure function VendorCovPointCreate( name: string ) return VendorCovHandleType is
     variable handle : VendorCovHandleType;
   begin
     if name = "" then
@@ -106,9 +106,9 @@ package body CoverageVendorApiPkg is
 
   --  Create Initial Data Structure for Cross Functional Coverage Model
   --  Sets initial name of the coverage model if available
-	impure function VendorCovCrossCreate( name: string ) return VendorCovHandleType is
+  impure function VendorCovCrossCreate( name: string ) return VendorCovHandleType is
     variable handle : VendorCovHandleType;
-   begin
+  begin
     if name = "" then
       create_cover_scope (handle, "__OSVVM_COVER_POINT");
     else
@@ -121,7 +121,7 @@ package body CoverageVendorApiPkg is
   --  Sets/Updates the name of the Coverage Model.
   --  Should not be called until the data structure is created by VendorCovPointCreate or VendorCovCrossCreate.
   --  Replaces name that was set by VendorCovPointCreate or VendorCovCrossCreate.
-	procedure VendorCovSetName(obj: inout VendorCovHandleType; name: string ) is
+  procedure VendorCovSetName(obj: inout VendorCovHandleType; name: string ) is
   begin
     if name = "" then
       set_cover_scope_name(obj, "__OSVVM_COVER_POINT");
@@ -134,7 +134,7 @@ package body CoverageVendorApiPkg is
   --  Checking for sizing that is different from original sizing already done in OSVVM CoveragePkg
   --  It is important to maintain an index that corresponds to the order the bins were entered as
   --  that is used when coverage is recorded.
-	procedure VendorCovBinAdd(obj: inout VendorCovHandleType; bins: VendorCovRangeArrayType; Action: integer; atleast: integer; name: string )is
+  procedure VendorCovBinAdd(obj: inout VendorCovHandleType; bins: VendorCovRangeArrayType; Action: integer; atleast: integer; name: string )is
     variable item       : t_item_handle;
     variable ranges     : t_item_range_array(1 to bins'length);
     variable exclude    : boolean;
@@ -159,7 +159,7 @@ package body CoverageVendorApiPkg is
   --  Increment the coverage of bin identified by index number.
   --  Index ranges from 1 to Number of Bins.
   --  Index corresponds to the order the bins were entered (starting from 1)
-	procedure VendorCovBinInc(obj: inout VendorCovHandleType; index: integer )is
+  procedure VendorCovBinInc(obj: inout VendorCovHandleType; index: integer )is
   begin
    increment_cover_item(obj, t_item_handle(index - 1));
   end procedure VendorCovBinInc ;
