@@ -28,6 +28,7 @@
 --
 --  Revision History :
 --    Date       Version    Description
+--    11/2024    2024.11    Added Scalar Exclude values to most (except RandIntV without unique value) 
 --    05/2024    2024.05    Update to address if max < min sometimes multiple errors were generated
 --    03/2024    2024.03    Added RandInt that randomly selects a value in the entire integer range
 --    09/2023    2023.09    Added control of UseNewSeedMethods from OsvvmSettingsPkg.RANDOM_USE_NEW_SEED_METHODS
@@ -295,9 +296,9 @@ package RandomPkg is
     --
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
-    impure function RandInt      (A, Exclude : integer_vector  ) return integer ;
-    impure function RandReal     (A, Exclude : real_vector     ) return real ;
-    impure function RandTime     (A, Exclude : time_vector     ) return time ;
+    impure function RandInt      (A, Exclude : integer_vector   ) return integer ;
+    impure function RandReal     (A, Exclude : real_vector      ) return real ;
+    impure function RandTime     (A, Exclude : time_vector      ) return time ;
     impure function RandSlv      (A, Exclude : integer_vector ; Size : natural) return std_logic_vector  ;
     impure function RandUnsigned (A, Exclude : integer_vector ; Size : natural) return Unsigned ;
     impure function RandSigned   (A, Exclude : integer_vector ; Size : natural ) return Signed ;
@@ -395,7 +396,90 @@ package RandomPkg is
     impure function RandBool     return boolean;
     impure function RandSl       return std_logic;
     impure function RandBit      return bit;
+    
+    
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Convenience Functions with Exclude as an scalar rather than a _vector
+    --    Calls the version with _vector
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Base Randomization Distributions
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function Uniform    (Min, Max : integer ; Exclude : integer) return integer ;
+    impure function FavorSmall (Min, Max : integer ; Exclude : integer) return integer ;
+    impure function FavorBig   (Min, Max : integer ; Exclude : integer) return integer ;
+    impure function Normal (Mean, StdDeviation : real; Min, Max, Exclude : integer) return integer ;
+    impure function Poisson (Mean : real; Min, Max, Exclude : integer) return integer ;
+  
+    
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomization with range and exclude
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function RandInt      (Min, Max : integer ; Exclude : integer ) return integer ;
+-- ambiguous if Unit has a default
+--    impure function RandTime     (Min, Max : time ;    Exclude : time ;    Unit   : time := ns) return time ;
+    impure function RandTime     (Min, Max : time ;    Exclude : time ;    Unit   : time) return time ;
+    impure function RandSlv      (Min, Max : natural ; Exclude : integer ; Size   : natural) return std_logic_vector ;
+    impure function RandUnsigned (Min, Max : natural ; Exclude : integer ; Size   : natural) return Unsigned ;
+    impure function RandSigned   (Min, Max : integer ; Exclude : integer ; Size   : natural) return Signed ;
+-- ambiguous with RandIntV(Min, Max, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (Min, Max : integer ; Exclude : integer ; Size   : natural) return integer_vector ;
+    impure function RandIntV     (Min, Max : integer ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector ;
+    impure function RandTimeV    (Min, Max : time ;    Exclude : time ;    Size   : natural ; Unit : in time := ns) return time_vector ;
+    impure function RandTimeV    (Min, Max : time ;    Exclude : time ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector ;
 
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
+    --    Uses internal settings of RandomParm to deterimine distribution.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandInt      (A : integer_vector ; Exclude : integer  ) return integer ;
+    impure function RandReal     (A : real_vector    ; Exclude : real     ) return real ;
+    impure function RandTime     (A : time_vector    ; Exclude : time     ) return time ;
+    impure function RandSlv      (A : integer_vector ; Exclude : integer ; Size : natural) return std_logic_vector  ;
+    impure function RandUnsigned (A : integer_vector ; Exclude : integer ; Size : natural) return Unsigned ;
+    impure function RandSigned   (A : integer_vector ; Exclude : integer ; Size : natural ) return Signed ;
+-- ambiguous with RandIntV(A, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (A : integer_vector ; Exclude : integer ; Size : natural) return integer_vector ;
+    impure function RandIntV     (A : integer_vector ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector ;
+    impure function RandRealV    (A : real_vector    ; Exclude : real    ; Size : natural) return real_vector ;
+    impure function RandRealV    (A : real_vector    ; Exclude : real    ; Unique : natural ; Size : natural) return real_vector ;
+    impure function RandTimeV    (A : time_vector    ; Exclude : time    ; Size : natural) return time_vector ;
+    impure function RandTimeV    (A : time_vector    ; Exclude : time    ; Unique : natural ; Size : natural) return time_vector ;
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Basic Distributions with exclude values (so can skip last or last n)
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function DistInt      (Weight : integer_vector ; Exclude : integer ) return integer ;
+    impure function DistSlv      (Weight : integer_vector ; Exclude : integer ; Size  : natural ) return std_logic_vector ;
+    impure function DistUnsigned (Weight : integer_vector ; Exclude : integer ; Size  : natural ) return unsigned ;
+    impure function DistSigned   (Weight : integer_vector ; Exclude : integer ; Size  : natural ) return signed ;
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Distribution for sparse values with exclude values (so can skip last or last n)
+    --    Specify weight and value
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function DistValInt      (A : DistType ; Exclude : integer ) return integer ;
+    impure function DistValSlv      (A : DistType ; Exclude : integer ; Size  : natural) return std_logic_vector ;
+    impure function DistValUnsigned (A : DistType ; Exclude : integer ; Size  : natural) return unsigned ;
+    impure function DistValSigned   (A : DistType ; Exclude : integer ; Size  : natural) return signed ;
+    
   end protected RandomPType ;
 
 end RandomPkg ;
@@ -1987,6 +2071,189 @@ package body RandomPkg is
     begin
       return bit'val(RandInt(1));
     end function RandBit ;
+    
+    
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Convenience Functions with Exclude as an scalar rather than a _vector
+    --    Calls the version with _vector
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+      --- ///////////////////////////////////////////////////////////////////////////
+    ---
+    --- Base Randomization Distributions
+    ---
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function Uniform    (Min, Max : integer ; Exclude : integer) return integer is
+    begin
+      return Uniform(Min, Max, (0 => Exclude)) ; 
+    end function Uniform ; 
+    impure function FavorSmall (Min, Max : integer ; Exclude : integer) return integer is
+    begin
+      return FavorSmall(Min, Max, (0 => Exclude)) ; 
+    end function FavorSmall ; 
+    impure function FavorBig   (Min, Max : integer ; Exclude : integer) return integer is
+    begin
+      return FavorBig(Min, Max, (0 => Exclude)) ; 
+    end function FavorBig ; 
+    impure function Normal (Mean, StdDeviation : real; Min, Max, Exclude : integer) return integer is
+    begin
+      return Normal(Mean, StdDeviation, Min, Max, (0 => Exclude)) ; 
+    end function Normal ; 
+    impure function Poisson (Mean : real; Min, Max, Exclude : integer) return integer is
+    begin
+      return Poisson(Mean, Min, Max, (0 => Exclude)) ; 
+    end function Poisson ; 
+  
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomization with range and exclude
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function RandInt      (Min, Max : integer ; Exclude : integer ) return integer is
+    begin
+      return RandInt (Min, Max, (0 => Exclude)) ; 
+    end function RandInt ; 
+-- ambiguous if Unit has a default
+--    impure function RandTime     (Min, Max : time ;    Exclude : time ;    Unit   : time := ns) return time is
+    impure function RandTime     (Min, Max : time ;    Exclude : time ;    Unit   : time ) return time is
+    begin
+      return RandTime (Min, Max, (0 => Exclude), Unit) ; 
+    end function RandTime ; 
+    impure function RandSlv      (Min, Max : natural ; Exclude : integer ; Size   : natural) return std_logic_vector is
+    begin
+      return RandSlv (Min, Max, (0 => Exclude), Size) ; 
+    end function RandSlv ; 
+    impure function RandUnsigned (Min, Max : natural ; Exclude : integer ; Size   : natural) return Unsigned is
+    begin
+      return RandUnsigned (Min, Max, (0 => Exclude), Size) ; 
+    end function RandUnsigned ; 
+    impure function RandSigned   (Min, Max : integer ; Exclude : integer ; Size   : natural) return Signed is
+    begin
+      return RandSigned (Min, Max, (0 => Exclude), Size) ; 
+    end function RandSigned ; 
+-- ambiguous with RandIntV(Min, Max, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (Min, Max : integer ; Exclude : integer ; Size   : natural) return integer_vector is
+--    begin
+--      return RandIntV (Min, Max, (0 => Exclude), Size) ; 
+--    end function RandIntV ; 
+    impure function RandIntV     (Min, Max : integer ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector is
+    begin
+      return RandIntV (Min, Max, (0 => Exclude), Unique, Size) ; 
+    end function RandIntV ; 
+    impure function RandTimeV    (Min, Max : time ;    Exclude : time ;    Size   : natural ; Unit : in time := ns) return time_vector is
+    begin
+      return RandTimeV (Min, Max, (0 => Exclude), Size, Unit) ; 
+    end function RandTimeV ; 
+    impure function RandTimeV    (Min, Max : time ;    Exclude : time ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector is
+    begin
+      return RandTimeV (Min, Max, (0 => Exclude), Unique, Size, Unit) ; 
+    end function RandTimeV ; 
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
+    --    Uses internal settings of RandomParm to deterimine distribution.
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandInt      (A : integer_vector ; Exclude : integer  ) return integer is
+    begin
+      return RandInt (A, (0 => Exclude)) ; 
+    end function RandInt ; 
+    impure function RandReal     (A : real_vector    ; Exclude : real     ) return real is
+    begin
+      return RandReal (A, (0 => Exclude)) ; 
+    end function RandReal ; 
+    impure function RandTime     (A : time_vector    ; Exclude : time     ) return time is
+    begin
+      return RandTime (A, (0 => Exclude)) ; 
+    end function RandTime ; 
+    impure function RandSlv      (A : integer_vector ; Exclude : integer ; Size : natural) return std_logic_vector is
+    begin
+      return RandSlv (A, (0 => Exclude), Size) ; 
+    end function RandSlv ; 
+    impure function RandUnsigned (A : integer_vector ; Exclude : integer ; Size : natural) return Unsigned is
+    begin
+      return RandUnsigned (A, (0 => Exclude), Size) ; 
+    end function RandUnsigned ; 
+    impure function RandSigned   (A : integer_vector ; Exclude : integer ; Size : natural ) return Signed is
+    begin
+      return RandSigned (A, (0 => Exclude), Size) ; 
+    end function RandSigned ; 
+-- ambiguous with RandIntV(A, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (A : integer_vector ; Exclude : integer ; Size : natural) return integer_vector is
+--    begin
+--      return RandIntV (A, (0 => Exclude), Size) ; 
+--    end function RandIntV ; 
+    impure function RandIntV     (A : integer_vector ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector is
+    begin
+      return RandIntV (A, (0 => Exclude), Unique, Size) ; 
+    end function RandIntV ; 
+    impure function RandRealV    (A : real_vector    ; Exclude : real    ; Size : natural) return real_vector is
+    begin
+      return RandRealV (A, (0 => Exclude), Size) ; 
+    end function RandRealV ; 
+    impure function RandRealV    (A : real_vector    ; Exclude : real    ; Unique : natural ; Size : natural) return real_vector is
+    begin
+      return RandRealV (A, (0 => Exclude), Unique, Size) ; 
+    end function RandRealV ; 
+    impure function RandTimeV    (A : time_vector    ; Exclude : time    ; Size : natural) return time_vector is
+    begin
+      return RandTimeV (A, (0 => Exclude), Size) ; 
+    end function RandTimeV ; 
+    impure function RandTimeV    (A : time_vector    ; Exclude : time    ; Unique : natural ; Size : natural) return time_vector is
+    begin
+      return RandTimeV (A, (0 => Exclude), Unique, Size) ; 
+    end function RandTimeV ; 
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Basic Distributions with exclude values (so can skip last or last n)
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function DistInt      (Weight : integer_vector ; Exclude : integer ) return integer is
+    begin
+      return DistInt (Weight, (0 => Exclude)) ; 
+    end function DistInt ; 
+    impure function DistSlv      (Weight : integer_vector ; Exclude : integer ; Size  : natural ) return std_logic_vector is
+    begin
+      return DistSlv (Weight, (0 => Exclude), Size) ; 
+    end function DistSlv ; 
+    impure function DistUnsigned (Weight : integer_vector ; Exclude : integer ; Size  : natural ) return unsigned is
+    begin
+      return DistUnsigned (Weight, (0 => Exclude), Size) ; 
+    end function DistUnsigned ; 
+    impure function DistSigned   (Weight : integer_vector ; Exclude : integer ; Size  : natural ) return signed is
+    begin
+      return DistSigned (Weight, (0 => Exclude), Size) ; 
+    end function DistSigned ; 
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    --  Distribution for sparse values with exclude values (so can skip last or last n)
+    --    Specify weight and value
+    --    Always uses Uniform via DistInt
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function DistValInt      (A : DistType ; Exclude : integer ) return integer is
+    begin
+      return DistValInt (A, (0 => Exclude)) ; 
+    end function DistValInt ; 
+    impure function DistValSlv      (A : DistType ; Exclude : integer ; Size  : natural) return std_logic_vector is
+    begin
+      return DistValSlv (A, (0 => Exclude), Size) ; 
+    end function DistValSlv ; 
+    impure function DistValUnsigned (A : DistType ; Exclude : integer ; Size  : natural) return unsigned is
+    begin
+      return DistValUnsigned (A, (0 => Exclude), Size) ; 
+    end function DistValUnsigned ; 
+    impure function DistValSigned   (A : DistType ; Exclude : integer ; Size  : natural) return signed is
+    begin
+      return DistValSigned (A, (0 => Exclude), Size) ; 
+    end function DistValSigned ; 
     
   end protected body RandomPType ;
 

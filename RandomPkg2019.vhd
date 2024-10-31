@@ -28,6 +28,7 @@
 --
 --  Revision History :
 --    Date       Version    Description
+--    11/2024    2024.11    Added Scalar Exclude values to most (except RandIntV without unique value) 
 --    09/2024    2024.09    Derived from RandomPkg 
 --
 --  This file is part of OSVVM.
@@ -101,9 +102,11 @@ package RandomPkg2019 is
   
   -- Save and restore seed values
   impure function SetSeed (RandomSeedIn : RandomSeedType) return RandomType ;
+  procedure       SetSeed (variable RV : inout RandomType ;  RandomSeedIn : RandomSeedType ) ;
   impure function GetSeed (RV : RandomType)               return RandomSeedType ;
   alias SeedRandom is SetSeed [RandomSeedType return RandomType] ;
   alias SeedRandom is GetSeed [RandomType return RandomSeedType] ;
+
   
   ------------------------------------------------------------
   --  Setting Randomization Parameters
@@ -361,6 +364,91 @@ package RandomPkg2019 is
   impure function RandBool     (variable RV : inout RandomType ) return boolean;
   impure function RandSl       (variable RV : inout RandomType ) return std_logic;
   impure function RandBit      (variable RV : inout RandomType ) return bit;
+  
+  
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Convenience Functions with Exclude as an scalar rather than a _vector
+  --    Calls the version with _vector
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  --- ///////////////////////////////////////////////////////////////////////////
+  ---
+  --- Base Randomization Distributions
+  ---
+  --- ///////////////////////////////////////////////////////////////////////////
+  impure function Uniform    (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer ;
+  impure function FavorSmall (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer ;
+  impure function FavorBig   (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer ;
+  impure function Normal     (variable RV : inout RandomType ; Mean, StdDeviation : real; Min, Max, Exclude : integer) return integer ;
+  impure function Poisson    (variable RV : inout RandomType ; Mean : real; Min, Max, Exclude : integer) return integer ;
+
+  
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Randomization with range and exclude
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  impure function RandInt      (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ) return integer ;
+-- ambiguous if Unit has a default
+--    impure function RandTime     (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unit   : time := ns) return time ;
+  impure function RandTime     (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unit   : time) return time ;
+  impure function RandSlv      (variable RV : inout RandomType ; Min, Max : natural ; Exclude : integer ; Size   : natural) return std_logic_vector ;
+  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : natural ; Exclude : integer ; Size   : natural) return Unsigned ;
+  impure function RandSigned   (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Size   : natural) return Signed ;
+-- ambiguous with RandIntV(RV, Min, Max, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Size   : natural) return integer_vector ;
+  impure function RandIntV     (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector ;
+  impure function RandTimeV    (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Size   : natural ; Unit : in time := ns) return time_vector ;
+  impure function RandTimeV    (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector ;
+
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
+  --    Uses internal settings of RandomParm to deterimine distribution.
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  impure function RandInt      (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer  ) return integer ;
+  impure function RandReal     (variable RV : inout RandomType ; A : real_vector    ; Exclude : real     ) return real ;
+  impure function RandTime     (variable RV : inout RandomType ; A : time_vector    ; Exclude : time     ) return time ;
+  impure function RandSlv      (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return std_logic_vector  ;
+  impure function RandUnsigned (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return Unsigned ;
+  impure function RandSigned   (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural ) return Signed ;
+-- ambiguous with RandIntV(RV, A, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return integer_vector ;
+  impure function RandIntV     (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector ;
+  impure function RandRealV    (variable RV : inout RandomType ; A : real_vector    ; Exclude : real    ; Size : natural) return real_vector ;
+  impure function RandRealV    (variable RV : inout RandomType ; A : real_vector    ; Exclude : real    ; Unique : natural ; Size : natural) return real_vector ;
+  impure function RandTimeV    (variable RV : inout RandomType ; A : time_vector    ; Exclude : time    ; Size : natural) return time_vector ;
+  impure function RandTimeV    (variable RV : inout RandomType ; A : time_vector    ; Exclude : time    ; Unique : natural ; Size : natural) return time_vector ;
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Basic Distributions with exclude values (so can skip last or last n)
+  --    Always uses Uniform via DistInt
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  impure function DistInt      (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ) return integer ;
+  impure function DistSlv      (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return std_logic_vector ;
+  impure function DistUnsigned (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return unsigned ;
+  impure function DistSigned   (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return signed ;
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Distribution for sparse values with exclude values (so can skip last or last n)
+  --    Specify weight and value
+  --    Always uses Uniform via DistInt
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  impure function DistValInt      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ) return integer ;
+  impure function DistValSlv      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return std_logic_vector ;
+  impure function DistValUnsigned (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return unsigned ;
+  impure function DistValSigned   (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return signed ;
+    
+  
 end RandomPkg2019 ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -476,6 +564,13 @@ package body RandomPkg2019 is
     RV.Seed  :=  RandomSeedIn ; 
     return RV ;    
   end function SetSeed ;
+  
+  ------------------------------------------------------------
+  procedure       SetSeed (variable RV : inout RandomType ;  RandomSeedIn : RandomSeedType ) is
+  ------------------------------------------------------------
+  begin
+    RV.Seed  :=  RandomSeedIn ; 
+  end procedure SetSeed ;
 
   ------------------------------------------------------------
   impure function GetSeed (RV : RandomType) return RandomSeedType is
@@ -1957,4 +2052,188 @@ package body RandomPkg2019 is
   begin
     return bit'val(RandInt(RV, 1));
   end function RandBit ;
+  
+  
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Convenience Functions with Exclude as an scalar rather than a _vector
+  --    Calls the version with _vector
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+    --- ///////////////////////////////////////////////////////////////////////////
+  ---
+  --- Base Randomization Distributions
+  ---
+  --- ///////////////////////////////////////////////////////////////////////////
+  impure function Uniform    (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer is
+  begin
+    return Uniform(RV, Min, Max, (0 => Exclude)) ; 
+  end function Uniform ; 
+  impure function FavorSmall (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer is
+  begin
+    return FavorSmall(RV, Min, Max, (0 => Exclude)) ; 
+  end function FavorSmall ; 
+  impure function FavorBig   (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer is
+  begin
+    return FavorBig(RV, Min, Max, (0 => Exclude)) ; 
+  end function FavorBig ; 
+  impure function Normal (variable RV : inout RandomType ; Mean, StdDeviation : real; Min, Max, Exclude : integer) return integer is
+  begin
+    return Normal(RV, Mean, StdDeviation, Min, Max, (0 => Exclude)) ; 
+  end function Normal ; 
+  impure function Poisson (variable RV : inout RandomType ; Mean : real; Min, Max, Exclude : integer) return integer is
+  begin
+    return Poisson(RV, Mean, Min, Max, (0 => Exclude)) ; 
+  end function Poisson ; 
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Randomization with range and exclude
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  impure function RandInt      (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ) return integer is
+  begin
+    return RandInt(RV, Min, Max, (0 => Exclude)) ; 
+  end function RandInt ; 
+-- ambiguous if Unit has a default
+--    impure function RandTime     (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unit   : time := ns) return time is
+  impure function RandTime     (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unit   : time ) return time is
+  begin
+    return RandTime(RV, Min, Max, (0 => Exclude), Unit) ; 
+  end function RandTime ; 
+  impure function RandSlv      (variable RV : inout RandomType ; Min, Max : natural ; Exclude : integer ; Size   : natural) return std_logic_vector is
+  begin
+    return RandSlv(RV, Min, Max, (0 => Exclude), Size) ; 
+  end function RandSlv ; 
+  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : natural ; Exclude : integer ; Size   : natural) return Unsigned is
+  begin
+    return RandUnsigned(RV, Min, Max, (0 => Exclude), Size) ; 
+  end function RandUnsigned ; 
+  impure function RandSigned   (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Size   : natural) return Signed is
+  begin
+    return RandSigned(RV, Min, Max, (0 => Exclude), Size) ; 
+  end function RandSigned ; 
+-- ambiguous with RandIntV(Min, Max, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Size   : natural) return integer_vector is
+--    begin
+--      return RandIntV(RV, Min, Max, (0 => Exclude), Size) ; 
+--    end function RandIntV ; 
+  impure function RandIntV     (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector is
+  begin
+    return RandIntV(RV, Min, Max, (0 => Exclude), Unique, Size) ; 
+  end function RandIntV ; 
+  impure function RandTimeV    (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Size   : natural ; Unit : in time := ns) return time_vector is
+  begin
+    return RandTimeV(RV, Min, Max, (0 => Exclude), Size, Unit) ; 
+  end function RandTimeV ; 
+  impure function RandTimeV    (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector is
+  begin
+    return RandTimeV(RV, Min, Max, (0 => Exclude), Unique, Size, Unit) ; 
+  end function RandTimeV ; 
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Randomly select a value within a set of values with exclude values (so can skip last or last n)
+  --    Uses internal settings of RandomParm to deterimine distribution.
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  impure function RandInt      (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer  ) return integer is
+  begin
+    return RandInt(RV, A, (0 => Exclude)) ; 
+  end function RandInt ; 
+  impure function RandReal     (variable RV : inout RandomType ; A : real_vector    ; Exclude : real     ) return real is
+  begin
+    return RandReal(RV, A, (0 => Exclude)) ; 
+  end function RandReal ; 
+  impure function RandTime     (variable RV : inout RandomType ; A : time_vector    ; Exclude : time     ) return time is
+  begin
+    return RandTime(RV, A, (0 => Exclude)) ; 
+  end function RandTime ; 
+  impure function RandSlv      (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return std_logic_vector is
+  begin
+    return RandSlv(RV, A, (0 => Exclude), Size) ; 
+  end function RandSlv ; 
+  impure function RandUnsigned (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return Unsigned is
+  begin
+    return RandUnsigned(RV, A, (0 => Exclude), Size) ; 
+  end function RandUnsigned ; 
+  impure function RandSigned   (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural ) return Signed is
+  begin
+    return RandSigned(RV, A, (0 => Exclude), Size) ; 
+  end function RandSigned ; 
+-- ambiguous with RandIntV(RV, A, Unique, Size) return integer_vector ;
+--    impure function RandIntV     (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return integer_vector is
+--    begin
+--      return RandIntV(RV, A, (0 => Exclude), Size) ; 
+--    end function RandIntV ; 
+  impure function RandIntV     (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector is
+  begin
+    return RandIntV(RV, A, (0 => Exclude), Unique, Size) ; 
+  end function RandIntV ; 
+  impure function RandRealV    (variable RV : inout RandomType ; A : real_vector    ; Exclude : real    ; Size : natural) return real_vector is
+  begin
+    return RandRealV(RV, A, (0 => Exclude), Size) ; 
+  end function RandRealV ; 
+  impure function RandRealV    (variable RV : inout RandomType ; A : real_vector    ; Exclude : real    ; Unique : natural ; Size : natural) return real_vector is
+  begin
+    return RandRealV(RV, A, (0 => Exclude), Unique, Size) ; 
+  end function RandRealV ; 
+  impure function RandTimeV    (variable RV : inout RandomType ; A : time_vector    ; Exclude : time    ; Size : natural) return time_vector is
+  begin
+    return RandTimeV(RV, A, (0 => Exclude), Size) ; 
+  end function RandTimeV ; 
+  impure function RandTimeV    (variable RV : inout RandomType ; A : time_vector    ; Exclude : time    ; Unique : natural ; Size : natural) return time_vector is
+  begin
+    return RandTimeV(RV, A, (0 => Exclude), Unique, Size) ; 
+  end function RandTimeV ; 
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Basic Distributions with exclude values (so can skip last or last n)
+  --    Always uses Uniform via DistInt
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  impure function DistInt      (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ) return integer is
+  begin
+    return DistInt(RV, Weight, (0 => Exclude)) ; 
+  end function DistInt ; 
+  impure function DistSlv      (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return std_logic_vector is
+  begin
+    return DistSlv(RV, Weight, (0 => Exclude), Size) ; 
+  end function DistSlv ; 
+  impure function DistUnsigned (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return unsigned is
+  begin
+    return DistUnsigned(RV, Weight, (0 => Exclude), Size) ; 
+  end function DistUnsigned ; 
+  impure function DistSigned   (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return signed is
+  begin
+    return DistSigned(RV, Weight, (0 => Exclude), Size) ; 
+  end function DistSigned ; 
+
+  --- ///////////////////////////////////////////////////////////////////////////
+  --
+  --  Distribution for sparse values with exclude values (so can skip last or last n)
+  --    Specify weight and value
+  --    Always uses Uniform via DistInt
+  --
+  --- ///////////////////////////////////////////////////////////////////////////
+  ------------------------------------------------------------
+  impure function DistValInt      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ) return integer is
+  begin
+    return DistValInt(RV, A, (0 => Exclude)) ; 
+  end function DistValInt ; 
+  impure function DistValSlv      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return std_logic_vector is
+  begin
+    return DistValSlv(RV, A, (0 => Exclude), Size) ; 
+  end function DistValSlv ; 
+  impure function DistValUnsigned (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return unsigned is
+  begin
+    return DistValUnsigned(RV, A, (0 => Exclude), Size) ; 
+  end function DistValUnsigned ; 
+  impure function DistValSigned   (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return signed is
+  begin
+    return DistValSigned(RV, A, (0 => Exclude), Size) ; 
+  end function DistValSigned ; 
+  
 end RandomPkg2019 ;

@@ -272,8 +272,8 @@ package body RandomBasePkg is
     variable Seed      : RandomSeedType ; 
     variable ChurnSeed : real ;
   begin
-    Seed(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0) mod 2.0 ** 30) ;
-    Seed(2) := integer((real(I) * 313.0 + 5381.0) mod 2.0 ** 30) ; 
+    Seed(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0 - 1.0) mod 2.0 ** 30) + 1 ;
+    Seed(2) := integer((real(I) * 313.0 + 5381.0 - 1.0) mod 2.0 ** 30) + 1 ; 
     Uniform(ChurnSeed, Seed) ;
     return Seed ; 
   end function GenRandSeed ;
@@ -316,9 +316,9 @@ package body RandomBasePkg is
     for i in 1 to HALF_LEN loop
       temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
     end loop ;
-    Seed(1) := (integer(temp) + GetRandomSalt) mod (2**30) ;
+    Seed(1) := (integer(temp) + GetRandomSalt - 1) mod (2**30) + 1 ;
     for i in HALF_LEN + 1 to LEN loop
-      temp := (temp*33.0 + real(character'pos(revS(i)))) mod (2.0**30) ;
+      temp := (temp*33.0 + real(character'pos(revS(i))) -1.0) mod (2.0**30) + 1.0 ;
     end loop ;
     Seed(2) := integer(temp) ;
     Uniform(ChurnSeed, Seed) ;
@@ -333,13 +333,14 @@ package body RandomBasePkg is
     alias revS : string(LEN downto 1) is S ;
     variable result : integer_vector(1 to 2) ;
     variable temp : integer := 0 ;
+    constant MOD_AMOUNT : integer := 2**30 - 2**8 - 1 + 2**30 ;
   begin
     for i in 1 to HALF_LEN loop
-      temp := (temp + character'pos(revS(i))) mod (integer'right - 2**8) ;
+      temp := (temp + character'pos(revS(i))) mod MOD_AMOUNT ;
     end loop ;
-    result(1) := (temp + GetRandomSalt) mod (integer'right - 2**8)  ;
+    result(1) := (temp + GetRandomSalt - 1) mod MOD_AMOUNT + 1 ;
     for i in HALF_LEN + 1 to LEN loop
-      temp := (temp + character'pos(revS(i))) mod (integer'right - 2**8) ;
+      temp := (temp + character'pos(revS(i)) - 1) mod MOD_AMOUNT + 1;
     end loop ;
     result(2) := temp ;
     return OldGenRandSeed(result) ;  -- make value ranges legal
@@ -369,7 +370,7 @@ package body RandomBasePkg is
   procedure SetRandomSalt (I : integer) is
   -----------------------------------------------------------------
   begin 
-    RandomSalt.Set(I) ; 
+    RandomSalt.Set(I mod 2**30) ; 
   end procedure SetRandomSalt ; 
   
   -----------------------------------------------------------------
@@ -394,7 +395,9 @@ package body RandomBasePkg is
     variable temp : real := 5381.0 ;
   begin
     for i in S'reverse_range loop
-      temp := (temp*33.0 + real(character'pos(S(i)))) mod (2.0**31 - 2.0**8 - 1.0) ;
+--    keep value between 0 and 2**30-1 for later additions.
+--      temp := (temp*33.0 + real(character'pos(S(i)))) mod (2.0**31 - 2.0**8 - 1.0) ;
+      temp := (temp*33.0 + real(character'pos(S(i)))) mod (2.0**30) ;
     end loop ;
     RandomSalt.Set(integer(temp)) ; 
   end procedure SetRandomSalt ; 
