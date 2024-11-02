@@ -94,6 +94,7 @@ package DelayCoveragePkg is
   impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
   procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
   procedure SetBurstLength ( ID : DelayCoverageIDType ; BurstLength : integer ) ;
+  impure function GetBurstLength ( ID : DelayCoverageIDType ) return integer ;
   
   ------------------------------------------------------------
   impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer ;
@@ -216,6 +217,7 @@ package body DelayCoveragePkg is
     impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
     procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
     procedure SetBurstLength ( ID : DelayCoverageIDType ; BurstLength : integer ) ;
+    impure function GetBurstLength ( ID : DelayCoverageIDType ) return integer ;
     
     ------------------------------------------------------------
     impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer ;
@@ -465,6 +467,12 @@ package body DelayCoveragePkg is
       SingletonArrayPtr(ID.ID).BurstLength    := BurstLength ;
     end procedure SetBurstLength ;
 
+    ------------------------------------------------------------
+    impure function GetBurstLength ( ID : DelayCoverageIDType ) return integer is
+    ------------------------------------------------------------
+    begin
+      return SingletonArrayPtr(ID.ID).BurstLength ;
+    end function GetBurstLength ;
 
 --    ------------------------------------------------------------
 --    impure function GetDelayCoverage ( ID : DelayCoverageIDType ) return DelayCoverageIDType is
@@ -485,8 +493,8 @@ package body DelayCoveragePkg is
         ICoverLast(SingletonArrayPtr(ID.ID).BurstLengthCov) ; 
       else
         DelayCov := SingletonArrayPtr(ID.ID).BeatDelayCov ; 
+        SingletonArrayPtr(ID.ID).BurstLength := SingletonArrayPtr(ID.ID).BurstLength - 1; 
       end if ; 
-      SingletonArrayPtr(ID.ID).BurstLength := SingletonArrayPtr(ID.ID).BurstLength - 1; 
       return DelayCov ; 
     end function GetRandDelayCov ; 
 
@@ -819,6 +827,12 @@ package body DelayCoveragePkg is
     DelayCoverage.SetBurstLength ( ID, BurstLength ) ;
   end procedure SetBurstLength ;
 
+  ------------------------------------------------------------
+  impure function GetBurstLength ( ID : DelayCoverageIDType ) return integer is
+  ------------------------------------------------------------
+  begin
+    return DelayCoverage.GetBurstLength ( ID ) ;
+  end function GetBurstLength ;
 
   ------------------------------------------------------------
   procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) is
