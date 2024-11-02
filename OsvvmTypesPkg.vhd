@@ -41,10 +41,13 @@
 use std.textio.all ;
 library ieee ; 
 use ieee.std_logic_1164.all ; 
+use ieee.numeric_std.all ; 
 
 package OsvvmTypesPkg is
 
   type slv_vector is array (integer range <>) of std_logic_vector ; 
+  type uv_vector is array (integer range <>) of unsigned ; 
+  type sv_vector is array (integer range <>) of signed ; 
   
 end OsvvmTypesPkg ;
 
