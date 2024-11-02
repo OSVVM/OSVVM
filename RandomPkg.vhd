@@ -80,6 +80,7 @@ use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
 use work.OsvvmSettingsPkg.all ;
+use work.OsvvmTypesPkg.all ;
 
 use std.textio.all ;
 
@@ -379,7 +380,19 @@ package RandomPkg is
     impure function RandUnsigned (Min, Max : unsigned) return unsigned ;
     impure function RandSlv      (Min, Max : std_logic_vector) return std_logic_vector ;
     impure function RandSigned   (Min, Max : signed) return signed ;
-
+    
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    -- Large vector handling with Exclude
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : uv_vector)  return unsigned ;
+    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : unsigned)  return unsigned ;
+    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector ;
+    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector ;
+    impure function RandSigned ( Min, Max : signed ; Exclude : sv_vector) return signed ;
+    impure function RandSigned ( Min, Max : signed ; Exclude : signed) return signed ;
+    
     --- ///////////////////////////////////////////////////////////////////////////
     --
     --  Convenience Functions.  Resolve into calls into the other functions
@@ -1993,6 +2006,83 @@ package body RandomPkg is
         end if ;
         return NULL_SV ;
       end if ;
+    end function RandSigned ;
+
+    --- ///////////////////////////////////////////////////////////////////////////
+    --
+    -- Large vector handling with Exclude values
+    --
+    --- ///////////////////////////////////////////////////////////////////////////
+    ------------------------------------------------------------
+    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : uv_vector)  return unsigned is
+    ------------------------------------------------------------
+      constant LEN : integer := maximum(Max'length, Min'length) ;
+      variable Result : unsigned (LEN - 1 downto 0) ; 
+    begin
+      RandValLoop : loop 
+        Result := RandUnsigned( Min, Max) ; 
+        for i in Exclude'range loop 
+          next RandValLoop when Result = Exclude(i) ; 
+        end loop ;
+        exit RandValLoop ;
+      end loop RandValLoop ; 
+      return Result ; 
+    end function RandUnsigned ;
+
+    ------------------------------------------------------------
+    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : unsigned)  return unsigned is
+    ------------------------------------------------------------
+      constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+    begin
+      return RandUnsigned( Min, Max, EXCLUDE_VECTOR) ; 
+    end function RandUnsigned ;
+
+    ------------------------------------------------------------
+    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector is
+    ------------------------------------------------------------
+      constant LEN : integer := maximum(Max'length, Min'length) ;
+      variable Result : std_logic_vector (LEN - 1 downto 0) ; 
+    begin
+      RandValLoop : loop 
+        Result := RandSlv( Min, Max) ; 
+        for i in Exclude'range loop 
+          next RandValLoop when Result = Exclude(i) ; 
+        end loop ;
+        exit RandValLoop ;
+      end loop RandValLoop ; 
+      return Result ;   
+    end function RandSlv ;
+
+    ------------------------------------------------------------
+    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector is
+    ------------------------------------------------------------
+      constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+    begin
+      return RandSlv( Min, Max, EXCLUDE_VECTOR) ; 
+    end function RandSlv ;
+
+    ------------------------------------------------------------
+    impure function RandSigned ( Min, Max : signed ; Exclude : sv_vector) return signed is
+    ------------------------------------------------------------
+      constant LEN : integer := maximum(Max'length, Min'length) ;
+      variable Result : signed (LEN - 1 downto 0) ; 
+    begin
+      RandValLoop : loop 
+        Result := RandSigned( Min, Max) ; 
+        for i in Exclude'range loop 
+          next RandValLoop when Result = Exclude(i) ; 
+        end loop ;
+        exit RandValLoop ;
+      end loop RandValLoop ; 
+      return Result ; 
+    end function RandSigned ;
+
+    ------------------------------------------------------------
+    impure function RandSigned ( Min, Max : signed ; Exclude : signed) return signed is
+    ------------------------------------------------------------
+      constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+    begin
+      return RandSigned( Min, Max, EXCLUDE_VECTOR) ; 
     end function RandSigned ;
 
 

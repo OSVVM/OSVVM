@@ -49,6 +49,7 @@ context OsvvmContext is
   library OSVVM ;  
 
   use OSVVM.IfElsePkg.all ;
+  use OSVVM.OsvvmTypesPkg.all ; 
   use OSVVM.OsvvmScriptSettingsPkg.all ;
   use OSVVM.NamePkg.all ;
   use OSVVM.NameStorePkg.all ;
@@ -68,7 +69,6 @@ context OsvvmContext is
   use OSVVM.TbUtilPkg.all ;
   use OSVVM.ClockResetPkg.all ;
   use OSVVM.ReportPkg.all ;
-  use OSVVM.OsvvmTypesPkg.all ; 
   use OSVVM.LanguageSupport2019Pkg.all ;  -- for non-2019 tools this has stub subprograms that allow a graceful degradation of 2019 features
 
 end context OsvvmContext ; 

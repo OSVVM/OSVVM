@@ -51,11 +51,11 @@ if {$::osvvm::ToolName eq "RivieraPRO"} {
   RemoveLibrary osvvm
 }
 library osvvm
-# Analyze package declarations
+
 analyze IfElsePkg.vhd
+analyze OsvvmTypesPkg.vhd
 
-
-
+# Analyze package declarations
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
 analyze OsvvmSettingsPkg.vhd
 if {!$::osvvm::ToolSupportsDeferredConstants}  {
@@ -161,7 +161,6 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 }
 
 analyze ReportPkg.vhd
-analyze OsvvmTypesPkg.vhd
 
 if {$::osvvm::ToolSupportsDeferredConstants}  {
   set SettingsDirectory [FindOsvvmSettingsDirectory]

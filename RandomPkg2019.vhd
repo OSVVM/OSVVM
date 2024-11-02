@@ -54,6 +54,7 @@ use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
 use work.OsvvmSettingsPkg.all ;
+use work.OsvvmTypesPkg.all ;
 
 use std.textio.all ;
 
@@ -339,14 +340,22 @@ package RandomPkg2019 is
   --- ///////////////////////////////////////////////////////////////////////////
   ------------------------------------------------------------
   impure function RandUnsigned (variable RV : inout RandomType ; Size : natural) return unsigned ;
-  impure function RandSlv      (variable RV : inout RandomType ; Size : natural) return std_logic_vector ;
-  impure function RandSigned   (variable RV : inout RandomType ; Size : natural) return signed ;
   impure function RandUnsigned (variable RV : inout RandomType ; Max : Unsigned) return unsigned ;
-  impure function RandSlv      (variable RV : inout RandomType ; Max : std_logic_vector) return std_logic_vector ;
-  impure function RandSigned   (variable RV : inout RandomType ; Max : signed) return signed ;
   impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned) return unsigned ;
+  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : uv_vector)  return unsigned ;
+  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : unsigned)  return unsigned ;
+  
+  impure function RandSlv      (variable RV : inout RandomType ; Size : natural) return std_logic_vector ;
+  impure function RandSlv      (variable RV : inout RandomType ; Max : std_logic_vector) return std_logic_vector ;
   impure function RandSlv      (variable RV : inout RandomType ; Min, Max : std_logic_vector) return std_logic_vector ;
+  impure function RandSlv      (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector ;
+  impure function RandSlv      (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector ;
+  
+  impure function RandSigned   (variable RV : inout RandomType ; Size : natural) return signed ;
+  impure function RandSigned   (variable RV : inout RandomType ; Max : signed) return signed ;
   impure function RandSigned   (variable RV : inout RandomType ; Min, Max : signed) return signed ;
+  impure function RandSigned   (variable RV : inout RandomType ; Min, Max : signed ; Exclude : sv_vector) return signed ;
+  impure function RandSigned   (variable RV : inout RandomType ; Min, Max : signed ; Exclude : signed) return signed ;
 
   --- ///////////////////////////////////////////////////////////////////////////
   --
@@ -1835,6 +1844,19 @@ package body RandomPkg2019 is
   --
   --- ///////////////////////////////////////////////////////////////////////////
   ------------------------------------------------------------
+  impure function SizeByLeftMostBit (A : unsigned) return integer is
+  ------------------------------------------------------------
+    alias normA : unsigned (A'length downto 1) is A ;
+  begin
+    for i in normA'range loop 
+      if normA(i) = '1' then 
+        return i ; 
+      end if ; 
+    end loop ;
+    return -1 ; 
+  end function SizeByLeftMostBit ; 
+
+  ------------------------------------------------------------
   impure function RandUnsigned (variable RV : inout RandomType ; Size : natural) return unsigned is
   ------------------------------------------------------------
     constant NumLoops : integer := integer(ceil(real(Size)/30.0)) ;
@@ -1850,33 +1872,6 @@ package body RandomPkg2019 is
     RandVal(1+30*(NumLoops-1) to Remain + 30*(NumLoops-1)) := to_unsigned(RandInt(RV, 0, 2**Remain-1), Remain) ;
     return RandVal ;
   end function RandUnsigned ;
-
-  ------------------------------------------------------------
-  impure function RandSlv (variable RV : inout RandomType ; Size : natural) return std_logic_vector is
-  ------------------------------------------------------------
-  begin
-    return std_logic_vector(RandUnsigned(RV, Size)) ;
-  end function RandSlv ;
-
-  ------------------------------------------------------------
-  impure function RandSigned (variable RV : inout RandomType ; Size : natural) return signed is
-  ------------------------------------------------------------
-  begin
-    return signed(RandUnsigned(RV, Size)) ;
-  end function RandSigned ;
-
-  ------------------------------------------------------------
-  impure function SizeByLeftMostBit (A : unsigned) return integer is
-  ------------------------------------------------------------
-    alias normA : unsigned (A'length downto 1) is A ;
-  begin
-    for i in normA'range loop 
-      if normA(i) = '1' then 
-        return i ; 
-      end if ; 
-    end loop ;
-    return -1 ; 
-  end function SizeByLeftMostBit ; 
 
   ------------------------------------------------------------
   impure function RandUnsigned (variable RV : inout RandomType ; Max : unsigned) return unsigned is
@@ -1913,25 +1908,6 @@ package body RandomPkg2019 is
   -- end function RandUnsigned ;
 
   ------------------------------------------------------------
-  impure function RandSlv (variable RV : inout RandomType ; Max : std_logic_vector) return std_logic_vector is
-  ------------------------------------------------------------
-  begin
-    return std_logic_vector(RandUnsigned(RV, unsigned(Max))) ;
-  end function RandSlv ;
-
-  ------------------------------------------------------------
-  impure function RandSigned (variable RV : inout RandomType ; Max : signed) return signed is
-  ------------------------------------------------------------
-  begin
-    if max'length > 0 then
-      AlertIf (OSVVM_RANDOM_ALERTLOG_ID, Max < 0, "RandomPkg2019.RandSigned: Max < 0", FAILURE) ;
-      return signed(RandUnsigned(RV, unsigned(Max))) ;
-    else
-      return NULL_SV ; -- Null Array
-    end if ;
-  end function RandSigned ;
-
-  ------------------------------------------------------------
   impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned) return unsigned is
   ------------------------------------------------------------
     constant LEN : integer := maximum(Max'length, Min'length) ;
@@ -1945,6 +1921,44 @@ package body RandomPkg2019 is
       return NULL_UV ;
     end if ;
   end function RandUnsigned ;
+
+  ------------------------------------------------------------
+  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : uv_vector)  return unsigned is
+  ------------------------------------------------------------
+    constant LEN : integer := maximum(Max'length, Min'length) ;
+    variable Result : unsigned (LEN - 1 downto 0) ; 
+  begin
+    RandValLoop : loop 
+      Result := RandUnsigned(RV, Min, Max) ; 
+      for i in Exclude'range loop 
+        next RandValLoop when Result = Exclude(i) ; 
+      end loop ;
+      exit RandValLoop ;
+    end loop RandValLoop ; 
+    return Result ; 
+  end function RandUnsigned ;
+
+  ------------------------------------------------------------
+  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : unsigned)  return unsigned is
+  ------------------------------------------------------------
+    constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+  begin
+    return RandUnsigned(RV, Min, Max, EXCLUDE_VECTOR) ; 
+  end function RandUnsigned ;
+
+  ------------------------------------------------------------
+  impure function RandSlv (variable RV : inout RandomType ; Size : natural) return std_logic_vector is
+  ------------------------------------------------------------
+  begin
+    return std_logic_vector(RandUnsigned(RV, Size)) ;
+  end function RandSlv ;
+
+  ------------------------------------------------------------
+  impure function RandSlv (variable RV : inout RandomType ; Max : std_logic_vector) return std_logic_vector is
+  ------------------------------------------------------------
+  begin
+    return std_logic_vector(RandUnsigned(RV, unsigned(Max))) ;
+  end function RandSlv ;
 
   ------------------------------------------------------------
   impure function RandSlv (variable RV : inout RandomType ; Min, Max : std_logic_vector) return std_logic_vector is
@@ -1962,6 +1976,49 @@ package body RandomPkg2019 is
   end function RandSlv ;
 
   ------------------------------------------------------------
+  impure function RandSlv (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector is
+  ------------------------------------------------------------
+    constant LEN : integer := maximum(Max'length, Min'length) ;
+    variable Result : std_logic_vector (LEN - 1 downto 0) ; 
+  begin
+    RandValLoop : loop 
+      Result := RandSlv(RV, Min, Max) ; 
+      for i in Exclude'range loop 
+        next RandValLoop when Result = Exclude(i) ; 
+      end loop ;
+      exit RandValLoop ;
+    end loop RandValLoop ; 
+    return Result ;   
+  end function RandSlv ;
+
+  ------------------------------------------------------------
+  impure function RandSlv (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector is
+  ------------------------------------------------------------
+    constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+  begin
+    return RandSlv(RV, Min, Max, EXCLUDE_VECTOR) ; 
+  end function RandSlv ;
+
+  ------------------------------------------------------------
+  impure function RandSigned (variable RV : inout RandomType ; Size : natural) return signed is
+  ------------------------------------------------------------
+  begin
+    return signed(RandUnsigned(RV, Size)) ;
+  end function RandSigned ;
+
+  ------------------------------------------------------------
+  impure function RandSigned (variable RV : inout RandomType ; Max : signed) return signed is
+  ------------------------------------------------------------
+  begin
+    if max'length > 0 then
+      AlertIf (OSVVM_RANDOM_ALERTLOG_ID, Max < 0, "RandomPkg2019.RandSigned: Max < 0", FAILURE) ;
+      return signed(RandUnsigned(RV, unsigned(Max))) ;
+    else
+      return NULL_SV ; -- Null Array
+    end if ;
+  end function RandSigned ;
+
+  ------------------------------------------------------------
   impure function RandSigned (variable RV : inout RandomType ; Min, Max : signed) return signed is
   ------------------------------------------------------------
     constant LEN : integer := maximum(Max'length, Min'length) ;
@@ -1975,6 +2032,31 @@ package body RandomPkg2019 is
       return NULL_SV ;
     end if ;
   end function RandSigned ;
+
+  ------------------------------------------------------------
+  impure function RandSigned (variable RV : inout RandomType ; Min, Max : signed ; Exclude : sv_vector) return signed is
+  ------------------------------------------------------------
+    constant LEN : integer := maximum(Max'length, Min'length) ;
+    variable Result : signed (LEN - 1 downto 0) ; 
+  begin
+    RandValLoop : loop 
+      Result := RandSigned(RV, Min, Max) ; 
+      for i in Exclude'range loop 
+        next RandValLoop when Result = Exclude(i) ; 
+      end loop ;
+      exit RandValLoop ;
+    end loop RandValLoop ; 
+    return Result ; 
+  end function RandSigned ;
+
+  ------------------------------------------------------------
+  impure function RandSigned (variable RV : inout RandomType ; Min, Max : signed ; Exclude : signed) return signed is
+  ------------------------------------------------------------
+    constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+  begin
+    return RandSigned(RV, Min, Max, EXCLUDE_VECTOR) ; 
+  end function RandSigned ;
+
 
 
   --- ///////////////////////////////////////////////////////////////////////////
