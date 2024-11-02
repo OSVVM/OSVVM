@@ -90,7 +90,7 @@ analyze OsvvmGlobalPkg.vhd
 # Compile CoverageVendorApiPkg_Aldec.vhd for RivieraPro and ActiveHDL, otherwise compile CoverageVendorApiPkg_default.vhd
 if {$::osvvm::ToolVendor eq "Aldec"}  {
   analyze CoverageVendorApiPkg_Aldec.vhd
-} elseif {$::osvvm::ToolVendor eq "NVC"}  {
+} elseif {($::osvvm::ToolVendor eq "NVC") && [expr [string compare $::osvvm::ToolVersion "1.15"] >= 0]} {
   analyze CoverageVendorApiPkg_NVC.vhd
 } else {
   analyze CoverageVendorApiPkg_default.vhd

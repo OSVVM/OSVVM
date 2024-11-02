@@ -50,6 +50,7 @@ use work.AlertLogPkg.all ;
 use work.CoveragePkg.all ; 
 use work.NameStorePkg.all ;
 use work.OsvvmScriptSettingsPkg.all ;
+use work.RandomBasePkg.all ; 
 
 package DelayCoveragePkg is
  
@@ -92,6 +93,7 @@ package DelayCoveragePkg is
   ------------------------------------------------------------
   impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
   procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
+  procedure SetBurstLength ( ID : DelayCoverageIDType ; BurstLength : integer ) ;
   
   ------------------------------------------------------------
   impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer ;
@@ -213,6 +215,7 @@ package body DelayCoveragePkg is
 
     impure function GetDelayCoverage(ID : integer) return DelayCoverageIDType ;
     procedure SetDelayCoverage ( ID : DelayCoverageIDType ) ;
+    procedure SetBurstLength ( ID : DelayCoverageIDType ; BurstLength : integer ) ;
     
     ------------------------------------------------------------
     impure function GetRandDelay ( ID : DelayCoverageIDType ) return integer ;
@@ -446,9 +449,21 @@ package body DelayCoveragePkg is
       SingletonArrayPtr(ID.ID).BurstLengthCov := ID.BurstLengthCov ; 
       SingletonArrayPtr(ID.ID).BurstDelayCov  := ID.BurstDelayCov  ; 
       SingletonArrayPtr(ID.ID).BeatDelayCov   := ID.BeatDelayCov   ; 
---      SingletonArrayPtr(ID.ID).BurstLength    := 0 ; 
-      SingletonArrayPtr(ID.ID).BurstLength    := ToRandPoint(ID.BurstLengthCov, (1 => (Min => 0, Max => 5))) ;  -- start with beat delay (1 to 5) vs burst delay (0)
+      if GetRandomSalt /= 0 then 
+        -- If RandomSalt set, randomize BurstLength
+        SingletonArrayPtr(ID.ID).BurstLength    := ToRandPoint(ID.BurstLengthCov, (1 => (Min => 0, Max => 5))) ;  -- start with beat delay (1 to 5) vs burst delay (0)
+      else
+        -- If RandomSalt is not set, randomizaation would always produce the same value, so why not 0 the original behavior.
+        SingletonArrayPtr(ID.ID).BurstLength    := 0 ; 
+      end if ; 
     end procedure SetDelayCoverage ;
+
+    ------------------------------------------------------------
+    procedure SetBurstLength ( ID : DelayCoverageIDType ; BurstLength : integer ) is
+    ------------------------------------------------------------
+    begin
+      SingletonArrayPtr(ID.ID).BurstLength    := BurstLength ;
+    end procedure SetBurstLength ;
 
 
 --    ------------------------------------------------------------
@@ -796,6 +811,14 @@ package body DelayCoveragePkg is
   begin
     DelayCoverage.SetDelayCoverage ( ID ) ;
   end procedure SetDelayCoverage ;
+  
+  ------------------------------------------------------------
+  procedure SetBurstLength ( ID : DelayCoverageIDType ; BurstLength : integer ) is
+  ------------------------------------------------------------
+  begin
+    DelayCoverage.SetBurstLength ( ID, BurstLength ) ;
+  end procedure SetBurstLength ;
+
 
   ------------------------------------------------------------
   procedure DeallocateBins ( ID : DelayCoverageIDArrayType ) is
