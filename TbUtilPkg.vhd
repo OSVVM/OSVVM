@@ -63,18 +63,18 @@
 library ieee ;
   use ieee.std_logic_1164.all ;
 
-  use work.AlertLogPkg.all ;
-  use work.TranscriptPkg.all ;
   use work.ResolutionPkg.all ;
-  use work.OsvvmGlobalPkg.all ;
+--  use work.AlertLogPkg.all ;
+--  use work.TranscriptPkg.all ;
+--  use work.OsvvmGlobalPkg.all ;
 
 package TbUtilPkg is
   type stdulogic_indexed_by_stdulogic is array (std_ulogic) of std_ulogic;
 
   constant CLK_ACTIVE : std_logic := '1' ;
 
-  constant t_sim_resolution : time := std.env.resolution_limit ;  -- VHDL-2008
-  -- constant t_sim_resolution : time := 1 ns ;  -- for non VHDL-2008 simulators
+  constant t_sim_resolution : delay_length := std.env.resolution_limit ;  -- VHDL-2008
+  -- constant t_sim_resolution : delay_length := 1 ns ;  -- for non VHDL-2008 simulators
 
   constant toggle_sl_table : stdulogic_indexed_by_stdulogic := (
       '0'     => '1',
@@ -249,7 +249,7 @@ package TbUtilPkg is
   ------------------------------------------------------------
   procedure Toggle (
     signal Sig        : InOut std_logic ;
-    constant DelayVal : time
+    constant DelayVal : delay_length
   ) ;
   procedure Toggle ( signal Sig : InOut std_logic ) ;
   procedure ToggleHS ( signal Sig : InOut std_logic ) ;
@@ -257,7 +257,7 @@ package TbUtilPkg is
   procedure WaitForToggle ( signal Sig : In std_logic ) ;
 
   -- Bit type versions
-  procedure Toggle ( signal Sig : InOut bit ; constant DelayVal : time ) ;
+  procedure Toggle ( signal Sig : InOut bit ; constant DelayVal : delay_length ) ;
   procedure Toggle ( signal Sig : InOut bit ) ;
   procedure ToggleHS ( signal Sig : InOut bit ) ;
   function  IsToggle ( signal Sig : In bit ) return boolean ;
@@ -276,7 +276,7 @@ package TbUtilPkg is
   ------------------------------------------------------------
   procedure WaitForBarrier ( signal Sig : InOut std_logic ) ;
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : time ) ;
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : delay_length ) ;
   -- resolved_barrier : summing resolution used in conjunction with integer based barriers
   function resolved_barrier ( s : integer_vector ) return integer ;
   -- integer'low+1 is for Xilinx.   It should be just integer'low
@@ -288,7 +288,7 @@ package TbUtilPkg is
   --   signal barrier2 : integer_barrier := 1 ;              -- using the subtype that already applies the resolution function
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ) ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
-  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : time ) ;
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : delay_length ) ;
   -- Using separate signals
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncInV : in  std_logic_vector ) ;
@@ -328,11 +328,11 @@ package TbUtilPkg is
   procedure WaitForLevel ( signal A : in boolean ) ;
   procedure WaitForLevel ( signal A : in std_logic ; Level : std_logic := '1' ) ;
 
-  procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : time);
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Level : std_logic := '1');
+  procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : delay_length);
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; constant Level : std_logic := '1');
 
-  procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : time; variable TimeOutReached : out boolean);
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Level : std_logic := '1');
+  procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : delay_length; variable TimeOutReached : out boolean);
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; variable TimeOutReached : out boolean; constant Level : std_logic := '1');
   alias WaitForLevelTimeOut is WaitForLevel [boolean, time, boolean] ;
   alias WaitForLevelTimeOut is WaitForLevel [std_logic, time, boolean, std_logic] ;
 
@@ -811,15 +811,15 @@ package body TbUtilPkg is
   ------------------------------------------------------------
   procedure Toggle (
     signal Sig        : InOut std_logic ;
-    constant DelayVal : time
+    constant DelayVal : delay_length
   ) is
-    variable iDelayVal : time ;
+    variable iDelayVal : delay_length ;
   begin
     if DelayVal > t_sim_resolution then
       iDelayVal := DelayVal - t_sim_resolution ;
     else
       iDelayVal := 0 sec ;
-      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns") ;
+--      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns") ;
     end if ;
     Sig <= toggle_sl_table(Sig) after iDelayVal ;
   end procedure Toggle ;
@@ -847,15 +847,14 @@ package body TbUtilPkg is
   end procedure WaitForToggle ;
 
   -- Bit type versions
-  procedure Toggle ( signal Sig : InOut bit ; constant DelayVal : time ) is
-    variable iDelayVal : time ;
+  procedure Toggle ( signal Sig : InOut bit ; constant DelayVal : delay_length ) is
+    variable iDelayVal : delay_length ;
   begin
     if DelayVal > t_sim_resolution then
       iDelayVal := DelayVal - t_sim_resolution ;
     else
       iDelayVal := 0 sec ;
-      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec,
-         "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns", WARNING) ;
+--      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns", WARNING) ;
     end if ;
     Sig <= not Sig after iDelayVal ;
   end procedure Toggle ;
@@ -931,7 +930,7 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : time ) is
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : delay_length ) is
   begin
     Sig <= 'H' ;
     -- Wait until all processes set Sig to H
@@ -981,7 +980,7 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
-  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : time ) is
+  procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : delay_length ) is
   begin
     Sig <= 0 ;
     -- Wait until all processes set Sig to 0
@@ -1080,27 +1079,27 @@ package body TbUtilPkg is
   -- WaitForLevel with TimeOut
   --   Find a signal at a level or simply pass after timeout
   ------------------------------------------------------------
-  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : time) is 
+  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : delay_length) is 
   begin
     if not A then 
       wait until A for TimeOut;
     end if ; 
   end procedure WaitForLevel ; 
   
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; constant Level : std_logic := '1') is 
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; constant Level : std_logic := '1') is 
   begin
     if A /= Level then 
 	    wait until A = Level for TimeOut; 
     end if ; 
   end procedure WaitForLevel ; 
 				
-  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : time; variable TimeOutReached : out boolean) is 
+  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : delay_length; variable TimeOutReached : out boolean) is 
   begin
     WaitForLevel(A, TimeOut) ; 
     TimeOutReached := not A ; 
   end procedure WaitForLevel ; 
   
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : time; variable TimeOutReached : out boolean; constant Level : std_logic := '1') is 
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; variable TimeOutReached : out boolean; constant Level : std_logic := '1') is 
   begin
     WaitForLevel(A, TimeOut, Level) ; 
     TimeOutReached := A /= Level ; 
