@@ -386,12 +386,19 @@ package RandomPkg is
     -- Large vector handling with Exclude
     --
     --- ///////////////////////////////////////////////////////////////////////////
+    impure function RandUnsigned (Size : natural ; Exclude : uv_vector) return unsigned ;
+--!!    impure function RandUnsigned (Size : natural ; Exclude : unsigned) return unsigned ;
+    impure function RandSlv      (Size : natural ; Exclude : slv_vector) return std_logic_vector ;
+--!!    impure function RandSlv      (Size : natural ; Exclude : std_logic_vector) return std_logic_vector ;
+    impure function RandSigned   (Size : natural ; Exclude : sv_vector) return signed ;
+--!!    impure function RandSigned   (Size : natural ; Exclude : signed) return signed ;
+
     impure function RandUnsigned ( Min, Max : unsigned ; Exclude : uv_vector)  return unsigned ;
-    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : unsigned)  return unsigned ;
+--!!    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : unsigned)  return unsigned ;
     impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector ;
-    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector ;
+--!!    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector ;
     impure function RandSigned ( Min, Max : signed ; Exclude : sv_vector) return signed ;
-    impure function RandSigned ( Min, Max : signed ; Exclude : signed) return signed ;
+--!!    impure function RandSigned ( Min, Max : signed ; Exclude : signed) return signed ;
     
     --- ///////////////////////////////////////////////////////////////////////////
     --
@@ -2014,6 +2021,75 @@ package body RandomPkg is
     --
     --- ///////////////////////////////////////////////////////////////////////////
     ------------------------------------------------------------
+    impure function RandUnsigned (Size : natural ; Exclude : uv_vector) return unsigned is
+    ------------------------------------------------------------
+      variable Result : unsigned (Size - 1 downto 0) ; 
+    begin
+      RandValLoop : loop 
+        Result := RandUnsigned( Size) ; 
+        for i in Exclude'range loop 
+          next RandValLoop when Result = Exclude(i) ; 
+        end loop ;
+        exit RandValLoop ;
+      end loop RandValLoop ; 
+      return Result ; 
+    end function RandUnsigned ;
+
+--!!    ------------------------------------------------------------
+--!!    impure function RandUnsigned (Size : natural ; Exclude : unsigned) return unsigned is
+--!!    ------------------------------------------------------------
+--!!      constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+--!!    begin
+--!!      return RandUnsigned( Size, EXCLUDE_VECTOR) ; 
+--!!    end function RandUnsigned ;
+
+    ------------------------------------------------------------
+    impure function RandSlv (Size : natural ; Exclude : slv_vector) return std_logic_vector is
+    ------------------------------------------------------------
+      variable Result : std_logic_vector (Size - 1 downto 0) ; 
+    begin
+      RandValLoop : loop 
+        Result := RandSlv( Size) ; 
+        for i in Exclude'range loop 
+          next RandValLoop when Result = Exclude(i) ; 
+        end loop ;
+        exit RandValLoop ;
+      end loop RandValLoop ; 
+      return Result ; 
+    end function RandSlv ;
+
+--!!    ------------------------------------------------------------
+--!!    impure function RandSlv (Size : natural ; Exclude : std_logic_vector) return std_logic_vector is
+--!!    ------------------------------------------------------------
+--!!      constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+--!!    begin
+--!!      return RandSlv( Size, EXCLUDE_VECTOR) ; 
+--!!    end function RandSlv ;
+
+    ------------------------------------------------------------
+    impure function RandSigned (Size : natural ; Exclude : sv_vector) return signed is
+    ------------------------------------------------------------
+      variable Result : signed (Size - 1 downto 0) ; 
+    begin
+      RandValLoop : loop 
+        Result := RandSigned( Size) ; 
+        for i in Exclude'range loop 
+          next RandValLoop when Result = Exclude(i) ; 
+        end loop ;
+        exit RandValLoop ;
+      end loop RandValLoop ; 
+      return Result ; 
+    end function RandSigned ;
+
+--!!    ------------------------------------------------------------
+--!!    impure function RandSigned (Size : natural ; Exclude : signed) return signed is
+--!!    ------------------------------------------------------------
+--!!      constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+--!!    begin
+--!!      return RandSigned( Size, EXCLUDE_VECTOR) ; 
+--!!    end function RandSigned ;
+
+    ------------------------------------------------------------
     impure function RandUnsigned ( Min, Max : unsigned ; Exclude : uv_vector)  return unsigned is
     ------------------------------------------------------------
       constant LEN : integer := maximum(Max'length, Min'length) ;
@@ -2029,13 +2105,13 @@ package body RandomPkg is
       return Result ; 
     end function RandUnsigned ;
 
-    ------------------------------------------------------------
-    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : unsigned)  return unsigned is
-    ------------------------------------------------------------
-      constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
-    begin
-      return RandUnsigned( Min, Max, EXCLUDE_VECTOR) ; 
-    end function RandUnsigned ;
+--!!    ------------------------------------------------------------
+--!!    impure function RandUnsigned ( Min, Max : unsigned ; Exclude : unsigned)  return unsigned is
+--!!    ------------------------------------------------------------
+--!!      constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+--!!    begin
+--!!      return RandUnsigned( Min, Max, EXCLUDE_VECTOR) ; 
+--!!    end function RandUnsigned ;
 
     ------------------------------------------------------------
     impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector is
@@ -2053,13 +2129,13 @@ package body RandomPkg is
       return Result ;   
     end function RandSlv ;
 
-    ------------------------------------------------------------
-    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector is
-    ------------------------------------------------------------
-      constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
-    begin
-      return RandSlv( Min, Max, EXCLUDE_VECTOR) ; 
-    end function RandSlv ;
+--!!    ------------------------------------------------------------
+--!!    impure function RandSlv ( Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector is
+--!!    ------------------------------------------------------------
+--!!      constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+--!!    begin
+--!!      return RandSlv( Min, Max, EXCLUDE_VECTOR) ; 
+--!!    end function RandSlv ;
 
     ------------------------------------------------------------
     impure function RandSigned ( Min, Max : signed ; Exclude : sv_vector) return signed is
@@ -2077,13 +2153,13 @@ package body RandomPkg is
       return Result ; 
     end function RandSigned ;
 
-    ------------------------------------------------------------
-    impure function RandSigned ( Min, Max : signed ; Exclude : signed) return signed is
-    ------------------------------------------------------------
-      constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
-    begin
-      return RandSigned( Min, Max, EXCLUDE_VECTOR) ; 
-    end function RandSigned ;
+--!!    ------------------------------------------------------------
+--!!    impure function RandSigned ( Min, Max : signed ; Exclude : signed) return signed is
+--!!    ------------------------------------------------------------
+--!!      constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
+--!!    begin
+--!!      return RandSigned( Min, Max, EXCLUDE_VECTOR) ; 
+--!!    end function RandSigned ;
 
 
     --- ///////////////////////////////////////////////////////////////////////////
