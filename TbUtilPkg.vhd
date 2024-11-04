@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2024   2024.11    Replaced time with delay_length (0 to time'high) and integer with natural (in WaitForClock)
 --    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
 --    07/2024   2024.07    Added pre-defined barriers:  
 --                             OsvvmTestInit, OsvvmResetDone, OsvvmVcInit, 
@@ -316,8 +317,8 @@ package TbUtilPkg is
   -- WaitForClock
   --   Sync to Clock - after a delay, after a number of clocks
   ------------------------------------------------------------
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in time ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in integer := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in delay_length ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in natural := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
   procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in boolean ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
   procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in std_logic ; constant EnableActive : std_logic := '1' ; constant ClkActive : in std_logic := CLK_ACTIVE) ;
 
@@ -333,8 +334,8 @@ package TbUtilPkg is
 
   procedure WaitForLevel ( signal A : in boolean;   constant TimeOut : delay_length; variable TimeOutReached : out boolean);
   procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; variable TimeOutReached : out boolean; constant Level : std_logic := '1');
-  alias WaitForLevelTimeOut is WaitForLevel [boolean, time, boolean] ;
-  alias WaitForLevelTimeOut is WaitForLevel [std_logic, time, boolean, std_logic] ;
+  alias WaitForLevelTimeOut is WaitForLevel [boolean, delay_length, boolean] ;
+  alias WaitForLevelTimeOut is WaitForLevel [std_logic, delay_length, boolean, std_logic] ;
 
   ------------------------------------------------------------
   --  Deprecated subprogram names
@@ -350,7 +351,7 @@ package TbUtilPkg is
   alias SyncTo is WaitForBarrier2[std_logic, std_logic] ;
   alias SyncTo is WaitForBarrier2[std_logic, std_logic_vector] ;
   -- Backward compatible name
-  alias SyncToClk is WaitForClock [std_logic, time, std_logic] ;
+  alias SyncToClk is WaitForClock [std_logic, delay_length, std_logic] ;
 
   ------------------------------------------------------------
   -- Deprecated
@@ -1026,7 +1027,7 @@ package body TbUtilPkg is
   -- WaitForClock
   --   Sync to Clock - after a delay, after a number of clocks
   ------------------------------------------------------------
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in time ; constant ClkActive : in std_logic := CLK_ACTIVE) is
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in delay_length ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
     if delay > t_sim_resolution then
       wait for delay - t_sim_resolution ;
@@ -1034,7 +1035,7 @@ package body TbUtilPkg is
     wait until Clk = ClkActive ;
   end procedure WaitForClock ;
 
-  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in integer := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) is
+  procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in natural := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
     for i in 1 to NumberOfClocks loop
       wait until Clk = ClkActive ;
