@@ -148,6 +148,7 @@ package AlertLogPkg is
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := ALERTLOG_BASE_ID + 1 ;
   constant  OSVVM_ALERTLOG_ID              : AlertLogIDType := ALERTLOG_BASE_ID + 2 ; -- reporting for packages
   constant  REQUIREMENT_ALERTLOG_ID        : AlertLogIDType := ALERTLOG_BASE_ID + 3 ;
+  constant  OSVVM_DEPRECATED_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ; -- soon to be ALERTLOG_BASE_ID + 4 ;
   -- May have its own ID or OSVVM_ALERTLOG_ID as default - most scoreboards allocate their own ID
   constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
   constant  OSVVM_COVERAGE_ALERTLOG_ID     : AlertLogIDType := OSVVM_ALERTLOG_ID ;
