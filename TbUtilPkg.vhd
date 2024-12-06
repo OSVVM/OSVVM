@@ -269,27 +269,27 @@ package TbUtilPkg is
   function  Increment (constant Sig : in integer ; constant Amount : in integer := 1) return integer ;
   procedure WaitForToggle ( signal Sig : In integer ) ;
 
-
   ------------------------------------------------------------
   -- WaitForBarrier
   --   Barrier Synchronization
   --   Multiple processes call it, it finishes when all have called it
   ------------------------------------------------------------
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ) ;
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
-  procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : delay_length ) ;
   -- resolved_barrier : summing resolution used in conjunction with integer based barriers
   function resolved_barrier ( s : integer_vector ) return integer ;
   -- integer'low+1 is for Xilinx.   It should be just integer'low
   subtype  BarrierType is resolved_barrier integer range integer'low+1 to integer'high ;
 --  alias    integer_barrier is BarrierType ; 
   subtype  integer_barrier is BarrierType ; 
-  -- Usage of integer barriers requires resolved_barrier. Initialization to 1 recommended, but not required
-  --   signal barrier1 : resolved_barrier integer := 1 ;     -- using the resolution function
-  --   signal barrier2 : integer_barrier := 1 ;              -- using the subtype that already applies the resolution function
+  -- Usage of integer barriers requires resolved_barrier.  Usage of BarrierType is recommended.
+  --   signal barrier1 : BarrierType ;                    -- Recommended
+  --   signal barrier2 : resolved_barrier integer := 1 ;  -- Supported
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ) ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : delay_length ) ;
+  -- std_logic support
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ) ;
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
+  procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : delay_length ) ;
   -- Using separate signals
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncInV : in  std_logic_vector ) ;
@@ -956,9 +956,9 @@ package body TbUtilPkg is
     return result ;
   end function resolved_barrier ;
 
-  -- Usage of integer barriers requires resolved_barrier. Initialization to 1 recommended, but not required
-  --   signal barrier1 : resolved_barrier integer := 1 ;     -- using the resolution function
-  --   signal barrier2 : integer_barrier := 1 ;              -- using the subtype that already applies the resolution function
+  -- Usage of integer barriers requires resolved_barrier.  Usage of BarrierType is recommended.
+  --   signal barrier1 : BarrierType ;                    -- Recommended
+  --   signal barrier2 : resolved_barrier integer := 1 ;  -- Supported
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ) is
   begin
     Sig <= 0 ;
