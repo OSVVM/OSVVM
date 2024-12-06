@@ -379,8 +379,8 @@ end MemoryGenericPkg ;
 
 package body MemoryGenericPkg is 
   constant BLOCK_WIDTH : integer := 10 ; 
-  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 24 ; -- 64 M Byte array of pointers
-  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 30 ; -- 4 G Byte Array of pointers - Maximum size supported by type integer
+  constant WARNING_AT_ADDRESS_WIDTH : integer := BLOCK_WIDTH + 24 ; -- 16 M Byte array of pointers
+  constant MAXIMUM_ADDRESS_WIDTH    : integer := BLOCK_WIDTH + 30 ; -- 1 G Byte Array of pointers - Maximum size supported by type integer
 
   type MemoryPType is protected body
 
