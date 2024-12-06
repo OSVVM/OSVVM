@@ -146,6 +146,8 @@ package CoveragePkg is
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
+  file OsvvmCoverageWriteBinFile : text ;
+
 -- Merged the two constants in AlertLogPkg  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_COV_ALERTLOG_ID ;
 
   -- CovPType allocates bins that are multiples of MIN_NUM_BINS
@@ -401,7 +403,8 @@ package CoveragePkg is
   procedure SetBinSize (ID : CoverageIDType; NewNumBins : integer) ;
   procedure Deallocate (ID : CoverageIDType) ;
   procedure DeallocateBins (CoverID : CoverageIDType) ;
-
+  alias     DeleteBins is DeallocateBins[CoverageIdType] ;
+  
   ------------------------------------------------------------
   procedure AddBins (
   ------------------------------------------------------------
@@ -2190,7 +2193,6 @@ package body CoveragePkg is
     variable ErrorIfNotCoveredVar           : boolean := FALSE ;
 --!!    variable CheckedForErrorIfNotCoveredVar : boolean := FALSE ;
 
-    file WriteBinFile : text ;
     variable WriteBinFileInit : boolean := FALSE ;
 --!!    variable UsingLocalFile   : boolean := FALSE ;
 
@@ -2418,7 +2420,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       WriteBinFileInit := TRUE ;
-      file_open( WriteBinFile , FileName , OpenKind );
+      file_open( OsvvmCoverageWriteBinFile , FileName , OpenKind );
     end procedure FileOpenWriteBin ;
 
     ------------------------------------------------------------
@@ -2426,7 +2428,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       WriteBinFileInit := FALSE ;
-      file_close( WriteBinFile) ;
+      file_close( OsvvmCoverageWriteBinFile) ;
     end procedure FileCloseWriteBin ;
 
     ------------------------------------------------------------
@@ -2436,8 +2438,8 @@ package body CoveragePkg is
     begin
       if buf /= NULL then
         if WriteBinFileInit then
-          -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
-          writeline(WriteBinFile, buf) ;
+          -- Write to Local OsvvmCoverageWriteBinFile - Deprecated, recommend use TranscriptFile instead
+          writeline(OsvvmCoverageWriteBinFile, buf) ;
         elsif IsTranscriptEnabled then
           if IsTranscriptMirrored then
             -- Write to TranscriptFile and OUTPUT
@@ -2485,6 +2487,7 @@ package body CoveragePkg is
       WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+-- Deprecated parameters.  Are ignored.
       WritePrefix     : string := OSVVM_STRING_INIT_PARM_DETECT ;
       PassName        : string := OSVVM_STRING_INIT_PARM_DETECT ;
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
@@ -2888,11 +2891,18 @@ package body CoveragePkg is
     end procedure SetIllegalMode ;
 
     ------------------------------------------------------------
-    procedure SetWeightMode (ID : CoverageIDType; WeightMode : WeightModeType;  WeightScale : real := 1.0) is
+    procedure SetWeightMode (
     ------------------------------------------------------------
+      ID          : CoverageIDType ; 
+      WeightMode  : WeightModeType ; 
+--!! Deprecated       
+      WeightScale : real := 1.0
+    ) is
       variable buf : line ;
     begin
       CovStructPtr(ID.ID).WeightMode := WeightMode ;
+      
+--!! Remaining Deprecated
       CovStructPtr(ID.ID).WeightScale := WeightScale ;
 
       if (WeightMode = REMAIN_EXP) and (WeightScale > 2.0) then
@@ -3731,13 +3741,18 @@ package body CoveragePkg is
         when AT_LEAST =>    -- AtLeast
           return CovStructPtr(ID.ID).CovBinPtr(BinIndex).AtLeast ;
 
-        when WEIGHT =>       -- Weight
-          return CovStructPtr(ID.ID).CovBinPtr(BinIndex).Weight ;
-
         when REMAIN =>       -- (Adjust * AtLeast) - Count
 --?? simpler integer( Ceil (MaxCovPercent - CovStructPtr(ID.ID).CovBinPtr(BinIndex).PercentCov)) * CovStructPtr(ID.ID).CovBinPtr(BinIndex).AtLeast
           return integer( Ceil( MaxCovPercent * real(CovStructPtr(ID.ID).CovBinPtr(BinIndex).AtLeast)/100.0)) -
                           CovStructPtr(ID.ID).CovBinPtr(BinIndex).Count ;
+
+-- ?? Deprecated??
+        when WEIGHT =>       -- Weight
+          return CovStructPtr(ID.ID).CovBinPtr(BinIndex).Weight ;
+
+--!!
+--!! Remaining are deprecated
+--!! 
 
         when REMAIN_EXP =>       -- Weight * (REMAIN **WeightScale)
           -- Experimental may be removed
@@ -3768,7 +3783,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     impure function GetRandIndex (ID : CoverageIDType; CovTargetPercent : real ) return integer is
     ------------------------------------------------------------
-      variable WeightVec : integer_vector(0 to CovStructPtr(ID.ID).NumBins-1) ;  -- Prep for change to DistInt
+      variable WeightVec : integer_vector(0 to CovStructPtr(ID.ID).NumBins-1) ;  
       variable MaxCovPercent : real ;
       variable MinCovPercent : real ;
       variable rInt : integer ;
@@ -3785,6 +3800,7 @@ package body CoveragePkg is
         if MinCovPercent < CovTargetPercent then
           MaxCovPercent := CovTargetPercent ;
         else
+-- Determines what is done after IsCovered is true.
           -- Done, Enable all bins
           MaxCovPercent := GetMaxCov(ID) + 1.0 ;
           -- MaxCovPercent := real'right ;  -- weight scale issues
@@ -6344,8 +6360,8 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       if WriteBinFileInit then
-        -- Write to Local WriteBinFile - Deprecated, recommend use TranscriptFile instead
-        WriteCovHoles(ID, WriteBinFile, AtLeast) ;
+        -- Write to Local OsvvmCoverageWriteBinFile - Deprecated, recommend use TranscriptFile instead
+        WriteCovHoles(ID, OsvvmCoverageWriteBinFile, AtLeast) ;
       elsif IsTranscriptEnabled then
         -- Write to TranscriptFile
         WriteCovHoles(ID, TranscriptFile, AtLeast) ;
