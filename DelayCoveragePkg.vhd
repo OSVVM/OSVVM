@@ -20,13 +20,14 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2024   2024.11    Added SetBurstLength.  SetDelayCoverage randomizes BurstLength if RandomSalt is set.
 --    07/2024   2024.07    Added IsInitialized
 --    05/2023   2023.05    Initial revision. 
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2023 by SynthWorks Design Inc.  
+--  Copyright (c) 2024 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
