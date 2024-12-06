@@ -20,7 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    09/2024   2024.09    Added to_string_max, RemoveSpace, RermoveCrLf, GetLine
+--    09/2024   2024.09    Added to_string_max, RemoveSpace, RemoveCrLf, GetLine
 --    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
 --                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
 --                         These updates are only so OSVVM can work with non-compilant (1076) tools.
@@ -60,19 +60,21 @@ use ieee.numeric_std.all ;
 
 package TextUtilPkg is
   ------------------------------------------------------------
+  -- Character tests
   function IsUpper  (constant Char : character ) return boolean ;
   function IsLower  (constant Char : character ) return boolean ;
-  function to_lower (constant Char : character ) return character ;
-  function to_lower (constant Str  : string ) return string ;
-  function to_upper (constant Char : character ) return character ;
-  function to_upper (constant Str  : string ) return string ;
   function IsWhiteSpace (constant Char : character ) return boolean ;
   function IsHex (constant Char : character ) return boolean ;
   function IsHexOrStdLogic (constant Char : character ) return boolean ;
   function IsNumber (constant Char : character ) return boolean ;
   function IsNumber (Name : string ) return boolean ;
-
   function isstd_logic (constant Char : character ) return boolean ;
+
+  -- Conversions
+  function to_lower (constant Char : character ) return character ;
+  function to_lower (constant Str  : string ) return string ;
+  function to_upper (constant Char : character ) return character ;
+  function to_upper (constant Str  : string ) return string ;
 
   ------------------------------------------------------------
   procedure RemoveSpace (variable S : inout string ; variable Len : InOut integer) ;
@@ -117,11 +119,10 @@ package TextUtilPkg is
   ) return string ;
 
   ------------------------------------------------------------
-  procedure IsWhiteSpaceOrEmpty (
+  -- FileExists
+  --    Return TRUE if file exists
   ------------------------------------------------------------
-    variable L                : InOut  line ;
-    variable Empty            : Out    boolean
-  ) ;
+  impure function FileExists(FileName : string) return boolean ;
 
   ------------------------------------------------------------
   procedure GetLine(
@@ -132,6 +133,7 @@ package TextUtilPkg is
     variable EndOfFile        : out   boolean ;
     constant IgnoreEmptyLines : in    boolean
   ) ;
+
   ------------------------------------------------------------
   procedure SkipWhiteSpace (
   ------------------------------------------------------------
@@ -139,6 +141,13 @@ package TextUtilPkg is
     variable Empty : out   boolean
   ) ;
   procedure SkipWhiteSpace (variable L : InOut line) ;
+
+  ------------------------------------------------------------
+  procedure IsWhiteSpaceOrEmpty (
+  ------------------------------------------------------------
+    variable L                : InOut  line ;
+    variable Empty            : Out    boolean
+  ) ;
 
   ------------------------------------------------------------
   procedure EmptyOrCommentLine (
@@ -149,29 +158,20 @@ package TextUtilPkg is
   ) ;
 
   ------------------------------------------------------------
+  procedure FindDelimiter(
+  ------------------------------------------------------------
+    variable L                : InOut line ;
+    constant Delimiter        : In    character ;
+    variable Found            : Out   boolean
+  ) ;
+
+  ------------------------------------------------------------
   procedure ReadUntilDelimiterOrEOL(
   ------------------------------------------------------------
     variable L         : InOut line ;
     variable Name      : InOut line ;
     constant Delimiter : In    character ;
     variable ReadValid : Out   boolean
-  ) ;
-
-  ------------------------------------------------------------
-  procedure sread_c (
-  -- sread for Xilinx tools
-  ------------------------------------------------------------
-    variable L          : InOut line ;
-    variable Name       : Out   string ;
-    variable NameLength : Out   integer
-  ) ;
-
-  ------------------------------------------------------------
-  procedure FindDelimiter(
-  ------------------------------------------------------------
-    variable L                : InOut line ;
-    constant Delimiter        : In    character ;
-    variable Found            : Out   boolean
   ) ;
 
   ------------------------------------------------------------
@@ -195,10 +195,13 @@ package TextUtilPkg is
   ) ;
 
   ------------------------------------------------------------
-  -- FileExists
-  --    Return TRUE if file exists
+  procedure sread_c (
+  -- sread for Xilinx tools
   ------------------------------------------------------------
-  impure function FileExists(FileName : string) return boolean ;
+    variable L          : InOut line ;
+    variable Name       : Out   string ;
+    variable NameLength : Out   integer
+  ) ;
 
 end TextUtilPkg ;
 
@@ -567,21 +570,18 @@ package body TextUtilPkg is
   end function Justify ;
 
   ------------------------------------------------------------
-  procedure IsWhiteSpaceOrEmpty (
+  -- FileExists
+  --    Return TRUE if file exists
   ------------------------------------------------------------
-    variable L                : InOut  line ;
-    variable Empty            : Out    boolean
-  ) is
+  impure function FileExists(FileName : string) return boolean is
+    file     FileID : text ;
+    variable status : file_open_status ;
   begin
-    Empty := TRUE ;
-    for i in L'range loop
-      if not IsWhiteSpace(L(i)) then
-        Empty := FALSE ;
-        exit ;
-      end if ;
-    end loop ;
-  end procedure IsWhiteSpaceOrEmpty ;
-
+    file_open(status, FileID, FileName, READ_MODE) ;
+    file_close(FileID) ;
+    return status = OPEN_OK ;
+  end function FileExists ;
+  
   ------------------------------------------------------------
   procedure GetLine(
   ------------------------------------------------------------
@@ -607,6 +607,22 @@ package body TextUtilPkg is
       deallocate(Buf) ; -- It was blank, try again
     end loop ;
   end procedure GetLine ;
+
+  ------------------------------------------------------------
+  procedure IsWhiteSpaceOrEmpty (
+  ------------------------------------------------------------
+    variable L                : InOut  line ;
+    variable Empty            : Out    boolean
+  ) is
+  begin
+    Empty := TRUE ;
+    for i in L'range loop
+      if not IsWhiteSpace(L(i)) then
+        Empty := FALSE ;
+        exit ;
+      end if ;
+    end loop ;
+  end procedure IsWhiteSpaceOrEmpty ;
 
   ------------------------------------------------------------
   procedure SkipWhiteSpace (
@@ -737,33 +753,6 @@ package body TextUtilPkg is
   end procedure ReadUntilDelimiterOrEOL ;
 
   ------------------------------------------------------------
-  procedure sread_c (
-  ------------------------------------------------------------
-    variable L          : InOut line ;
-    variable Name       : Out   string ;
-    variable NameLength : Out   integer
-  ) is
-    variable NameStr   : string(1 to Name'length) ;
-    variable ReadValid : boolean ;
-    variable Empty     : boolean ;
-  begin
-    SkipWhiteSpace(L, Empty) ;
-    if Empty then
-      NameLength := 0 ;
-      return ;
-    end if ;
-    NameLength := NameStr'length ;
-    for i in NameStr'range loop
-      Read(L, NameStr(i), ReadValid) ;
-      if not ReadValid or IsWhiteSpace(NameStr(i)) then
-        NameLength := i - 1 ;
-        exit ;
-      end if ;
-    end loop ;
-    Name := NameStr ;
-  end procedure sread_c ;
-
-  ------------------------------------------------------------
   procedure FindDelimiter(
   ------------------------------------------------------------
     variable L                : InOut line ;
@@ -775,12 +764,14 @@ package body TextUtilPkg is
   begin
     Found := FALSE ;
     ReadLoop : loop
+      -- Skip White Space unless it is the delimiter.   
       if Delimiter /= ' ' then
         SkipWhiteSpace(L) ;
       end if ;
 
+      -- read the character - which is expected to be the delimiter.
       Read(L, Char, ReadValid) ;
-      exit when ReadValid = FALSE or Char /= Delimiter ;
+      exit when ReadValid = FALSE or Char /= Delimiter ;  -- Fail if not delimiter
       Found := TRUE ;
       exit ;
     end loop ;
@@ -874,16 +865,30 @@ package body TextUtilPkg is
   end procedure ReadBinaryToken ;
 
   ------------------------------------------------------------
-  -- FileExists
-  --    Return TRUE if file exists
+  procedure sread_c (
   ------------------------------------------------------------
-  impure function FileExists(FileName : string) return boolean is
-    file     FileID : text ;
-    variable status : file_open_status ;
+    variable L          : InOut line ;
+    variable Name       : Out   string ;
+    variable NameLength : Out   integer
+  ) is
+    variable NameStr   : string(1 to Name'length) ;
+    variable ReadValid : boolean ;
+    variable Empty     : boolean ;
   begin
-    file_open(status, FileID, FileName, READ_MODE) ;
-    file_close(FileID) ;
-    return status = OPEN_OK ;
-  end function FileExists ;
+    SkipWhiteSpace(L, Empty) ;
+    if Empty then
+      NameLength := 0 ;
+      return ;
+    end if ;
+    NameLength := NameStr'length ;
+    for i in NameStr'range loop
+      Read(L, NameStr(i), ReadValid) ;
+      if not ReadValid or IsWhiteSpace(NameStr(i)) then
+        NameLength := i - 1 ;
+        exit ;
+      end if ;
+    end loop ;
+    Name := NameStr ;
+  end procedure sread_c ;
 
 end package body TextUtilPkg ;
