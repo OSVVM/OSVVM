@@ -146,8 +146,6 @@ package CoveragePkg is
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
-  file OsvvmCoverageWriteBinFile : text ;
-
 -- Merged the two constants in AlertLogPkg  constant OSVVM_COVERAGE_ALERTLOG_ID : AlertLogIDType := OSVVM_COV_ALERTLOG_ID ;
 
   -- CovPType allocates bins that are multiples of MIN_NUM_BINS
@@ -2193,6 +2191,7 @@ package body CoveragePkg is
     variable ErrorIfNotCoveredVar           : boolean := FALSE ;
 --!!    variable CheckedForErrorIfNotCoveredVar : boolean := FALSE ;
 
+    file OsvvmCoverageWriteBinFile : text ;
     variable WriteBinFileInit : boolean := FALSE ;
 --!!    variable UsingLocalFile   : boolean := FALSE ;
 
