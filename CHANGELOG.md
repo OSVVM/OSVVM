@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2024.11   |  Minor Maintenance Updates
 | 2024.09   |  New RandomPkg2019.  Updated to ScoreboardGenericPkg
 | 2024.07   |  Major due to moving CreateClock/CreateReset and CreateClock interface changes  
 | 2024.05   |  Minor updates to parameter handling in RandomPkg and NameStorePkg.  
@@ -80,7 +81,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2024.09 September 2024
+## Revision 2024.11 November 2024
 
 ### Current Revision and Compile Order
 
@@ -93,35 +94,37 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   -----------------------------------------------------|-----------------
   | IfElsePkg.vhd                                      | 2024.07  |
   | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
-  | OsvvmSettingsPkg.vhd                               | ** 2024.09 **  |
-  | TextUtilPkg.vhd                                    | ** 2024.09 **  |
+  | OsvvmSettingsPkg.vhd                               | 2024.09  |
+  | TextUtilPkg.vhd                                    | ** 2024.09 ** |
   | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2024.03  |
   | OsvvmGlobalPkg.vhd                                 | 2024.03  |
   | If Aldec                                           |          |
-  |     VendorCovApiPkg_Aldec.vhd                      | 2020.01  |
-  | If not Aldec                                       |          |
-  |     VendorCovApiPkg.vhd                            | 2020.01  |
+  |     CoverageVendorApiPkg_Aldec.vhd                 | 2020.01 - renamed |
+  | Elsif NVC and Version 1.14.2                       |          |
+  |     CoverageVendorApiPkg_NVC.vhd                   | ** 2024.11 **  |
+  | Else                                               |          |
+  |     CoverageVendorApiPkg.vhd                       | 2020.01 - renamed |
   | If version >= 2019                                 |          |
   |     LanguageSupport2019Pkg.vhd                     | 2024.07  |
   | If version < 2019                                  |          |
   |     deprecated/LanguageSupport2019Pkg_c.vhd        | 2024.07  |
   | TranscriptPkg.vhd                                  | 2023.01  |
   | AlertLogPkg.vhd                                    | ** 2024.09 ** |
-  | TbUtilPkg.vhd                                      | ** 2024.09 **  |
+  | TbUtilPkg.vhd                                      | ** 2024.11 **  |
   | NameStorePkg.vhd                                   | 2024.07  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | ** 2024.09 **  |
-  | RandomPkg.vhd                                      | ** 2024.09 **  |
+  | RandomBasePkg.vhd                                  | ** 2024.11 **  |
+  | RandomPkg.vhd                                      | ** 2024.11 **  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | 2024.07  |
-  | DelayCoveragePkg.vhd                               | 2024.07  |
-  | ClockResetPkg.vhd                                  | ** 2024.09 **  |
+  | CoveragePkg.vhd                                    | ** 2024.07 ** |
+  | DelayCoveragePkg.vhd                               | ** 2024.11 **  |
+  | ClockResetPkg.vhd                                  | 2024.09  |
   | deprecated/ClockResetPkg_2024_05.vhd               | 2024.07  |
   | ResizePkg.vhd                                      | 2024.03  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | ** 2024.09 **  |
+  |     ScoreboardGenericPkg.vhd                       | 2024.09  |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   |     ScoreboardPkg_signed.vhd                       | 2024.07  |
@@ -136,7 +139,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | MemorySupportPkg.vhd                               | 2022.10  |
   | If Support Generic Packages                        |          |
   |     If not Xilinx                                  |          |
-  |         MemoryGenericPkg.vhd                       | ** 2024.09 **  |
+  |         MemoryGenericPkg.vhd                       | ** 2024.09 ** |
   |     If Xilinx                                      |          |
   |         deprecated/MemoryGenericPkg_xilinx.vhd     | 2024.03  |
   |     MemoryPkg.vhd                                  | 2022.10  |
@@ -144,7 +147,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     MemoryPkg_c.vhd                                | 2024.03  |
   |     MemoryPkg_orig_c.vhd                           | 2022.11  |
   | ReportPkg.vhd                                      | 2024.07  |
-  | OsvvmTypesPkg.vhd                                  | 2022.01  |
+  | OsvvmTypesPkg.vhd                                  | ** 2024.11 **  |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
   | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
@@ -152,13 +155,35 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If exist OsvvmSettingsPkg_local.vhd                |          |
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | ** 2024.09 **  |
+  |     OsvvmSettingsPkg_default.vhd                   | 2024.09  |
   | If version >= 2019                                 |          |
-  |     RandomPkg2019.vhd                              | ** 2024.09 **  |
+  |     RandomPkg2019.vhd                              | ** 2024.11 **  |
   | If version < 2019                                  |          |
-  |     deprecated/RandomPkg2019_c.vhd                 | ** 2024.09 **  |
-  | OsvvmContext.vhd                                   | ** 2024.09 **  |
+  |     deprecated/RandomPkg2019_c.vhd                 | 2024.09  |
+  | OsvvmContext.vhd                                   | 2024.09  |
   
+### Comment Updates or Reordered code 
+- MemoryGenericPkg, AlertLogPkg, CoveragePkg, TextUtilPkg
+
+### TbUtilPkg.vhd                2024.11
+- Replaced time with delay_length (0 to time'high) and integer with natural (in WaitForClock)
+
+### RandomBasePkg, RandomPkg, and RandomPkg2019                2024.11
+- RandomBasePkg - GenRandSeed and RandomSalt updated to keep within valid values for RandomSeedType
+- RandomPkg and RandomPkg2019 - added excludes for scalar values (where possible)
+
+### OsvvmTypesPkg.vhd                2024.11
+- Added uv_vector and sv_vector - arrays of unsigned and signed
+
+### DelayCoveragePkg.vhd             2024.11
+-  Added SetBurstLength.  
+-  SetDelayCoverage randomizes BurstLength if RandomSalt is set.
+
+### CoverageVendorApiPkg_VVV.vhd  was formerly VendorCovApiPkg_VVV.vhd             2024.11
+- Updated name to more closely associate with CoveragePkg
+- Added CoverageVendorApiPkg_NVC.vhd  
+
+## Revision 2024.09 September 2024
 
 ### RandomPkg2019.vhd                          2024.09
 - Uses 2019 feature impure functions can have variable inout to build randomPkg without protected types.
