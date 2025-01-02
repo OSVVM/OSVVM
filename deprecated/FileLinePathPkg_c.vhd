@@ -103,12 +103,14 @@ package body FileLinePathPkg is
     Separator : STRING := "" & LF 
   ) return string is 
   begin
+    return "" ;
   end function Get_Call_Path;
 
   ------------------------------------------------------------
   impure function GetFileLineInfo(index : integer := 2) return string is 
   ------------------------------------------------------------
   begin
+   return "" ;
   end function GetFileLineInfo ; 
 
 
