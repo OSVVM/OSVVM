@@ -64,7 +64,8 @@ package body LanguageSupport2019Pkg is
   -- to_string
   impure function to_string ( A : integer_vector) return string is
   ------------------------------------------------------------
-    alias normA : integer_vector(1 to A'length) is A ;
+    constant A_LEN : integer := A'length ; 
+    alias normalizedA : integer_vector(1 to A_LEN) is A ;
 
     variable buf : line ;
     -- with VHDL-2019 this could be general purpose with buf as a parameter
@@ -78,11 +79,11 @@ package body LanguageSupport2019Pkg is
 
   begin
     swrite(buf, "(") ;
-    for i in 1 to A'length-1 loop
-      write(buf, A(i)) ;
+    for i in 1 to A_LEN-1 loop
+      write(buf, normalizedA(i)) ;
       swrite(buf, ",") ;
     end loop ;
-    write(buf, A(A'length)) ;
+    write(buf, normalizedA(A_LEN)) ;
     swrite(buf, ")") ;
 
     return local_to_string ;
