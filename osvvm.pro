@@ -162,6 +162,15 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 
 analyze ReportPkg.vhd
 
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze  RandomPkg2019.vhd
+} else {
+  analyze  deprecated/RandomPkg2019_c.vhd
+}
+
+analyze OsvvmContext.vhd 
+
+
 if {$::osvvm::ToolSupportsDeferredConstants}  {
   set SettingsDirectory [FindOsvvmSettingsDirectory]
   
@@ -185,11 +194,3 @@ if {$::osvvm::ToolSupportsDeferredConstants}  {
   }
 }
 
-if {$::osvvm::VhdlVersion >= 2019}  {
-  analyze  RandomPkg2019.vhd
-} else {
-  analyze  deprecated/RandomPkg2019_c.vhd
-}
-
-
-analyze OsvvmContext.vhd 
