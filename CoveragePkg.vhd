@@ -318,6 +318,16 @@ package CoveragePkg is
   ) return CoverageIDType ;
 
   ------------------------------------------------------------
+  impure function NewID (
+    Name                : String ;
+    IsRequirement       : Boolean ; 
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+  ) return CoverageIDType ;
+
+  ------------------------------------------------------------
   -- /////////////////////////////////////////
   --  Coverage Global Settings Common to All Coverage Models
   -- /////////////////////////////////////////
@@ -823,10 +833,15 @@ package CoveragePkg is
     ------------------------------------------------------------
     impure function NewID (
       Name                : String ;
-      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
-      Search              : NameSearchType          := PRIVATE_NAME ;
-      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+      IsRequirement       : Boolean ; 
+      ParentID            : AlertLogIDType ;
+      ReportMode          : AlertLogReportModeType ;
+      Search              : NameSearchType ;
+      PrintParent         : AlertLogPrintParentType
+--!!      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+--!!      ReportMode          : AlertLogReportModeType  := ENABLED ;
+--!!      Search              : NameSearchType          := PRIVATE_NAME ;
+--!!      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
     ) return CoverageIDType ;
     impure function GetNumIDs return integer ;
 
@@ -2364,10 +2379,11 @@ package body CoveragePkg is
     impure function NewID (
     ------------------------------------------------------------
       Name                : String ;
-      ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
-      ReportMode          : AlertLogReportModeType  := ENABLED ;
-      Search              : NameSearchType          := PRIVATE_NAME ;
-      PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+      IsRequirement       : Boolean ; 
+      ParentID            : AlertLogIDType ;
+      ReportMode          : AlertLogReportModeType ;
+      Search              : NameSearchType ;
+      PrintParent         : AlertLogPrintParentType
     ) return CoverageIDType is
       variable NewCoverageID       : CoverageIDType ;
       variable NameID              : integer ;
@@ -2380,6 +2396,7 @@ package body CoveragePkg is
       NameID := LocalNameStore.find(Name, ParentID, ResolvedSearch) ;
 
       if NameID /= ID_NOT_FOUND.ID then
+--!! Check if IsRequirement and currently a requirement, then update AlertLogID
         NewCoverageID := (ID => NameID) ;
         SetName(NewCoverageID, Name) ; -- redundant - refactor after diverge.  Needed if deallocate
         return NewCoverageID ;
@@ -2389,6 +2406,7 @@ package body CoveragePkg is
         CovStructPtr(NumItems) := CovStructType'(COV_STRUCT_INIT) ;
         NewCoverageID := (ID => NumItems) ;
         -- Create AlertLogID
+--!! if IsRequirement then GetReqID otherwise NewID
         CovStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
@@ -7868,8 +7886,22 @@ package body CoveragePkg is
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType is
+    constant IS_REQUIREMENT : boolean := FALSE ; 
   begin
-    return CoverageStore.NewID (Name, ParentID, ReportMode, Search, PrintParent) ;
+    return CoverageStore.NewID (Name, IS_REQUIREMENT, ParentID, ReportMode, Search, PrintParent) ;
+  end function NewID ;
+
+  ------------------------------------------------------------
+  impure function NewID (
+    Name                : String ;
+    IsRequirement       : Boolean ; 
+    ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
+    ReportMode          : AlertLogReportModeType  := ENABLED ;
+    Search              : NameSearchType          := PRIVATE_NAME ;
+    PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
+  ) return CoverageIDType is
+  begin
+    return CoverageStore.NewID (Name, IsRequirement, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
 
