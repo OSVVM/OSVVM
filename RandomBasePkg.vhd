@@ -591,7 +591,7 @@ package body RandomBasePkg is
 --!!      ValRange := rMax - rMin ;
 --!!      return integer(round(A * ValRange + rMin)) ;
 --!!    else
---!!      return integer'left ;
+--!!      return integer'low ;
 --!!    end if ;
   end function Scale ;
 

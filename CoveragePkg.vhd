@@ -142,7 +142,7 @@ package CoveragePkg is
     ID : integer_max ;
   end record CoverageIDType ;
   
-  constant COVERAGE_ID_UNINITIALZED : CoverageIdType := (ID => integer'left) ; 
+  constant COVERAGE_ID_UNINITIALZED : CoverageIdType := (ID => integer'low) ; 
 
   type CoverageIDArrayType is array (integer range <>) of CoverageIDType ;
 
@@ -156,7 +156,7 @@ package CoveragePkg is
     max : integer ;
   end record ;
   type RangeArrayType is array (integer range <>) of RangeType ;
-  constant ALL_RANGE : RangeArrayType := (1=>(Integer'left, Integer'right)) ;
+  constant ALL_RANGE : RangeArrayType := (1=>(integer'low, integer'high)) ;
 
 --!!  procedure write ( file f :  text ;  BinVal : RangeArrayType ) ;
   procedure write ( variable buf : inout line ; constant BinVal : in RangeArrayType) ;
@@ -1804,7 +1804,7 @@ package body CoveragePkg is
 --!!     for i in BinVal'range loop
 --!!       if BinVal(i).min = BinVal(i).max then
 --!!         write(f, "(" & to_string_max(BinVal(i).min) & ") " ) ;
---!!       elsif  (BinVal(i).min = integer'left) and (BinVal(i).max = integer'right) then
+--!!       elsif  (BinVal(i).min = integer'low) and (BinVal(i).max = integer'high) then
 --!!         write(f, "(ALL) " ) ;
 --!!       else
 --!!         write(f, "(" & to_string_max(BinVal(i).min) & " to " &
@@ -3508,7 +3508,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     impure function GetMinCount (ID : CoverageIDType) return integer is
     ------------------------------------------------------------
-      variable MinCount : integer := integer'right ;  -- big number
+      variable MinCount : integer := integer'high ;  -- big number
     begin
       CovLoop : for i in 1 to CovStructPtr(ID.ID).NumBins loop
         if CovStructPtr(ID.ID).CovBinPtr(i).action = COV_COUNT and CovStructPtr(ID.ID).CovBinPtr(i).Count < MinCount then
@@ -6239,7 +6239,7 @@ package body CoveragePkg is
           AdjAtLeast := AtLeast ;  -- Valid
         else
           -- Done, Enable all bins
-          -- AdjAtLeast := integer'right ;  -- Get All
+          -- AdjAtLeast := integer'high ;  -- Get All
           AdjAtLeast := GetMaxCount(ID) + 1 ;  -- Get All
         end if ;
       end if;

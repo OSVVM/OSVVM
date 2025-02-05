@@ -157,7 +157,7 @@ package AlertLogPkg is
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
   constant  LOG_DEFAULT_ID                 : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
 
-  constant  ALERTLOG_ID_NOT_FOUND          : AlertLogIDType := -1 ;  -- alternately integer'right
+  constant  ALERTLOG_ID_NOT_FOUND          : AlertLogIDType := -1 ;  -- alternately integer'high
   constant  ALERTLOG_ID_NOT_ASSIGNED       : AlertLogIDType := -1 ;
   constant  MIN_NUM_AL_IDS                 : AlertLogIDType := 32 ; -- Number IDs initially allocated
 
@@ -604,7 +604,7 @@ package AlertLogPkg is
     PrintDisabledAlerts      : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     PrintRequirements        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     PrintIfHaveRequirements  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    DefaultPassedGoal        : integer             := integer'left ;
+    DefaultPassedGoal        : integer             := integer'low ;
     AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
     ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -613,7 +613,7 @@ package AlertLogPkg is
     FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    TimeJustifyAmount        : integer             := integer'left
+    TimeJustifyAmount        : integer             := integer'low
   ) ;
 
   procedure ReportAlertLogOptions ;
@@ -2975,10 +2975,10 @@ package body AlertLogPkg is
     procedure ClearAlertStopCounts is
     ------------------------------------------------------------
     begin
-      AlertLogPtr(ALERTLOG_BASE_ID).AlertStopCount := (FAILURE => 0, ERROR => integer'right, WARNING => integer'right) ;
+      AlertLogPtr(ALERTLOG_BASE_ID).AlertStopCount := (FAILURE => 0, ERROR => integer'high, WARNING => integer'high) ;
 
       for i in ALERTLOG_BASE_ID + 1 to NumAlertLogIDsVar loop
-        AlertLogPtr(i).AlertStopCount := (FAILURE => integer'right, ERROR => integer'right, WARNING => integer'right) ;
+        AlertLogPtr(i).AlertStopCount := (FAILURE => integer'high, ERROR => integer'high, WARNING => integer'high) ;
       end loop ;
     end procedure ClearAlertStopCounts ;
 
@@ -3122,7 +3122,7 @@ package body AlertLogPkg is
       if AlertLogID = ALERTLOG_BASE_ID then
         AlertEnabled := (TRUE, TRUE, TRUE) ;
         LogEnabled   := (others => FALSE) ;
-        AlertStopCount := (FAILURE => 0, ERROR => integer'right, WARNING => integer'right) ;
+        AlertStopCount := (FAILURE => 0, ERROR => integer'high, WARNING => integer'high) ;
         HierarchyLevel := 0 ; 
         EnQueueID(AlertLogID, ALERTLOG_BASE_ID, TRUE) ;
       else
@@ -3135,7 +3135,7 @@ package body AlertLogPkg is
           LogEnabled   := AlertLogPtr(ParentID).LogEnabled ;
           EnQueueID(AlertLogID, ParentID, ParentIdSet) ;
         end if ;
-        AlertStopCount := (FAILURE | ERROR | WARNING => integer'right) ;
+        AlertStopCount := (FAILURE | ERROR | WARNING => integer'high) ;
       end if ;
       AlertLogPtr(AlertLogID).Name                := new string'(iName) ;
       AlertLogPtr(AlertLogID).NameLower           := new string'(to_lower(iName)) ;
@@ -3146,7 +3146,7 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).PassedGoal          := 0 ;
       AlertLogPtr(AlertLogID).AlertEnabled        := AlertEnabled ;
       AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
-      AlertLogPtr(AlertLogID).AlertPrintCount     := (FAILURE | ERROR | WARNING => integer'right) ;
+      AlertLogPtr(AlertLogID).AlertPrintCount     := (FAILURE | ERROR | WARNING => integer'high) ;
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
       AlertLogPtr(AlertLogID).ReportMode          := ReportMode ;
       AlertLogPtr(AlertLogID).HierarchyLevel      := HierarchyLevel ;
@@ -3742,7 +3742,7 @@ package body AlertLogPkg is
       Count        : integer
     ) is
     begin
-      if AlertLogPtr(AlertLogID).AlertStopCount(Level) = integer'right then
+      if AlertLogPtr(AlertLogID).AlertStopCount(Level) = integer'high then
         AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
       else
         AlertLogPtr(AlertLogID).AlertStopCount(Level) :=
@@ -7102,7 +7102,7 @@ package body AlertLogPkg is
     PrintDisabledAlerts      : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     PrintRequirements        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
     PrintIfHaveRequirements  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    DefaultPassedGoal        : integer          := integer'left ;
+    DefaultPassedGoal        : integer          := integer'low ;
     AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;
     ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;
@@ -7111,7 +7111,7 @@ package body AlertLogPkg is
     FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;
     IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;
     WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;
-    TimeJustifyAmount        : integer          := integer'left
+    TimeJustifyAmount        : integer          := integer'low
   ) is
   begin
     -- synthesis translate_off

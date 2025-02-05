@@ -85,7 +85,7 @@ package MemoryPkg_orig is
     ID : integer_max ;
   end record MemoryIDType ; 
   
-  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'left) ; 
+  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'low) ; 
 
   type MemoryIDArrayType is array (integer range <>) of MemoryIDType ;
 

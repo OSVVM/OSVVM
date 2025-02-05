@@ -122,7 +122,7 @@ package ScoreboardGenericPkg is
   type ScoreboardIdArrayType  is array (integer range <>) of ScoreboardIdType ;
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;
 
-  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'left) ; 
+  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'low) ; 
 
   -- Preparation for refactoring - if that ever happens.
   subtype FifoIdType       is ScoreboardIdType ;
@@ -364,7 +364,7 @@ package ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
-  -- Find returns integer'left if no match found
+  -- Find returns integer'low if no match found
   -- Also See Flush.  Flush will drop items up through the ItemNumber
 
   -- Simple Scoreboard
@@ -665,7 +665,7 @@ package ScoreboardGenericPkg is
     
     ------------------------------------------------------------
     -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
-    -- Find returns integer'left if no match found
+    -- Find returns integer'low if no match found
     -- Also See Flush.  Flush will drop items up through the ItemNumber
     -- Scoreboard no tag
     impure function Find (
@@ -856,7 +856,7 @@ package ScoreboardGenericPkg is
 
     ------------------------------------------------------------
     -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
-    -- Find returns integer'left if no match found
+    -- Find returns integer'low if no match found
     -- Also See Flush.  Flush will drop items up through the ItemNumber
     -- Simple Scoreboard
     impure function Find (
@@ -1975,7 +1975,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Tagged Scoreboards
     -- Find Element with Matching Tag and ActualData
-    -- Returns integer'left if no match found
+    -- Returns integer'low if no match found
     impure function Find (
     ------------------------------------------------------------
       constant Index       :  in  integer ;
@@ -1986,7 +1986,7 @@ package body ScoreboardGenericPkg is
       variable FindParentPtr : ListPtrType ;
     begin
 --!!        if LocalOutOfRange(Index, "Find") then
---!!          return integer'left ; -- error reporting in LocalOutOfRange
+--!!          return integer'low ; -- error reporting in LocalOutOfRange
 --!!        end if ;
 --!!        CurPtr := SbPtr(Index).HeadPtr ;
 --!!        loop
@@ -2002,8 +2002,8 @@ package body ScoreboardGenericPkg is
 --!!                    GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
 --!!                    ERROR ) ;
 --!!            end if ;
---!!  --          return integer'left ;
---!!            LocalItemNumber := integer'left ;
+--!!  --          return integer'low ;
+--!!            LocalItemNumber := integer'low ;
 --!!            exit ;
 --!!  
 --!!          elsif CurPtr.TagPtr.all = Tag and
@@ -2192,7 +2192,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Scoreboard no tag
     -- Find Element with Matching Tag and ActualData
-    -- Returns integer'left if no match found
+    -- Returns integer'low if no match found
     procedure FindAndDelete (
     ------------------------------------------------------------
       constant Index       :  in  integer ;
@@ -2264,7 +2264,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- Scoreboard no tag
     -- Find Element with Matching Tag and ActualData
-    -- Returns integer'left if no match found
+    -- Returns integer'low if no match found
     procedure FindAndFlush (
     ------------------------------------------------------------
       constant Index       :  in  integer ;
@@ -3508,7 +3508,7 @@ package body ScoreboardGenericPkg is
 
   ------------------------------------------------------------
   -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
-  -- Find returns integer'left if no match found
+  -- Find returns integer'low if no match found
   -- Also See Flush.  Flush will drop items up through the ItemNumber
 
   -- Simple Scoreboard

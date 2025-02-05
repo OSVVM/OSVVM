@@ -1667,7 +1667,7 @@ package body RandomPkg is
         DistArray(i) := DistArray(i) + sum ;
         if DistArray(i) < sum then
           Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.DistInt: negative weight or sum > 31 bits", FAILURE) ;
-          return DistArray'low ; -- allows debugging vs integer'left, out of range
+          return DistArray'low ; -- allows debugging vs integer'low, out of range
         end if ;
         sum := DistArray(i) ;
       end loop ;
@@ -1682,7 +1682,7 @@ package body RandomPkg is
       else
         Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.DistInt: No randomization weights", FAILURE) ;
       end if ;
-      return DistArray'low ; -- allows debugging vs integer'left, out of range
+      return DistArray'low ; -- allows debugging vs integer'low, out of range
     end function DistInt ;
 
     ------------------------------------------------------------

@@ -275,7 +275,7 @@ package body MemorySupportPkg is
   function InitMemoryBaseType_orig(Size : integer) return integer_vector is  
   ------------------------------------------------------------
   begin
-    return (1 => integer'left) ; 
+    return (1 => integer'low) ; 
   end function InitMemoryBaseType_orig ; 
  
 end MemorySupportPkg ;

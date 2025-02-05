@@ -57,7 +57,7 @@ package NameStorePkg is
   type NameIDArrayType is array (integer range <>) of NameIDType ;  
   type NameSearchType is (PRIVATE_NAME, NAME, NAME_AND_PARENT, NAME_AND_PARENT_ELSE_PRIVATE) ; 
   constant ID_NOT_FOUND : NameIDType := (ID => -1) ; 
-  constant NAME_ID_UNINITIALZED : NameIdType := (ID => integer'left) ; 
+  constant NAME_ID_UNINITIALZED : NameIdType := (ID => integer'low) ; 
   
   ------------------------------------------------------------
   impure function NewID (

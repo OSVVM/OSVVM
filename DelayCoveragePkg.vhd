@@ -63,7 +63,7 @@ package DelayCoveragePkg is
   end record DelayCoverageIDType ; 
   type DelayCoverageIDArrayType is array (integer range <>) of DelayCoverageIDType ;  
 
-  constant DELAYCOVERAGE_ID_UNINITIALZED : DelayCoverageIDType := (ID => integer'left, others => COVERAGE_ID_UNINITIALZED) ; 
+  constant DELAYCOVERAGE_ID_UNINITIALZED : DelayCoverageIDType := (ID => integer'low, others => COVERAGE_ID_UNINITIALZED) ; 
   
   ------------------------------------------------------------
   --- ///////////////////////////////////////////////////////////////////////////

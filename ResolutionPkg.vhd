@@ -226,7 +226,7 @@ package body ResolutionPkg is
     variable result : integer := 0 ;
   begin
     for i in s'RANGE loop
-      if s(i) /= integer'left then
+      if s(i) /= integer'low then
         result := s(i) + result;
       end if ;
     end loop ;

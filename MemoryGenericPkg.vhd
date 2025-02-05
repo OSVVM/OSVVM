@@ -81,7 +81,7 @@ package MemoryGenericPkg is
     ID : integer_max ;
   end record MemoryIDType ; 
   
-  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'left) ; 
+  constant MEMORY_ID_UNINITIALZED : MemoryIdType := (ID => integer'low) ; 
 
   type MemoryIDArrayType is array (integer range <>) of MemoryIDType ;
 
@@ -574,7 +574,7 @@ package body MemoryGenericPkg is
     ) return boolean is 
     begin
       if ID < MIN_INDEX or ID > MemStructPtr'High then 
-        if ID = integer'left then 
+        if ID = integer'low then 
           Alert(OSVVM_MEMORY_ALERTLOG_ID, "MemoryPkg." & Name & " ID not initialized yet.  " &
             "Either a call to NewID or wait for 0 ns (to allow for signal update) is needed. ",
              FAILURE ) ;
