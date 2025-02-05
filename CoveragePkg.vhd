@@ -9346,7 +9346,7 @@ package body CoveragePkg is
   begin
     -- create a separate CovBin for each value in the range Min to Max
     if Min < integer'low/2 or Max > integer'high/2 then 
-      report LF & LF & "GenBin/IllegalBin/IgnoreBIn(" & to_string_max(min) & ", " & to_string_max(max) & ")  is likely an error." & LF &
+      report LF & LF & "GenBin/IllegalBin/IgnoreBin(" & to_string_max(min) & ", " & to_string_max(max) & ")  is likely an error." & LF &
              "If the Max-Min+1 does not fit in an integer, you simulator may stop after these messages with a range constraint." & LF &
              "In the event your code does not have constraint issues, to avoid this message with large numbers specify the number of bins you want.  Such as:" & LF &
              "GenBin(" & to_string_max(min) & ", " & to_string_max(max) & ", 5)" & LF & LF  
