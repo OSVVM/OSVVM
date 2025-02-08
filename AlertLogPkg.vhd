@@ -1092,15 +1092,6 @@ package body AlertLogPkg is
     variable PrintRequirementsVar        : boolean := ALERT_LOG_PRINT_REQUIREMENTS ;          -- ReportAlerts: Print requirements
     variable PrintIfHaveRequirementsVar  : boolean := ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS ;  -- ReportAlerts: Print requirements if have any
 
-    -- Names used with printing
---!!    variable ReportPrefixVar             : NamePType ;  -- ALERT_LOG_PRINT_PREFIX
---!!    variable AlertPrefixVar              : NamePType ;  -- ALERT_LOG_ALERT_NAME  
---!!    variable LogPrefixVar                : NamePType ;  -- ALERT_LOG_LOG_NAME    
---!!    variable IdSeparatorVar              : NamePType ;  -- ALERT_LOG_ID_SEPARATOR
---!!    variable DoneNameVar                 : NamePType ;  -- ALERT_LOG_DONE_NAME
---!!    variable PassNameVar                 : NamePType ;  -- ALERT_LOG_PASS_NAME
---!!    variable FailNameVar                 : NamePType ;  -- ALERT_LOG_FAIL_NAME
-
     ------------------------------------------------------------
     -- PT Local
     impure function VerifyID(
@@ -1203,10 +1194,8 @@ package body AlertLogPkg is
       Message         : string ;
       WriteTime       : boolean
     ) is
---!!global      variable buf : line ;
       variable ParentID : AlertLogIDType ;
     begin
---!!      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ) ; -- Print
       write(buf, ALERT_LOG_PRINT_PREFIX ) ; -- Print
       -- Debug Mode
       if WriteErrorCount then
@@ -1219,7 +1208,6 @@ package body AlertLogPkg is
       -- Write Time
       if WriteTime and WriteTimeFirstVar then
 --!!      if ALERT_LOG_WRITE_TIME_FIRST then
---!!        write(buf, justify(to_string(NOW, GetOsvvmDefaultTimeUnits), TimeJustifyAmountVar, RIGHT) & "    ") ;
         write(buf, justify(to_string(NOW, DefaultTimeUnitsVar), TimeJustifyAmountVar, RIGHT) & "    ") ;
       end if ;
       -- Alert or Log
@@ -1234,7 +1222,6 @@ package body AlertLogPkg is
           write(buf, "  in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
         else
           ParentID := AlertLogPtr(AlertLogID).ParentID ;
---!!          write(buf, "  in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) &
           write(buf, "  in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ALERT_LOG_ID_SEPARATOR &
             AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
         end if ;
@@ -1254,7 +1241,6 @@ package body AlertLogPkg is
       -- Time Last
       if WriteTime and WriteTimeLastVar then
 --!!      if ALERT_LOG_WRITE_TIME_LAST then
---!!        write(buf, " at " & to_string(NOW, GetOsvvmDefaultTimeUnits)) ;
         write(buf, " at " & to_string(NOW, DefaultTimeUnitsVar)) ;
       end if ;
       writeline(buf) ;
@@ -1267,8 +1253,6 @@ package body AlertLogPkg is
       message      : string ;
       level        : AlertType := ERROR
     ) is
---!!global      variable buf : Line ;
-      -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount  : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -1285,7 +1269,6 @@ package body AlertLogPkg is
         if AlertLogPtr(localAlertLogID).AlertEnabled(Level) and (AlertLogPtr(localAlertLogID).AlertCount(Level) <= AlertLogPtr(localAlertLogID).AlertPrintCount(Level)) then
           LocalPrint(
             AlertLogID       => localAlertLogID,
---!!            AlertLogName     => AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX),
             AlertLogName     => ALERT_LOG_ALERT_NAME,
             WriteErrorCount  => WriteAlertErrorCountVar,
             WriteLevel       => WriteAlertLevelVar,
@@ -1297,10 +1280,6 @@ package body AlertLogPkg is
         end if ;
 
         if StopDueToCount then
---          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
---!!          write(buf, LF & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &
---!!            AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " &
---!!            ALERT_NAME(Level) & " reached") ;
          -- Not using Alert since already reached stop count
          write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME & 
                         " Stop Count on " & ALERT_NAME(Level) & " reached") ;
@@ -1320,7 +1299,6 @@ package body AlertLogPkg is
             ) ;
           end if ;
           TranscriptClose ;  -- Close Transcript if open
---          std.env.stop(ErrorCount) ;
           std.env.stop ;
         end if ;
       end if ;
@@ -1332,8 +1310,6 @@ package body AlertLogPkg is
       AlertLogID   : AlertLogIDType ;
       level        : AlertType := ERROR
     ) is
---!!global      variable buf : Line ;
-      -- constant AlertPrefix : string := AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) ;
       variable StopDueToCount : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -1343,8 +1319,6 @@ package body AlertLogPkg is
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
---          write(buf, LF & AlertPrefix & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
- --!!          write(buf, LF & AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX) & " Stop Count on " & ALERT_NAME(Level) & " reached") ;
         write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME & 
                         " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
@@ -1354,7 +1328,6 @@ package body AlertLogPkg is
           writeline(buf) ;
           ReportAlerts(ReportWhenZero => TRUE) ;
           TranscriptClose ;
---          std.env.stop(ErrorCount) ;
           std.env.stop ;
         end if ;
       end if ;
@@ -1615,27 +1588,6 @@ package body AlertLogPkg is
         TotalRequirementsGoal     => TotalRequirementsGoal   , 
         TotalRequirementErrors    => TotalRequirementErrors  
       ) ;
---!!      TotalAlertCount        := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount + ExternalErrors ;
---!!      TotalAlertErrors       := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
---!!      TotalErrors            := TotalAlertErrors ;
---!!
---!!      DisabledAlertCount        := GetDisabledAlertCount(ALERTLOG_BASE_ID) ;
---!!      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
---!!      if FailOnDisabledErrorsVar then
---!!        TotalAlertCount := TotalAlertCount + DisabledAlertCount ;
---!!        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
---!!      end if ;
---!!
---!!      -- Perspective, 1 requirement per bin
---!!      GetRequirementsCount(ALERTLOG_BASE_ID, TotalRequirementsPassed, TotalRequirementsCount) ;
---!!      TotalRequirementErrors := TotalRequirementsCount - TotalRequirementsPassed ;
---!!      if FailOnRequirementErrorsVar then
---!!        TotalErrors := TotalErrors + TotalRequirementErrors ;
---!!      end if ;
---!!
---!!      if TimeOut then
---!!        TotalErrors := TotalErrors + 1 ;
---!!      end if ; 
 
       -- Set AffirmCount for top level
       AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
@@ -1652,7 +1604,6 @@ package body AlertLogPkg is
       variable TotalDisabledAlertErrors : integer ;
       variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
       variable TotalRequirementErrors : integer ;
---!!      variable TotalAlertErrors : integer ;
     begin
     
       CalcTotalErrors (
@@ -1668,23 +1619,6 @@ package body AlertLogPkg is
         TotalRequirementErrors    => TotalRequirementErrors  
       ) ;
 
---!!      TotalAlertCount        := AlertLogPtr(AlertLogID).AlertCount ;
---!!      TotalAlertErrors       := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
---!!      TotalErrors            := TotalAlertErrors ;
---!!
---!!      DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
---!!      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
---!!      if FailOnDisabledErrorsVar then
---!!        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
---!!      end if ;
---!!
---!!      -- Perspective, 1 requirement per bin
---!!      GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsCount) ;
---!!      TotalRequirementErrors := TotalRequirementsCount - TotalRequirementsPassed ;
---!!      if FailOnRequirementErrorsVar then
---!!        TotalErrors := TotalErrors + TotalRequirementErrors ;
---!!      end if ;
-
       return TotalErrors ;
     end function CalcTotalErrors ;
 
@@ -1699,10 +1633,6 @@ package body AlertLogPkg is
       variable TestFailed         : inout Boolean ;
       TimeOut                     : boolean 
     ) is
---      constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
---      constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
---      constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
---      constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ;
       variable TotalErrors : integer ;
       variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
@@ -1710,9 +1640,6 @@ package body AlertLogPkg is
       variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       variable PassedCount, AffirmCheckCount : integer ;
     begin
---!!
---!! Update to use CalcTotalErrors
---!!
       CalcTotalErrors (
         AlertLogID                => AlertLogID              , 
         ExternalErrors            => ExternalErrors          , 
@@ -1726,34 +1653,12 @@ package body AlertLogPkg is
         TotalRequirementErrors    => TotalRequirementErrors  
       ) ;
 
---!!      AlertCountVar     := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;   ---
---!!      TotalAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(AlertCountVar)) ;
---!!
---!!      DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;             ---
---!!      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;  --
---!!
---!!      GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsGoal) ; -- both
---!!      TotalRequirementErrors := TotalRequirementsGoal - TotalRequirementsPassed ; -- 
---!!
---!!      TotalErrors := TotalAlertErrors ;
---!!      if FailOnDisabledErrorsVar then
---!!        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
---!!      end if ;
---!!      if FailOnRequirementErrorsVar then
---!!        TotalErrors := TotalErrors + TotalRequirementErrors ;
---!!      end if ;
---!!      
---!!      if TimeOut then
---!!        TotalErrors := TotalErrors + 1 ;  -- 
---!!      end if ; 
-      
 
       HasDisabledAlerts         := TotalDisabledAlertErrors /= 0 ;
       TestFailed := TotalErrors /= 0 ;
 
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCheckCount) ;
 
---!!      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt)) ;
       write(buf, ALERT_LOG_PRINT_PREFIX) ;
 --!!      if ALERT_LOG_WRITE_TIME_FIRST then
       if WriteTimeFirstVar then
@@ -1954,8 +1859,6 @@ package body AlertLogPkg is
       -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
---          Prefix             => ReportPrefix & "  ",
---!!          Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
           Prefix             => ALERT_LOG_PRINT_PREFIX & "  ",
           IndentAmount       => 2,
           ReportWhenZero     => ReportAll or ReportWhenZero,
@@ -1993,8 +1896,6 @@ package body AlertLogPkg is
       ) ;
       IterateAndPrintChildren(
         AlertLogID         => REQUIREMENT_ALERTLOG_ID,
---        Prefix             => ReportPrefix & "  ",
---!!        Prefix             => ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & "  ",
         Prefix             => ALERT_LOG_PRINT_PREFIX & "  ",
         IndentAmount       => 2,
         ReportWhenZero     => TRUE,
@@ -2010,21 +1911,13 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) is
     ------------------------------------------------------------
-      -- constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
-      -- constant DoneName        : string := ResolveOsvvmDoneName(DoneNameVar.GetOpt     ) ;
-      -- constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
-      -- constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
       variable buf : line ;
       variable NumErrors : integer ;
     begin
       NumErrors := SumAlertCount(AlertCount) ;
       if  NumErrors = 0 then
         -- Passed
-        -- write(buf, ReportPrefix & DoneName & "  " & PassName & "  " & Name) ;
         write(buf,
---!!          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
---!!          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
---!!          ResolveOsvvmPassName(PassNameVar.GetOpt) & "  " &  -- PassName
           ALERT_LOG_PRINT_PREFIX & -- ReportPrefix
           ALERT_LOG_DONE_NAME & "  " &  -- DoneName
           ALERT_LOG_PASS_NAME & "  " &  -- PassName
@@ -2034,11 +1927,7 @@ package body AlertLogPkg is
         WriteLine(buf) ;
       else
         -- Failed
-        -- write(buf, ReportPrefix & DoneName & "  " & FailName & "  "& Name) ;
         write(buf,
---          ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) & -- ReportPrefix
---          ResolveOsvvmDoneName(DoneNameVar.GetOpt) & "  " &  -- DoneName
---          ResolveOsvvmFailName(FailNameVar.GetOpt) & "  " &  -- FailName
           ALERT_LOG_PRINT_PREFIX & -- ReportPrefix
           ALERT_LOG_DONE_NAME & "  " &  -- DoneName
           ALERT_LOG_FAIL_NAME & "  " &  -- FailName
@@ -2495,11 +2384,7 @@ package body AlertLogPkg is
       variable TotalRequirementErrors : integer ;
       variable PassedCount, AffirmCount : integer ;
       constant DELIMITER : string := ", " ;
---!!      variable TotalAlertErrors : integer ;
     begin
---!!
---!! Update to use CalcTopTotalErrors
---!!
       CalcTotalErrors (
         AlertLogID                => AlertLogID              , 
         ExternalErrors            => ExternalErrors          , 
@@ -2512,25 +2397,6 @@ package body AlertLogPkg is
         TotalRequirementsGoal     => TotalRequirementsGoal   , 
         TotalRequirementErrors    => TotalRequirementErrors  
       ) ;
-
-
---!!      TotalAlertCount           := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
---!!      TotalAlertErrors          := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
---!!
---!!      DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
---!!      TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount) ) ;
---!!
---!!      GetRequirementsCount(AlertLogID, TotalRequirementsPassed, TotalRequirementsGoal) ;
---!!      TotalRequirementErrors := TotalRequirementsGoal - TotalRequirementsPassed ;
---!!
---!!      TotalErrors := TotalAlertErrors ;
---!!      if FailOnDisabledErrorsVar then
---!!        TotalErrors := TotalErrors + TotalDisabledAlertErrors ;
---!!        TotalAlertCount := TotalAlertCount + DisabledAlertCount ;
---!!      end if ;
---!!      if FailOnRequirementErrorsVar then
---!!        TotalErrors := TotalErrors + TotalRequirementErrors ;
---!!      end if ;
 
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
 
@@ -2634,21 +2500,12 @@ package body AlertLogPkg is
       Delimiter            : string
     ) is
       variable buf : line ;
-      -- constant ReportPrefix    : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt ) ;
-      -- constant PassName        : string := ResolveOsvvmPassName(PassNameVar.GetOpt     ) ;
-      -- constant FailName        : string := ResolveOsvvmFailName(FailNameVar.GetOpt     ) ;
     begin
---      write(buf, ReportPrefix &  " ") ;
---!!      write(buf, ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) &  " ") ;
       write(buf, ALERT_LOG_PRINT_PREFIX &  " ") ;
 
       if (AffirmCount > 0) and (TotalErrors = 0) then
---        write(buf, PassName) ;
---!!        write(buf, ResolveOsvvmPassName(PassNameVar.GetOpt)) ;
         write(buf, ALERT_LOG_PASS_NAME) ;
       elsif TotalErrors > 0 then
---        write(buf, FailName) ;
---!!        write(buf, ResolveOsvvmFailName(FailNameVar.GetOpt)) ;
         write(buf, ALERT_LOG_FAIL_NAME) ;
       else
         write(buf, string'("ReportTestSummaries Warning:  No checking done. ")) ;
@@ -3091,7 +2948,6 @@ package body AlertLogPkg is
     begin
       LocalPrint(
         AlertLogID       => AlertLogID,
---!!        AlertLogName     => LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX),
         AlertLogName     => ALERT_LOG_LOG_NAME,
         WriteErrorCount  => WriteLogErrorCountVar,
         WriteLevel       => WriteLogLevelVar,
@@ -3267,7 +3123,6 @@ package body AlertLogPkg is
     -- PT Local
     procedure CalcJustifyOneLevel(ID : AlertLogIDType) is
     ------------------------------------------------------------
---!!      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
       variable ParentID : AlertLogIDType ; 
       variable HierarchyLevel : integer := 1 ; 
       variable IdNameLen : integer ; 
@@ -3395,14 +3250,6 @@ package body AlertLogPkg is
       PrintDisabledAlertsVar        := ALERT_LOG_PRINT_DISABLED_ALERTS ;
       PrintRequirementsVar          := ALERT_LOG_PRINT_REQUIREMENTS ;
       PrintIfHaveRequirementsVar    := ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS ;
-
-      -- Free up space used by protected types within AlertLogPkg
---!!      AlertPrefixVar.Deallocate ;
---!!      LogPrefixVar.Deallocate ;
---!!      ReportPrefixVar.Deallocate ;
---!!      DoneNameVar.Deallocate ;
---!!      PassNameVar.Deallocate ;
---!!      FailNameVar.Deallocate ;
 
       -- State information
       AffirmCheckCountVar           := 0 ;
@@ -3548,12 +3395,6 @@ package body AlertLogPkg is
       variable localParentIdSet : boolean := ParentIdSet ;
     begin
       localPassedGoal := Goal when Goal >= 0 else DefaultPassedGoalVar ;
---!! Checked in call to NewID
---!!      localParentID := VerifyID(ParentID, ALERTLOG_ID_NOT_ASSIGNED, ALERTLOG_ID_NOT_ASSIGNED) ;
---!!      if localParentID = ALERTLOG_ID_NOT_ASSIGNED then
---!!        localParentID := ALERTLOG_BASE_ID when localPassedGoal = 0 else REQUIREMENT_ALERTLOG_ID ; 
---!!        localParentIdSet := FALSE ; 
---!!      end if ; 
       ResultID      := LocalFindID(Name, localParentID, localParentIdSet) ;
       if ResultID = ALERTLOG_ID_NOT_FOUND then
         -- Create a new ID
@@ -4077,31 +3918,24 @@ package body AlertLogPkg is
         DefaultPassedGoalVar := DefaultPassedGoal ;
       end if ;
       if AlertPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        AlertPrefixVar.Set(AlertPrefix) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME replaced SetAlertLogOptions(AlertPrefix)", WARNING) ;  
       end if ;
       if LogPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        LogPrefixVar.Set(LogPrefix) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_LOG_NAME replaced SetAlertLogOptions(LogPrefix)", WARNING) ;  
       end if ;
       if ReportPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        ReportPrefixVar.Set(ReportPrefix) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX replaced SetAlertLogOptions(ReportPrefix)", WARNING) ;  
       end if ;
       if DoneName /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        DoneNameVar.Set(DoneName) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_DONE_NAME replaced SetAlertLogOptions(DoneName)", WARNING) ;  
       end if ;
       if PassName /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        PassNameVar.Set(PassName) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_PASS_NAME replaced SetAlertLogOptions(PassName)", WARNING) ;  
       end if ;
       if FailName /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        FailNameVar.Set(FailName) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME replaced SetAlertLogOptions(FailName)", WARNING) ;  
       end if ;
       if IdSeparator /= OSVVM_STRING_INIT_PARM_DETECT then
---!!        IdSeparatorVar.Set(IdSeparator) ;
         Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR replaced SetAlertLogOptions(IdSeparator)", WARNING) ;  
       end if ;
       if WriteTimeLast /= OPT_INIT_PARM_DETECT then
@@ -4144,13 +3978,7 @@ package body AlertLogPkg is
       swrite(buf, "PrintIfHaveRequirementsVar: " & to_string(PrintIfHaveRequirementsVar  ) & LF ) ;
 
       -- String
---=!!      swrite(buf, "AlertPrefixVar:             " & string'(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX))  & LF ) ;
---=!!      swrite(buf, "LogPrefixVar:               " & string'(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX))      & LF ) ;
---=!!      swrite(buf, "ReportPrefixVar:            " & ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) & LF ) ;
---=!!      swrite(buf, "DoneNameVar:                " & ResolveOsvvmDoneName(DoneNameVar.GetOpt)        & LF ) ;
---=!!      swrite(buf, "PassNameVar:                " & ResolveOsvvmPassName(PassNameVar.GetOpt)        & LF ) ;
---=!!      swrite(buf, "FailNameVar:                " & ResolveOsvvmFailName(FailNameVar.GetOpt)        & LF ) ;
---!! Deprecated
+--!! Deprecated, but values print for historical reasons
       swrite(buf, "AlertPrefixVar:             " & ALERT_LOG_ALERT_NAME   & LF ) ;        --!! Deprecated
       swrite(buf, "LogPrefixVar:               " & ALERT_LOG_LOG_NAME     & LF ) ;        --!! Deprecated
       swrite(buf, "ReportPrefixVar:            " & ALERT_LOG_PRINT_PREFIX & LF ) ;        --!! Deprecated
@@ -4336,7 +4164,6 @@ package body AlertLogPkg is
     impure function GetAlertLogReportPrefix return string is
     ------------------------------------------------------------
     begin
---!!      return ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       return ALERT_LOG_PRINT_PREFIX ;
     end function GetAlertLogReportPrefix ;
 
@@ -4344,7 +4171,6 @@ package body AlertLogPkg is
     impure function GetAlertLogDoneName return string is
     ------------------------------------------------------------
     begin
---!!      return ResolveOsvvmDoneName(DoneNameVar.GetOpt) ;
       return ALERT_LOG_DONE_NAME ;
     end function GetAlertLogDoneName ;
 
@@ -4352,7 +4178,6 @@ package body AlertLogPkg is
     impure function GetAlertLogPassName return string is
     ------------------------------------------------------------
     begin
---!!      return ResolveOsvvmPassName(PassNameVar.GetOpt) ;
       return ALERT_LOG_PASS_NAME ;
     end function GetAlertLogPassName ;
 
@@ -4360,7 +4185,6 @@ package body AlertLogPkg is
     impure function GetAlertLogFailName return string is
     ------------------------------------------------------------
     begin
---!!      return ResolveOsvvmFailName(FailNameVar.GetOpt) ;
       return ALERT_LOG_FAIL_NAME ;
     end function GetAlertLogFailName ;
 
@@ -5083,8 +4907,6 @@ package body AlertLogPkg is
     variable Buf1, Buf2 : line ;
     variable EndOfFile1, EndOfFile2 : boolean ;
     variable LineCount1, LineCount2 : integer := 0 ;
---!! Change these to input parameters    
---    variable IgnoreEmptyLines, IgnoreSpaces : boolean := FALSE ; 
   begin
     -- synthesis translate_off
     ReadLoop : loop
