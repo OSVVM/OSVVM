@@ -5278,7 +5278,7 @@ package body CoveragePkg is
               --2    RequirementsMet := FALSE ;
               --2  end if ; 
               if CovBin.Count >= CovBin.AtLeast then 
-                --1  AffirmPassed( AlertLogID, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;  -- info already in print of coverage model
+                --3.1  AffirmPassed( AlertLogID, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;  -- info already in print of coverage model
                 IncAffirmPassedCount(AlertLogID) ;
               end if ; 
             when COV_ILLEGAL => 
@@ -5287,11 +5287,12 @@ package body CoveragePkg is
               --2    RequirementsMet := FALSE ;
               --2  end if ; 
               if CovBin.Count = 0 then 
-                -- AffirmPassed(AlertLogID, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ; -- info already in print of coverage model
+                --3.1 AffirmPassed(AlertLogID, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ; -- info already in print of coverage model
                 IncAffirmPassedCount(AlertLogID) ;
               end if ; 
             when others => 
               -- Counting Ignore bins as anything other than PASSED is contrary to the definition of an ignore bin.
+              -- Count of an ignore bin is always 0 so there is nothing to check.
               IncAffirmPassedCount(AlertLogID) ;
               -- ignore bins always pass
           -- end if ;
@@ -9219,7 +9220,7 @@ package body CoveragePkg is
       -- Alert(OSVVM_COVERAGE_ALERTLOG_ID, "CoveragePkg.MakeBin (called by GenBin, IllegalBin, IgnoreBin): NumBin must be <= 0", WARNING) ;
       return NULL_BIN ;
 
-    elsif NumBin = 1 then
+    elsif NumBin = 1 or Min = Max then
       iCovBin(1) := (
         BinVal   => (1 => (Min, Max)),
         Action   => Action,
@@ -9227,7 +9228,7 @@ package body CoveragePkg is
         Weight   => Weight,
         AtLeast  => AtLeast
       ) ;
-      return iCovBin ;
+      return iCovBin(1 to 1) ;
 
     elsif Min >= integer'low/2 and Max <= integer'high/2 then 
       -- Do calculations in type integer
