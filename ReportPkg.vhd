@@ -129,8 +129,6 @@ package body ReportPkg is
     TimeOut        : boolean        := FALSE 
   ) return integer is
   begin
-    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
-    
     if GotCoverage then 
       WriteCovYaml (
         FileName      => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
@@ -174,6 +172,8 @@ package body ReportPkg is
     end if ; 
     
     -- Summarize Alerts Last to allow previous steps to update Alerts
+    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
+    
     WriteAlertSummaryYaml(
       FileName        => OSVVM_BUILD_YAML_FILE, 
       ExternalErrors  => ExternalErrors,

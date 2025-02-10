@@ -318,9 +318,8 @@ package CoveragePkg is
   ) return CoverageIDType ;
 
   ------------------------------------------------------------
-  impure function NewID (
+  impure function NewReqID (
     Name                : String ;
-    IsRequirement       : Boolean ; 
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
@@ -833,7 +832,7 @@ package CoveragePkg is
     ------------------------------------------------------------
     impure function NewID (
       Name                : String ;
-      IsRequirement       : Boolean ; 
+      Goal                : real ; 
       ParentID            : AlertLogIDType ;
       ReportMode          : AlertLogReportModeType ;
       Search              : NameSearchType ;
@@ -1795,24 +1794,6 @@ package body CoveragePkg is
     swrite(buf, ")") ;
   end procedure write ;
 
---!!   ------------------------------------------------------------
---!! --?? Is this still used?  Probably not. Remove if not used.
---!!   procedure write ( file f :  text ;  BinVal : RangeArrayType ) is
---!!   -- called by WriteBin and WriteCovHoles
---!!   ------------------------------------------------------------
---!!   begin
---!!     for i in BinVal'range loop
---!!       if BinVal(i).min = BinVal(i).max then
---!!         write(f, "(" & to_string_max(BinVal(i).min) & ") " ) ;
---!!       elsif  (BinVal(i).min = integer'low) and (BinVal(i).max = integer'high) then
---!!         write(f, "(ALL) " ) ;
---!!       else
---!!         write(f, "(" & to_string_max(BinVal(i).min) & " to " &
---!!                        to_string_max(BinVal(i).max) & ") " ) ;
---!!       end if ;
---!!     end loop ;
---!!   end procedure write ;
-
   ------------------------------------------------------------
   procedure write (
   -- called by WriteBin and WriteCovHoles
@@ -2277,6 +2258,8 @@ package body CoveragePkg is
       RvSeedInit         : boolean ;
 
       AlertLogID         : AlertLogIDType ;
+      IsRequirement      : boolean ; 
+--??      Goal               : real ; 
     end record CovStructType ;
 
     variable COV_STRUCT_INIT : CovStructType :=
@@ -2318,7 +2301,8 @@ package body CoveragePkg is
         RV                 =>  (1, 7),
         RvSeedInit         =>  FALSE,
 
-        AlertLogID         =>  OSVVM_COVERAGE_ALERTLOG_ID
+        AlertLogID         =>  OSVVM_COVERAGE_ALERTLOG_ID,
+        IsRequirement      => FALSE 
       ) ;
 
     ------------------------------------------------------------
@@ -2378,8 +2362,8 @@ package body CoveragePkg is
     ------------------------------------------------------------
     impure function NewID (
     ------------------------------------------------------------
-      Name                : String ;
-      IsRequirement       : Boolean ; 
+      Name                : string ;
+      Goal                : real ; 
       ParentID            : AlertLogIDType ;
       ReportMode          : AlertLogReportModeType ;
       Search              : NameSearchType ;
@@ -2406,8 +2390,15 @@ package body CoveragePkg is
         CovStructPtr(NumItems) := CovStructType'(COV_STRUCT_INIT) ;
         NewCoverageID := (ID => NumItems) ;
         -- Create AlertLogID
---!! if IsRequirement then GetReqID otherwise NewID
-        CovStructPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
+        if Goal > 0.0 then 
+          CovStructPtr(NumItems).AlertLogID    := NewReqID(Name, 1, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
+          CovStructPtr(NumItems).IsRequirement := TRUE ; 
+--??          CovStructPtr(NumItems).Goal          := Goal ; 
+        else
+          CovStructPtr(NumItems).AlertLogID    := NewID(Name, ParentID, ReportMode, ResolvedPrintParent, CreateHierarchy => FALSE) ;
+          CovStructPtr(NumItems).IsRequirement := FALSE ; 
+--??          CovStructPtr(NumItems).Goal          := Goal ; 
+        end if ; 
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, ResolvedSearch) ;
         AlertIfNotEqual(CovStructPtr(NumItems).AlertLogID, NameID, NumItems, "CoveragePkg: Index of LocalNameStore /= CoverageID") ;
@@ -5180,6 +5171,7 @@ package body CoveragePkg is
       write(buf, Prefix & "  IllegalMode: """      & to_upper(to_string(CovStructPtr(ID.ID).IllegalMode))        & '"' & LF) ;
       write(buf, Prefix & "  Threshold: "          & to_string(CovStructPtr(ID.ID).CovThreshold, 1)              & LF) ;
       write(buf, Prefix & "  ThresholdEnable: """  & to_upper(to_string(CovStructPtr(ID.ID).ThresholdingEnable)) & '"' & LF) ;
+      write(buf, Prefix & "  IsRequirement: """    & to_upper(to_string(CovStructPtr(ID.ID).IsRequirement))      & '"' & LF) ;
       GetTotalCovCountAndGoal (ID, TotalCovCount, TotalCovGoal) ;
       write(buf, Prefix & "  TotalCovCount: "      & to_string(TotalCovCount)                                    & LF) ;
       write(buf, Prefix & "  TotalCovGoal: "       & to_string(TotalCovGoal)                                     & LF) ;
@@ -5245,10 +5237,28 @@ package body CoveragePkg is
     ------------------------------------------------------------
       variable Action : integer ;
       variable CovBin : CovBinInternalBaseType ;
+      variable IsRequirement : boolean ; 
+      variable AlertLogID : AlertLogIDType ; 
     begin
       -- write bins to YAML file
       write(buf, Prefix & "Bins: " & LF) ;
+      AlertLogID    := CovStructPtr(ID.ID).AlertLogID ;
+      IsRequirement := CovStructPtr(ID.ID).IsRequirement ;
+      if IsRequirement then 
+        SetPassedGoal(AlertLogID, CovStructPtr(ID.ID).NumBins) ; -- Update passed goal to 1 pass per bin in coverage model
+        
+--!!--??  CovWeight = 0 Action??   
+--!!--??    * Ignore and check requirement anyway -- Current 
+--!!--??    * Flag as an Error?  
+--!!--??    * Turn off checking for this requirement?  
+--!!--??   Decision:  CovWeight is a separate concern.  Not for turning off requirement.  Error?  Maybe, maybe not.
+--!!--??        if CovStructPtr(ID.ID).CovWeight = 0 then
+--!!--??          Alert(AlertLogID,  "CovWeight is 0.  This is contrary to it being a requirement.") ;  -- Covered failed.  --??  CovWeight is contrary to a requirement
+--!!--??          IsRequirement := FALSE ;  -- No.  still interesting to accumulate the actual coverage.
+--!!--??        end if ; 
 
+      end if ; 
+      
       writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
         CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
         write(buf, Prefix & "  - Name: """ & CovBin.Name.all             & '"' & LF) ;
@@ -5258,6 +5268,13 @@ package body CoveragePkg is
         write(buf, Prefix & "    Count: "      & to_string(CovBin.Count) & LF) ;
         write(buf, Prefix & "    AtLeast: "    & to_string(CovBin.AtLeast) & LF) ;
         write(buf, Prefix & "    PercentCov: " & to_string(CovBin.PercentCov, 4) & LF) ;
+        if IsRequirement then 
+          if CovBin.Action = COV_COUNT then 
+            AffirmIf( AlertLogID, CovBin.Count >= CovBin.AtLeast, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;
+          else
+            AffirmIf( AlertLogID, CovBin.Count = 0, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: " & IfElse(CovBin.Action = COV_ILLEGAL, "Illegal", "Ignore") ) ;
+          end if ; 
+        end if ; 
       end loop writeloop ;
     end procedure WriteCovBinsYaml ;
 
@@ -7886,23 +7903,23 @@ package body CoveragePkg is
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType is
-    constant IS_REQUIREMENT : boolean := FALSE ; 
+    constant GOAL : real := 0.0 ; 
   begin
-    return CoverageStore.NewID (Name, IS_REQUIREMENT, ParentID, ReportMode, Search, PrintParent) ;
+    return CoverageStore.NewID (Name, GOAL, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
   ------------------------------------------------------------
-  impure function NewID (
+  impure function NewReqID (
     Name                : String ;
-    IsRequirement       : Boolean ; 
     ParentID            : AlertLogIDType          := OSVVM_COVERAGE_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := ENABLED ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
   ) return CoverageIDType is
+    constant GOAL : real := 100.0 ; 
   begin
-    return CoverageStore.NewID (Name, IsRequirement, ParentID, ReportMode, Search, PrintParent) ;
-  end function NewID ;
+    return CoverageStore.NewID (Name, GOAL, ParentID, ReportMode, Search, PrintParent) ;
+  end function NewReqID ;
 
 
   ------------------------------------------------------------
