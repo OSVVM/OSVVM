@@ -669,6 +669,7 @@ package CoveragePkg is
   procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
   procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) ;
   impure function GotCoverage return boolean ;
+  procedure RecordCovRequirements ;
   impure function GetCov (PercentCov : real ) return real ;
   impure function GetCov return real ;
   procedure AffirmIfCovered ; 
@@ -1208,6 +1209,7 @@ package CoveragePkg is
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) ;
     impure function GotCoverage return boolean ;
+    procedure RecordCovRequirements ;
     procedure SetErrorIfNotCovered(Checked : boolean := FALSE) ; 
 
 
@@ -5235,32 +5237,10 @@ package body CoveragePkg is
     --  pt local
     procedure WriteCovBinsYaml (ID : CoverageIDType; variable buf : inout LINE; Prefix : string ) is
     ------------------------------------------------------------
-      variable Action : integer ;
       variable CovBin : CovBinInternalBaseType ;
-      variable IsRequirement : boolean ; 
-      variable AlertLogID : AlertLogIDType ; 
---2      variable RequirementsMet : boolean := TRUE ; 
     begin
       -- write bins to YAML file
       write(buf, Prefix & "Bins: " & LF) ;
-      AlertLogID    := CovStructPtr(ID.ID).AlertLogID ;
-      IsRequirement := CovStructPtr(ID.ID).IsRequirement ;
-      if IsRequirement then  
-        -- Options 1 and 3 do this
-        SetPassedGoal(AlertLogID, CovStructPtr(ID.ID).NumBins) ; -- Update passed goal to 1 pass per bin in coverage model
-        
---!!--??  CovWeight = 0 Action??   
---!!--??    * Ignore and check requirement anyway -- Current 
---!!--??    * Flag as an Error?  
---!!--??    * Turn off checking for this requirement?  
---!!--??   Decision:  CovWeight is a separate concern.  Not for turning off requirement.  Error?  Maybe, maybe not.
---!!--??        if CovStructPtr(ID.ID).CovWeight = 0 then
---!!--??          Alert(AlertLogID,  "CovWeight is 0.  This is contrary to it being a requirement.") ;  -- Covered failed.  --??  CovWeight is contrary to a requirement
---!!--??          IsRequirement := FALSE ;  -- No.  still interesting to accumulate the actual coverage.
---!!--??        end if ; 
-
-      end if ; 
-      
       writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
         CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
         write(buf, Prefix & "  - Name: """ & CovBin.Name.all             & '"' & LF) ;
@@ -5270,38 +5250,7 @@ package body CoveragePkg is
         write(buf, Prefix & "    Count: "      & to_string(CovBin.Count) & LF) ;
         write(buf, Prefix & "    AtLeast: "    & to_string(CovBin.AtLeast) & LF) ;
         write(buf, Prefix & "    PercentCov: " & to_string(CovBin.PercentCov, 4) & LF) ;
-        if IsRequirement then 
-          case CovBin.Action Is
-            when COV_COUNT => 
-              --1  AffirmIf( AlertLogID, CovBin.Count >= CovBin.AtLeast, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;
-              --2  if CovBin.Count < CovBin.AtLeast then 
-              --2    RequirementsMet := FALSE ;
-              --2  end if ; 
-              if CovBin.Count >= CovBin.AtLeast then 
-                --3.1  AffirmPassed( AlertLogID, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;  -- info already in print of coverage model
-                IncAffirmPassedCount(AlertLogID) ;
-              end if ; 
-            when COV_ILLEGAL => 
-              --1  AffirmIf( AlertLogID, CovBin.Count = 0, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ;
-              --2  if CovBin.Count /= 0 then 
-              --2    RequirementsMet := FALSE ;
-              --2  end if ; 
-              if CovBin.Count = 0 then 
-                --3.1 AffirmPassed(AlertLogID, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ; -- info already in print of coverage model
-                IncAffirmPassedCount(AlertLogID) ;
-              end if ; 
-            when others => 
-              -- Counting Ignore bins as anything other than PASSED is contrary to the definition of an ignore bin.
-              -- Count of an ignore bin is always 0 so there is nothing to check.
-              IncAffirmPassedCount(AlertLogID) ;
-              -- ignore bins always pass
-          -- end if ;
-          end case ; 
-        end if ; 
       end loop writeloop ;
-      --2  if IsRequirement then 
-      --2    AffirmIf(AlertLogID, RequirementsMet, "Coverage Bin: " & CovBin.Name.all & "  Requirements met = " & to_upper(to_string(RequirementsMet)) ) ; 
-      --2  end if ; 
     end procedure WriteCovBinsYaml ;
 
     ------------------------------------------------------------
@@ -5993,6 +5942,84 @@ package body CoveragePkg is
       return FALSE ;
     end function GotCoverage ;
     
+    ------------------------------------------------------------
+    --  pt local
+    procedure RecordCovRequirements (ID : CoverageIDType) is
+    ------------------------------------------------------------
+      variable CovBin : CovBinInternalBaseType ;
+--      variable IsRequirement : boolean ; 
+      variable AlertLogID : AlertLogIDType ; 
+--2      variable RequirementsMet : boolean := TRUE ; 
+    begin
+      if not CovStructPtr(ID.ID).IsRequirement then
+        -- this procedure only handles when is a requirement.
+        return ; 
+      end if ; 
+--!!--??  CovWeight = 0 Action??   
+--!!--??    * Ignore and check requirement anyway -- Current 
+--!!--??    * Flag as an Error?  
+--!!--??    * Turn off checking for this requirement?  
+--!!--??   Decision:  CovWeight is a separate concern.  Not for turning off requirement.  Error?  Maybe, maybe not.
+--!!--??        if CovStructPtr(ID.ID).CovWeight = 0 then
+--!!--??          Alert(AlertLogID,  "CovWeight is 0.  This is contrary to it being a requirement.") ;  -- Covered failed.  --??  CovWeight is contrary to a requirement
+--!!--??          IsRequirement := FALSE ;  -- No.  still interesting to accumulate the actual coverage.
+--!!--??        end if ; 
+      AlertLogID    := CovStructPtr(ID.ID).AlertLogID ;
+--!!      if IsRequirement then  
+
+        -- Options 1 and 3 do this
+        SetPassedGoal(AlertLogID, CovStructPtr(ID.ID).NumBins) ; -- Update passed goal to 1 pass per bin in coverage model        
+--!!      end if ; 
+      
+      writeloop : for EachLine in 1 to CovStructPtr(ID.ID).NumBins loop
+        CovBin := CovStructPtr(ID.ID).CovBinPtr(EachLine) ;
+--!!        if IsRequirement then 
+          case CovBin.Action Is
+            when COV_COUNT => 
+              --1  AffirmIf( AlertLogID, CovBin.Count >= CovBin.AtLeast, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;
+              --2  if CovBin.Count < CovBin.AtLeast then 
+              --2    RequirementsMet := FALSE ;
+              --2  end if ; 
+              if CovBin.Count >= CovBin.AtLeast then 
+                --3.1  AffirmPassed( AlertLogID, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;  -- info already in print of coverage model
+                IncAffirmPassedCount(AlertLogID) ;
+              end if ; 
+            when COV_ILLEGAL => 
+              --1  AffirmIf( AlertLogID, CovBin.Count = 0, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ;
+              --2  if CovBin.Count /= 0 then 
+              --2    RequirementsMet := FALSE ;
+              --2  end if ; 
+              if CovBin.Count = 0 then 
+                --3.1 AffirmPassed(AlertLogID, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ; -- info already in print of coverage model
+                IncAffirmPassedCount(AlertLogID) ;
+              end if ; 
+            when others => 
+              -- Counting Ignore bins as anything other than PASSED is contrary to the definition of an ignore bin.
+              -- Count of an ignore bin is always 0 so there is nothing to check.
+              IncAffirmPassedCount(AlertLogID) ;
+              -- ignore bins always pass
+          -- end if ;
+          end case ; 
+--!!        end if ; 
+      end loop writeloop ;
+--!!      --2  if IsRequirement then 
+      --2    AffirmIf(AlertLogID, RequirementsMet, "Coverage Bin: " & CovBin.Name.all & "  Requirements met = " & to_upper(to_string(RequirementsMet)) ) ; 
+      --2.3  IncAffirmPassedCount(AlertLogID) ;
+--!!      --2  end if ; 
+    end procedure RecordCovRequirements ;
+    
+    ------------------------------------------------------------
+    procedure RecordCovRequirements is
+    ------------------------------------------------------------
+    begin
+
+      for i in 1 to NumItems loop
+        if CovStructPtr(i).NumBins >= 1 then
+          RecordCovRequirements(CoverageIDType'(ID => i)) ;
+        end if ;
+      end loop ;
+    end procedure RecordCovRequirements ;
+
     ------------------------------------------------------------
     procedure SetErrorIfNotCovered(Checked : boolean := FALSE) is 
     ------------------------------------------------------------
@@ -8980,6 +9007,13 @@ package body CoveragePkg is
   begin
     return CoverageStore.GotCoverage ;
   end function GotCoverage ;
+
+  ------------------------------------------------------------
+  procedure RecordCovRequirements is
+  ------------------------------------------------------------
+  begin
+    CoverageStore.RecordCovRequirements ;
+  end procedure RecordCovRequirements ;
 
   ------------------------------------------------------------
   impure function GetCov (PercentCov : real ) return real is
