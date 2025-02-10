@@ -5239,12 +5239,14 @@ package body CoveragePkg is
       variable CovBin : CovBinInternalBaseType ;
       variable IsRequirement : boolean ; 
       variable AlertLogID : AlertLogIDType ; 
+--2      variable RequirementsMet : boolean := TRUE ; 
     begin
       -- write bins to YAML file
       write(buf, Prefix & "Bins: " & LF) ;
       AlertLogID    := CovStructPtr(ID.ID).AlertLogID ;
       IsRequirement := CovStructPtr(ID.ID).IsRequirement ;
-      if IsRequirement then 
+      if IsRequirement then  
+        -- Options 1 and 3 do this
         SetPassedGoal(AlertLogID, CovStructPtr(ID.ID).NumBins) ; -- Update passed goal to 1 pass per bin in coverage model
         
 --!!--??  CovWeight = 0 Action??   
@@ -5269,13 +5271,36 @@ package body CoveragePkg is
         write(buf, Prefix & "    AtLeast: "    & to_string(CovBin.AtLeast) & LF) ;
         write(buf, Prefix & "    PercentCov: " & to_string(CovBin.PercentCov, 4) & LF) ;
         if IsRequirement then 
-          if CovBin.Action = COV_COUNT then 
-            AffirmIf( AlertLogID, CovBin.Count >= CovBin.AtLeast, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;
-          else
-            AffirmIf( AlertLogID, CovBin.Count = 0, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: " & IfElse(CovBin.Action = COV_ILLEGAL, "Illegal", "Ignore") ) ;
-          end if ; 
+          case CovBin.Action Is
+            when COV_COUNT => 
+              --1  AffirmIf( AlertLogID, CovBin.Count >= CovBin.AtLeast, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;
+              --2  if CovBin.Count < CovBin.AtLeast then 
+              --2    RequirementsMet := FALSE ;
+              --2  end if ; 
+              if CovBin.Count >= CovBin.AtLeast then 
+                --1  AffirmPassed( AlertLogID, "Coverage Count: " & to_string(CovBin.Count) & "  Goal: " & to_string(CovBin.AtLeast) & ".  Action:  Count") ;  -- info already in print of coverage model
+                IncAffirmPassedCount(AlertLogID) ;
+              end if ; 
+            when COV_ILLEGAL => 
+              --1  AffirmIf( AlertLogID, CovBin.Count = 0, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ;
+              --2  if CovBin.Count /= 0 then 
+              --2    RequirementsMet := FALSE ;
+              --2  end if ; 
+              if CovBin.Count = 0 then 
+                -- AffirmPassed(AlertLogID, "Coverage Count: " & to_string(abs(CovBin.Count)) & "  Goal: 0.  Action: Illegal" ) ; -- info already in print of coverage model
+                IncAffirmPassedCount(AlertLogID) ;
+              end if ; 
+            when others => 
+              -- Counting Ignore bins as anything other than PASSED is contrary to the definition of an ignore bin.
+              IncAffirmPassedCount(AlertLogID) ;
+              -- ignore bins always pass
+          -- end if ;
+          end case ; 
         end if ; 
       end loop writeloop ;
+      --2  if IsRequirement then 
+      --2    AffirmIf(AlertLogID, RequirementsMet, "Coverage Bin: " & CovBin.Name.all & "  Requirements met = " & to_upper(to_string(RequirementsMet)) ) ; 
+      --2  end if ; 
     end procedure WriteCovBinsYaml ;
 
     ------------------------------------------------------------
