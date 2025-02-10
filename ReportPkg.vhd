@@ -133,6 +133,7 @@ package body ReportPkg is
       WriteCovYaml (
         FileName      => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
       ) ;
+      RecordCovRequirements ;
     end if ; 
     
     if work.ScoreboardPkg_slv.GotScoreboards then 
@@ -171,9 +172,7 @@ package body ReportPkg is
       ) ;
     end if ; 
     
-    -- Summarize Alerts Last to allow previous steps to update Alerts
-    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
-    
+    -- Summarize Results Last to allow previous steps to update Alerts
     WriteAlertSummaryYaml(
       FileName        => OSVVM_BUILD_YAML_FILE, 
       ExternalErrors  => ExternalErrors,
@@ -185,6 +184,9 @@ package body ReportPkg is
     WriteSimTimeYaml (
       FileName        => OSVVM_BUILD_YAML_FILE
     ) ;
+    
+    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
+    
     WriteAlertYaml (
       FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors,
