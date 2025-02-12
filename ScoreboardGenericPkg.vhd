@@ -346,8 +346,17 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string
   ) return boolean ;                    -- Simple, Tagged
 
-  alias Empty           is IsEmpty [ScoreboardIDType return boolean] ;
-  alias Empty           is IsEmpty [ScoreboardIDType, string return boolean] ;
+--  alias Empty           is IsEmpty [ScoreboardIDType return boolean] ;
+--  alias Empty           is IsEmpty [ScoreboardIDType, string return boolean] ;
+  impure function Empty (    -- Deprecated
+    constant ID     : in  ScoreboardIDType
+  ) return boolean ;
+  -- Tagged
+  impure function Empty (    -- Deprecated
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string
+  ) return boolean ;                    -- Simple, Tagged
+
   alias ScoreboardEmpty is IsEmpty [ScoreboardIDType return boolean] ;
   alias ScoreboardEmpty is IsEmpty [ScoreboardIDType, string return boolean] ;
   
@@ -3441,6 +3450,23 @@ package body ScoreboardGenericPkg is
   begin
     return ScoreboardStore.Empty(ID.ID, Tag) ;
   end function IsEmpty ;
+
+--!! These should be an alias, but Questa fails under some 
+--!! interesting conditions when they are not an alias.
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID) ;
+  end function Empty ;
+  -- Tagged
+  impure function Empty (
+    constant ID     : in  ScoreboardIDType ;
+    constant Tag    : in  string
+  ) return boolean is
+  begin
+    return ScoreboardStore.Empty(ID.ID, Tag) ;
+  end function Empty ;                    -- Simple, Tagged
   
   -- All scoreboards in the singleton
   impure function AllScoreboardsEmpty return boolean is
