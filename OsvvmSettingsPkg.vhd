@@ -74,9 +74,10 @@ package OsvvmSettingsPkg is
   -- ------------------------------------------
   -- Settings for CoveragePkg
   -- ------------------------------------------
+  constant  COVERAGE_REQUIREMENT_BY_BIN  : boolean ;  
+  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string ;
   -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.  
   constant  COVERAGE_USE_NEW_SEED_METHODS : boolean ; 
-  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string ;
   constant  COVERAGE_PRINT_PREFIX         : string ; 
   constant  COVERAGE_PASS_NAME            : string ;
   constant  COVERAGE_FAIL_NAME            : string ;

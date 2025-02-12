@@ -70,6 +70,7 @@ package body OsvvmSettingsPkg is
   -- ------------------------------------------
   -- Settings shared by AlertLogPkg and CoveragePkg
   -- ------------------------------------------
+  -- Output Formatting
   constant  OSVVM_PRINT_PREFIX         : string := "%% " ;
   constant  OSVVM_DONE_NAME            : string := "DONE" ;
   constant  OSVVM_PASS_NAME            : string := "PASSED" ;
@@ -77,13 +78,18 @@ package body OsvvmSettingsPkg is
 
   constant  OSVVM_DEFAULT_TIME_UNITS   : time := 1 ns ;
 
-
   -- ------------------------------------------
   -- Settings for CoveragePkg
   -- ------------------------------------------
+  -- COVERAGE_REQUIREMENT_BY_BIN
+  --   if TRUE, each bin of a coverage model is one requirement. 
+  --   if FALSE, an entire coverage model is one requirement, 
+  constant  COVERAGE_REQUIREMENT_BY_BIN   : boolean := TRUE ;  
+  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024", string'("REMAIN"), "AT_LEAST") ;
   -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.
   constant  COVERAGE_USE_NEW_SEED_METHODS : boolean := TRUE ;
-  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024", string'("REMAIN"), "AT_LEAST") ;
+  
+  -- OUTPUT formatting
   constant  COVERAGE_PRINT_PREFIX         : string := OSVVM_PRINT_PREFIX ;
   constant  COVERAGE_PASS_NAME            : string := OSVVM_PASS_NAME ;
   constant  COVERAGE_FAIL_NAME            : string := OSVVM_FAIL_NAME ;
@@ -104,10 +110,11 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_TIME_LAST            : boolean := not ALERT_LOG_WRITE_TIME_FIRST ;
   constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2024", 9, 0) ;  -- Justify time - particularly when at beginning
 
-  -- File Match/Diff controls
+  -- File Match/Diff controls - defaults for AffirmIfTranscriptsMatch, AffirmIfFilesMatch, AlertIfDiff
   constant  ALERT_LOG_IGNORE_SPACES                : boolean := FALSE ; -- Historic FALSE
   constant  ALERT_LOG_IGNORE_EMPTY_LINES           : boolean := FALSE ; -- Historic FALSE
 
+  -- OUTPUT Formatting
   -- Boolean controls to print or not print fields in Alert/Log
   constant  ALERT_LOG_WRITE_ERRORCOUNT           : boolean := FALSE ;  -- prefix message with # of errors - requested by Marco for Mike P.
   constant  ALERT_LOG_WRITE_NAME                 : boolean := TRUE ;   -- Print Alert/Log
