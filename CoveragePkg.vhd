@@ -22,6 +22,9 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2025   2025.02    FindBinIndex
+--                         GetBinAction, GetPointAction
+--                         IsBinCount, IsBinIllegal, IsBinIgnore, IsPointCount, IsPointIllegal, IsPointIgnore
 --    09/2024   2024.09    Updated reporting for integer'high and integer'low
 --    07/2024   2024.07    In Yaml reports, print ones with weight = 0 last
 --                         Added IsInitialized
@@ -487,6 +490,8 @@ package CoveragePkg is
   procedure ICover     (ID : CoverageIDType; CovPoint : integer_vector) ;
   procedure ICover     (ID : CoverageIDType; CovPoint : integer) ;
   procedure TCover     (ID : CoverageIDType; A : integer) ;
+  impure function FindBinIndex (ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer ;
+  impure function FindBinIndex (ID : CoverageIDType; CovPoint : integer; StartingIndex : integer := 1) return integer ;
 
   procedure ClearCov (ID : CoverageIDType) ;
 
@@ -500,13 +505,26 @@ package CoveragePkg is
   impure function IsBinCovered (ID : CoverageIDType ; BinIndex : integer ) return boolean ;
   impure function IsCovered    (ID : CoverageIDType ; PercentCov : real ) return boolean ;
   impure function IsCovered    (ID : CoverageIDType) return boolean ;
-  impure function AllCovered (PercentCov : real ) return boolean ;
-  impure function AllCovered return boolean ;
+  impure function AllCovered   (PercentCov : real )  return boolean ;
+  impure function AllCovered                         return boolean ;
   impure function IsNotCovered (ID : CoverageIDType ; PercentCov : real ) return boolean ;
   impure function IsNotCovered (ID : CoverageIDType) return boolean ;
 
   impure function IsInitialized (ID : CoverageIDType) return boolean ;
-
+  
+  ------------------------------------------------------------
+  impure function IsBinCount  (ID : CoverageIDType; BinIndex : integer) return boolean ;
+  impure function IsBinIllegal(ID : CoverageIDType; BinIndex : integer) return boolean ;
+  impure function IsBinIgnore (ID : CoverageIDType; BinIndex : integer) return boolean ;
+  
+  ------------------------------------------------------------
+  impure function IsPointCount  (ID : CoverageIDType; CovPoint : integer_vector) return boolean ;
+  impure function IsPointCount  (ID : CoverageIDType; CovPoint : integer) return boolean ;
+  impure function IsPointIllegal(ID : CoverageIDType; CovPoint : integer_vector) return boolean ;
+  impure function IsPointIllegal(ID : CoverageIDType; CovPoint : integer) return boolean ;
+  impure function IsPointIgnore (ID : CoverageIDType; CovPoint : integer_vector) return boolean ;
+  impure function IsPointIgnore (ID : CoverageIDType; CovPoint : integer) return boolean ;
+  
   ------------------------------------------------------------
   impure function GetItemCount    (ID : CoverageIDType) return integer ;
   impure function GetCov          (ID : CoverageIDType; PercentCov : real ) return real ;
@@ -600,12 +618,17 @@ package CoveragePkg is
   -- /////////////////////////////////////////
   ------------------------------------------------------------
   -- ------------------------------------------------------------
-  -- Intended as a stand in until we get a more general GetBin
+  -- Get all bin information except the BinVal (since it is sized)
   impure function GetBinInfo (ID : CoverageIDType; BinIndex : integer ) return CovBinBaseType ;
 
   -- ------------------------------------------------------------
-  -- Intended as a stand in until we get a more general GetBin
-  impure function GetBinValLength (ID : CoverageIDType) return integer ;
+  -- Get Pieces of Bin Information
+  impure function GetBinValLength (ID : CoverageIDType) return integer ;  -- Length of BinVal
+  impure function GetBinAction    (ID : CoverageIDType; BinIndex : integer) return integer ;
+  impure function GetBinName      (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string ;
+  
+  impure function GetPointAction  (ID : CoverageIDType; CovPoint : integer_vector) return integer ;
+  impure function GetPointAction  (ID : CoverageIDType; CovPoint : integer) return integer ;
 
   -- ------------------------------------------------------------
   -- Eventually the multiple GetBin functions will be replaced by a
@@ -620,9 +643,6 @@ package CoveragePkg is
   impure function GetBin (ID : CoverageIDType; BinIndex : integer ) return CovMatrix7BaseType ;
   impure function GetBin (ID : CoverageIDType; BinIndex : integer ) return CovMatrix8BaseType ;
   impure function GetBin (ID : CoverageIDType; BinIndex : integer ) return CovMatrix9BaseType ;
-
-  -- ------------------------------------------------------------
-  impure function GetBinName (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string ;
 
   ------------------------------------------------------------
   impure function GetErrorCount (ID : CoverageIDType) return integer ;
@@ -1143,12 +1163,16 @@ package CoveragePkg is
     -- /////////////////////////////////////////
     ------------------------------------------------------------
     -- ------------------------------------------------------------
-    -- Intended as a stand in until we get a more general GetBin
+    -- Get all bin information except the BinVal (since it is sized)
     impure function GetBinInfo (ID : CoverageIDType; BinIndex : integer ) return CovBinBaseType ;
 
     -- ------------------------------------------------------------
-    -- Intended as a stand in until we get a more general GetBin
-    impure function GetBinValLength (ID : CoverageIDType) return integer ;
+    -- Get Pieces of Bin Information
+    impure function GetBinValLength (ID : CoverageIDType) return integer ;  -- Length of BinVal
+    impure function GetBinAction    (ID : CoverageIDType; BinIndex : integer) return integer ;
+    impure function GetBinName      (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string ;
+
+    impure function GetPointAction  (ID : CoverageIDType; CovPoint : integer_vector) return integer ;
 
     -- ------------------------------------------------------------
     -- Eventually the multiple GetBin functions will be replaced by a
@@ -1163,9 +1187,6 @@ package CoveragePkg is
     impure function GetBin (ID : CoverageIDType; BinIndex : integer ) return CovMatrix7BaseType ;
     impure function GetBin (ID : CoverageIDType; BinIndex : integer ) return CovMatrix8BaseType ;
     impure function GetBin (ID : CoverageIDType; BinIndex : integer ) return CovMatrix9BaseType ;
-
-    -- ------------------------------------------------------------
-    impure function GetBinName (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string ;
 
     ------------------------------------------------------------
     impure function GetErrorCount (ID : CoverageIDType) return integer ;
@@ -1342,6 +1363,7 @@ package CoveragePkg is
     procedure ICover( CovPoint : integer) ;
     procedure ICover( CovPoint : integer_vector) ;
     procedure TCover( A : integer) ;
+    impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer ;
 
     procedure ClearCov ;
     procedure SetCovZero ;  -- Deprecated
@@ -1427,12 +1449,13 @@ package CoveragePkg is
     impure function GetNextIndex  return integer ;
     impure function GetNextIndex(Mode : NextPointModeType)  return integer ;
 
-    -- GetBin returns an internal value of the coverage data structure
     -- The return value may change as the package evolves
-    -- Use it only for debugging.
-    -- GetBinInfo is a for development only.
+    -- Get all bin information except the BinVal (since it is sized)
     impure function GetBinInfo ( BinIndex : integer ) return CovBinBaseType ;
     impure function GetBinValLength return integer ;
+    impure function GetBinName ( BinIndex : integer; DefaultName : string := "" ) return string ;
+    
+    -- GetBin returns an internal value of the coverage data structure
     impure function GetBin ( BinIndex : integer ) return CovBinBaseType ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix2BaseType  ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix3BaseType ;
@@ -1442,7 +1465,6 @@ package CoveragePkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix7BaseType ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix8BaseType ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix9BaseType ;
-    impure function GetBinName ( BinIndex : integer; DefaultName : string := "" ) return string ;
     impure function GetErrorCount return integer ;
 
     ------------------------------------------------------------
@@ -3435,21 +3457,20 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       if CovPoint'length /= CovStructPtr(ID.ID).BinValLength then
+        -- Fatal:  Bin size mismatch 
         Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." &
         " ICover: CovPoint length = " & to_string(CovPoint'length) &
         "  does not match Coverage Bin dimensions = " & to_string(CovStructPtr(ID.ID).BinValLength), FAILURE) ;
-      -- Search CovStructPtr(ID.ID).LastStimGenIndex first.  Important it is not CovStructPtr(ID.ID).LastIndex seen by ICover below.
-      -- If find an object in a sentinal bin - only looks in sentinal bin after that point
       elsif CovStructPtr(ID.ID).CountMode = COUNT_FIRST and inside(CovPoint, CovStructPtr(ID.ID).CovBinPtr(CovStructPtr(ID.ID).LastStimGenIndex).BinVal.all) then
+        -- Found point in CovStructPtr(ID.ID).LastStimGenIndex 
         ICoverIndex(ID, CovStructPtr(ID.ID).LastStimGenIndex, CovPoint) ;
       else
+        -- Search for bin
         CovLoop : for i in 1 to CovStructPtr(ID.ID).NumBins loop
-          -- skip this CovBin if CovPoint is not in it
-          next CovLoop when not inside(CovPoint, CovStructPtr(ID.ID).CovBinPtr(i).BinVal.all) ;
-          -- Mark Covered
-          CovStructPtr(ID.ID).LastIndex := i ; -- Mark found index
-          ICoverIndex(ID, i, CovPoint) ;
-          exit CovLoop when CovStructPtr(ID.ID).CountMode = COUNT_FIRST ;   -- only find first one
+          next CovLoop when not inside(CovPoint, CovStructPtr(ID.ID).CovBinPtr(i).BinVal.all) ;  -- skip if not found
+          CovStructPtr(ID.ID).LastIndex := i ;                              -- Mark found index
+          ICoverIndex(ID, i, CovPoint) ;                                    -- Mark Covered
+          exit CovLoop when CovStructPtr(ID.ID).CountMode = COUNT_FIRST ;   -- Find additional if not COUNT_FIRST
         end loop CovLoop ;
       end if ;
      end procedure ICover ;
@@ -3461,6 +3482,29 @@ package body CoveragePkg is
      ICover(ID, (1=> CovPoint)) ;
     end procedure ICover ;
 
+    ------------------------------------------------------------
+    impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer is
+    ------------------------------------------------------------
+    begin
+      if CovPoint'length /= CovStructPtr(ID.ID).BinValLength then
+        -- Fatal:  Bin size mismatch 
+        Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg." &
+        " FindBinIndex: CovPoint length = " & to_string(CovPoint'length) &
+        "  does not match Coverage Bin dimensions = " & to_string(CovStructPtr(ID.ID).BinValLength), FAILURE) ;
+        return -1 ; 
+      elsif CovStructPtr(ID.ID).CountMode = COUNT_FIRST and inside(CovPoint, CovStructPtr(ID.ID).CovBinPtr(CovStructPtr(ID.ID).LastStimGenIndex).BinVal.all) then
+        -- Found point in CovStructPtr(ID.ID).LastStimGenIndex 
+        return CovStructPtr(ID.ID).LastStimGenIndex ;
+      else
+        -- Search for bin
+        CovLoop : for i in StartingIndex to CovStructPtr(ID.ID).NumBins loop
+          next CovLoop when not inside(CovPoint, CovStructPtr(ID.ID).CovBinPtr(i).BinVal.all) ; -- skip if not found
+          return i ; 
+        end loop CovLoop ;
+        return 0 ; 
+      end if ;
+     end function FindBinIndex ;
+     
     ------------------------------------------------------------
     procedure TCover (ID : CoverageIDType; A : integer) is
     ------------------------------------------------------------
@@ -4193,7 +4237,7 @@ package body CoveragePkg is
     end function RandCovPoint ;
 
     -- ------------------------------------------------------------
-    -- Intended as a stand in until we get a more general GetBin
+    -- Get all bin information except the BinVal (since it is sized)
     impure function GetBinInfo (ID : CoverageIDType; BinIndex : integer ) return CovBinBaseType is
     -- ------------------------------------------------------------
       variable result : CovBinBaseType ;
@@ -4207,12 +4251,46 @@ package body CoveragePkg is
     end function GetBinInfo ;
 
     -- ------------------------------------------------------------
-    -- Intended as a stand in until we get a more general GetBin
+    -- Get Pieces of Bin Information
+    -- ------------------------------------------------------------
+    -- ------------------------------------------------------------
     impure function GetBinValLength (ID : CoverageIDType) return integer is
     -- ------------------------------------------------------------
     begin
       return CovStructPtr(ID.ID).BinValLength ;
     end function GetBinValLength ;
+    
+    ------------------------------------------------------------
+    impure function GetBinAction(ID : CoverageIDType; BinIndex : integer) return integer is
+    ------------------------------------------------------------
+    begin
+      return CovStructPtr(ID.ID).CovBinPtr(BinIndex).Action ; 
+    end function GetBinAction ;
+
+    -- ------------------------------------------------------------
+    impure function GetBinName (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string is
+    -- ------------------------------------------------------------
+    begin
+      if CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name.all /= "" then
+        return CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name.all ;
+      else
+        return DefaultName ;
+      end if;
+    end function GetBinName;
+
+    ------------------------------------------------------------
+    impure function GetPointAction(ID : CoverageIDType; CovPoint : integer_vector) return integer is
+    ------------------------------------------------------------
+      variable BinIndex : integer ; 
+    begin
+      BinIndex := FindBinIndex(ID, CovPoint) ;
+      if BinIndex > 0 then 
+        return GetBinAction( ID, BinIndex ) ; 
+      else 
+        return -2 ; 
+      end if ; 
+    end function GetPointAction ;
+
 
 -- Eventually the multiple GetBin functions will be replaced by a
 -- a single GetBin that returns CovBinBaseType with BinVal as an
@@ -4333,17 +4411,6 @@ package body CoveragePkg is
       result.Weight  := CovStructPtr(ID.ID).CovBinPtr(BinIndex).Weight;
       return result ;
     end function GetBin ;
-
-    -- ------------------------------------------------------------
-    impure function GetBinName (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string is
-    -- ------------------------------------------------------------
-    begin
-      if CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name.all /= "" then
-        return CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name.all ;
-      else
-        return DefaultName ;
-      end if;
-    end function GetBinName;
 
     ------------------------------------------------------------
     -- pt local for now -- file formal parameter not allowed with a public method
@@ -6872,6 +6939,7 @@ package body CoveragePkg is
       TCover(COV_STRUCT_ID_DEFAULT, A) ;
     end procedure TCover ;
 
+
     ------------------------------------------------------------
     procedure ClearCov is
     ------------------------------------------------------------
@@ -8415,13 +8483,27 @@ package body CoveragePkg is
 
   procedure ICover (ID : CoverageIDType; CovPoint : integer) is
   begin
-    CoverageStore.ICover (ID, CovPoint) ;
+    CoverageStore.ICover (ID, (1 => CovPoint)) ;
   end procedure ICover ;
 
   procedure TCover (ID : CoverageIDType; A : integer) is
   begin
     CoverageStore.TCover (ID, A) ;
   end procedure TCover ;
+  
+  impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer is
+    variable BinIndex : integer ; 
+  begin
+    BinIndex := CoverageStore.FindBinIndex(ID, CovPoint, StartingIndex) ;
+    return BinIndex ; 
+  end function FindBinIndex ; 
+  
+  impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer; StartingIndex : integer := 1) return integer is
+    variable BinIndex : integer ; 
+  begin
+    BinIndex := CoverageStore.FindBinIndex(ID, (1 => CovPoint), StartingIndex) ;
+    return BinIndex ; 
+  end function FindBinIndex ; 
 
   procedure ClearCov (ID : CoverageIDType) is
   begin
@@ -8480,6 +8562,56 @@ package body CoveragePkg is
     return CoverageStore.IsInitialized (ID) ;
   end function IsInitialized ;
 
+  ------------------------------------------------------------
+  impure function IsBinCount(ID : CoverageIDType; BinIndex : integer) return boolean is
+  begin
+    return CoverageStore.GetBinAction(ID, BinIndex) = COV_COUNT ;
+  end function IsBinCount ; 
+
+  ------------------------------------------------------------
+  impure function IsBinIllegal(ID : CoverageIDType; BinIndex : integer) return boolean is
+  begin
+    return CoverageStore.GetBinAction(ID, BinIndex) = COV_ILLEGAL ;
+  end function IsBinIllegal ; 
+
+  ------------------------------------------------------------
+  impure function IsBinIgnore(ID : CoverageIDType; BinIndex : integer) return boolean is
+  begin
+    return CoverageStore.GetBinAction(ID, BinIndex) = COV_IGNORE ;
+  end function IsBinIgnore ; 
+
+  ------------------------------------------------------------
+  impure function IsPointCount(ID : CoverageIDType; CovPoint : integer_vector) return boolean is
+  begin
+    return CoverageStore.GetPointAction(ID, CovPoint) = COV_COUNT ;
+  end function IsPointCount ; 
+
+  impure function IsPointCount(ID : CoverageIDType; CovPoint : integer) return boolean is
+  begin
+    return CoverageStore.GetPointAction(ID, (1 => CovPoint)) = COV_COUNT ;
+  end function IsPointCount ; 
+
+  ------------------------------------------------------------
+  impure function IsPointIllegal(ID : CoverageIDType; CovPoint : integer_vector) return boolean is
+  begin
+    return CoverageStore.GetPointAction(ID, CovPoint) = COV_ILLEGAL ;
+  end function IsPointIllegal ; 
+
+  impure function IsPointIllegal(ID : CoverageIDType; CovPoint : integer) return boolean is
+  begin
+    return CoverageStore.GetPointAction(ID, (1 => CovPoint)) = COV_ILLEGAL ;
+  end function IsPointIllegal ; 
+
+  ------------------------------------------------------------
+  impure function IsPointIgnore(ID : CoverageIDType; CovPoint : integer_vector) return boolean is
+  begin
+    return CoverageStore.GetPointAction(ID, CovPoint) = COV_IGNORE ;
+  end function IsPointIgnore ; 
+
+  impure function IsPointIgnore(ID : CoverageIDType; CovPoint : integer) return boolean is
+  begin
+    return CoverageStore.GetPointAction(ID, (1 => CovPoint)) = COV_IGNORE ;
+  end function IsPointIgnore ; 
 
   ------------------------------------------------------------
   impure function GetItemCount (ID : CoverageIDType) return integer is
@@ -8806,7 +8938,7 @@ package body CoveragePkg is
   -- /////////////////////////////////////////
   ------------------------------------------------------------
   -- ------------------------------------------------------------
-  -- Intended as a stand in until we get a more general GetBin
+  -- Get all bin information except the BinVal (since it is sized)
   impure function GetBinInfo (ID : CoverageIDType; BinIndex : integer ) return CovBinBaseType is
   begin
     return CoverageStore.GetBinInfo(ID, BinIndex) ;
@@ -8814,11 +8946,31 @@ package body CoveragePkg is
 
 
   -- ------------------------------------------------------------
-  -- Intended as a stand in until we get a more general GetBin
+  -- Get Pieces of Bin Information
   impure function GetBinValLength (ID : CoverageIDType) return integer is
   begin
     return CoverageStore.GetBinValLength(ID => ID);
   end function GetBinValLength ;
+
+  impure function GetBinAction(ID : CoverageIDType; BinIndex : integer) return integer is
+  begin
+    return CoverageStore.GetBinAction(ID, BinIndex) ;
+  end function GetBinAction ; 
+  
+  impure function GetBinName (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string is
+  begin
+    return CoverageStore.GetBinName (ID, BinIndex, DefaultName) ;
+  end function GetBinName ;
+
+  impure function GetPointAction(ID : CoverageIDType; CovPoint : integer_vector) return integer is
+  begin
+    return CoverageStore.GetPointAction(ID, CovPoint) ;
+  end function GetPointAction ; 
+
+  impure function GetPointAction(ID : CoverageIDType; CovPoint : integer) return integer is
+  begin
+    return CoverageStore.GetPointAction(ID, (1 => CovPoint)) ;
+  end function GetPointAction ; 
 
 
   -- ------------------------------------------------------------
@@ -8870,20 +9022,11 @@ package body CoveragePkg is
     return CoverageStore.GetBin(ID, BinIndex) ;
   end function GetBin ;
 
-
-  -- ------------------------------------------------------------
-  impure function GetBinName (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string is
-  begin
-    return CoverageStore.GetBinName (ID, BinIndex, DefaultName) ;
-  end function GetBinName ;
-
-
   ------------------------------------------------------------
   impure function GetErrorCount (ID : CoverageIDType) return integer is
   begin
     return CoverageStore.GetErrorCount (ID => ID) ;
   end function GetErrorCount ;
-
 
   ------------------------------------------------------------
   -- /////////////////////////////////////////
