@@ -379,8 +379,10 @@ package body TextUtilPkg is
   begin
     Len := 0 ; 
     for i in aS'reverse_range loop
-      Len := i ;
-      exit when not (aS(i) = CR or aS(i) = LF) ;
+      if not  (aS(i) = CR or aS(i) = LF) then 
+        Len := i ;
+        exit ; 
+      end if ; 
     end loop ;
   end procedure RemoveCrLf ;
 
