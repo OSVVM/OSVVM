@@ -46,6 +46,12 @@ library osvvm ;
 use osvvm.TranscriptPkg.all ; 
 
 package FileLinePathPkg is
+
+  alias FILE_NAME is FILE_NAME [return string] ;
+  alias FILE_PATH is FILE_PATH [return string] ;
+  alias FILE_LINE is FILE_LINE [return string] ;
+  
+
   ------------------------------------------------------------
   procedure deallocate(      variable Cpe    : inout CALL_PATH_ELEMENT) ;
   procedure deallocateCpvPtr(variable CpvPtr : inout CALL_PATH_VECTOR_PTR) ;
@@ -131,7 +137,7 @@ package body FileLinePathPkg is
   impure function GetFileLineInfo ( variable CpvPtr : inout Call_Path_Vector; index : integer) return string is
   ------------------------------------------------------------
   begin
-    return "in file: " & CpvPtr(index).file_name.all & " line: " & to_string(CpvPtr(index).file_line) ;
+    return "in " & CpvPtr(index).file_name.all & " line: " & to_string(CpvPtr(index).file_line) ;
   end function GetFileLineInfo ; 
   
   ------------------------------------------------------------

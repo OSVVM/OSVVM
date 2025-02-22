@@ -1,6 +1,6 @@
 --
---  File Name:         FileLinePathPkg.vhd
---  Design Unit Name:  FileLinePathPkg
+--  File Name:         FilelinePathPkg.vhd
+--  Design Unit Name:  FilelinePathPkg
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -9,7 +9,7 @@
 --
 --
 --  Description:
---        Get File and Line Info from Call Stack - requires VHDL-2019 features
+--        Get File and line Info from Call Stack - requires VHDL-2019 features
 --          
 --
 --  Developed for:
@@ -43,13 +43,22 @@
 use std.textio.all ;
 library ieee ; 
 
-package FileLinePathPkg is
+package FilelinePathPkg is
+
+  impure function FILE_NAME return string;
+  impure function FILE_PATH return string;
+  impure function FILE_LINE return string;
+  
+  impure function FILE_NAME return line;
+  impure function FILE_PATH return line;
+  impure function FILE_LINE return POSITIVE;
+
 
  type CALL_PATH_ELEMENT is record
-   name      : LINE;      -- subprogram name
-   file_name : LINE;      -- file name containing name
-   file_path : LINE;      -- directory path to file name 
-   file_line : POSITIVE;  -- line number in file name
+   name      : line;      -- subprogram name
+   file_name : line;      -- file name containing name
+   file_path : line;      -- directory path to file name 
+   FILE_LINE : POSITIVE;  -- line number in file name
  end record;
   
   type CALL_PATH_VECTOR is array (natural range <>) of CALL_PATH_ELEMENT ;
@@ -63,18 +72,57 @@ package FileLinePathPkg is
   -- Get Call Path as a string
   impure function Get_Call_Path(
     index: integer := 2 ;
-    Separator : STRING := "" & LF 
+    Separator : string := "" & LF 
   ) return string ;
 
-  impure function GetFileLineInfo(index : integer := 2) return string ; 
+  impure function GetFilelineInfo(index : integer := 2) return string ; 
 
-end FileLinePathPkg ;
+end FilelinePathPkg ;
   
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 
-package body FileLinePathPkg is
+package body FilelinePathPkg is
+
+  -------------------------------------------------------
+  -- Dummy return values
+  -------------------------------------------------------
+  impure function FILE_NAME return string is
+  begin
+    return "" ;
+  end function FILE_NAME ; 
+  
+  impure function FILE_PATH return string is
+  begin
+    return "" ;
+  end function FILE_PATH ; 
+  
+  impure function FILE_LINE return string is
+  begin
+    return "" ;
+  end function FILE_LINE ; 
+  
+  impure function FILE_NAME return line is
+    variable result : line ; 
+    constant FN : string := FILE_NAME ; 
+  begin
+    result := new string'(FN) ;
+    return result ; 
+  end function FILE_NAME ; 
+  
+  impure function FILE_PATH return line is
+    variable result : line ; 
+    constant FP : string := FILE_NAME ; 
+  begin
+    result := new string'(FP) ;
+    return result ;
+  end function FILE_PATH ; 
+  
+  impure function FILE_LINE return POSITIVE is
+  begin
+    return 1 ;
+  end function FILE_LINE ; 
 
   ------------------------------------------------------------
   procedure deallocate(variable Cpe : inout CALL_PATH_ELEMENT) is 
@@ -100,18 +148,18 @@ package body FileLinePathPkg is
   impure function Get_Call_Path(
   ------------------------------------------------------------
     index: integer := 2 ;
-    Separator : STRING := "" & LF 
+    Separator : string := "" & LF 
   ) return string is 
   begin
     return "" ;
   end function Get_Call_Path;
 
   ------------------------------------------------------------
-  impure function GetFileLineInfo(index : integer := 2) return string is 
+  impure function GetFilelineInfo(index : integer := 2) return string is 
   ------------------------------------------------------------
   begin
    return "" ;
-  end function GetFileLineInfo ; 
+  end function GetFilelineInfo ; 
 
 
-end package body FileLinePathPkg ;
+end package body FilelinePathPkg ;
