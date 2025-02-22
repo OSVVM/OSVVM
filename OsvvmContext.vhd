@@ -70,6 +70,6 @@ context OsvvmContext is
   use OSVVM.ClockResetPkg.all ;
   use OSVVM.ReportPkg.all ;
   use OSVVM.LanguageSupport2019Pkg.all ;  -- for non-2019 tools this has stub subprograms that allow a graceful degradation of 2019 features
-
+  use OSVVM.FilelinePathPkg.all ;
 end context OsvvmContext ; 
 
