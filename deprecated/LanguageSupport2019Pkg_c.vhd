@@ -52,6 +52,29 @@ package LanguageSupport2019Pkg is
   --   for integer_vector
   ------------------------------------------------------------
   impure function to_string ( A : integer_vector) return string ;
+  
+  impure function VHDL_VERSION return STRING;
+  function TOOL_TYPE return STRING;
+  function TOOL_VENDOR return STRING;
+  function TOOL_NAME return STRING;
+  function TOOL_EDITION return STRING;
+  function TOOL_VERSION return STRING;
+  
+  -- VHDL assert failed
+  impure function IsVhdlAssertFailed return boolean;
+  impure function IsVhdlAssertFailed (Level : severity_level ) return boolean ;
+  
+  -- VHDL assert count
+  impure function GetVhdlAssertCount return natural ;
+  impure function GetVhdlAssertCount (Level : severity_level ) return natural ;
+  
+  -- Clear VHDL assert errors
+  procedure ClearVhdlAssert;
+  
+  -- Assert enable, disable/ignore asserts
+  procedure SetVhdlAssertEnable(Enable : boolean := TRUE);
+  procedure SetVhdlAssertEnable(Level : severity_level := NOTE; Enable : boolean := TRUE);
+  impure function GetVhdlAssertEnable(Level : severity_level := NOTE) return boolean;
 
 end LanguageSupport2019Pkg ;
 
@@ -60,6 +83,33 @@ end LanguageSupport2019Pkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body LanguageSupport2019Pkg is
+  impure function VHDL_VERSION return STRING is
+  begin
+    return "2008" ;
+  end function VHDL_VERSION ; 
+  function TOOL_TYPE return STRING is
+  begin
+    return "SIMULATION" ;
+  end function TOOL_TYPE ; 
+  function TOOL_VENDOR return STRING is
+  begin
+    return "" ;
+  end function TOOL_VENDOR ; 
+  function TOOL_NAME return STRING is
+  begin
+    return "" ;
+  end function TOOL_NAME ; 
+  function TOOL_EDITION return STRING is
+  begin
+    return "" ;
+  end function TOOL_EDITION ; 
+  function TOOL_VERSION return STRING is
+  begin
+    return "" ;
+  end function TOOL_VERSION ; 
+  
+
+
   ------------------------------------------------------------
   -- to_string
   impure function to_string ( A : integer_vector) return string is
@@ -88,5 +138,47 @@ package body LanguageSupport2019Pkg is
 
     return local_to_string ;
   end function to_string ;
+  
+  -------------------------------------------------------
+  -- Dummy return values
+  -------------------------------------------------------
+  -- VHDL assert failed
+  impure function IsVhdlAssertFailed return boolean is
+  begin
+    return FALSE ;
+  end function IsVhdlAssertFailed ; 
+  impure function IsVhdlAssertFailed (Level : severity_level ) return boolean is
+  begin
+    return FALSE ;
+  end function IsVhdlAssertFailed ; 
+  
+  -- VHDL assert count
+  impure function GetVhdlAssertCount return natural is
+  begin
+    return integer'high ;
+  end function GetVhdlAssertCount ; 
+  impure function GetVhdlAssertCount (Level : severity_level ) return natural is
+  begin
+    return integer'high ;
+  end function GetVhdlAssertCount ; 
+  
+  -- Clear VHDL assert errors
+  procedure ClearVhdlAssert is
+  begin
+  end procedure ClearVhdlAssert ;
+  
+  -- Assert enable, disable/ignore asserts
+  procedure SetVhdlAssertEnable(Enable : boolean := TRUE) is
+  begin
+  end ; 
+  procedure SetVhdlAssertEnable(Level : severity_level := NOTE; Enable : boolean := TRUE) is
+  begin
+  end ; 
+  impure function GetVhdlAssertEnable(Level : severity_level := NOTE) return boolean is
+  begin
+    return TRUE ;
+  end ; 
+
+
 
 end package body LanguageSupport2019Pkg ;
