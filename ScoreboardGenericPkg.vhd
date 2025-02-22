@@ -346,6 +346,8 @@ package ScoreboardGenericPkg is
     constant Tag    : in  string
   ) return boolean ;                    -- Simple, Tagged
 
+--  Workaround:  Questa 2025.1 alias causes issues when a record has the name Empty and uses aggregate to specify the value.
+--  See issue:   https://github.com/OSVVM/OSVVM/issues/100
 --  alias Empty           is IsEmpty [ScoreboardIDType return boolean] ;
 --  alias Empty           is IsEmpty [ScoreboardIDType, string return boolean] ;
   impure function Empty (    -- Deprecated
