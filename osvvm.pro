@@ -32,7 +32,7 @@
 #
 #  This file is part of OSVVM.
 #  
-#  Copyright (c) 2016 - 2023 by SynthWorks Design Inc.  
+#  Copyright (c) 2016 - 2025 by SynthWorks Design Inc.  
 #  
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -47,9 +47,6 @@
 #  limitations under the License.
 #  
 
-if {$::osvvm::ToolName eq "RivieraPRO"} {
-  RemoveLibrary osvvm
-}
 library osvvm
 
 analyze IfElsePkg.vhd
@@ -82,7 +79,11 @@ if {!$::osvvm::ToolSupportsDeferredConstants}  {
   }
 }
 
-analyze TextUtilPkg.vhd
+if {$::osvvm::ToolName ne "XSIM"}  {
+  analyze TextUtilPkg.vhd
+} else {
+  analyze deprecated/TextUtilPkg_xilinx.vhd
+}
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
 analyze OsvvmGlobalPkg.vhd
@@ -92,11 +93,15 @@ analyze CoverageVendorApiPkg_${::osvvm::FunctionalCoverageIntegratedInSimulator}
 
 analyze TranscriptPkg.vhd
 
-if {$::osvvm::VhdlVersion >= 2019}  {
+if {$::osvvm::Support2019FilePath} {
   analyze FileLinePathPkg.vhd
-  analyze LanguageSupport2019Pkg.vhd
 } else {
   analyze deprecated/FileLinePathPkg_c.vhd
+}
+
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze LanguageSupport2019Pkg.vhd
+} else {
   analyze deprecated/LanguageSupport2019Pkg_c.vhd
 }
 
@@ -127,7 +132,11 @@ if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
 analyze ResizePkg.vhd
 
 if {$::osvvm::ToolSupportsGenericPackages}  {
-  analyze ScoreboardGenericPkg.vhd
+  if {$::osvvm::ToolName ne "XSIM"}  {
+    analyze ScoreboardGenericPkg.vhd
+  } else {
+  analyze deprecated/ScoreboardGenericPkg_pure.vhd
+  }
   analyze ScoreboardPkg_slv.vhd
   analyze ScoreboardPkg_int.vhd
   analyze ScoreboardPkg_signed.vhd
@@ -143,6 +152,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 
 analyze MemorySupportPkg.vhd
 if {$::osvvm::ToolSupportsGenericPackages}  {
+#  analyze MemoryGenericPkg.vhd
   if {$::osvvm::ToolName ne "XSIM"}  {
     analyze MemoryGenericPkg.vhd
   } else {
