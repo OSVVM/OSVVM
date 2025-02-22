@@ -173,11 +173,6 @@ package body ReportPkg is
     end if ; 
     
     -- Summarize Results Last to allow previous steps to update Alerts
-    WriteAlertSummaryYaml(
-      FileName        => OSVVM_BUILD_YAML_FILE, 
-      ExternalErrors  => ExternalErrors,
-      TimeOut         => TimeOut
-    ) ; 
     WriteCovSummaryYaml (
       FileName        => OSVVM_BUILD_YAML_FILE
     ) ;
@@ -187,7 +182,13 @@ package body ReportPkg is
     
     ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
     
-    WriteAlertYaml (
+    WriteAlertSummaryYaml(
+      FileName        => OSVVM_BUILD_YAML_FILE, 
+      ExternalErrors  => ExternalErrors,
+      TimeOut         => TimeOut
+    ) ; 
+	
+	WriteAlertYaml (
       FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors,
       TimeOut         => TimeOut
