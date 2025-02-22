@@ -1031,7 +1031,7 @@ package body MemoryGenericPkg is
       if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
       -- Check StartAddr and EndAddr Widths and Memory not initialized
         if (MemStructPtr(ID).MemArrayPtr = NULL) then 
-          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  Memory not initialized, FileRead Ignored.", FAILURE) ; 
+          Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  Memory not initialized, FileWrite Ignored.", FAILURE) ; 
         else
           AlertIf(MemStructPtr(ID).AlertLogID, StartAddr'length /= ADDR_WIDTH, "MemoryPkg.FileWriteX:  StartAddr'length: " 
                                & to_string(StartAddr'length) & 
