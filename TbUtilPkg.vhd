@@ -74,8 +74,9 @@ package TbUtilPkg is
 
   constant CLK_ACTIVE : std_logic := '1' ;
 
-  constant t_sim_resolution : delay_length := std.env.resolution_limit ;  -- VHDL-2008
-  -- constant t_sim_resolution : delay_length := 1 ns ;  -- for non VHDL-2008 simulators
+  constant OSVVM_SIM_RESOLUTION : delay_length := std.env.resolution_limit ;  -- VHDL-2008
+  constant t_sim_resolution     : delay_length := OSVVM_SIM_RESOLUTION ;  -- VHDL-2008
+  -- constant OSVVM_SIM_RESOLUTION : delay_length := 1 ns ;  -- for non VHDL-2008 simulators
 
   constant toggle_sl_table : stdulogic_indexed_by_stdulogic := (
       '0'     => '1',
@@ -816,8 +817,8 @@ package body TbUtilPkg is
   ) is
     variable iDelayVal : delay_length ;
   begin
-    if DelayVal > t_sim_resolution then
-      iDelayVal := DelayVal - t_sim_resolution ;
+    if DelayVal > OSVVM_SIM_RESOLUTION then
+      iDelayVal := DelayVal - OSVVM_SIM_RESOLUTION ;
     else
       iDelayVal := 0 sec ;
 --      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns") ;
@@ -851,8 +852,8 @@ package body TbUtilPkg is
   procedure Toggle ( signal Sig : InOut bit ; constant DelayVal : delay_length ) is
     variable iDelayVal : delay_length ;
   begin
-    if DelayVal > t_sim_resolution then
-      iDelayVal := DelayVal - t_sim_resolution ;
+    if DelayVal > OSVVM_SIM_RESOLUTION then
+      iDelayVal := DelayVal - OSVVM_SIM_RESOLUTION ;
     else
       iDelayVal := 0 sec ;
 --      AlertIf(OSVVM_ALERTLOG_ID, DelayVal < 0 sec, "osvvm.TbUtilPkg.Toggle: Delay value < 0 ns", WARNING) ;
@@ -1029,8 +1030,8 @@ package body TbUtilPkg is
   ------------------------------------------------------------
   procedure WaitForClock ( signal Clk : in std_logic ;  constant Delay : in delay_length ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
-    if delay > t_sim_resolution then
-      wait for delay - t_sim_resolution ;
+    if delay > OSVVM_SIM_RESOLUTION then
+      wait for delay - OSVVM_SIM_RESOLUTION ;
     end if ;
     wait until Clk = ClkActive ;
   end procedure WaitForClock ;
