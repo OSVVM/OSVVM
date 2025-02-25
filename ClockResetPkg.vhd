@@ -258,9 +258,9 @@ package body ClockResetPkg is
     else
       -- Schedule s.t. all assignments after the first occur on delta cycle 0
       Clk <= '0', '1' after LOW_TIME ;
-      wait for period - t_sim_resolution ; -- allows after on future Clk <= '0'
+      wait for period - OSVVM_SIM_RESOLUTION ; -- allows after on future Clk <= '0'
       loop
-        Clk <= '0' after t_sim_resolution, '1' after LOW_TIME + t_sim_resolution ;
+        Clk <= '0' after OSVVM_SIM_RESOLUTION, '1' after LOW_TIME + OSVVM_SIM_RESOLUTION ;
         wait for period ;
       end loop ;
     end if ;
@@ -326,7 +326,7 @@ package body ClockResetPkg is
   begin
     wait until Clk = ClkActive and Clk'last_value = not ClkActive ;
     Reset <= ResetActive after tpd ;
-    wait for Period - t_sim_resolution ;
+    wait for Period - OSVVM_SIM_RESOLUTION ;
     wait until Clk = ClkActive ;
     Reset <= not ResetActive after tpd ;
     wait ;
