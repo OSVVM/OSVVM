@@ -107,7 +107,11 @@ if {$::osvvm::VhdlVersion >= 2019}  {
 
 analyze AlertLogPkg.vhd
 
-analyze TbUtilPkg.vhd
+if {$::osvvm::ToolName ne "XSIM"}  {
+  analyze TbUtilPkg.vhd
+} else {
+  analyze deprecated/TbUtilPkg_xilinx.vhd
+}
 
 analyze NameStorePkg.vhd
 
@@ -134,14 +138,16 @@ analyze ResizePkg.vhd
 if {$::osvvm::ToolSupportsGenericPackages}  {
   if {$::osvvm::ToolName ne "XSIM"}  {
     analyze ScoreboardGenericPkg.vhd
+    analyze ScoreboardPkg_IntV.vhd
   } else {
-  analyze deprecated/ScoreboardGenericPkg_pure.vhd
+    analyze deprecated/ScoreboardGenericPkg_pure.vhd
+    analyze deprecated/ScoreboardPkg_IntV_c.vhd    ; # works around mapping issue and provides a compatible package.
   }
   analyze ScoreboardPkg_slv.vhd
   analyze ScoreboardPkg_int.vhd
   analyze ScoreboardPkg_signed.vhd
   analyze ScoreboardPkg_unsigned.vhd
-  analyze ScoreboardPkg_IntV.vhd
+#  analyze ScoreboardPkg_IntV.vhd      ; # do not analyze with XSIM.
 } else {
   analyze deprecated/ScoreboardPkg_slv_c.vhd
   analyze deprecated/ScoreboardPkg_int_c.vhd
