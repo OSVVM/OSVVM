@@ -70,6 +70,7 @@ use std.textio.all ;
 
 use work.OsvvmGlobalPkg.all ; 
 use work.AlertLogPkg.all ; 
+use work.TbUtilPkg.all ; 
 use work.SortListPkg_int.all ;
 
 -- comment out following 2 lines with VHDL-2008.  Leave in for VHDL-2002 
@@ -297,7 +298,8 @@ package body RandomBasePkg is
     --      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
     -- Also consider:
     --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
-    return GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit ) ; 
+--     return GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit ) ; 
+    return GenRandSeed( (T mod (2**30*OSVVM_SIM_RESOLUTION)) /OSVVM_SIM_RESOLUTION ) ; 
   end function GenRandSeed ;
 
   -----------------------------------------------------------------
