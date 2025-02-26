@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2025   2025.02    Added NewReqID and FindID.  Updated requirement handling s.t. requirements can be anywhere in the hierarchy.
 --    09/2024   2024.09    Added AffirmIfFilesMatch (renames AffirmIfNotDiff) and AlertIfFilesNotMatch (renames AlertIfDiff).  
 --                         Above file compares support IgnoreSpaces and IgnoreEmptyLines
 --                         Moved GetAlertLogId out of deprecated.

@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2025.02   |  Track requirements with Functional Coverage as well as Alerts
 | 2024.11   |  Minor Maintenance Updates
 | 2024.09   |  New RandomPkg2019.  Updated to ScoreboardGenericPkg
 | 2024.07   |  Major due to moving CreateClock/CreateReset and CreateClock interface changes  
@@ -81,7 +82,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2024.11 November 2024
+## Revision 2025.02 February 2025
 
 ### Current Revision and Compile Order
 
@@ -93,38 +94,45 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | File Name                                          | Revision Date  |
   -----------------------------------------------------|-----------------
   | IfElsePkg.vhd                                      | 2024.07  |
+  | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
-  | OsvvmSettingsPkg.vhd                               | 2024.09  |
-  | TextUtilPkg.vhd                                    | ** 2024.09 ** |
+  | OsvvmSettingsPkg.vhd                               | ** 2025.02 ** |
+  | TextUtilPkg.vhd                                    | ** 2025.02 ** |
   | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2024.03  |
   | OsvvmGlobalPkg.vhd                                 | 2024.03  |
   | If Aldec                                           |          |
-  |     CoverageVendorApiPkg_Aldec.vhd                 | 2020.01 - renamed |
-  | Elsif NVC and Version 1.14.2                       |          |
-  |     CoverageVendorApiPkg_NVC.vhd                   | ** 2024.11 **  |
+  |     CoverageVendorApiPkg_Aldec.vhd                 | 2020.01  |
+  | Elsif NVC and Version 1.15.2                       |          |
+  |     CoverageVendorApiPkg_NVC.vhd                   | 2024.11  |
   | Else                                               |          |
-  |     CoverageVendorApiPkg.vhd                       | 2020.01 - renamed |
+  |     CoverageVendorApiPkg.vhd                       | 2020.01  |
+  | TranscriptPkg.vhd                                  | 2023.01  |
   | If version >= 2019                                 |          |
   |     LanguageSupport2019Pkg.vhd                     | 2024.07  |
   | If version < 2019                                  |          |
   |     deprecated/LanguageSupport2019Pkg_c.vhd        | 2024.07  |
-  | TranscriptPkg.vhd                                  | 2023.01  |
-  | AlertLogPkg.vhd                                    | ** 2024.09 ** |
-  | TbUtilPkg.vhd                                      | ** 2024.11 **  |
+  | If Support2019FilePath                             |          |
+  |     FileLinePathPkg.vhd                            | ** 2025.02 ** |
+  | If not Support2019FilePath                         |          |
+  |     deprecated/FileLinePathPkg_c.vhd               | ** 2025.02 ** |
+  | AlertLogPkg.vhd                                    | ** 2025.02 ** |
+  | TbUtilPkg.vhd                                      | 2024.11  |
   | NameStorePkg.vhd                                   | 2024.07  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | ** 2024.11 **  |
-  | RandomPkg.vhd                                      | ** 2024.11 **  |
+  | RandomBasePkg.vhd                                  | 2024.11  |
+  | RandomPkg.vhd                                      | 2024.11  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | ** 2024.07 ** |
-  | DelayCoveragePkg.vhd                               | ** 2024.11 **  |
-  | ClockResetPkg.vhd                                  | 2024.09  |
-  | deprecated/ClockResetPkg_2024_05.vhd               | 2024.07  |
+  | CoveragePkg.vhd                                    | ** 2025.02 ** |
+  | DelayCoveragePkg.vhd                               | 2024.11  |
+  | If ClockResetVersion                               |          |
+  |    ClockResetPkg.vhd                               | 2024.09  |
+  | else                                               |          |
+  |    deprecated/ClockResetPkg_2024_05.vhd            | 2024.07  |
   | ResizePkg.vhd                                      | 2024.03  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | 2024.09  |
+  |     ScoreboardGenericPkg.vhd                       | ** 2025.02 ** |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   |     ScoreboardPkg_signed.vhd                       | 2024.07  |
@@ -139,7 +147,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | MemorySupportPkg.vhd                               | 2022.10  |
   | If Support Generic Packages                        |          |
   |     If not Xilinx                                  |          |
-  |         MemoryGenericPkg.vhd                       | ** 2024.09 ** |
+  |         MemoryGenericPkg.vhd                       | 2024.09  |
   |     If Xilinx                                      |          |
   |         deprecated/MemoryGenericPkg_xilinx.vhd     | 2024.03  |
   |     MemoryPkg.vhd                                  | 2022.10  |
@@ -147,7 +155,12 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     MemoryPkg_c.vhd                                | 2024.03  |
   |     MemoryPkg_orig_c.vhd                           | 2022.11  |
   | ReportPkg.vhd                                      | 2024.07  |
-  | OsvvmTypesPkg.vhd                                  | ** 2024.11 **  |
+  | OsvvmTypesPkg.vhd                                  | 2024.11  |
+  | If version >= 2019                                 |          |
+  |     RandomPkg2019.vhd                              | 2024.11  |
+  | If version < 2019                                  |          |
+  |     deprecated/RandomPkg2019_c.vhd                 | 2024.09  |
+  | OsvvmContext.vhd                                   | ** 2025.02 ** |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
   | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
@@ -155,13 +168,33 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If exist OsvvmSettingsPkg_local.vhd                |          |
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | 2024.09  |
-  | If version >= 2019                                 |          |
-  |     RandomPkg2019.vhd                              | ** 2024.11 **  |
-  | If version < 2019                                  |          |
-  |     deprecated/RandomPkg2019_c.vhd                 | 2024.09  |
-  | OsvvmContext.vhd                                   | 2024.09  |
-  
+  |     OsvvmSettingsPkg_default.vhd                   | ** 2025.02 ** |
+
+### OsvvmSettingsPkg.vhd    2025.02
+Added COVERAGE_REQUIREMENT_BY_BIN
+
+### TextUtilPkg.vhd   2025.02
+Fix to RemoveCrLf broken when only CR or LF in line
+
+### FileLinePathPkg.vhd   2025.02
+Added FILE_PATH, ...
+
+### AlertLogPkg.vhd   2025.02
+Added NewReqID and FindID (replaces FindAlertLogID).
+Requirements can be any where in AlertLog hierarchy
+
+### CoveragePkg.vhd   2025.02
+Added NewReqID.  Requirements can now be FC
+
+### ScoreboardGenericPkg.vhd   2025.02
+Work around for Quest bug
+
+### OsvvmContext.vhd   2025.02
+Added FileLinePathPkg reference
+
+
+## Revision 2024.11 November 2024
+
 ### Comment Updates or Reordered code 
 - MemoryGenericPkg, AlertLogPkg, CoveragePkg, TextUtilPkg
 

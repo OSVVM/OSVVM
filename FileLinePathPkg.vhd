@@ -20,12 +20,14 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2025   2025.02    alias to FILE_PATH, FILE_LINE, FILE_NAME from std.env.
+--                         coordinates with deprecated/FileLinePathPkg_c.vhd
 --    11/2024   2024.11    Initial revision
 --
 --
 --  This file is part of OSVVM.
 --  
---  Copyright (c) 2024 by SynthWorks Design Inc.  
+--  Copyright (c) 2025 by SynthWorks Design Inc.  
 --  
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.

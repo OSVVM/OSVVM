@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2025   2025.02    Fixed bug in RemoveCrLf when only Cr/LF in line and no other characters.
 --    09/2024   2024.09    Added to_string_max, RemoveSpace, RemoveCrLf, GetLine
 --    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
 --                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication

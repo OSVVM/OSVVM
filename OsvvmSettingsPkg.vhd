@@ -24,6 +24,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2025   2025.02    Added COVERAGE_REQUIREMENT_BY_BIN
+--    09/2024   2024.09    Added ALERT_LOG_IGNORE_SPACES and ALERT_LOG_IGNORE_EMPTY_LINES
 --    07/2024   2024.07    Added ALERT_LOG_NOCHECKS_NAME and ALERT_LOG_TIMEOUT_NAME
 --    03/2024   2024.03    Major updates
 --    09/2023   2023.09    Initial

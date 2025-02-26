@@ -22,7 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    02/2025   2025.02    FindBinIndex
+--    02/2025   2025.02    Added NewReqID.
+--                         FindBinIndex
 --                         GetBinAction, GetPointAction
 --                         IsBinCount, IsBinIllegal, IsBinIgnore, IsPointCount, IsPointIllegal, IsPointIgnore
 --    09/2024   2024.09    Updated reporting for integer'high and integer'low

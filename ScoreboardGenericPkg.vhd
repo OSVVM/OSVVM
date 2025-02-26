@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    02/2025   2025.02    Replaced alias Empty with function Empty to work around Q bug. 
 --    09/2024   2024.09    Updated Data Structure.  Added FindAndDelete and FindAndFlush.  
 --    07/2024   2024.07    Made function generics impure. Added IsInitialized.  Updated Yaml.  
 --    05/2023   2023.05    Updated Pop fail on empty error to print tag if a tag is used
