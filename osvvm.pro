@@ -119,12 +119,12 @@ analyze MessageListPkg.vhd
 # PT based MessagePkg replaced by List based MessageListPkg
 # analyze MessagePkg.vhd      
 analyze SortListPkg_int.vhd
-analyze RandomBasePkg.vhd
-analyze RandomPkg.vhd
+analyze RandomBasePkg.vhd [NoNullRangeWarning]
+analyze RandomPkg.vhd [NoNullRangeWarning]
 # RandomProcedurePkg is a temporary and is used by CoveragePkg
 # Likely will be replaced when VHDL-2019 support is good.
 analyze RandomProcedurePkg.vhd
-analyze CoveragePkg.vhd
+analyze CoveragePkg.vhd [NoNullRangeWarning]
 analyze DelayCoveragePkg.vhd
 
 if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
@@ -173,7 +173,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 analyze ReportPkg.vhd
 
 if {$::osvvm::VhdlVersion >= 2019}  {
-  analyze  RandomPkg2019.vhd
+  analyze RandomPkg2019.vhd [NoNullRangeWarning]
 } else {
   analyze  deprecated/RandomPkg2019_c.vhd
 }
