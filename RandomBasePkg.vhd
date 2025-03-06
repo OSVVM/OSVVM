@@ -83,8 +83,9 @@ package RandomBasePkg is
   constant OSVVM_RANDOM_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -----------------------------------------------------------------
+  constant NULL_STRING : string := "";
   -- note NULL_RANGE_TYPE should probably be in std.standard
-  subtype NULL_RANGE_TYPE is integer range 0 downto 1 ;
+  subtype NULL_RANGE_TYPE is integer range NULL_STRING'range ;
   constant NULL_INTV : integer_vector (NULL_RANGE_TYPE) := (others => 0) ;
 
   -----------------------------------------------------------------
