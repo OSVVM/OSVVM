@@ -4987,6 +4987,8 @@ package body CoveragePkg is
         read(buf, NumRangeItems, ReadValid) ;
         exit when AlertIfNot(CovStructPtr(ID.ID).AlertLogID, ReadValid, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
                        "CoveragePkg.ReadCovDb: Failed while reading NumRangeItems", FAILURE) ;
+        CovStructPtr(ID.ID).BinValLength := NumRangeItems ;
+        
         read(buf, NumLines, ReadValid) ;
         exit when AlertIfNot(CovStructPtr(ID.ID).AlertLogID, ReadValid, GetNamePlus(ID, prefix => "in ", suffix => ", ") &
                        "CoveragePkg.ReadCovDb: Failed while reading NumLines", FAILURE) ;
@@ -5083,6 +5085,34 @@ package body CoveragePkg is
       end loop ReadLoop ;
       Good := ReadValid ;
     end ReadCovDbDataBase ;
+    
+    ------------------------------------------------------------
+    --  pt local
+    procedure ReadCovDbFieldNames (
+    ------------------------------------------------------------
+      ID                     :     CoverageIDType ;
+      File     CovDbFile     :     text ;
+      constant NumRangeItems : in  integer ;
+      variable Good          : out boolean
+    )  is
+      variable buf              : line ;
+      variable Empty            : boolean ;
+      variable MultiLineComment : boolean := FALSE ;
+      variable ReadValid        : boolean ;
+      variable FieldNameArray   : FieldNameArrayType(1 to NumRangeItems) ;
+    begin
+      ReadLoop : for FieldNameIndex in 1 to NumRangeItems loop 
+        exit ReadLoop when EndFile(CovDbFile) ;  -- If nothing to read, skip reading
+        ReadLine(CovDbFile, buf) ;
+        EmptyOrCommentLine(buf, Empty, MultiLineComment) ;
+        exit ReadLoop when Empty or buf = NULL ;  
+        FieldNameArray(FieldNameIndex) := buf ; 
+        buf := NULL ; 
+        if FieldNameIndex = NumRangeItems then 
+          CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray) ;
+        end if ; 
+      end loop ReadLoop ; 
+    end procedure ReadCovDbFieldNames ;
 
     ------------------------------------------------------------
     -- pt local
@@ -5108,7 +5138,12 @@ package body CoveragePkg is
 
         -- Read the file
         ReadCovDbDataBase(ID, CovDbFile, NumRangeItems, NumLines, Merge, ReadValid) ;
-        exit ;
+        exit when not ReadValid ;
+        
+        -- Read the field names (if they are set)
+        ReadCovDbFieldNames (ID, CovDbFile, NumRangeItems, ReadValid) ;
+        exit ; 
+
       end loop ReadLoop ;
     end ReadCovDb ;
 
@@ -5196,6 +5231,10 @@ package body CoveragePkg is
         write(buf, CovStructPtr(ID.ID).CovBinPtr(LineCount).Name.all) ;
         writeline(CovDbFile, buf) ;
       end loop WriteLoop ;
+      FieldNameLoop : for FieldNameIndex in 1 to CovStructPtr(ID.ID).FieldName'length loop 
+        write(buf, CovStructPtr(ID.ID).FieldName(FieldNameIndex).all) ; 
+        writeline(CovDbFile, buf) ;
+      end loop FieldNameLoop ; 
     end procedure WriteCovDb ;
 
     ------------------------------------------------------------
