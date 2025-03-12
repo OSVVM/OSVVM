@@ -5231,7 +5231,8 @@ package body CoveragePkg is
         write(buf, CovStructPtr(ID.ID).CovBinPtr(LineCount).Name.all) ;
         writeline(CovDbFile, buf) ;
       end loop WriteLoop ;
-      FieldNameLoop : for FieldNameIndex in 1 to CovStructPtr(ID.ID).FieldName'length loop 
+      FieldNameLoop : for FieldNameIndex in 1 to CovStructPtr(ID.ID).CovBinPtr(1).BinVal'length loop
+        exit when CovStructPtr(ID.ID).FieldName = NULL ; 
         write(buf, CovStructPtr(ID.ID).FieldName(FieldNameIndex).all) ; 
         writeline(CovDbFile, buf) ;
       end loop FieldNameLoop ; 
