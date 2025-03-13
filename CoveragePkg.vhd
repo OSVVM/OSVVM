@@ -680,7 +680,8 @@ package CoveragePkg is
   procedure ReadCovDb  (ID : CoverageIDType; FileName : string; Merge : boolean := FALSE) ;
   procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
   --     procedure WriteCovDb (ID : CoverageIDType) ;
---  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
+  procedure ReadCovYaml (variable ID : inout CoverageIDType; FileName : string := ""; Merge : boolean := FALSE) ;
+  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
 
   ------------------------------------------------------------
   -- /////////////////////////////////////////
@@ -1227,8 +1228,9 @@ package CoveragePkg is
     procedure ReadCovDb  (ID : CoverageIDType; FileName : string; Merge : boolean := FALSE) ;
     procedure WriteCovDb (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
     --     procedure WriteCovDb (ID : CoverageIDType) ;
---    procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
+    procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    procedure ReadCovYaml  (variable ID : inout CoverageIDType; FileName : string := ""; Merge : boolean := FALSE) ;
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) ;
     impure function GotCoverage return boolean ;
     procedure RecordCovRequirements ;
@@ -4807,7 +4809,8 @@ package body CoveragePkg is
       if Merge then
         for i in 1 to CovStructPtr(ID.ID).NumBins loop
           if (BinVal = CovStructPtr(ID.ID).CovBinPtr(i).BinVal.all) and (Action = CovStructPtr(ID.ID).CovBinPtr(i).Action) and
-             (AtLeast = CovStructPtr(ID.ID).CovBinPtr(i).AtLeast) and (Weight = CovStructPtr(ID.ID).CovBinPtr(i).Weight) and
+             (AtLeast = CovStructPtr(ID.ID).CovBinPtr(i).AtLeast) and 
+             (Weight = CovStructPtr(ID.ID).CovBinPtr(i).Weight or Weight = -1) and
              (Name = CovStructPtr(ID.ID).CovBinPtr(i).Name.all) then
             return i ;
           end if;
@@ -5386,7 +5389,18 @@ package body CoveragePkg is
       WriteCovBinsYaml    (ID, buf, NAME_PREFIX &  "  ") ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteCovYaml ;
-    
+
+    ------------------------------------------------------------
+    procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
+    ------------------------------------------------------------
+--x      file CovYamlFile : text open OpenKind is FileName ;
+      file CovYamlFile : text ;
+    begin
+      file_open(CovYamlFile, FileName, OpenKind) ;
+      WriteCovYaml(ID, CovYamlFile, GetTestName) ;
+      file_close(CovYamlFile) ;
+    end procedure WriteCovYaml ;
+
     ------------------------------------------------------------
     --  pt local
     procedure WriteSettingsYaml (file CovYamlFile : text) is
@@ -5401,19 +5415,10 @@ package body CoveragePkg is
       writeline(CovYamlFile, buf) ;
     end procedure WriteSettingsYaml ;
 
---     ------------------------------------------------------------
---     procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
---     ------------------------------------------------------------
---       file CovYamlFile : text open OpenKind is FileName ;
---     begin
---       WriteCovYaml(ID, CovYamlFile) ;
---       file_close(CovYamlFile) ;
---     end procedure WriteCovYaml ;
-
     ------------------------------------------------------------
     procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
+      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_cov.yml", FileName) ;
 --x      file CovYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       file CovYamlFile : text ;
       variable buf : line ;
@@ -5428,14 +5433,14 @@ package body CoveragePkg is
       for i in 1 to NumItems loop
         if CovStructPtr(i).NumBins >= 1 then
           if CovStructPtr(i).CovWeight >= 1 then
-            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetTestName) ;
           end if ;
         end if ;
       end loop ;
       for i in 1 to NumItems loop
         if CovStructPtr(i).NumBins >= 1 then
           if CovStructPtr(i).CovWeight < 1 then
-            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetAlertLogName) ;
+            WriteCovYaml(CoverageIDType'(ID => i), CovYamlFile, GetTestName) ;
           end if ;
         end if ;
       end loop ;
@@ -5524,9 +5529,9 @@ package body CoveragePkg is
     --  pt local
     procedure ReadCovModelNameYaml (
     ------------------------------------------------------------
-      variable ID          : out CoverageIDType ;
-      file     CovYamlFile :     text ;
-      variable Found       : out boolean
+      variable ID          : inout CoverageIDType ;
+      file     CovYamlFile :       text ;
+      variable Found       : out   boolean
     ) is
       variable buf  : line ;
       variable sName : line ;
@@ -5541,7 +5546,11 @@ package body CoveragePkg is
             "CoveragePkg.ReadCovYaml: Unnamed Coverage Model.", COV_READ_YAML_ALERT_LEVEL);
 
 --!! TODO: Add reading for ParentName, ReportMode, Search, PrintParent
-        ID := NewID(sName.all, ReportMode => ENABLED, Search => NAME_AND_PARENT, PrintParent => PRINT_NAME_AND_PARENT) ;
+        if ID.ID > 0 then 
+          SetName(ID, sName.all) ; 
+        else
+          ID := NewID(sName.all, ReportMode => ENABLED, Search => NAME_AND_PARENT, PrintParent => PRINT_NAME_AND_PARENT) ;
+        end if ; 
         deallocate(sName) ;
         Found := TRUE ;
         exit ;
@@ -5901,7 +5910,7 @@ package body CoveragePkg is
             "CoveragePkg.ReadCovYaml Error while reading PercentCov value.", COV_READ_YAML_ALERT_LEVEL) ;
 
         -- Insert the Bin
-        Index := FindExactBin(CovID, Merge, BinVal, Action, AtLeast, Weight, NamePtr.all) ;
+        Index := FindExactBin(CovID, Merge, BinVal, Action, AtLeast, -1, NamePtr.all) ;
         if Index > 0 then
           -- Bin is an exact match so only merge the count values
           CovStructPtr(ID).CovBinPtr(Index).Count := CovStructPtr(ID).CovBinPtr(Index).Count + Count ;
@@ -5958,11 +5967,11 @@ package body CoveragePkg is
     --  pt local
     procedure ReadCovModelYaml (
     ------------------------------------------------------------
-      file     CovYamlFile :     text ;
-      variable Found       : out boolean ;
-      constant Merge       : in  boolean := FALSE
+      file     CovYamlFile :       text ;
+      variable CovID       : inout CoverageIDType ;
+      variable Found       : out   boolean ;
+      constant Merge       : in    boolean := FALSE
     ) is
-      variable CovID      : CoverageIDType ;
       variable Dimensions : integer ;
       variable NumBins    : integer ;
       variable FoundModelName : boolean ;
@@ -6006,24 +6015,28 @@ package body CoveragePkg is
       end if ;
     end procedure ReadCovModelYaml ;
 
---     ------------------------------------------------------------
---     procedure ReadCovYaml (ModelName : string; FileName : string) is
---     ------------------------------------------------------------
---       file CovYamlFile : text open READ_MODE is FileName ;
---     begin
---       ID := NewID("ModelName"
---       ReadCovYaml(ID, CovYamlFile) ;
---       file_close(CovYamlFile) ;
---     end procedure ReadCovYaml ;
+    ------------------------------------------------------------
+    procedure ReadCovYaml (variable ID : inout CoverageIDType; FileName : string := ""; Merge : boolean := FALSE) is
+    ------------------------------------------------------------
+      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_cov.yml", FileName) ;
+      file CovYamlFile : text ;
+      variable Found   : boolean ;
+    begin
+      file_open(CovYamlFile, RESOLVED_FILE_NAME, READ_MODE) ;
+      ReadCovModelYaml(CovYamlFile, ID, Found, Merge) ;
+      file_close(CovYamlFile) ;
+    end procedure ReadCovYaml ;
 
     ------------------------------------------------------------
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName & "_cov.yml", FileName) ;
-      file CovYamlFile : text open READ_MODE is RESOLVED_FILE_NAME ;
+      constant RESOLVED_FILE_NAME : string := ifelse(FileName = "", OSVVM_RAW_OUTPUT_DIRECTORY & GetTestName & "_cov.yml", FileName) ;
+      file CovYamlFile : text ;
       variable buf     : line ;
       variable Found   : boolean ;
+      variable CovID   : CoverageIDType ;
     begin
+      file_open(CovYamlFile, RESOLVED_FILE_NAME, READ_MODE) ;
       ReadFindToken (CovYamlFile, "Models:", buf, Found) ;
       if not Found then
         Alert(OSVVM_COVERAGE_ALERTLOG_ID,
@@ -6032,7 +6045,8 @@ package body CoveragePkg is
       end if;
 
       loop
-        ReadCovModelYaml(CovYamlFile, Found, Merge) ;
+        CovID := CoverageIDType'(ID => integer'low) ;  -- Coverage Model Empty
+        ReadCovModelYaml(CovYamlFile, CovID, Found, Merge) ;
         exit when not Found ;
       end loop ;
       file_close(CovYamlFile) ;
@@ -9161,13 +9175,13 @@ package body CoveragePkg is
 
   --     procedure WriteCovDb (ID : CoverageIDType) is
 
---  ------------------------------------------------------------
---  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
---  ------------------------------------------------------------
---    file CovYamlFile : text open OpenKind is FileName ;
---  begin
---    CoverageStore.WriteCovYaml (ID, FileName, OpenKind) ;
---  end procedure WriteCovYaml ;
+  ------------------------------------------------------------
+  procedure WriteCovYaml (ID : CoverageIDType; FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
+  ------------------------------------------------------------
+  begin
+    CoverageStore.WriteCovYaml (ID, FileName, OpenKind) ;
+  end procedure WriteCovYaml ;
+
 
   ------------------------------------------------------------
   procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
@@ -9175,6 +9189,13 @@ package body CoveragePkg is
   begin
     CoverageStore.WriteCovYaml(FileName, GetCov, OpenKind) ;
   end procedure WriteCovYaml ;
+
+  ------------------------------------------------------------
+  procedure ReadCovYaml (variable ID : inout CoverageIDType; FileName : string := ""; Merge : boolean := FALSE) is
+  ------------------------------------------------------------
+  begin
+    CoverageStore.ReadCovYaml(ID, FileName, Merge) ;
+  end procedure ReadCovYaml ;
 
   ------------------------------------------------------------
   procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
