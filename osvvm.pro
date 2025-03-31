@@ -56,27 +56,8 @@ analyze OsvvmTypesPkg.vhd
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
 analyze OsvvmSettingsPkg.vhd
 if {!$::osvvm::ToolSupportsDeferredConstants}  {
-  # work around path for tools that do not support deferred constants
-  set SettingsDirectory [FindOsvvmSettingsDirectory]
-  
-  if {[FileExists $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd]} {
-    analyze $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd
-  } else {
-    # Generate the file if possible
-    set GeneratedPkg [CreateOsvvmScriptSettingsPkg $SettingsDirectory]
-    puts "GeneratedPkg = $GeneratedPkg"
-    if {[FileExists $GeneratedPkg]} {
-      analyze $GeneratedPkg
-    } else {
-      analyze OsvvmScriptSettingsPkg_default.vhd
-    }
-  }
-
-  if {[FileExists $SettingsDirectory/OsvvmSettingsPkg_local.vhd]} {
-    analyze $SettingsDirectory/OsvvmSettingsPkg_local.vhd
-  } else {
-    analyze OsvvmSettingsPkg_default.vhd
-  }
+  # Compile early in tools that do not support deferred constants
+  include OsvvmVhdlSettings.pro
 }
 
 if {$::osvvm::ToolName ne "XSIM"}  {
@@ -182,25 +163,6 @@ analyze OsvvmContext.vhd
 
 
 if {$::osvvm::ToolSupportsDeferredConstants}  {
-  set SettingsDirectory [FindOsvvmSettingsDirectory]
-  
-  if {[FileExists $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd]} {
-    analyze $SettingsDirectory/OsvvmScriptSettingsPkg_local.vhd
-  } else {
-    # Generate the file if possible
-    set GeneratedPkg [CreateOsvvmScriptSettingsPkg $SettingsDirectory]
-    puts "GeneratedPkg = $GeneratedPkg"
-    if {[FileExists $GeneratedPkg]} {
-      analyze   $GeneratedPkg
-    } else {
-      analyze OsvvmScriptSettingsPkg_default.vhd
-    }
-  }
-
-  if {[FileExists $SettingsDirectory/OsvvmSettingsPkg_local.vhd]} {
-    analyze $SettingsDirectory/OsvvmSettingsPkg_local.vhd
-  } else {
-    analyze OsvvmSettingsPkg_default.vhd
-  }
+  include OsvvmVhdlSettings.pro
 }
 
