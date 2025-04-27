@@ -74,7 +74,7 @@ analyze CoverageVendorApiPkg_${::osvvm::FunctionalCoverageIntegratedInSimulator}
 
 analyze TranscriptPkg.vhd
 
-if {$::osvvm::Support2019FilePath} {
+if {$::osvvm::Support2019FilePath && $::osvvm::VhdlVersion >= 2019} {
   analyze FileLinePathPkg.vhd
 } else {
   analyze deprecated/FileLinePathPkg_c.vhd
