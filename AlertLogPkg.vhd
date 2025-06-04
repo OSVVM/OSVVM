@@ -1962,6 +1962,28 @@ package body AlertLogPkg is
         end if; 
       end if ;
     end function GetTestResultStatus ;
+
+    ------------------------------------------------------------
+    --  pt local
+    function WriteExpectedCount( 
+    ------------------------------------------------------------
+      TopLevel             : boolean ;
+      ExternalErrors       : AlertCountType 
+    ) return string is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+    begin
+      if not TopLevel then
+        return "" ; 
+      else
+        return 
+          DELIMITER & "ExpectedCount: {" &
+          "Failure: "            & to_string( ifelse(ExternalErrors(FAILURE) >= 0, 0, -ExternalErrors(FAILURE) ) )  & DELIMITER &
+          "Error: "              & to_string( ifelse(ExternalErrors(ERROR)   >= 0, 0, -ExternalErrors(ERROR) ) )    & DELIMITER &
+          "Warning: "            & to_string( ifelse(ExternalErrors(WARNING) >= 0, 0, -ExternalErrors(WARNING) ) )  &
+        "}" ;
+      end if ; 
+    end function WriteExpectedCount ;     
     
     ------------------------------------------------------------
     --  pt local
@@ -1975,7 +1997,8 @@ package body AlertLogPkg is
       FirstPrefix          : string := "" ;
       Prefix               : string := "" ;
       TimeOut              : boolean := FALSE ; 
-      TopLevel             : boolean := FALSE 
+      TopLevel             : boolean := FALSE ;
+      ExternalErrors       : AlertCountType := (0,0,0) 
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
@@ -1998,7 +2021,8 @@ package body AlertLogPkg is
             "Failure: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(FAILURE) )  & DELIMITER &
             "Error: "              & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(ERROR) )    & DELIMITER &
             "Warning: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(WARNING) )  &
-          "}" &
+          "}" & 
+          WriteExpectedCount(TopLevel, ExternalErrors) & 
         "}"
       ) ;
       WriteLine(TestFile, buf) ;
