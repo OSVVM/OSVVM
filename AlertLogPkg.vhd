@@ -2160,7 +2160,8 @@ package body AlertLogPkg is
         FirstPrefix              => Prefix,
         Prefix                   => Prefix,
         TimeOut                  => TimeOut, 
-        TopLevel                 => TRUE
+        TopLevel                 => TRUE,
+        ExternalErrors           => ExternalErrors
       ) ;
       if PrintSettings then
         WriteSettingsYaml(
