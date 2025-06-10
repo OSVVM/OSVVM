@@ -6572,7 +6572,7 @@ package body AlertLogPkg is
     variable PassedGoalSet : boolean ;
 		constant ReportMode    : AlertLogReportModeType  := ENABLED ;
     constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ; 
-    alias Goal : integer is PassedGoal ; 
+    -- alias Goal : integer is PassedGoal ; 
 	begin
     -- synthesis translate_off
     ParentIdSet   := AlertLogStruct.IsValidID(ParentID) ;
@@ -6584,7 +6584,7 @@ package body AlertLogPkg is
     end if ; 
     PassedGoalSet := PassedGoal > 0 ; 
     
-    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, PassedGoal, PassedGoalSet) ;
     -- synthesis translate_on
     return result ;
   end function GetReqID ;
