@@ -65,6 +65,8 @@ if {$::osvvm::ToolName ne "XSIM"}  {
 } else {
   analyze deprecated/TextUtilPkg_xilinx.vhd
 }
+
+analyze FileUtilPkg.vhd
 analyze ResolutionPkg.vhd
 analyze NamePkg.vhd
 analyze OsvvmGlobalPkg.vhd

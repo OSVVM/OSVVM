@@ -56,6 +56,7 @@ context OsvvmContext is
   use OSVVM.NameStorePkg.all ;
   use OSVVM.TranscriptPkg.all ; 
   use OSVVM.TextUtilPkg.all ; 
+  use OSVVM.FileUtilPkg.all ; 
   use OSVVM.OsvvmGlobalPkg.all ;
   use OSVVM.AlertLogPkg.all ; 
   use OSVVM.SortListPkg_int.all ;

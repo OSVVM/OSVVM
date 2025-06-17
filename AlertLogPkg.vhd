@@ -120,6 +120,7 @@ use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
+use work.FileUtilPkg.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.LanguageSupport2019Pkg.all ; 
 
@@ -1296,7 +1297,7 @@ package body AlertLogPkg is
               FileName        => OSVVM_BUILD_YAML_FILE
             ) ;
             WriteAlertYaml (
-              FileName        => OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
+              FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml"
             ) ;
           end if ;
           TranscriptClose ;  -- Close Transcript if open
