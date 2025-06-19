@@ -529,7 +529,7 @@ package body TbUtilPkg is
     end if ;
     -- align to clock if needed (not back-to-back transactions)
     if NOW /= AckTime then
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end if ;
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
@@ -593,7 +593,7 @@ package body TbUtilPkg is
     end if ;
     -- align to clock if needed (not back-to-back transactions)
     if NOW /= AckTime then
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end if ;
     -- Model active and owns the record
     Ack        <= '0' ;               --  #3
@@ -650,7 +650,7 @@ package body TbUtilPkg is
 
     -- Align to clock if needed (not back-to-back transactions)
     if not EdgeActive(Clk, ClkActive) then
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end if ;
   end procedure WaitForTransaction ;
 
@@ -693,7 +693,7 @@ package body TbUtilPkg is
     FoundRdy := Rdy = '1' ;
     -- align to clock if Rdy or TimeOut does not happen within delta cycles from Ack
     if NOW /= AckTime then
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end if ;
     if FoundRdy then
       -- Model active and owns the record
@@ -724,7 +724,7 @@ package body TbUtilPkg is
    end if ;
     -- align to clock if Rdy or IntReq does not happen within delta cycles from Ack
     if NOW /= AckTime then
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end if ;
   end procedure ;
 
@@ -775,7 +775,7 @@ package body TbUtilPkg is
    end if ;
     -- Align to clock if needed (not back-to-back transactions)
     if not EdgeActive(Clk, ClkActive) then
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end if ;
   end procedure ;
 
@@ -1033,24 +1033,24 @@ package body TbUtilPkg is
     if delay > OSVVM_SIM_RESOLUTION then
       wait for delay - OSVVM_SIM_RESOLUTION ;
     end if ;
-    wait until Clk = ClkActive ;
+    wait until Clk ?= ClkActive ;
   end procedure WaitForClock ;
 
   procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in natural := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
     for i in 1 to NumberOfClocks loop
-      wait until Clk = ClkActive ;
+      wait until Clk ?= ClkActive ;
     end loop ;
   end procedure WaitForClock ;
 
   procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in boolean ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
-    wait on Clk until Clk = ClkActive and Enable ;
+    wait on Clk until (??(Clk ?= ClkActive)) and Enable ;
   end procedure WaitForClock ;
 
   procedure WaitForClock ( signal Clk : in std_logic ;  signal Enable : in std_logic ; constant EnableActive : std_logic := '1' ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
-    wait on Clk until Clk = ClkActive and Enable = EnableActive ;
+    wait on Clk until Clk ?= ClkActive and Enable ?= EnableActive ;
   end procedure WaitForClock ;
 
 
