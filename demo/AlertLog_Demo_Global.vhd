@@ -83,7 +83,7 @@ begin
     TbP1 : process
     begin
 -- Uncomment this line to use a log file rather than OUTPUT
-      -- TranscriptOpen("./Demo_Global.txt") ;   
+      -- TranscriptOpen ;
 -- Uncomment this line and the simulation will stop after 15 errors  
       -- SetAlertStopCount(ERROR, 15) ; 
       SetAlertLogName("AlertLog_Demo_Global") ; 
