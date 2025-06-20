@@ -120,12 +120,6 @@ package TextUtilPkg is
   ) return string ;
 
   ------------------------------------------------------------
-  -- FileExists
-  --    Return TRUE if file exists
-  ------------------------------------------------------------
-  impure function FileExists(FileName : string) return boolean ;
-
-  ------------------------------------------------------------
   procedure GetLine(
   ------------------------------------------------------------
     File     FileId           :       text ;
@@ -578,19 +572,6 @@ package body TextUtilPkg is
     return Justify(S, ' ', Amount, Align) ;
   end function Justify ;
 
-  ------------------------------------------------------------
-  -- FileExists
-  --    Return TRUE if file exists
-  ------------------------------------------------------------
-  impure function FileExists(FileName : string) return boolean is
-    file     FileID : text ;
-    variable status : file_open_status ;
-  begin
-    file_open(status, FileID, FileName, READ_MODE) ;
-    file_close(FileID) ;
-    return status = OPEN_OK ;
-  end function FileExists ;
-  
   ------------------------------------------------------------
   procedure GetLine(
   ------------------------------------------------------------
