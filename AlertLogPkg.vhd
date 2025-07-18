@@ -120,6 +120,7 @@ use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
+use work.FileUtilPkg.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.LanguageSupport2019Pkg.all ; 
 
@@ -1296,7 +1297,7 @@ package body AlertLogPkg is
               FileName        => OSVVM_BUILD_YAML_FILE
             ) ;
             WriteAlertYaml (
-              FileName        => OSVVM_RAW_OUTPUT_DIRECTORY & GetAlertLogName(ALERTLOG_BASE_ID) & "_alerts.yml"
+              FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml"
             ) ;
           end if ;
           TranscriptClose ;  -- Close Transcript if open
@@ -1962,6 +1963,28 @@ package body AlertLogPkg is
         end if; 
       end if ;
     end function GetTestResultStatus ;
+
+    ------------------------------------------------------------
+    --  pt local
+    function WriteExpectedCount( 
+    ------------------------------------------------------------
+      TopLevel             : boolean ;
+      ExternalErrors       : AlertCountType 
+    ) return string is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+    begin
+      if not TopLevel then
+        return "" ; 
+      else
+        return 
+          DELIMITER & "ExpectedCount: {" &
+          "Failure: "            & to_string( ifelse(ExternalErrors(FAILURE) >= 0, 0, -ExternalErrors(FAILURE) ) )  & DELIMITER &
+          "Error: "              & to_string( ifelse(ExternalErrors(ERROR)   >= 0, 0, -ExternalErrors(ERROR) ) )    & DELIMITER &
+          "Warning: "            & to_string( ifelse(ExternalErrors(WARNING) >= 0, 0, -ExternalErrors(WARNING) ) )  &
+        "}" ;
+      end if ; 
+    end function WriteExpectedCount ;     
     
     ------------------------------------------------------------
     --  pt local
@@ -1975,7 +1998,8 @@ package body AlertLogPkg is
       FirstPrefix          : string := "" ;
       Prefix               : string := "" ;
       TimeOut              : boolean := FALSE ; 
-      TopLevel             : boolean := FALSE 
+      TopLevel             : boolean := FALSE ;
+      ExternalErrors       : AlertCountType := (0,0,0) 
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
@@ -1998,7 +2022,8 @@ package body AlertLogPkg is
             "Failure: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(FAILURE) )  & DELIMITER &
             "Error: "              & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(ERROR) )    & DELIMITER &
             "Warning: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(WARNING) )  &
-          "}" &
+          "}" & 
+          WriteExpectedCount(TopLevel, ExternalErrors) & 
         "}"
       ) ;
       WriteLine(TestFile, buf) ;
@@ -2136,7 +2161,8 @@ package body AlertLogPkg is
         FirstPrefix              => Prefix,
         Prefix                   => Prefix,
         TimeOut                  => TimeOut, 
-        TopLevel                 => TRUE
+        TopLevel                 => TRUE,
+        ExternalErrors           => ExternalErrors
       ) ;
       if PrintSettings then
         WriteSettingsYaml(
@@ -6547,7 +6573,7 @@ package body AlertLogPkg is
     variable PassedGoalSet : boolean ;
 		constant ReportMode    : AlertLogReportModeType  := ENABLED ;
     constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ; 
-    alias Goal : integer is PassedGoal ; 
+    -- alias Goal : integer is PassedGoal ; 
 	begin
     -- synthesis translate_off
     ParentIdSet   := AlertLogStruct.IsValidID(ParentID) ;
@@ -6559,7 +6585,7 @@ package body AlertLogPkg is
     end if ; 
     PassedGoalSet := PassedGoal > 0 ; 
     
-    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, PassedGoal, PassedGoalSet) ;
     -- synthesis translate_on
     return result ;
   end function GetReqID ;

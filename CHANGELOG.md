@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2025.06   |  Added FileUtilPkg - some refactored from TextUtilPkg.  WaitForClock with ClkActive that supports ?=
 | 2025.04   |  Small refactor of OSVVM.pro
 | 2025.02   |  Track requirements with Functional Coverage as well as Alerts
 | 2024.11   |  Minor Maintenance Updates
@@ -83,7 +84,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2025.02 February 2025
+## Revision 2025.06 June/July 2025
 
 ### Current Revision and Compile Order
 
@@ -97,8 +98,9 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | IfElsePkg.vhd                                      | 2024.07  |
   | OsvvmTypesPkg.vhd                                  | 2022.01  |
   | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
-  | OsvvmSettingsPkg.vhd                               | ** 2025.02 ** |
-  | TextUtilPkg.vhd                                    | ** 2025.02 ** |
+  | OsvvmSettingsPkg.vhd                               | 2025.02  |
+  | TextUtilPkg.vhd                                    | ** 2025.06 ** |
+  | FileUtilPkg.vhd                                    | ** 2025.06 ** |
   | ResolutionPkg.vhd                                  | 2021.06  |
   | NamePkg.vhd                                        | 2024.03  |
   | OsvvmGlobalPkg.vhd                                 | 2024.03  |
@@ -109,23 +111,23 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | Else                                               |          |
   |     CoverageVendorApiPkg.vhd                       | 2020.01  |
   | TranscriptPkg.vhd                                  | 2023.01  |
+  | If Support2019FilePath                             |          |
+  |     FileLinePathPkg.vhd                            | 2025.02  |
+  | If not Support2019FilePath                         |          |
+  |     deprecated/FileLinePathPkg_c.vhd               | 2025.02  |
   | If version >= 2019                                 |          |
   |     LanguageSupport2019Pkg.vhd                     | 2024.07  |
   | If version < 2019                                  |          |
   |     deprecated/LanguageSupport2019Pkg_c.vhd        | 2024.07  |
-  | If Support2019FilePath                             |          |
-  |     FileLinePathPkg.vhd                            | ** 2025.02 ** |
-  | If not Support2019FilePath                         |          |
-  |     deprecated/FileLinePathPkg_c.vhd               | ** 2025.02 ** |
-  | AlertLogPkg.vhd                                    | ** 2025.02 ** |
-  | TbUtilPkg.vhd                                      | 2024.11  |
+  | AlertLogPkg.vhd                                    | 2025.02  |
+  | TbUtilPkg.vhd                                      | ** 2025.06 ** |
   | NameStorePkg.vhd                                   | 2024.07  |
   | MessageListPkg.vhd                                 | 2021.07  |
   | SortListPkg_int.vhd                                | 2020.01  |
   | RandomBasePkg.vhd                                  | 2024.11  |
   | RandomPkg.vhd                                      | 2024.11  |
   | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | ** 2025.02 ** |
+  | CoveragePkg.vhd                                    | 2025.02  |
   | DelayCoveragePkg.vhd                               | 2024.11  |
   | If ClockResetVersion                               |          |
   |    ClockResetPkg.vhd                               | 2024.09  |
@@ -133,7 +135,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |    deprecated/ClockResetPkg_2024_05.vhd            | 2024.07  |
   | ResizePkg.vhd                                      | 2024.03  |
   | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | ** 2025.02 ** |
+  |     ScoreboardGenericPkg.vhd                       | 2025.02  |
   |     ScoreboardPkg_slv.vhd                          | 2022.04  |
   |     ScoreboardPkg_int.vhd                          | 2020.01  |
   |     ScoreboardPkg_signed.vhd                       | 2024.07  |
@@ -161,7 +163,7 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     RandomPkg2019.vhd                              | 2024.11  |
   | If version < 2019                                  |          |
   |     deprecated/RandomPkg2019_c.vhd                 | 2024.09  |
-  | OsvvmContext.vhd                                   | ** 2025.02 ** |
+  | OsvvmContext.vhd                                   | 2025.02  |
   | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
   |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
   | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
@@ -169,7 +171,18 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | If exist OsvvmSettingsPkg_local.vhd                |          |
   |     OsvvmSettingsPkg_local.vhd                     | User Created |
   | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | ** 2025.02 ** |
+  |     OsvvmSettingsPkg_default.vhd                   | 2025.02  |
+
+### TextUtilPkg.vhd   2025.06
+Moved FileExists to FileUtilPkg.vhd
+
+### FileUtilPkg.vhd   2025.06
+Added Tail, ChangeSeparator, RemoveEndingSpearator.   Moved FileExists to here.
+
+### TbUtilPkg.vhd   2025.06
+ClkActive checks in WaitForClock, WaitForTransaction, ..., now uses ?= and supports '-'
+
+## Revision 2025.02 February 2025
 
 ### OsvvmSettingsPkg.vhd    2025.02
 Added COVERAGE_REQUIREMENT_BY_BIN

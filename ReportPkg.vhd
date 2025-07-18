@@ -188,7 +188,7 @@ package body ReportPkg is
       TimeOut         => TimeOut
     ) ; 
 	
-	WriteAlertYaml (
+    WriteAlertYaml (
       FileName        => OSVVM_RAW_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
       ExternalErrors  => ExternalErrors,
       TimeOut         => TimeOut
