@@ -55,10 +55,11 @@ analyze OsvvmTypesPkg.vhd
 # Analyze package declarations
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
 analyze OsvvmSettingsPkg.vhd
-if {!$::osvvm::ToolSupportsDeferredConstants}  {
-  # Compile early in tools that do not support deferred constants
-  include OsvvmVhdlSettings.pro
-}
+# if {!$::osvvm::ToolSupportsDeferredConstants}  {
+#   # Compile early in tools that do not support deferred constants
+#   include OsvvmVhdlSettings.pro
+# }
+include OsvvmVhdlSettings.pro
 
 if {$::osvvm::ToolName ne "XSIM"}  {
   analyze TextUtilPkg.vhd
@@ -164,7 +165,7 @@ if {$::osvvm::VhdlVersion >= 2019}  {
 analyze OsvvmContext.vhd 
 
 
-if {$::osvvm::ToolSupportsDeferredConstants}  {
-  include OsvvmVhdlSettings.pro
-}
+# if {$::osvvm::ToolSupportsDeferredConstants}  {
+#   include OsvvmVhdlSettings.pro
+# }
 
