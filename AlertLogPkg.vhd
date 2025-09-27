@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    10/2025   2025.10    Conneccted settings from VhdlSettings:  ALERT_LOG_STOP_COUNT_FAILURE, ALERT_LOG_STOP_COUNT_ERROR, ALERT_LOG_STOP_COUNT_WARNING
 --    02/2025   2025.02    Added NewReqID and FindID.  Updated requirement handling s.t. requirements can be anywhere in the hierarchy.
 --    09/2024   2024.09    Added AffirmIfFilesMatch (renames AffirmIfNotDiff) and AlertIfFilesNotMatch (renames AlertIfDiff).  
 --                         Above file compares support IgnoreSpaces and IgnoreEmptyLines
@@ -145,6 +146,9 @@ package AlertLogPkg is
   type     LogEnableType            is array (LogIndexType) of boolean ;
   type     AlertLogReportModeType   is (DISABLED, ENABLED, NONZERO) ;
   type     AlertLogPrintParentType  is (PRINT_NAME, PRINT_NAME_AND_PARENT) ;
+
+  constant  ALERT_LOG_STOP_COUNT_DEFAULT   : AlertCountType := (FAILURE => ALERT_LOG_STOP_COUNT_FAILURE, ERROR => ALERT_LOG_STOP_COUNT_ERROR, WARNING => ALERT_LOG_STOP_COUNT_WARNING) ;
+  constant  ALERT_LOG_COUNT_MAXIMUM        : AlertCountType := (FAILURE => integer'high, ERROR => integer'high, WARNING => integer'high) ;
 
   constant  ALERTLOG_BASE_ID               : AlertLogIDType := 0 ;  -- Careful as some code may assume this is 0.
   constant  ALERTLOG_DEFAULT_ID            : AlertLogIDType := ALERTLOG_BASE_ID + 1 ;
@@ -2957,10 +2961,10 @@ package body AlertLogPkg is
     procedure ClearAlertStopCounts is
     ------------------------------------------------------------
     begin
-      AlertLogPtr(ALERTLOG_BASE_ID).AlertStopCount := (FAILURE => 0, ERROR => integer'high, WARNING => integer'high) ;
+      AlertLogPtr(ALERTLOG_BASE_ID).AlertStopCount := ALERT_LOG_STOP_COUNT_DEFAULT ;
 
       for i in ALERTLOG_BASE_ID + 1 to NumAlertLogIDsVar loop
-        AlertLogPtr(i).AlertStopCount := (FAILURE => integer'high, ERROR => integer'high, WARNING => integer'high) ;
+        AlertLogPtr(i).AlertStopCount := ALERT_LOG_COUNT_MAXIMUM ;
       end loop ;
     end procedure ClearAlertStopCounts ;
 
@@ -3103,7 +3107,7 @@ package body AlertLogPkg is
       if AlertLogID = ALERTLOG_BASE_ID then
         AlertEnabled := (TRUE, TRUE, TRUE) ;
         LogEnabled   := (others => FALSE) ;
-        AlertStopCount := (FAILURE => 0, ERROR => integer'high, WARNING => integer'high) ;
+        AlertStopCount := ALERT_LOG_STOP_COUNT_DEFAULT ;
         HierarchyLevel := 0 ; 
         EnQueueID(AlertLogID, ALERTLOG_BASE_ID, TRUE) ;
       else
@@ -3116,7 +3120,7 @@ package body AlertLogPkg is
           LogEnabled   := AlertLogPtr(ParentID).LogEnabled ;
           EnQueueID(AlertLogID, ParentID, ParentIdSet) ;
         end if ;
-        AlertStopCount := (FAILURE | ERROR | WARNING => integer'high) ;
+        AlertStopCount := ALERT_LOG_COUNT_MAXIMUM ;
       end if ;
       AlertLogPtr(AlertLogID).Name                := new string'(iName) ;
       AlertLogPtr(AlertLogID).NameLower           := new string'(to_lower(iName)) ;
@@ -3127,7 +3131,7 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).PassedGoal          := 0 ;
       AlertLogPtr(AlertLogID).AlertEnabled        := AlertEnabled ;
       AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
-      AlertLogPtr(AlertLogID).AlertPrintCount     := (FAILURE | ERROR | WARNING => integer'high) ;
+      AlertLogPtr(AlertLogID).AlertPrintCount     := ALERT_LOG_COUNT_MAXIMUM ;
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
       AlertLogPtr(AlertLogID).ReportMode          := ReportMode ;
       AlertLogPtr(AlertLogID).HierarchyLevel      := HierarchyLevel ;
