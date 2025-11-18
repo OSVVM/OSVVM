@@ -156,7 +156,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 
 analyze ReportPkg.vhd
 
-if {$::osvvm::VhdlVersion >= 2019}  {
+if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019ImpureFunctions}  {
   analyze RandomPkg2019.vhd [NoNullRangeWarning]
 } else {
   analyze  deprecated/RandomPkg2019_c.vhd
