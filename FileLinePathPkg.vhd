@@ -49,9 +49,10 @@ use osvvm.TranscriptPkg.all ;
 
 package FileLinePathPkg is
 
-  alias FILE_NAME is FILE_NAME [return string] ;
-  alias FILE_PATH is FILE_PATH [return string] ;
-  alias FILE_LINE is FILE_LINE [return string] ;
+  -- Alias's to std.env are not ambiguous just like for ieee.std_logic_textio
+  alias FILE_NAME is std.env.FILE_NAME [return string] ;
+  alias FILE_PATH is std.env.FILE_PATH [return string] ;
+  alias FILE_LINE is std.env.FILE_LINE [return string] ;
   
 
   ------------------------------------------------------------

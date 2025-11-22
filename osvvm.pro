@@ -77,17 +77,24 @@ analyze CoverageVendorApiPkg_${::osvvm::FunctionalCoverageIntegratedInSimulator}
 
 analyze TranscriptPkg.vhd
 
+if {$::osvvm::VhdlVersion >= 2019}  {
+  analyze LanguageSupport2019Pkg.vhd
+} else {
+  analyze deprecated/LanguageSupport2019Pkg_c.vhd
+}
+
 if {$::osvvm::Supports2019FilePath && $::osvvm::VhdlVersion >= 2019} {
   analyze FileLinePathPkg.vhd
 } else {
   analyze deprecated/FileLinePathPkg_c.vhd
 }
 
-if {$::osvvm::VhdlVersion >= 2019}  {
-  analyze LanguageSupport2019Pkg.vhd
+if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
+  analyze AssertApiPkg.vhd
 } else {
-  analyze deprecated/LanguageSupport2019Pkg_c.vhd
+  analyze deprecated/AssertApiPkg_c.vhd
 }
+
 
 analyze AlertLogPkg.vhd
 

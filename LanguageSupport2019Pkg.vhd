@@ -48,9 +48,21 @@ use ieee.std_logic_1164.all ;
 use ieee.numeric_std.all ; 
 
 package LanguageSupport2019Pkg is
-
-  -- implemented directly by 1076-2019
-  -- function to_string ( A : integer_vector) return string ;
+  
+  ------------------------------------------------------------
+  -- Language built in
+  ------------------------------------------------------------
+  alias to_string is std.standard.to_string [integer_vector return string] ;
+  
+  ------------------------------------------------------------
+  -- ToolVersionApi
+  ------------------------------------------------------------
+  alias VHDL_VERSION is std.env.VHDL_VERSION [return STRING] ;
+  alias TOOL_TYPE    is std.env.TOOL_TYPE    [return STRING] ;
+  alias TOOL_VENDOR  is std.env.TOOL_VENDOR  [return STRING] ;
+  alias TOOL_NAME    is std.env.TOOL_NAME    [return STRING] ;
+  alias TOOL_EDITION is std.env.TOOL_EDITION [return STRING] ;
+  alias TOOL_VERSION is std.env.TOOL_VERSION [return STRING] ;
 
 end LanguageSupport2019Pkg ;
   
