@@ -124,7 +124,8 @@ use work.TextUtilPkg.all ;
 use work.FileUtilPkg.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.LanguageSupport2019Pkg.all ; 
-
+use work.AssertApiPkg.all ; 
+use work.OsvvmSettingsPkg.all ; 
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -166,6 +167,9 @@ package AlertLogPkg is
   constant  ALERTLOG_ID_NOT_FOUND          : AlertLogIDType := -1 ;  -- alternately integer'high
   constant  ALERTLOG_ID_NOT_ASSIGNED       : AlertLogIDType := -1 ;
   constant  MIN_NUM_AL_IDS                 : AlertLogIDType := 32 ; -- Number IDs initially allocated
+
+  -- Get VHDL Assert Count, return AlertCountType
+  impure function GetVhdlAssertCount return AlertCountType ;
 
   ------------------------------------------------------------
   --  Alert always goes to the transcript file
@@ -761,6 +765,17 @@ package body AlertLogPkg is
     end if ;
   end function LeftJustify ;
 
+  ------------------------------------------------------------
+  impure function GetVhdlAssertCount return AlertCountType is
+  ------------------------------------------------------------
+    variable AssertCount : AlertCountType ;
+  begin
+    AssertCount(FAILURE) := GetVhdlAssertCount(SEVERITY_LEVEL'(FAILURE)) ;  -- Type Qual required in GHDL 6.0.0-dev
+    AssertCount(ERROR)   := GetVhdlAssertCount(SEVERITY_LEVEL'(ERROR)) ; 
+    AssertCount(WARNING) := GetVhdlAssertCount(SEVERITY_LEVEL'(WARNING)) ; 
+    return AssertCount ; 
+  end function GetVhdlAssertCount ;
+
 
   type AlertLogStructPType is protected
 
@@ -1005,9 +1020,11 @@ package body AlertLogPkg is
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
 
     -- Calculated by NewID and GetReqID 
+    constant VHDL_ASSERT_ID_NAME           : string  := "VHDL Asserts" ;
     variable CalcAlertLogJustifyAmountVar  : integer := 0 ;
     variable CurAlertLogJustifyAmountVar   : integer := 0 ;
-    variable CalcReportJustifyAmountVar    : integer := 0 ;
+    constant CALC_REPORT_JUSTIFY_INIT      : integer := IfElse(ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS and SUPPORTS_2019_ASSERT_API, VHDL_ASSERT_ID_NAME'length + 2, 0) ; -- len + indent
+    variable CalcReportJustifyAmountVar    : integer := CALC_REPORT_JUSTIFY_INIT ; 
     variable CurReportJustifyAmountVar     : integer := 0 ;
     -- Calculated by NewID and GetReqID
     variable FoundReportHierVar          : boolean := FALSE ;    -- Calculated by NewID, GetReqID
@@ -1079,6 +1096,8 @@ package body AlertLogPkg is
     variable FailOnWarningVar            : boolean := ALERT_LOG_FAIL_ON_WARNING ;             -- WriteAlertYaml, ReportAlerts
     variable FailOnDisabledErrorsVar     : boolean := ALERT_LOG_FAIL_ON_DISABLED_ERRORS ;     -- WriteAlertYaml, ReportAlerts
     variable FailOnRequirementErrorsVar  : boolean := ALERT_LOG_FAIL_ON_REQUIREMENT_ERRORS ;  -- WriteAlertYaml, ReportAlerts
+    variable FailOnVhdlAssertErrorsVar   : boolean := ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS and SUPPORTS_2019_ASSERT_API ;  -- WriteAlertYaml, ReportAlerts
+    variable PrintVhdlAssertErrorsVar    : boolean := ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS and SUPPORTS_2019_ASSERT_API ;  -- WriteAlertYaml, ReportAlerts
 
     -- Controls for printing Alert and Log - Long term, it may be best to merge these into a single control for both Alert and Log
     variable WriteAlertErrorCountVar     : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;            -- Alert / LocalPrint
@@ -1538,10 +1557,17 @@ package body AlertLogPkg is
       variable TotalRequirementsGoal    : out integer ;
       variable TotalRequirementErrors   : out integer   
     ) is
+      variable VhdlAssertCount  : AlertCountType ;
+      variable TotalAssertCount : integer ; 
     begin
+      if FailOnVhdlAssertErrorsVar and (AlertLogID = ALERTLOG_BASE_ID) then
+        VhdlAssertCount  := GetVhdlAssertCount ; 
+      else
+        VhdlAssertCount := (0, 0, 0) ;
+      end if ;
     
       -- Alert Count with ExternalErrors (includes ExpectedErrors)
-      TotalAlertCount        := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors ;
+      TotalAlertCount   := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors + VhdlAssertCount ;
       TotalErrors       := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
       
       -- Account for Disabled Errors
@@ -1557,8 +1583,8 @@ package body AlertLogPkg is
       if FailOnRequirementErrorsVar then
         TotalErrors  := TotalErrors + TotalRequirementErrors ;
       end if ;
-      
-      -- Timeout is an error that 
+
+     -- Timeout is an error that 
       if TimeOut then
         TotalErrors := TotalErrors + 1 ;
       end if ; 
@@ -1566,39 +1592,39 @@ package body AlertLogPkg is
     end procedure CalcTotalErrors ;
     
     
-    ------------------------------------------------------------
-    -- Local
-    procedure CalcTopTotalErrors (
-    ------------------------------------------------------------
-      constant ExternalErrors           : in  AlertCountType ;
-      constant TimeOut                  : in  boolean ;
-      variable TotalAlertCount          : out AlertCountType ;
-      variable TotalErrors              : out integer ;
-      variable TotalRequirementsPassed  : out integer ;
-      variable TotalRequirementsGoal    : out integer 
-    ) is
-      variable DisabledAlertCount : AlertCountType ;
-      variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
-      variable TotalRequirementErrors : integer ;
-    begin
-    
-      CalcTotalErrors (
-        AlertLogID                => ALERTLOG_BASE_ID        , 
-        ExternalErrors            => ExternalErrors          , 
-        Timeout                   => Timeout                 , 
-        TotalAlertCount           => TotalAlertCount         , 
-        TotalErrors               => TotalErrors             , 
-        DisabledAlertCount        => DisabledAlertCount      , 
-        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
-        TotalRequirementsPassed   => TotalRequirementsPassed , 
-        TotalRequirementsGoal     => TotalRequirementsGoal   , 
-        TotalRequirementErrors    => TotalRequirementErrors  
-      ) ;
-
-      -- Set AffirmCount for top level
-      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
-      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
-    end procedure CalcTopTotalErrors ;
+--    ------------------------------------------------------------
+--    -- Local
+--    procedure CalcTopTotalErrors (
+--    ------------------------------------------------------------
+--      constant ExternalErrors           : in  AlertCountType ;
+--      constant TimeOut                  : in  boolean ;
+--      variable TotalAlertCount          : out AlertCountType ;
+--      variable TotalErrors              : out integer ;
+--      variable TotalRequirementsPassed  : out integer ;
+--      variable TotalRequirementsGoal    : out integer 
+--    ) is
+--      variable DisabledAlertCount : AlertCountType ;
+--      variable TotalDisabledAlertErrors : integer ;
+--      variable TotalRequirementErrors : integer ;
+--    begin
+--    
+--      CalcTotalErrors (
+--        AlertLogID                => ALERTLOG_BASE_ID        , 
+--        ExternalErrors            => ExternalErrors          , 
+--        Timeout                   => Timeout                 , 
+--        TotalAlertCount           => TotalAlertCount         , 
+--        TotalErrors               => TotalErrors             , 
+--        DisabledAlertCount        => DisabledAlertCount      , 
+--        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
+--        TotalRequirementsPassed   => TotalRequirementsPassed , 
+--        TotalRequirementsGoal     => TotalRequirementsGoal   , 
+--        TotalRequirementErrors    => TotalRequirementErrors  
+--      ) ;
+--
+--      -- Set AffirmCount for top level
+--      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
+--      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
+--    end procedure CalcTopTotalErrors ;
 
     ------------------------------------------------------------
     -- Local
@@ -1738,6 +1764,47 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
+    procedure PrintVhdlAssertCount(
+    ------------------------------------------------------------
+      Prefix            : string ;
+      IndentAmount      : integer ;
+      ReportWhenZero    : boolean ;
+      HasErrors         : boolean ;
+      HasDisabledErrors : boolean
+    ) is
+      variable buf : line ;
+      variable VhdlAssertCount  : AlertCountType ;
+      variable TotalAssertCount : integer ; 
+    begin
+      if PrintVhdlAssertErrorsVar then
+        VhdlAssertCount  := GetVhdlAssertCount ; 
+        TotalAssertCount := SumAlertCount(VhdlAssertCount) ; 
+        if ReportWhenZero or HasErrors then
+          write(buf, Prefix & " " & LeftJustify(VHDL_ASSERT_ID_NAME, CurReportJustifyAmountVar - IndentAmount)) ;
+          write(buf, "  Failures: "  & to_string(VhdlAssertCount(FAILURE) ) ) ;
+          write(buf, "  Errors: "    & to_string(VhdlAssertCount(ERROR) ) ) ;
+          write(buf, "  Warnings: "  & to_string(VhdlAssertCount(WARNING) ) ) ;
+          if (HasDisabledErrors and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
+            write(buf, string'("  Disabled Failures: 0" )) ;
+            write(buf, string'("  Errors: 0"  )) ;
+            write(buf, string'("  Warnings: 0" )) ;
+          end if ;
+          if PrintPassedVar or PrintRequirementsVar then
+            write(buf, string'("  Passed: 0")) ;
+          end if;
+          if PrintRequirementsVar then
+            write(buf, string'(" of 0")) ; -- Passed Goal
+          end if ;
+          if PrintAffirmationsVar then
+            write(buf, string'("  Affirmations: 0")) ;
+          end if ;
+          WriteLine(buf) ;
+        end if ;
+      end if ;
+    end procedure PrintVhdlAssertCount ;
+
+    ------------------------------------------------------------
+    -- PT Local
     procedure PrintOneChild(
     ------------------------------------------------------------
       AlertLogID        : AlertLogIDType ;
@@ -1790,6 +1857,7 @@ package body AlertLogPkg is
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
         -- Don't print requirements if there no requirements
+--proposed          if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
         if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
@@ -1808,6 +1876,10 @@ package body AlertLogPkg is
             HasErrors          => HasErrors,
             HasDisabledErrors  => HasDisabledErrors
           ) ;
+--??        -- Print VHDL Asserts after default or other
+--??            if CurID = OSVVM_ALERTLOG_ID then -- ALERTLOG_DEFAULT_ID
+--??              PrintVhdlAssertCount ;
+--??            end if ; 
           IterateAndPrintChildren(
             AlertLogID         => CurID,
             Prefix             => Prefix & "  ",
@@ -1863,6 +1935,14 @@ package body AlertLogPkg is
       --Print Hierarchy when enabled and test failed
       if ReportAll or (FoundReportHierVar and ReportHierarchyVar and TestFailed) then
       -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
+        -- Print VHDL Asserts before default
+        PrintVhdlAssertCount(
+          Prefix            => ALERT_LOG_PRINT_PREFIX & "  ",
+          IndentAmount      => 2,
+          ReportWhenZero    => ReportAll or ReportWhenZero,
+          HasErrors         => TestFailed,
+          HasDisabledErrors => HasDisabledErrors
+        ) ;
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
           Prefix             => ALERT_LOG_PRINT_PREFIX & "  ",
@@ -1970,26 +2050,122 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     --  pt local
+    -- Only used for top level
     function WriteExpectedCount( 
     ------------------------------------------------------------
-      TopLevel             : boolean ;
       ExternalErrors       : AlertCountType 
     ) return string is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
     begin
-      if not TopLevel then
-        return "" ; 
-      else
-        return 
-          DELIMITER & "ExpectedCount: {" &
-          "Failure: "            & to_string( ifelse(ExternalErrors(FAILURE) >= 0, 0, -ExternalErrors(FAILURE) ) )  & DELIMITER &
-          "Error: "              & to_string( ifelse(ExternalErrors(ERROR)   >= 0, 0, -ExternalErrors(ERROR) ) )    & DELIMITER &
-          "Warning: "            & to_string( ifelse(ExternalErrors(WARNING) >= 0, 0, -ExternalErrors(WARNING) ) )  &
-        "}" ;
-      end if ; 
+      return 
+        DELIMITER & "ExpectedCount: {" &
+        "Failure: "            & to_string( ifelse(ExternalErrors(FAILURE) >= 0, 0, -ExternalErrors(FAILURE) ) )  & DELIMITER &
+        "Error: "              & to_string( ifelse(ExternalErrors(ERROR)   >= 0, 0, -ExternalErrors(ERROR) ) )    & DELIMITER &
+        "Warning: "            & to_string( ifelse(ExternalErrors(WARNING) >= 0, 0, -ExternalErrors(WARNING) ) )  &
+      "}" ;
     end function WriteExpectedCount ;     
     
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteTopAlertYaml (
+    ------------------------------------------------------------
+      file TestFile        : text ;
+      Prefix               : string ;
+      TimeOut              : boolean ; 
+      ExternalErrors       : AlertCountType  
+    ) is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+      variable TotalErrors : integer ;
+      variable TotalAlertErrors, TotalDisabledAlertErrors : integer ;
+      variable TotalRequirementsPassed, TotalRequirementsGoal, TotalRequirementErrors : integer ;
+      variable AlertCountVar, DisabledAlertCount : AlertCountType ;
+      variable PassedCount, AffirmCheckCount : integer ;
+    begin
+      CalcTotalErrors (
+        AlertLogID                => ALERTLOG_BASE_ID        , 
+        ExternalErrors            => ExternalErrors          , 
+        Timeout                   => Timeout                 , 
+        TotalAlertCount           => AlertCountVar           , 
+        TotalErrors               => TotalErrors             , 
+        DisabledAlertCount        => DisabledAlertCount      , 
+        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
+        TotalRequirementsPassed   => TotalRequirementsPassed , 
+        TotalRequirementsGoal     => TotalRequirementsGoal   , 
+        TotalRequirementErrors    => TotalRequirementErrors  
+      ) ;
+
+      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
+      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
+
+      Write(buf,
+        Prefix & "Name: " & '"' & AlertLogPtr(ALERTLOG_BASE_ID).Name.all & '"'  & LF  &
+        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut, TRUE)        & LF  &
+        Prefix & "Results: {" &
+          "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
+          "AlertCount: {" &
+            "Failure: "            & to_string( AlertCountVar(FAILURE) )  & DELIMITER &
+            "Error: "              & to_string( AlertCountVar(ERROR) )    & DELIMITER &
+            "Warning: "            & to_string( AlertCountVar(WARNING) )  &
+          "}" & DELIMITER &
+          "PassedCount: "        & to_string( PassedCountVar )  & DELIMITER &
+          "AffirmCount: "        & to_string( AffirmCheckCountVar )  & DELIMITER &
+          "RequirementsPassed: " & to_string( TotalRequirementsPassed )   & DELIMITER &
+          "RequirementsGoal: "   & to_string( TotalRequirementsGoal )    & DELIMITER &
+          "DisabledAlertCount: {" &
+            "Failure: "            & to_string( DisabledAlertCount(FAILURE) )  & DELIMITER &
+            "Error: "              & to_string( DisabledAlertCount(ERROR) )    & DELIMITER &
+            "Warning: "            & to_string( DisabledAlertCount(WARNING) )  &
+          "}" & 
+          WriteExpectedCount(ExternalErrors) & 
+        "}"
+      ) ;
+      WriteLine(TestFile, buf) ;
+    end procedure WriteTopAlertYaml ;
+
+    ------------------------------------------------------------
+    --  pt local
+    procedure WriteVhdlAssertYaml (
+    ------------------------------------------------------------
+      file TestFile  : text ;
+      FirstPrefix    : string := "" ;
+      Prefix         : string := "" 
+    ) is
+      variable buf : line ;
+      constant DELIMITER : string := ", " ;
+      variable VhdlAssertCount  : AlertCountType ;
+      variable TotalAssertCount : integer ; 
+    begin
+      if PrintVhdlAssertErrorsVar then
+        VhdlAssertCount  := GetVhdlAssertCount ; 
+        TotalAssertCount := SumAlertCount(RemoveNonFailingWarnings(VhdlAssertCount)) ; 
+        Write(buf,
+          FirstPrefix & "Name:  " & '"' & VHDL_ASSERT_ID_NAME & '"'  & LF  &
+          Prefix & "Status: " & GetTestResultStatus(TotalAssertCount, FALSE, FALSE)        & LF  &
+          Prefix & "Results: {" &
+            "TotalErrors: "          & to_string( TotalAssertCount )          & DELIMITER &
+            "AlertCount: {" &
+              "Failure: "            & to_string( VhdlAssertCount(FAILURE) )  & DELIMITER &
+              "Error: "              & to_string( VhdlAssertCount(ERROR) )    & DELIMITER &
+              "Warning: "            & to_string( VhdlAssertCount(WARNING) )  &
+            "}" & DELIMITER &
+            "PassedCount: 0"        & DELIMITER & 
+            "AffirmCount: 0"        & DELIMITER & 
+            "RequirementsPassed: 0" & DELIMITER & 
+            "RequirementsGoal: 0"   & DELIMITER & 
+            "DisabledAlertCount: {" &
+              "Failure: 0"          & DELIMITER &
+              "Error: 0"            & DELIMITER &
+              "Warning: 0"          &
+            "}" &
+          "}" & LF & 
+          Prefix & "Children: []"
+        ) ;
+        WriteLine(TestFile, buf) ;
+      end if ; 
+    end procedure WriteVhdlAssertYaml ;
+
     ------------------------------------------------------------
     --  pt local
     procedure WriteOneAlertYaml (
@@ -2000,17 +2176,14 @@ package body AlertLogPkg is
       RequirementsPassed   : integer ;
       RequirementsGoal     : integer ;
       FirstPrefix          : string := "" ;
-      Prefix               : string := "" ;
-      TimeOut              : boolean := FALSE ; 
-      TopLevel             : boolean := FALSE ;
-      ExternalErrors       : AlertCountType := (0,0,0) 
+      Prefix               : string := "" 
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
     begin
       Write(buf,
         FirstPrefix & "Name: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
-        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut, TopLevel)        & LF  &
+        Prefix & "Status: " & GetTestResultStatus(TotalErrors, FALSE, FALSE)        & LF  &
         Prefix & "Results: {" &
           "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
           "AlertCount: {" &
@@ -2027,7 +2200,6 @@ package body AlertLogPkg is
             "Error: "              & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(ERROR) )    & DELIMITER &
             "Warning: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(WARNING) )  &
           "}" & 
-          WriteExpectedCount(TopLevel, ExternalErrors) & 
         "}"
       ) ;
       WriteLine(TestFile, buf) ;
@@ -2051,7 +2223,8 @@ package body AlertLogPkg is
         -- Write "Children:" at current level
         while CurID > ALERTLOG_BASE_ID loop
           -- Don't print requirements if there no requirements
-          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+--proposed          if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
+          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then -- or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID)
             CurID := AlertLogPtr(CurID).SiblingID ;
             next ;
           end if ;
@@ -2067,6 +2240,14 @@ package body AlertLogPkg is
               Write(buf, Prefix & "Children: " ) ;
               WriteLine(TestFile, buf) ;
               FoundChildToReport := TRUE ; 
+            end if ; 
+            if CurID = ALERTLOG_DEFAULT_ID then 
+              -- Print VHDL Asserts before default
+              WriteVhdlAssertYaml (
+                TestFile             => TestFile,
+                FirstPrefix          => Prefix & "  - ",
+                Prefix               => string'(Prefix & "    ")
+              ) ;
             end if ; 
             WriteOneAlertYaml(
               TestFile             => TestFile,
@@ -2125,7 +2306,6 @@ package body AlertLogPkg is
       WriteLine(TestFile, buf) ;
     end procedure WriteSettingsYaml ;
 
-
     ------------------------------------------------------------
     --  pt local
     procedure WriteAlertYaml (
@@ -2138,36 +2318,41 @@ package body AlertLogPkg is
       TimeOut        : boolean 
     ) is
       -- Format:  Action Count min1 max1 min2 max2
-      variable TotalErrors : integer ;
-      variable TotalAlertCount : AlertCountType ;
-      variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
+--      variable TotalErrors : integer ;
+--      variable TotalAlertCount : AlertCountType ;
+--      variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
       variable buf : line ; 
     begin
       if PrintSettings then
         write(buf, Prefix & "Version: ""1.0""") ; 
         WriteLine(TestFile, buf) ; 
       end if ; 
-      CalcTopTotalErrors (
-        ExternalErrors           => ExternalErrors         ,
-        TotalErrors              => TotalErrors            ,
-        TotalAlertCount          => TotalAlertCount        ,
-        TotalRequirementsPassed  => TotalRequirementsPassed,
-        TotalRequirementsGoal    => TotalRequirementsGoal  , 
-        TimeOut                  => TimeOut
-      ) ;
-
-      WriteOneAlertYaml (
-        TestFile                 => TestFile,
-        AlertLogID               => ALERTLOG_BASE_ID,
-        TotalErrors              => TotalErrors,
-        RequirementsPassed       => TotalRequirementsPassed,
-        RequirementsGoal         => TotalRequirementsGoal,
-        FirstPrefix              => Prefix,
+      WriteTopAlertYaml (
+        TestFile                 => TestFile, 
         Prefix                   => Prefix,
         TimeOut                  => TimeOut, 
-        TopLevel                 => TRUE,
         ExternalErrors           => ExternalErrors
-      ) ;
+      ) ; 
+--      CalcTopTotalErrors (
+--        ExternalErrors           => ExternalErrors         ,
+--        TotalErrors              => TotalErrors            ,
+--        TotalAlertCount          => TotalAlertCount        ,
+--        TotalRequirementsPassed  => TotalRequirementsPassed,
+--        TotalRequirementsGoal    => TotalRequirementsGoal  , 
+--        TimeOut                  => TimeOut
+--      ) ;
+--      WriteOneAlertYaml (
+--        TestFile                 => TestFile,
+--        AlertLogID               => ALERTLOG_BASE_ID,
+--        TotalErrors              => TotalErrors,
+--        RequirementsPassed       => TotalRequirementsPassed,
+--        RequirementsGoal         => TotalRequirementsGoal,
+--        FirstPrefix              => Prefix,
+--        Prefix                   => Prefix,
+--        TimeOut                  => TimeOut, 
+--        TopLevel                 => TRUE,
+--        ExternalErrors           => ExternalErrors
+--      ) ;
       if PrintSettings then
         WriteSettingsYaml(
           TestFile               => TestFile,
@@ -3290,7 +3475,7 @@ package body AlertLogPkg is
       
       CalcAlertLogJustifyAmountVar  := 0 ;
       CurAlertLogJustifyAmountVar   := 0 ;
-      CalcReportJustifyAmountVar    := 0 ;
+      CalcReportJustifyAmountVar    := CALC_REPORT_JUSTIFY_INIT ;
       CurReportJustifyAmountVar     := 0 ;
 
       FoundReportHierVar            := FALSE ;
