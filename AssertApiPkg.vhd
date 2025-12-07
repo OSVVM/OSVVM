@@ -56,8 +56,8 @@ package AssertApiPkg is
   alias IsVhdlAssertFailed is std.env.IsVhdlAssertFailed [SEVERITY_LEVEL return BOOLEAN] ; 
 
   -- VHDL assert count
-  alias GetVhdlAssertCount is std.env.GetVhdlAssertCount [return INTEGER] ; 
-  alias GetVhdlAssertCount is std.env.GetVhdlAssertCount [SEVERITY_LEVEL return INTEGER] ; 
+  alias GetVhdlAssertCount is std.env.GetVhdlAssertCount [return NATURAL] ; 
+  alias GetVhdlAssertCount is std.env.GetVhdlAssertCount [SEVERITY_LEVEL return NATURAL] ; 
 
   -- Clear VHDL assert errors
   alias ClearVhdlAssert is std.env.ClearVhdlAssert [] ; 
