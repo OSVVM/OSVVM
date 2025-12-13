@@ -48,7 +48,11 @@ use ieee.std_logic_1164.all ;
 use ieee.numeric_std.all ; 
 
 package LanguageSupport2019Pkg is
-  
+  constant TOOL_USES_32_BIT_INTEGERS : boolean := 
+    -- GHDL does not support writing -2**31 so using -2**30 - 2**30
+    -- 2's complement               or  1's complement
+    (integer'left = -2**30 - 2**30) or (integer'left = 1 -2**30 - 2**30) ; 
+    
   ------------------------------------------------------------
   -- Language built in
   ------------------------------------------------------------
@@ -64,6 +68,7 @@ package LanguageSupport2019Pkg is
   alias TOOL_EDITION is std.env.TOOL_EDITION [return STRING] ;
   alias TOOL_VERSION is std.env.TOOL_VERSION [return STRING] ;
 
+
 end LanguageSupport2019Pkg ;
   
 --- ///////////////////////////////////////////////////////////////////////////
@@ -71,6 +76,5 @@ end LanguageSupport2019Pkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body LanguageSupport2019Pkg is
-
 
 end package body LanguageSupport2019Pkg ;
