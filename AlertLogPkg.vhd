@@ -27,7 +27,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    10/2025   2025.10    Conneccted settings from VhdlSettings:  ALERT_LOG_STOP_COUNT_FAILURE, ALERT_LOG_STOP_COUNT_ERROR, ALERT_LOG_STOP_COUNT_WARNING
+--    10/2025   2025.10    Connected settings from VhdlSettings:  ALERT_LOG_STOP_COUNT_FAILURE, ALERT_LOG_STOP_COUNT_ERROR, ALERT_LOG_STOP_COUNT_WARNING
+--                         Renamed GetAlertLogID (now alias) to GetID.
 --    02/2025   2025.02    Added NewReqID and FindID.  Updated requirement handling s.t. requirements can be anywhere in the hierarchy.
 --    09/2024   2024.09    Added AffirmIfFilesMatch (renames AffirmIfNotDiff) and AlertIfFilesNotMatch (renames AlertIfDiff).  
 --                         Above file compares support IgnoreSpaces and IgnoreEmptyLines
@@ -535,7 +536,8 @@ package AlertLogPkg is
     PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ;
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType ;
-  impure function GetAlertLogID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType ;
+  impure function GetID(Name : string; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED; CreateHierarchy : Boolean := TRUE; DoNotReport : Boolean := FALSE) return AlertLogIDType ;
+  alias GetAlertLogID is GetID[string, AlertLogIDType, Boolean, Boolean return AlertLogIDType] ;
   impure function NewReqID(
     Name            : string ;
     Goal            : natural ; 
@@ -1375,7 +1377,8 @@ package body AlertLogPkg is
       end if ;
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
-        if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+--!!        if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+        if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ;
@@ -1591,41 +1594,6 @@ package body AlertLogPkg is
       
     end procedure CalcTotalErrors ;
     
-    
---    ------------------------------------------------------------
---    -- Local
---    procedure CalcTopTotalErrors (
---    ------------------------------------------------------------
---      constant ExternalErrors           : in  AlertCountType ;
---      constant TimeOut                  : in  boolean ;
---      variable TotalAlertCount          : out AlertCountType ;
---      variable TotalErrors              : out integer ;
---      variable TotalRequirementsPassed  : out integer ;
---      variable TotalRequirementsGoal    : out integer 
---    ) is
---      variable DisabledAlertCount : AlertCountType ;
---      variable TotalDisabledAlertErrors : integer ;
---      variable TotalRequirementErrors : integer ;
---    begin
---    
---      CalcTotalErrors (
---        AlertLogID                => ALERTLOG_BASE_ID        , 
---        ExternalErrors            => ExternalErrors          , 
---        Timeout                   => Timeout                 , 
---        TotalAlertCount           => TotalAlertCount         , 
---        TotalErrors               => TotalErrors             , 
---        DisabledAlertCount        => DisabledAlertCount      , 
---        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
---        TotalRequirementsPassed   => TotalRequirementsPassed , 
---        TotalRequirementsGoal     => TotalRequirementsGoal   , 
---        TotalRequirementErrors    => TotalRequirementErrors  
---      ) ;
---
---      -- Set AffirmCount for top level
---      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
---      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
---    end procedure CalcTopTotalErrors ;
-
     ------------------------------------------------------------
     -- Local
     impure function CalcTotalErrors (AlertLogID : AlertLogIDType) return integer is
@@ -1857,8 +1825,8 @@ package body AlertLogPkg is
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
         -- Don't print requirements if there no requirements
---proposed          if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
-        if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+--!!        if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
+        if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
           CurID := AlertLogPtr(CurID).SiblingID ;
           next ;
         end if ;
@@ -2223,8 +2191,8 @@ package body AlertLogPkg is
         -- Write "Children:" at current level
         while CurID > ALERTLOG_BASE_ID loop
           -- Don't print requirements if there no requirements
---proposed          if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
-          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then -- or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID)
+--!!          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then 
+          if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
             CurID := AlertLogPtr(CurID).SiblingID ;
             next ;
           end if ;
@@ -3133,6 +3101,8 @@ package body AlertLogPkg is
       PassedCountVar       := 0 ;
       AlertCount           := (0, 0, 0) ;
       ErrorCount           := 0 ;
+
+      ClearVhdlAssert ;
 
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
         AlertLogPtr(i).AlertCount           := (0, 0, 0) ;
@@ -6690,7 +6660,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- Lookup ID.   Create placeholder ID via NewID if it does not exist.
-  impure function GetAlertLogID(
+  impure function GetID(
     Name            : string ; 
     ParentID        : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; 
     CreateHierarchy : Boolean := TRUE ; 
@@ -6710,7 +6680,7 @@ package body AlertLogPkg is
     if not ParentIdSet then 
       localParentID := ALERTLOG_BASE_ID ; 
       if ParentID /= ALERTLOG_ID_NOT_ASSIGNED then 
-        FailureInvalidParentID("GetAlertLogID", ParentID) ;  
+        FailureInvalidParentID("GetID", ParentID) ;  
       end if ; 
     end if ; 
 
@@ -6723,7 +6693,7 @@ package body AlertLogPkg is
     result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
     -- synthesis translate_on
     return result ;
-  end function GetAlertLogID ;
+  end function GetID ;
 
   ------------------------------------------------------------
   impure function NewReqID(
@@ -7499,7 +7469,7 @@ package body AlertLogPkg is
           when GET_ID =>
             sread_c(buf, Name, NameLen) ;
             exit ReadNameLoop when NameLen = 0 ;
-            AlertLogID := GetAlertLogID(Name(1 to NameLen), ALERTLOG_ID_NOT_ASSIGNED) ;
+            AlertLogID := GetID(Name(1 to NameLen), ALERTLOG_ID_NOT_ASSIGNED) ;
             ReadState := GET_ENABLE ;
             ReadAnEnable := FALSE ;
 
