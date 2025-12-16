@@ -170,7 +170,7 @@ package AlertLogPkg is
   constant  MIN_NUM_AL_IDS                 : AlertLogIDType := 32 ; -- Number IDs initially allocated
 
   -- Get VHDL Assert Count, return AlertCountType
-  impure function GetVhdlAssertCount return AlertCountType ;
+  impure function GetVhdlAlertCount return AlertCountType ;
 
   ------------------------------------------------------------
   --  Alert always goes to the transcript file
@@ -768,15 +768,15 @@ package body AlertLogPkg is
   end function LeftJustify ;
 
   ------------------------------------------------------------
-  impure function GetVhdlAssertCount return AlertCountType is
+  impure function GetVhdlAlertCount return AlertCountType is
   ------------------------------------------------------------
     variable AssertCount : AlertCountType ;
   begin
-    AssertCount(FAILURE) := GetVhdlAssertCount(SEVERITY_LEVEL'(FAILURE)) ;  -- Type Qual required in GHDL 6.0.0-dev
-    AssertCount(ERROR)   := GetVhdlAssertCount(SEVERITY_LEVEL'(ERROR)) ; 
-    AssertCount(WARNING) := GetVhdlAssertCount(SEVERITY_LEVEL'(WARNING)) ; 
+    AssertCount(FAILURE) := GetVhdlAssertCount(FAILURE) ;  
+    AssertCount(ERROR)   := GetVhdlAssertCount(ERROR) ; 
+    AssertCount(WARNING) := GetVhdlAssertCount(WARNING) ; 
     return AssertCount ; 
-  end function GetVhdlAssertCount ;
+  end function GetVhdlAlertCount ;
 
 
   type AlertLogStructPType is protected
@@ -1564,7 +1564,7 @@ package body AlertLogPkg is
       variable TotalAssertCount : integer ; 
     begin
       if FailOnVhdlAssertErrorsVar and (AlertLogID = ALERTLOG_BASE_ID) then
-        VhdlAssertCount  := GetVhdlAssertCount ; 
+        VhdlAssertCount  := GetVhdlAlertCount ; 
       else
         VhdlAssertCount := (0, 0, 0) ;
       end if ;
@@ -1745,7 +1745,7 @@ package body AlertLogPkg is
       variable TotalAssertCount : integer ; 
     begin
       if PrintVhdlAssertErrorsVar then
-        VhdlAssertCount  := GetVhdlAssertCount ; 
+        VhdlAssertCount  := GetVhdlAlertCount ; 
         TotalAssertCount := SumAlertCount(VhdlAssertCount) ; 
         if ReportWhenZero or HasErrors then
           write(buf, Prefix & " " & LeftJustify(VHDL_ASSERT_ID_NAME, CurReportJustifyAmountVar - IndentAmount)) ;
@@ -2106,7 +2106,7 @@ package body AlertLogPkg is
       variable TotalAssertCount : integer ; 
     begin
       if PrintVhdlAssertErrorsVar then
-        VhdlAssertCount  := GetVhdlAssertCount ; 
+        VhdlAssertCount  := GetVhdlAlertCount ; 
         TotalAssertCount := SumAlertCount(RemoveNonFailingWarnings(VhdlAssertCount)) ; 
         Write(buf,
           FirstPrefix & "Name:  " & '"' & VHDL_ASSERT_ID_NAME & '"'  & LF  &
