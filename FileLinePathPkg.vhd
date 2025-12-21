@@ -53,7 +53,9 @@ package FileLinePathPkg is
   alias FILE_NAME is std.env.FILE_NAME [return string] ;
   alias FILE_PATH is std.env.FILE_PATH [return string] ;
   alias FILE_LINE is std.env.FILE_LINE [return string] ;
-  
+  alias GET_CALL_PATH is std.env.GET_CALL_PATH [return CALL_PATH_VECTOR_PTR] ;
+  alias TO_STRING is std.env.TO_STRING[CALL_PATH_VECTOR,     STRING return STRING] ;
+  alias TO_STRING is std.env.TO_STRING[CALL_PATH_VECTOR_PTR, STRING return STRING] ;
 
   ------------------------------------------------------------
   procedure deallocate(      variable Cpe    : inout CALL_PATH_ELEMENT) ;
