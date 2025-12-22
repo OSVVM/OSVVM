@@ -513,8 +513,15 @@ package AlertLogPkg is
   procedure SetTestName(Name : string ) ;
   alias SetAlertLogName is SetTestName [string] ;
 
+  -- Test Description and Tags for complex test scenarios
+  procedure SetTestDescription(Description : string ) ;
+  procedure SetTestTag(TagName : string ; TagValue : string ) ;
+  procedure ClearTestDescription ;
+  procedure ClearTestTags ;
+
   -- synthesis translate_off
   impure function GetTestName return string ;
+  impure function GetTestDescription return string ;
   impure function GetTranscriptName return string ;
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string ;
   -- synthesis translate_on
@@ -855,6 +862,12 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     procedure SetTestName(Name : string ) ;
+    procedure SetTestDescription(Description : string ) ;
+    impure function GetTestDescription return string ;
+    procedure SetTestTag(TagName : string ; TagValue : string ) ;
+    procedure ClearTestDescription ;
+    procedure ClearTestTags ;
+    -- WriteTestDescriptionYaml is a pt local procedure (file parameters not allowed in protected type interface)
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindID(Name : string ) return AlertLogIDType ;
     impure function FindID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
@@ -1011,6 +1024,14 @@ package body AlertLogPkg is
 
     -- Calculated by GetReqID
     variable HasRequirementsVar          : boolean := FALSE ;
+
+    -- Test Description and Tags storage
+    constant MAX_TEST_TAGS               : integer := 32 ;
+    type LineArrayType is array (integer range <>) of line ;
+    variable TestDescriptionVar          : Line := null ;
+    variable TestTagNameArray            : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
+    variable TestTagValueArray           : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
+    variable NumTestTagsVar              : integer := 0 ;
 
     ------------------------------------------------------------
     type AlertLogRecType is record
@@ -2124,6 +2145,30 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     --  pt local
+    procedure WriteTestDescriptionYaml(file TestFile : text ; Prefix : string) is
+    ------------------------------------------------------------
+      variable buf : line ;
+    begin
+      -- Write description if set
+      if TestDescriptionVar /= null and TestDescriptionVar.all'length > 0 then
+        write(buf, Prefix & "Description: """ & TestDescriptionVar.all & """") ;
+        writeline(TestFile, buf) ;
+      end if ;
+      -- Write tags if any
+      if NumTestTagsVar > 0 then
+        write(buf, Prefix & "Tags:") ;
+        writeline(TestFile, buf) ;
+        for i in 1 to NumTestTagsVar loop
+          if TestTagNameArray(i) /= null then
+            write(buf, Prefix & "  " & TestTagNameArray(i).all & ": """ & TestTagValueArray(i).all & """") ;
+            writeline(TestFile, buf) ;
+          end if ;
+        end loop ;
+      end if ;
+    end procedure WriteTestDescriptionYaml ;
+
+    ------------------------------------------------------------
+    --  pt local
     procedure WriteAlertYaml (
     ------------------------------------------------------------
       file TestFile  : text ;
@@ -2164,6 +2209,8 @@ package body AlertLogPkg is
         TopLevel                 => TRUE,
         ExternalErrors           => ExternalErrors
       ) ;
+      -- Write test description and tags if available
+      WriteTestDescriptionYaml(TestFile, Prefix) ;
       if PrintSettings then
         WriteSettingsYaml(
           TestFile               => TestFile,
@@ -3019,6 +3066,72 @@ package body AlertLogPkg is
       Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).NameLower) ;
       AlertLogPtr(ALERTLOG_BASE_ID).NameLower  := new string'(to_lower(NAME)) ;
     end procedure SetTestName ;
+
+    ------------------------------------------------------------
+    procedure SetTestDescription(Description : string ) is
+    ------------------------------------------------------------
+    begin
+      Deallocate(TestDescriptionVar) ;
+      TestDescriptionVar := new string'(Description) ;
+    end procedure SetTestDescription ;
+
+    ------------------------------------------------------------
+    impure function GetTestDescription return string is
+    ------------------------------------------------------------
+    begin
+      if TestDescriptionVar /= null then
+        return TestDescriptionVar.all ;
+      else
+        return "" ;
+      end if ;
+    end function GetTestDescription ;
+
+    ------------------------------------------------------------
+    procedure SetTestTag(TagName : string ; TagValue : string ) is
+    ------------------------------------------------------------
+      variable FoundExisting : boolean := FALSE ;
+    begin
+      -- Check if tag already exists and update it
+      for i in 1 to NumTestTagsVar loop
+        if TestTagNameArray(i) /= null and TestTagNameArray(i).all = TagName then
+          Deallocate(TestTagValueArray(i)) ;
+          TestTagValueArray(i) := new string'(TagValue) ;
+          FoundExisting := TRUE ;
+          exit ;
+        end if ;
+      end loop ;
+      -- Add new tag if not found and space available
+      if not FoundExisting then
+        if NumTestTagsVar < MAX_TEST_TAGS then
+          NumTestTagsVar := NumTestTagsVar + 1 ;
+          TestTagNameArray(NumTestTagsVar) := new string'(TagName) ;
+          TestTagValueArray(NumTestTagsVar) := new string'(TagValue) ;
+        else
+          Alert("SetTestTag: Maximum number of test tags reached (" & to_string(MAX_TEST_TAGS) & ")", WARNING) ;
+        end if ;
+      end if ;
+    end procedure SetTestTag ;
+
+    ------------------------------------------------------------
+    procedure ClearTestDescription is
+    ------------------------------------------------------------
+    begin
+      Deallocate(TestDescriptionVar) ;
+      TestDescriptionVar := null ;
+    end procedure ClearTestDescription ;
+
+    ------------------------------------------------------------
+    procedure ClearTestTags is
+    ------------------------------------------------------------
+    begin
+      for i in 1 to NumTestTagsVar loop
+        Deallocate(TestTagNameArray(i)) ;
+        Deallocate(TestTagValueArray(i)) ;
+        TestTagNameArray(i) := null ;
+        TestTagValueArray(i) := null ;
+      end loop ;
+      NumTestTagsVar := 0 ;
+    end procedure ClearTestTags ;
 
     ------------------------------------------------------------
     impure function GetAlertLogName(AlertLogID : AlertLogIDType) return string is
@@ -6396,6 +6509,42 @@ package body AlertLogPkg is
     -- synthesis translate_on
   end procedure SetTestName ;
 
+  ------------------------------------------------------------
+  procedure SetTestDescription(Description : string ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestDescription(Description) ;
+    -- synthesis translate_on
+  end procedure SetTestDescription ;
+
+  ------------------------------------------------------------
+  procedure SetTestTag(TagName : string ; TagValue : string ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTag(TagName, TagValue) ;
+    -- synthesis translate_on
+  end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure ClearTestDescription is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ClearTestDescription ;
+    -- synthesis translate_on
+  end procedure ClearTestDescription ;
+
+  ------------------------------------------------------------
+  procedure ClearTestTags is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ClearTestTags ;
+    -- synthesis translate_on
+  end procedure ClearTestTags ;
+
   -- synthesis translate_off
   ------------------------------------------------------------
   impure function GetTestName return string is
@@ -6403,6 +6552,13 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogName(ALERTLOG_BASE_ID) ;
   end function GetTestName ;
+
+  ------------------------------------------------------------
+  impure function GetTestDescription return string is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetTestDescription ;
+  end function GetTestDescription ;
 
   ------------------------------------------------------------
   impure function GetTranscriptName return string is
