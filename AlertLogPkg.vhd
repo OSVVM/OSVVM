@@ -516,7 +516,7 @@ package AlertLogPkg is
   -- Test Description and Tags for complex test scenarios
   procedure SetTestBrief(Brief : string ) ;
   procedure SetTestDescription(Description : string ) ;
-  procedure SetTestTag(TagName : string ; TagValue : string ) ;
+  procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) ;
   procedure ClearTestBrief ;
   procedure ClearTestDescription ;
   procedure ClearTestTags ;
@@ -869,7 +869,7 @@ package body AlertLogPkg is
     procedure SetTestDescription(Description : string ) ;
     impure function GetTestBrief return string ;
     impure function GetTestDescription return string ;
-    procedure SetTestTag(TagName : string ; TagValue : string ) ;
+    procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) ;
     procedure ClearTestBrief ;
     procedure ClearTestDescription ;
     procedure ClearTestTags ;
@@ -1034,10 +1034,12 @@ package body AlertLogPkg is
     -- Test Description and Tags storage
     constant MAX_TEST_TAGS               : integer := 32 ;
     type LineArrayType is array (integer range <>) of line ;
+    type BoolArrayType is array (integer range <>) of boolean ;
     variable TestBriefVar                : Line := null ;
     variable TestDescriptionVar          : Line := null ;
     variable TestTagNameArray            : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
     variable TestTagValueArray           : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
+    variable TestTagVisibleArray         : BoolArrayType(1 to MAX_TEST_TAGS) := (others => TRUE) ;
     variable NumTestTagsVar              : integer := 0 ;
 
     ------------------------------------------------------------
@@ -2381,6 +2383,21 @@ package body AlertLogPkg is
             writeline(TestFile, buf) ;
           end if ;
         end loop ;
+
+        -- TagVisibility controls whether tags should be shown in summary tables.
+        -- Default is TRUE for all tags.
+        write(buf, Prefix & "TagVisibility:") ;
+        writeline(TestFile, buf) ;
+        for i in 1 to NumTestTagsVar loop
+          if TestTagNameArray(i) /= null then
+            if TestTagVisibleArray(i) then
+              write(buf, Prefix & "  " & TestTagNameArray(i).all & ": true") ;
+            else
+              write(buf, Prefix & "  " & TestTagNameArray(i).all & ": false") ;
+            end if ;
+            writeline(TestFile, buf) ;
+          end if ;
+        end loop ;
       end if ;
     end procedure WriteTestDescriptionYaml ;
 
@@ -3323,7 +3340,7 @@ package body AlertLogPkg is
     end function GetTestDescription ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : string ) is
+    procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) is
     ------------------------------------------------------------
       variable FoundExisting : boolean := FALSE ;
     begin
@@ -3332,6 +3349,7 @@ package body AlertLogPkg is
         if TestTagNameArray(i) /= null and TestTagNameArray(i).all = TagName then
           Deallocate(TestTagValueArray(i)) ;
           TestTagValueArray(i) := new string'(TagValue) ;
+          TestTagVisibleArray(i) := Visible ;
           FoundExisting := TRUE ;
           exit ;
         end if ;
@@ -3342,6 +3360,7 @@ package body AlertLogPkg is
           NumTestTagsVar := NumTestTagsVar + 1 ;
           TestTagNameArray(NumTestTagsVar) := new string'(TagName) ;
           TestTagValueArray(NumTestTagsVar) := new string'(TagValue) ;
+          TestTagVisibleArray(NumTestTagsVar) := Visible ;
         else
           Alert("SetTestTag: Maximum number of test tags reached (" & to_string(MAX_TEST_TAGS) & ")", WARNING) ;
         end if ;
@@ -3373,6 +3392,7 @@ package body AlertLogPkg is
         Deallocate(TestTagValueArray(i)) ;
         TestTagNameArray(i) := null ;
         TestTagValueArray(i) := null ;
+        TestTagVisibleArray(i) := TRUE ;
       end loop ;
       NumTestTagsVar := 0 ;
     end procedure ClearTestTags ;
@@ -6772,11 +6792,11 @@ package body AlertLogPkg is
   end procedure SetTestDescription ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : string ) is
+  procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue) ;
+    AlertLogStruct.SetTestTag(TagName, TagValue, Visible) ;
     -- synthesis translate_on
   end procedure SetTestTag ;
 
