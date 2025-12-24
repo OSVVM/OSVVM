@@ -514,13 +514,16 @@ package AlertLogPkg is
   alias SetAlertLogName is SetTestName [string] ;
 
   -- Test Description and Tags for complex test scenarios
+  procedure SetTestBrief(Brief : string ) ;
   procedure SetTestDescription(Description : string ) ;
   procedure SetTestTag(TagName : string ; TagValue : string ) ;
+  procedure ClearTestBrief ;
   procedure ClearTestDescription ;
   procedure ClearTestTags ;
 
   -- synthesis translate_off
   impure function GetTestName return string ;
+  impure function GetTestBrief return string ;
   impure function GetTestDescription return string ;
   impure function GetTranscriptName return string ;
   impure function GetAlertLogName(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) return string ;
@@ -862,9 +865,12 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     procedure SetTestName(Name : string ) ;
+    procedure SetTestBrief(Brief : string ) ;
     procedure SetTestDescription(Description : string ) ;
+    impure function GetTestBrief return string ;
     impure function GetTestDescription return string ;
     procedure SetTestTag(TagName : string ; TagValue : string ) ;
+    procedure ClearTestBrief ;
     procedure ClearTestDescription ;
     procedure ClearTestTags ;
     -- WriteTestDescriptionYaml is a pt local procedure (file parameters not allowed in protected type interface)
@@ -1028,6 +1034,7 @@ package body AlertLogPkg is
     -- Test Description and Tags storage
     constant MAX_TEST_TAGS               : integer := 32 ;
     type LineArrayType is array (integer range <>) of line ;
+    variable TestBriefVar                : Line := null ;
     variable TestDescriptionVar          : Line := null ;
     variable TestTagNameArray            : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
     variable TestTagValueArray           : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
@@ -2148,11 +2155,221 @@ package body AlertLogPkg is
     procedure WriteTestDescriptionYaml(file TestFile : text ; Prefix : string) is
     ------------------------------------------------------------
       variable buf : line ;
+
+      procedure WriteYamlDoubleQuotedScalar(
+        file TestFile : text ;
+        Prefix        : string ;
+        KeyName       : string ;
+        Value         : string
+      ) is
+        variable localBuf : line ;
+        constant BS : character := character'val(16#5C#) ;
+        constant LF : character := character'val(10) ;
+        constant CR : character := character'val(13) ;
+        constant HT : character := character'val(9) ;
+      begin
+        write(localBuf, Prefix & KeyName & ": ") ;
+        write(localBuf, '"') ;
+        for i in Value'range loop
+          case Value(i) is
+            when '"' =>
+              write(localBuf, BS) ;
+              write(localBuf, '"') ;
+            when BS =>
+              write(localBuf, BS) ;
+              write(localBuf, BS) ;
+            when LF =>
+              write(localBuf, BS) ;
+              write(localBuf, 'n') ;
+            when CR =>
+              write(localBuf, BS) ;
+              write(localBuf, 'r') ;
+            when HT =>
+              write(localBuf, BS) ;
+              write(localBuf, 't') ;
+            when others =>
+              write(localBuf, Value(i)) ;
+          end case ;
+        end loop ;
+        write(localBuf, '"') ;
+        writeline(TestFile, localBuf) ;
+      end procedure WriteYamlDoubleQuotedScalar ;
+
+      function ToLowerChar(C : character) return character is
+      begin
+        if (C >= 'A') and (C <= 'Z') then
+          return character'val(character'pos(C) + (character'pos('a') - character'pos('A'))) ;
+        else
+          return C ;
+        end if ;
+      end function ToLowerChar ;
+
+      function ToLowerStr(S : string) return string is
+        variable R : string(S'range) ;
+      begin
+        for i in S'range loop
+          R(i) := ToLowerChar(S(i)) ;
+        end loop ;
+        return R ;
+      end function ToLowerStr ;
+
+      function IsDigit(C : character) return boolean is
+      begin
+        return (C >= '0') and (C <= '9') ;
+      end function IsDigit ;
+
+      function IsInteger(S : string) return boolean is
+        variable j : integer ;
+      begin
+        if S'length = 0 then
+          return false ;
+        end if ;
+        j := S'low ;
+        if (S(j) = '+') or (S(j) = '-') then
+          if S'length = 1 then
+            return false ;
+          end if ;
+          j := j + 1 ;
+        end if ;
+        for k in j to S'high loop
+          if not IsDigit(S(k)) then
+            return false ;
+          end if ;
+        end loop ;
+        return true ;
+      end function IsInteger ;
+
+      function IsTrimmedEqualIgnoreCase(S : string ; Ref : string) return boolean is
+        variable FirstNonSpace : integer ;
+        variable LastNonSpace  : integer ;
+        variable RefIndex      : integer ;
+      begin
+        if S'length = 0 then
+          return false ;
+        end if ;
+
+        FirstNonSpace := S'high + 1 ;
+        for i in S'range loop
+          if S(i) /= ' ' then
+            FirstNonSpace := i ;
+            exit ;
+          end if ;
+        end loop ;
+        if FirstNonSpace > S'high then
+          return false ;
+        end if ;
+
+        LastNonSpace := S'low - 1 ;
+        for i in S'reverse_range loop
+          if S(i) /= ' ' then
+            LastNonSpace := i ;
+            exit ;
+          end if ;
+        end loop ;
+        if LastNonSpace < FirstNonSpace then
+          return false ;
+        end if ;
+
+        if (LastNonSpace - FirstNonSpace + 1) /= Ref'length then
+          return false ;
+        end if ;
+
+        RefIndex := Ref'low ;
+        for i in FirstNonSpace to LastNonSpace loop
+          if ToLowerChar(S(i)) /= ToLowerChar(Ref(RefIndex)) then
+            return false ;
+          end if ;
+          RefIndex := RefIndex + 1 ;
+        end loop ;
+        return true ;
+      end function IsTrimmedEqualIgnoreCase ;
+
+      function IsReal(S : string) return boolean is
+        variable SawDot   : boolean := false ;
+        variable SawExp   : boolean := false ;
+        variable SawDigit : boolean := false ;
+        variable i : integer := S'low ;
+      begin
+        if S'length = 0 then
+          return false ;
+        end if ;
+        if (S(i) = '+') or (S(i) = '-') then
+          if S'length = 1 then
+            return false ;
+          end if ;
+          i := i + 1 ;
+        end if ;
+        for k in i to S'high loop
+          if IsDigit(S(k)) then
+            SawDigit := true ;
+          elsif (S(k) = '.') and (not SawDot) and (not SawExp) then
+            SawDot := true ;
+          elsif ((S(k) = 'e') or (S(k) = 'E')) and (not SawExp) and SawDigit then
+            SawExp := true ;
+          elsif (SawExp and ((S(k) = '+') or (S(k) = '-'))) then
+            if not ((k > S'low) and ((S(k-1) = 'e') or (S(k-1) = 'E'))) then
+              return false ;
+            end if ;
+          else
+            return false ;
+          end if ;
+        end loop ;
+        return SawDigit and (SawDot or SawExp) ;
+      end function IsReal ;
+
+      function YamlScalar(Value : string) return string is
+        variable FirstNonSpace : integer ;
+        variable LastNonSpace  : integer ;
+      begin
+        -- empty scalar => YAML null
+        if Value'length = 0 then
+          return "null" ;
+        end if ;
+
+        FirstNonSpace := Value'high + 1 ;
+        for i in Value'range loop
+          if Value(i) /= ' ' then
+            FirstNonSpace := i ;
+            exit ;
+          end if ;
+        end loop ;
+        if FirstNonSpace > Value'high then
+          return "null" ;
+        end if ;
+
+        LastNonSpace := Value'low - 1 ;
+        for i in Value'reverse_range loop
+          if Value(i) /= ' ' then
+            LastNonSpace := i ;
+            exit ;
+          end if ;
+        end loop ;
+        if LastNonSpace < FirstNonSpace then
+          return "null" ;
+        end if ;
+
+        if IsTrimmedEqualIgnoreCase(Value, "null") then
+          return "null" ;
+        elsif IsTrimmedEqualIgnoreCase(Value, "true") then
+          return "true" ;
+        elsif IsTrimmedEqualIgnoreCase(Value, "false") then
+          return "false" ;
+        elsif IsInteger(Value(FirstNonSpace to LastNonSpace)) then
+          return Value(FirstNonSpace to LastNonSpace) ;
+        elsif IsReal(Value(FirstNonSpace to LastNonSpace)) then
+          return Value(FirstNonSpace to LastNonSpace) ;
+        else
+          return """" & Value & """" ;
+        end if ;
+      end function YamlScalar ;
     begin
+      -- Write brief if set (plain text)
+      if TestBriefVar /= null and TestBriefVar.all'length > 0 then
+        WriteYamlDoubleQuotedScalar(TestFile, Prefix, "Brief", TestBriefVar.all) ;
+      end if ;
       -- Write description if set
       if TestDescriptionVar /= null and TestDescriptionVar.all'length > 0 then
-        write(buf, Prefix & "Description: """ & TestDescriptionVar.all & """") ;
-        writeline(TestFile, buf) ;
+        WriteYamlDoubleQuotedScalar(TestFile, Prefix, "Description", TestDescriptionVar.all) ;
       end if ;
       -- Write tags if any
       if NumTestTagsVar > 0 then
@@ -2160,7 +2377,7 @@ package body AlertLogPkg is
         writeline(TestFile, buf) ;
         for i in 1 to NumTestTagsVar loop
           if TestTagNameArray(i) /= null then
-            write(buf, Prefix & "  " & TestTagNameArray(i).all & ": """ & TestTagValueArray(i).all & """") ;
+            write(buf, Prefix & "  " & TestTagNameArray(i).all & ": " & YamlScalar(TestTagValueArray(i).all)) ;
             writeline(TestFile, buf) ;
           end if ;
         end loop ;
@@ -3068,6 +3285,25 @@ package body AlertLogPkg is
     end procedure SetTestName ;
 
     ------------------------------------------------------------
+    procedure SetTestBrief(Brief : string ) is
+    ------------------------------------------------------------
+    begin
+      Deallocate(TestBriefVar) ;
+      TestBriefVar := new string'(Brief) ;
+    end procedure SetTestBrief ;
+
+    ------------------------------------------------------------
+    impure function GetTestBrief return string is
+    ------------------------------------------------------------
+    begin
+      if TestBriefVar /= null then
+        return TestBriefVar.all ;
+      else
+        return "" ;
+      end if ;
+    end function GetTestBrief ;
+
+    ------------------------------------------------------------
     procedure SetTestDescription(Description : string ) is
     ------------------------------------------------------------
     begin
@@ -3119,6 +3355,14 @@ package body AlertLogPkg is
       Deallocate(TestDescriptionVar) ;
       TestDescriptionVar := null ;
     end procedure ClearTestDescription ;
+
+    ------------------------------------------------------------
+    procedure ClearTestBrief is
+    ------------------------------------------------------------
+    begin
+      Deallocate(TestBriefVar) ;
+      TestBriefVar := null ;
+    end procedure ClearTestBrief ;
 
     ------------------------------------------------------------
     procedure ClearTestTags is
@@ -6510,6 +6754,15 @@ package body AlertLogPkg is
   end procedure SetTestName ;
 
   ------------------------------------------------------------
+  procedure SetTestBrief(Brief : string ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestBrief(Brief) ;
+    -- synthesis translate_on
+  end procedure SetTestBrief ;
+
+  ------------------------------------------------------------
   procedure SetTestDescription(Description : string ) is
   ------------------------------------------------------------
   begin
@@ -6537,6 +6790,15 @@ package body AlertLogPkg is
   end procedure ClearTestDescription ;
 
   ------------------------------------------------------------
+  procedure ClearTestBrief is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ClearTestBrief ;
+    -- synthesis translate_on
+  end procedure ClearTestBrief ;
+
+  ------------------------------------------------------------
   procedure ClearTestTags is
   ------------------------------------------------------------
   begin
@@ -6552,6 +6814,13 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogName(ALERTLOG_BASE_ID) ;
   end function GetTestName ;
+
+  ------------------------------------------------------------
+  impure function GetTestBrief return string is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetTestBrief ;
+  end function GetTestBrief ;
 
   ------------------------------------------------------------
   impure function GetTestDescription return string is
