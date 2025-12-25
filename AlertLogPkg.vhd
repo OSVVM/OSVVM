@@ -516,7 +516,18 @@ package AlertLogPkg is
   -- Test Description and Tags for complex test scenarios
   procedure SetTestBrief(Brief : string ) ;
   procedure SetTestDescription(Description : string ) ;
-  procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) ;
+  procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
+
+  -- Array-type tag helpers: avoid overloading SetTestTag on array types (string literals can match arrays)
+  procedure SetTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTagSigned  (TagName : string ; TagValue : signed ;   ShowInSummary : boolean := TRUE ) ;
+  procedure SetTestTagSlv     (TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) ;
+
   procedure ClearTestBrief ;
   procedure ClearTestDescription ;
   procedure ClearTestTags ;
@@ -869,7 +880,12 @@ package body AlertLogPkg is
     procedure SetTestDescription(Description : string ) ;
     impure function GetTestBrief return string ;
     impure function GetTestDescription return string ;
-    procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) ;
+    procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
+    procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
+    procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
+    procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
+    procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
+    procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
     procedure ClearTestBrief ;
     procedure ClearTestDescription ;
     procedure ClearTestTags ;
@@ -2169,6 +2185,7 @@ package body AlertLogPkg is
         constant LF : character := character'val(10) ;
         constant CR : character := character'val(13) ;
         constant HT : character := character'val(9) ;
+        constant DEL : character := character'val(127) ;
       begin
         write(localBuf, Prefix & KeyName & ": ") ;
         write(localBuf, '"') ;
@@ -2190,7 +2207,12 @@ package body AlertLogPkg is
               write(localBuf, BS) ;
               write(localBuf, 't') ;
             when others =>
-              write(localBuf, Value(i)) ;
+              -- Remove other control chars that can break YAML/HTML tooling
+              if (character'pos(Value(i)) < 32) or (Value(i) = DEL) then
+                write(localBuf, ' ') ;
+              else
+                write(localBuf, Value(i)) ;
+              end if ;
           end case ;
         end loop ;
         write(localBuf, '"') ;
@@ -2384,9 +2406,9 @@ package body AlertLogPkg is
           end if ;
         end loop ;
 
-        -- TagVisibility controls whether tags should be shown in summary tables.
+        -- TagSummaryVisibility controls whether tags should be shown in summary tables.
         -- Default is TRUE for all tags.
-        write(buf, Prefix & "TagVisibility:") ;
+        write(buf, Prefix & "TagSummaryVisibility:") ;
         writeline(TestFile, buf) ;
         for i in 1 to NumTestTagsVar loop
           if TestTagNameArray(i) /= null then
@@ -3304,7 +3326,14 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure SetTestBrief(Brief : string ) is
     ------------------------------------------------------------
+      constant OSVVM_TEST_BRIEF_MAX_LENGTH : natural := 120 ;
     begin
+      -- Soft warning: keep briefs brief. Use Log so it does not affect fail-on-warning flows.
+      if OSVVM_TEST_BRIEF_MAX_LENGTH > 0 and Brief'length > OSVVM_TEST_BRIEF_MAX_LENGTH then
+        log(ALERTLOG_BASE_ID,
+            "WARNING: Test brief length (" & integer'image(Brief'length) & ") exceeds max (" & integer'image(OSVVM_TEST_BRIEF_MAX_LENGTH) & ")",
+            INFO) ;
+      end if ;
       Deallocate(TestBriefVar) ;
       TestBriefVar := new string'(Brief) ;
     end procedure SetTestBrief ;
@@ -3340,7 +3369,7 @@ package body AlertLogPkg is
     end function GetTestDescription ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) is
+    procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
       variable FoundExisting : boolean := FALSE ;
     begin
@@ -3349,7 +3378,7 @@ package body AlertLogPkg is
         if TestTagNameArray(i) /= null and TestTagNameArray(i).all = TagName then
           Deallocate(TestTagValueArray(i)) ;
           TestTagValueArray(i) := new string'(TagValue) ;
-          TestTagVisibleArray(i) := Visible ;
+          TestTagVisibleArray(i) := ShowInSummary ;
           FoundExisting := TRUE ;
           exit ;
         end if ;
@@ -3360,11 +3389,51 @@ package body AlertLogPkg is
           NumTestTagsVar := NumTestTagsVar + 1 ;
           TestTagNameArray(NumTestTagsVar) := new string'(TagName) ;
           TestTagValueArray(NumTestTagsVar) := new string'(TagValue) ;
-          TestTagVisibleArray(NumTestTagsVar) := Visible ;
+          TestTagVisibleArray(NumTestTagsVar) := ShowInSummary ;
         else
           Alert("SetTestTag: Maximum number of test tags reached (" & to_string(MAX_TEST_TAGS) & ")", WARNING) ;
         end if ;
       end if ;
+    end procedure SetTestTag ;
+
+    ------------------------------------------------------------
+    procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
+    ------------------------------------------------------------
+    begin
+      if TagValue then
+        SetTestTag(TagName, string'("true"), ShowInSummary) ;
+      else
+        SetTestTag(TagName, string'("false"), ShowInSummary) ;
+      end if ;
+    end procedure SetTestTag ;
+
+    ------------------------------------------------------------
+    procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
+    ------------------------------------------------------------
+    begin
+      SetTestTag(TagName, to_string(TagValue), ShowInSummary) ;
+    end procedure SetTestTag ;
+
+    ------------------------------------------------------------
+    procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
+    ------------------------------------------------------------
+    begin
+      SetTestTag(TagName, to_string(TagValue, DefaultTimeUnitsVar), ShowInSummary) ;
+    end procedure SetTestTag ;
+
+    ------------------------------------------------------------
+    procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
+    ------------------------------------------------------------
+    begin
+      SetTestTag(TagName, real'image(TagValue), ShowInSummary) ;
+    end procedure SetTestTag ;
+
+    ------------------------------------------------------------
+    procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
+    ------------------------------------------------------------
+    begin
+      -- Use std_logic'image so '0'/'1' do not get misinterpreted as YAML integers/booleans.
+      SetTestTag(TagName, std_logic'image(TagValue), ShowInSummary) ;
     end procedure SetTestTag ;
 
     ------------------------------------------------------------
@@ -6792,13 +6861,79 @@ package body AlertLogPkg is
   end procedure SetTestDescription ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : string ; Visible : boolean := TRUE ) is
+  procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, Visible) ;
+    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
   end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    -- synthesis translate_on
+  end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    -- synthesis translate_on
+  end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    -- synthesis translate_on
+  end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    -- synthesis translate_on
+  end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    -- synthesis translate_on
+  end procedure SetTestTag ;
+
+  ------------------------------------------------------------
+  procedure SetTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    SetTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
+  end procedure SetTestTagUnsigned ;
+
+  ------------------------------------------------------------
+  procedure SetTestTagSigned(TagName : string ; TagValue : signed ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    SetTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
+  end procedure SetTestTagSigned ;
+
+  ------------------------------------------------------------
+  procedure SetTestTagSlv(TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) is
+  ------------------------------------------------------------
+  begin
+    SetTestTag(TagName, to_hxstring(std_ulogic_vector(TagValue)), ShowInSummary) ;
+  end procedure SetTestTagSlv ;
 
   ------------------------------------------------------------
   procedure ClearTestDescription is
