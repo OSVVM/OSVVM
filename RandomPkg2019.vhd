@@ -1642,7 +1642,7 @@ package body RandomPkg2019 is
     for i in DistArray'range loop
       DistArray(i) := DistArray(i) + sum ;
       if DistArray(i) < sum then
-        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.DistInt: negative weight or sum > 31 bits", FAILURE) ;
+        Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.DistInt: negative weight or sum > maximum integer", FAILURE) ;
         return DistArray'low ; -- allows debugging vs integer'low, out of range
       end if ;
       sum := DistArray(i) ;

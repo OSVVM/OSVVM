@@ -111,9 +111,9 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | Else                                               |          |
   |     CoverageVendorApiPkg.vhd                       | 2020.01  |
   | TranscriptPkg.vhd                                  | 2023.01  |
-  | If Support2019FilePath                             |          |
+  | If Supports2019FilePath                             |          |
   |     FileLinePathPkg.vhd                            | 2025.02  |
-  | If not Support2019FilePath                         |          |
+  | If not Supports2019FilePath                         |          |
   |     deprecated/FileLinePathPkg_c.vhd               | 2025.02  |
   | If version >= 2019                                 |          |
   |     LanguageSupport2019Pkg.vhd                     | 2024.07  |

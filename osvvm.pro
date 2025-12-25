@@ -77,17 +77,24 @@ analyze CoverageVendorApiPkg_${::osvvm::FunctionalCoverageIntegratedInSimulator}
 
 analyze TranscriptPkg.vhd
 
-if {$::osvvm::Support2019FilePath && $::osvvm::VhdlVersion >= 2019} {
-  analyze FileLinePathPkg.vhd
-} else {
-  analyze deprecated/FileLinePathPkg_c.vhd
-}
-
 if {$::osvvm::VhdlVersion >= 2019}  {
   analyze LanguageSupport2019Pkg.vhd
 } else {
   analyze deprecated/LanguageSupport2019Pkg_c.vhd
 }
+
+if {$::osvvm::Supports2019FilePath && $::osvvm::VhdlVersion >= 2019} {
+  analyze FileLinePathPkg.vhd
+} else {
+  analyze deprecated/FileLinePathPkg_c.vhd
+}
+
+if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
+  analyze AssertApiPkg.vhd
+} else {
+  analyze deprecated/AssertApiPkg_c.vhd
+}
+
 
 analyze AlertLogPkg.vhd
 
@@ -156,7 +163,7 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
 
 analyze ReportPkg.vhd
 
-if {$::osvvm::VhdlVersion >= 2019}  {
+if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019ImpureFunctions}  {
   analyze RandomPkg2019.vhd [NoNullRangeWarning]
 } else {
   analyze  deprecated/RandomPkg2019_c.vhd

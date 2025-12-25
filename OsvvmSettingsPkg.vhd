@@ -137,6 +137,8 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_FAIL_ON_WARNING            : boolean ;
   constant  ALERT_LOG_FAIL_ON_DISABLED_ERRORS    : boolean ;
   constant  ALERT_LOG_FAIL_ON_REQUIREMENT_ERRORS : boolean ;
+  constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean ; 
+  constant  ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS   : boolean ;
 
   -- ReportAlerts Settings
   constant ALERT_LOG_REPORT_HIERARCHY            : boolean ;  -- ReportAerts 

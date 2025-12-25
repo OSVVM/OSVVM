@@ -63,7 +63,9 @@ package FilelinePathPkg is
   
   type CALL_PATH_VECTOR is array (natural range <>) of CALL_PATH_ELEMENT ;
   type CALL_PATH_VECTOR_PTR is access CALL_PATH_VECTOR ;
-    
+  impure function TO_STRING (variable call_path : inout CALL_PATH_VECTOR;     Separator : STRING := "" & LF ) return STRING ;
+  impure function TO_STRING (variable call_path : inout CALL_PATH_VECTOR_PTR; Separator : STRING := "" & LF ) return STRING ;
+
   ------------------------------------------------------------
   procedure deallocate(      variable Cpe    : inout CALL_PATH_ELEMENT) ;
   procedure deallocateCpvPtr(variable CpvPtr : inout CALL_PATH_VECTOR_PTR) ;
@@ -76,6 +78,8 @@ package FilelinePathPkg is
   ) return string ;
 
   impure function GetFilelineInfo(index : integer := 2) return string ; 
+
+  impure function GET_CALL_PATH return CALL_PATH_VECTOR_PTR ;
 
 end FilelinePathPkg ;
   
@@ -161,5 +165,12 @@ package body FilelinePathPkg is
    return "" ;
   end function GetFilelineInfo ; 
 
+  ------------------------------------------------------------
+  -- Get Call Path as CALL_PATH_VECTOR_PTR
+  ------------------------------------------------------------
+  impure function GET_CALL_PATH return CALL_PATH_VECTOR_PTR is 
+  begin
+    return NULL ;
+  end function Get_Call_Path;
 
 end package body FilelinePathPkg ;

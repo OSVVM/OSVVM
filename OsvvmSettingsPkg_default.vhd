@@ -150,6 +150,9 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_FAIL_ON_WARNING            : boolean := TRUE ;
   constant  ALERT_LOG_FAIL_ON_DISABLED_ERRORS    : boolean := TRUE ;
   constant  ALERT_LOG_FAIL_ON_REQUIREMENT_ERRORS : boolean := TRUE ;
+--   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := TRUE ; 
+  constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026", TRUE, FALSE) ;
+  constant  ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS   : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026", TRUE, FALSE) ;
 
   -- ReportAlerts Settings
   constant ALERT_LOG_REPORT_HIERARCHY            : boolean := TRUE ;   -- ReportAerts
