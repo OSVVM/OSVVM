@@ -3635,10 +3635,87 @@ package body AlertLogPkg is
     end procedure SetTestTag ;
 
     ------------------------------------------------------------
+    impure function RealToCompactString(Value : real) return string is
+    ------------------------------------------------------------
+      variable L : line ;
+      variable FirstNonSpace : integer ;
+      variable LastNonSpace  : integer ;
+      variable DotPos        : integer := 0 ;
+      variable TrimLast      : integer ;
+      variable ResultBuf     : string(1 to 256) ;
+      variable ResultLen     : integer := 0 ;
+    begin
+      -- Write as fixed-point, then trim trailing zeros/dot.
+      -- This avoids simulator-dependent real'image formatting (which can emit scientific notation).
+      write(L, Value, right, 0, 6) ;
+
+      FirstNonSpace := L.all'high + 1 ;
+      for i in L.all'range loop
+        if L.all(i) /= ' ' then
+          FirstNonSpace := i ;
+          exit ;
+        end if ;
+      end loop ;
+      if FirstNonSpace > L.all'high then
+        deallocate(L) ;
+        return "0" ;
+      end if ;
+
+      LastNonSpace := L.all'low - 1 ;
+      for i in L.all'reverse_range loop
+        if L.all(i) /= ' ' then
+          LastNonSpace := i ;
+          exit ;
+        end if ;
+      end loop ;
+      if LastNonSpace < FirstNonSpace then
+        deallocate(L) ;
+        return "0" ;
+      end if ;
+
+      for i in FirstNonSpace to LastNonSpace loop
+        if L.all(i) = '.' then
+          DotPos := i ;
+          exit ;
+        end if ;
+      end loop ;
+
+      TrimLast := LastNonSpace ;
+      if DotPos /= 0 then
+        while (TrimLast > DotPos) and (L.all(TrimLast) = '0') loop
+          TrimLast := TrimLast - 1 ;
+        end loop ;
+        if TrimLast = DotPos then
+          TrimLast := TrimLast - 1 ;
+        end if ;
+      end if ;
+
+      -- Copy into a fixed buffer so we can deallocate L before returning.
+      ResultLen := 0 ;
+      for i in FirstNonSpace to TrimLast loop
+        exit when ResultLen = ResultBuf'length ;
+        ResultLen := ResultLen + 1 ;
+        ResultBuf(ResultLen) := L.all(i) ;
+      end loop ;
+      deallocate(L) ;
+
+      if ResultLen = 0 then
+        return "0" ;
+      end if ;
+
+      -- Normalize "-0" to "0" after trimming.
+      if ResultLen = 2 and ResultBuf(1) = '-' and ResultBuf(2) = '0' then
+        return "0" ;
+      else
+        return ResultBuf(1 to ResultLen) ;
+      end if ;
+    end function RealToCompactString ;
+
+    ------------------------------------------------------------
     procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
-      SetTestTag(TagName, real'image(TagValue), ShowInSummary) ;
+      SetTestTag(TagName, RealToCompactString(TagValue), ShowInSummary) ;
     end procedure SetTestTag ;
 
     ------------------------------------------------------------
