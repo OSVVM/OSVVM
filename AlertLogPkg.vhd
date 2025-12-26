@@ -510,8 +510,11 @@ package AlertLogPkg is
 
   procedure ReportLogEnables ;
 
-  procedure SetTestName(Name : string ) ;
-  alias SetAlertLogName is SetTestName [string] ;
+  procedure SetTestName(Name : string ; Title : string := "" ) ;
+  alias SetAlertLogName is SetTestName [string, string] ;
+
+  -- Test Title (short human-friendly label).  Kept separate from test Name.
+  procedure SetTestTitle(Title : string ) ;
 
   -- Test Description and Tags for complex test scenarios
   procedure SetTestBrief(Brief : string ) ;
@@ -528,12 +531,14 @@ package AlertLogPkg is
   procedure SetTestTagSigned  (TagName : string ; TagValue : signed ;   ShowInSummary : boolean := TRUE ) ;
   procedure SetTestTagSlv     (TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) ;
 
+  procedure ClearTestTitle ;
   procedure ClearTestBrief ;
   procedure ClearTestDescription ;
   procedure ClearTestTags ;
 
   -- synthesis translate_off
   impure function GetTestName return string ;
+  impure function GetTestTitle return string ;
   impure function GetTestBrief return string ;
   impure function GetTestDescription return string ;
   impure function GetTranscriptName return string ;
@@ -875,9 +880,11 @@ package body AlertLogPkg is
     -- AlertLog Structure Creation and Interaction Methods
 
     ------------------------------------------------------------
-    procedure SetTestName(Name : string ) ;
+    procedure SetTestName(Name : string ; Title : string := "" ) ;
+    procedure SetTestTitle(Title : string ) ;
     procedure SetTestBrief(Brief : string ) ;
     procedure SetTestDescription(Description : string ) ;
+    impure function GetTestTitle return string ;
     impure function GetTestBrief return string ;
     impure function GetTestDescription return string ;
     procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
@@ -886,6 +893,7 @@ package body AlertLogPkg is
     procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
     procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
     procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
+    procedure ClearTestTitle ;
     procedure ClearTestBrief ;
     procedure ClearTestDescription ;
     procedure ClearTestTags ;
@@ -1051,6 +1059,7 @@ package body AlertLogPkg is
     constant MAX_TEST_TAGS               : integer := 32 ;
     type LineArrayType is array (integer range <>) of line ;
     type BoolArrayType is array (integer range <>) of boolean ;
+    variable TestTitleVar                : Line := null ;
     variable TestBriefVar                : Line := null ;
     variable TestDescriptionVar          : Line := null ;
     variable TestTagNameArray            : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
@@ -2387,6 +2396,10 @@ package body AlertLogPkg is
         end if ;
       end function YamlScalar ;
     begin
+      -- Write title if set (plain text)
+      if TestTitleVar /= null and TestTitleVar.all'length > 0 then
+        WriteYamlDoubleQuotedScalar(TestFile, Prefix, "Title", TestTitleVar.all) ;
+      end if ;
       -- Write brief if set (plain text)
       if TestBriefVar /= null and TestBriefVar.all'length > 0 then
         WriteYamlDoubleQuotedScalar(TestFile, Prefix, "Brief", TestBriefVar.all) ;
@@ -3314,13 +3327,52 @@ package body AlertLogPkg is
     -- AlertLog Structure Creation and Interaction Methods
 
     ------------------------------------------------------------
-    procedure SetTestName(Name : string ) is
+    procedure SetTestTitle(Title : string ) is
+    ------------------------------------------------------------
+      constant OSVVM_TEST_TITLE_MAX_LENGTH : natural := 80 ;
+    begin
+      -- Soft warning: keep titles short. Use Log so it does not affect fail-on-warning flows.
+      if OSVVM_TEST_TITLE_MAX_LENGTH > 0 and Title'length > OSVVM_TEST_TITLE_MAX_LENGTH then
+        log(ALERTLOG_BASE_ID,
+            "WARNING: Test title length (" & integer'image(Title'length) & ") exceeds max (" & integer'image(OSVVM_TEST_TITLE_MAX_LENGTH) & ")",
+            INFO) ;
+      end if ;
+      Deallocate(TestTitleVar) ;
+      TestTitleVar := new string'(Title) ;
+    end procedure SetTestTitle ;
+
+    ------------------------------------------------------------
+    impure function GetTestTitle return string is
+    ------------------------------------------------------------
+    begin
+      if TestTitleVar /= null then
+        return TestTitleVar.all ;
+      else
+        return "" ;
+      end if ;
+    end function GetTestTitle ;
+
+    ------------------------------------------------------------
+    procedure ClearTestTitle is
+    ------------------------------------------------------------
+    begin
+      Deallocate(TestTitleVar) ;
+      TestTitleVar := null ;
+    end procedure ClearTestTitle ;
+
+    ------------------------------------------------------------
+    procedure SetTestName(Name : string ; Title : string := "" ) is
     ------------------------------------------------------------
     begin
       Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).Name) ;
       AlertLogPtr(ALERTLOG_BASE_ID).Name := new string'(Name) ;
       Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).NameLower) ;
       AlertLogPtr(ALERTLOG_BASE_ID).NameLower  := new string'(to_lower(NAME)) ;
+
+      -- Optional: set Title when provided; do not clear Title when empty.
+      if Title'length > 0 then
+        SetTestTitle(Title) ;
+      end if ;
     end procedure SetTestName ;
 
     ------------------------------------------------------------
@@ -6834,13 +6886,22 @@ package body AlertLogPkg is
   end ReportLogEnables ;
 
  ------------------------------------------------------------
-  procedure SetTestName(Name : string ) is
+  procedure SetTestName(Name : string ; Title : string := "" ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestName(Name) ;
+    AlertLogStruct.SetTestName(Name, Title) ;
     -- synthesis translate_on
   end procedure SetTestName ;
+
+  ------------------------------------------------------------
+  procedure SetTestTitle(Title : string ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetTestTitle(Title) ;
+    -- synthesis translate_on
+  end procedure SetTestTitle ;
 
   ------------------------------------------------------------
   procedure SetTestBrief(Brief : string ) is
@@ -6954,6 +7015,15 @@ package body AlertLogPkg is
   end procedure ClearTestBrief ;
 
   ------------------------------------------------------------
+  procedure ClearTestTitle is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.ClearTestTitle ;
+    -- synthesis translate_on
+  end procedure ClearTestTitle ;
+
+  ------------------------------------------------------------
   procedure ClearTestTags is
   ------------------------------------------------------------
   begin
@@ -6969,6 +7039,13 @@ package body AlertLogPkg is
   begin
     return AlertLogStruct.GetAlertLogName(ALERTLOG_BASE_ID) ;
   end function GetTestName ;
+
+  ------------------------------------------------------------
+  impure function GetTestTitle return string is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetTestTitle ;
+  end function GetTestTitle ;
 
   ------------------------------------------------------------
   impure function GetTestBrief return string is
