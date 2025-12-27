@@ -63,8 +63,6 @@ package FilelinePathPkg is
   
   type CALL_PATH_VECTOR is array (natural range <>) of CALL_PATH_ELEMENT ;
   type CALL_PATH_VECTOR_PTR is access CALL_PATH_VECTOR ;
-  impure function TO_STRING (variable call_path : inout CALL_PATH_VECTOR;     Separator : STRING := "" & LF ) return STRING ;
-  impure function TO_STRING (variable call_path : inout CALL_PATH_VECTOR_PTR; Separator : STRING := "" & LF ) return STRING ;
 
   ------------------------------------------------------------
   procedure deallocate(      variable Cpe    : inout CALL_PATH_ELEMENT) ;
