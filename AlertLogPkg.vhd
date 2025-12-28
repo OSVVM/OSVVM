@@ -528,6 +528,11 @@ package AlertLogPkg is
   -- Test Description and Tags for complex test scenarios
   procedure SetTestBrief(Brief : string ) ;
   procedure SetTestDescription(Description : string ) ;
+  -- Append one line to the test description. Automatically inserts LF between lines.
+  -- This allows writing readable multi-line descriptions without "& LF &" concatenation.
+  procedure AppendTestDescriptionLine(Line : string ) ;
+  -- Short alias for AppendTestDescriptionLine.
+  alias DescLn is AppendTestDescriptionLine [string] ;
   procedure AddTestTag(TagName : string ; TagValue : string    ; ShowInSummary : boolean := TRUE ) ;
   procedure AddTestTag(TagName : string ; TagValue : boolean   ; ShowInSummary : boolean := TRUE ) ;
   procedure AddTestTag(TagName : string ; TagValue : integer   ; ShowInSummary : boolean := TRUE ) ;
@@ -905,6 +910,7 @@ package body AlertLogPkg is
     procedure SetTestTitle(Title : string ) ;
     procedure SetTestBrief(Brief : string ) ;
     procedure SetTestDescription(Description : string ) ;
+    procedure AppendTestDescriptionLine(Line : string ) ;
     impure function GetTestTitle return string ;
     impure function GetTestBrief return string ;
     impure function GetTestDescription return string ;
@@ -3670,6 +3676,24 @@ package body AlertLogPkg is
       Deallocate(TestDescriptionVar) ;
       TestDescriptionVar := new string'(Description) ;
     end procedure SetTestDescription ;
+
+    ------------------------------------------------------------
+    ------------------------------------------------------------
+    procedure AppendTestDescriptionLine(Line : string ) is
+    ------------------------------------------------------------
+      variable OldDescriptionVar : std.textio.line ;
+    begin
+      if TestDescriptionVar = null then
+        TestDescriptionVar := new string'(Line) ;
+      elsif TestDescriptionVar.all'length = 0 then
+        Deallocate(TestDescriptionVar) ;
+        TestDescriptionVar := new string'(Line) ;
+      else
+        OldDescriptionVar := TestDescriptionVar ;
+        TestDescriptionVar := new string'(OldDescriptionVar.all & LF & Line) ;
+        Deallocate(OldDescriptionVar) ;
+      end if ;
+    end procedure AppendTestDescriptionLine ;
 
     ------------------------------------------------------------
     impure function GetTestDescription return string is
@@ -7486,6 +7510,15 @@ package body AlertLogPkg is
     AlertLogStruct.SetTestDescription(Description) ;
     -- synthesis translate_on
   end procedure SetTestDescription ;
+
+  ------------------------------------------------------------
+  procedure AppendTestDescriptionLine(Line : string ) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.AppendTestDescriptionLine(Line) ;
+    -- synthesis translate_on
+  end procedure AppendTestDescriptionLine ;
 
   ------------------------------------------------------------
   procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
