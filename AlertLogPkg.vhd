@@ -2399,6 +2399,79 @@ package body AlertLogPkg is
         writeline(TestFile, localBuf) ;
       end procedure WriteYamlDoubleQuotedScalar ;
 
+      procedure WriteYamlLiteralBlockScalar(
+        file TestFile : text ;
+        Prefix        : string ;
+        KeyName       : string ;
+        Value         : string
+      ) is
+        variable localBuf   : line ;
+        variable LineStart  : integer ;
+        variable LineEnd    : integer ;
+        variable Index      : integer ;
+
+        procedure WriteOneLine(StartIndex : integer ; EndIndex : integer) is
+          variable lineBuf : line ;
+          variable FirstNonSpace : integer ;
+        begin
+          write(lineBuf, Prefix & "  ") ;
+
+          -- Some Tcl YAML parsers strip comment lines that start with '#'
+          -- even inside literal block scalars.  To keep markdown headings
+          -- (##, ###, etc.) lossless, prefix a backslash before a leading '#'.
+          FirstNonSpace := StartIndex ;
+          if StartIndex <= EndIndex then
+            while FirstNonSpace <= EndIndex loop
+              exit when (Value(FirstNonSpace) /= ' ') and (Value(FirstNonSpace) /= HT) ;
+              FirstNonSpace := FirstNonSpace + 1 ;
+            end loop ;
+          end if ;
+
+          if StartIndex <= EndIndex then
+            for j in StartIndex to EndIndex loop
+              -- For block scalars, no escaping needed.  Replace control chars.
+              if (j = FirstNonSpace) and (Value(j) = '#') then
+                write(lineBuf, '\') ;
+                write(lineBuf, '#') ;
+              elsif (Value(j) = HT) then
+                write(lineBuf, ' ') ;
+              elsif (character'pos(Value(j)) < 32) or (Value(j) = DEL) then
+                write(lineBuf, ' ') ;
+              else
+                write(lineBuf, Value(j)) ;
+              end if ;
+            end loop ;
+          end if ;
+          writeline(TestFile, lineBuf) ;
+        end procedure WriteOneLine ;
+
+      begin
+        -- YAML literal block scalar (|) keeps newlines and is readable in YAML.
+        write(localBuf, Prefix & KeyName & ": |") ;
+        writeline(TestFile, localBuf) ;
+
+        LineStart := Value'low ;
+        Index := Value'low ;
+        while Index <= Value'high loop
+          if (Value(Index) = LF) or (Value(Index) = CR) then
+            LineEnd := Index - 1 ;
+            WriteOneLine(LineStart, LineEnd) ;
+            -- Handle CRLF as a single newline
+            if (Value(Index) = CR) and (Index < Value'high) and (Value(Index+1) = LF) then
+              Index := Index + 1 ;
+            end if ;
+            LineStart := Index + 1 ;
+          end if ;
+          Index := Index + 1 ;
+        end loop ;
+        if LineStart <= Value'high then
+          WriteOneLine(LineStart, Value'high) ;
+        elsif (Value'length > 0) and ((Value(Value'high) = LF) or (Value(Value'high) = CR)) then
+          -- Value ended with newline: preserve trailing blank line in the block
+          WriteOneLine(1, 0) ;
+        end if ;
+      end procedure WriteYamlLiteralBlockScalar ;
+
       -- function IsTrimmedEqualIgnoreCase(S : string ; Ref : string) return boolean is
       --   variable FirstNonSpace : integer ;
       --   variable LastNonSpace  : integer ;
@@ -2512,7 +2585,7 @@ package body AlertLogPkg is
       end if ;
       -- Write description if set
       if TestDescriptionVar /= null and TestDescriptionVar.all'length > 0 then
-        WriteYamlDoubleQuotedScalar(TestFile, Prefix, "Description", TestDescriptionVar.all) ;
+        WriteYamlLiteralBlockScalar(TestFile, Prefix, "Description", TestDescriptionVar.all) ;
       end if ;
       -- Write tags if any
       if NumTestTagsVar > 0 then
