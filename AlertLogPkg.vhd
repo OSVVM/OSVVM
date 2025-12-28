@@ -528,17 +528,17 @@ package AlertLogPkg is
   -- Test Description and Tags for complex test scenarios
   procedure SetTestBrief(Brief : string ) ;
   procedure SetTestDescription(Description : string ) ;
-  procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
 
   -- Array-type tag helpers: avoid overloading SetTestTag on array types (string literals can match arrays)
-  procedure SetTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTagSigned  (TagName : string ; TagValue : signed ;   ShowInSummary : boolean := TRUE ) ;
-  procedure SetTestTagSlv     (TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTagSigned  (TagName : string ; TagValue : signed ;   ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTagSlv     (TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) ;
 
   procedure ClearTestTitle ;
   procedure ClearTestBrief ;
@@ -908,12 +908,12 @@ package body AlertLogPkg is
     impure function GetTestTitle return string ;
     impure function GetTestBrief return string ;
     impure function GetTestDescription return string ;
-    procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
-    procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
-    procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
-    procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
-    procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
-    procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
+    procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
+    procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
+    procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
+    procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
+    procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
+    procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
     procedure ClearTestTitle ;
     procedure ClearTestBrief ;
     procedure ClearTestDescription ;
@@ -1087,7 +1087,7 @@ package body AlertLogPkg is
     variable TestDescriptionVar          : Line := null ;
     variable TestTagNameArray            : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
     variable TestTagValueArray           : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
-    variable TestTagVisibleArray         : BoolArrayType(1 to MAX_TEST_TAGS) := (others => TRUE) ;
+    variable TestTagVisibleArray         : boolean_vector(1 to MAX_TEST_TAGS) := (others => TRUE) ;
     variable NumTestTagsVar              : integer := 0 ;
 
     ------------------------------------------------------------
@@ -3613,11 +3613,7 @@ package body AlertLogPkg is
     procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
-      if TagValue then
-        SetTestTag(TagName, string'("true"), ShowInSummary) ;
-      else
-        SetTestTag(TagName, string'("false"), ShowInSummary) ;
-      end if ;
+      SetTestTag(TagName, boolean'image(TagValue), ShowInSummary) ;
     end procedure SetTestTag ;
 
     ------------------------------------------------------------
