@@ -2574,6 +2574,94 @@ package body AlertLogPkg is
           when TAG_STD_LOGIC => return "TAG_STD_LOGIC" ;
         end case ;
       end function TagTypeToString ;
+
+      procedure WriteYamlDoubleQuotedValue(
+        Buf   : inout line ;
+        Value : string
+      ) is
+      begin
+        write(Buf, '"') ;
+        for i in Value'range loop
+          case Value(i) is
+            when '"' =>
+              write(Buf, '\') ;
+              write(Buf, '"') ;
+            when '\' =>
+              write(Buf, '\') ;
+              write(Buf, '\') ;
+            when LF =>
+              write(Buf, '\') ;
+              write(Buf, 'n') ;
+            when CR =>
+              write(Buf, '\') ;
+              write(Buf, 'r') ;
+            when HT =>
+              write(Buf, '\') ;
+              write(Buf, 't') ;
+            when others =>
+              if (character'pos(Value(i)) < 32) or (Value(i) = DEL) then
+                write(Buf, ' ') ;
+              else
+                write(Buf, Value(i)) ;
+              end if ;
+          end case ;
+        end loop ;
+        write(Buf, '"') ;
+      end procedure WriteYamlDoubleQuotedValue ;
+
+      procedure WriteYamlInlineTagRecord(
+        file TestFile : text ;
+        Prefix        : string ;
+        TagName       : string ;
+        variable TagP : TagRecP
+      ) is
+        variable localBuf : line ;
+      begin
+        if TagP = null then
+          return ;
+        end if ;
+
+        std.textio.write(localBuf, Prefix & "  ") ;
+
+        -- Always quote the key to support spaces/special chars.
+        WriteYamlDoubleQuotedValue(localBuf, TagName) ;
+
+        std.textio.write(localBuf, string'(": {Value: ")) ;
+        case TagP.TagType is
+          when TAG_STRING =>
+            if TagP.ValueStr /= null then
+              WriteYamlDoubleQuotedValue(localBuf, TagP.ValueStr.all) ;
+            else
+              std.textio.write(localBuf, string'("null")) ;
+            end if ;
+          when TAG_BOOL =>
+            if TagP.ValueBoolean then
+              std.textio.write(localBuf, string'("true")) ;
+            else
+              std.textio.write(localBuf, string'("false")) ;
+            end if ;
+          when TAG_INT =>
+            std.textio.write(localBuf, to_string(TagP.ValueInt)) ;
+          when TAG_REAL =>
+            std.textio.write(localBuf, RealToCompactString(TagP.ValueReal)) ;
+          when TAG_TIME =>
+            WriteYamlDoubleQuotedValue(localBuf, to_string(TagP.ValueTime, DefaultTimeUnitsVar)) ;
+          when TAG_STD_LOGIC =>
+            WriteYamlDoubleQuotedValue(localBuf, std_logic'image(TagP.ValueStdLogic)) ;
+        end case ;
+
+        std.textio.write(localBuf, string'(", Type: ")) ;
+        WriteYamlDoubleQuotedValue(localBuf, TagTypeToString(TagP.TagType)) ;
+
+        std.textio.write(localBuf, string'(", Visibility: {Summary: ")) ;
+        if TagP.ShowInSummary then
+          std.textio.write(localBuf, string'("true")) ;
+        else
+          std.textio.write(localBuf, string'("false")) ;
+        end if ;
+        std.textio.write(localBuf, string'("}}")) ;
+        std.textio.writeline(TestFile, localBuf) ;
+      end procedure WriteYamlInlineTagRecord ;
     begin
       -- Write title if set (plain text)
       if TestTitleVar /= null and TestTitleVar.all'length > 0 then
@@ -2594,60 +2682,7 @@ package body AlertLogPkg is
         CurTag := TestTagHead ;
         while CurTag /= null loop
           if CurTag.Name /= null then
-            case CurTag.TagType is
-              when TAG_STRING =>
-                if CurTag.ValueStr /= null then
-                  WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, CurTag.ValueStr.all) ;
-                else
-                  write(buf, Prefix & "  " & CurTag.Name.all & ": null") ;
-                  writeline(TestFile, buf) ;
-                end if ;
-              when TAG_BOOL =>
-                if CurTag.ValueBoolean then
-                  write(buf, Prefix & "  " & CurTag.Name.all & ": true") ;
-                else
-                  write(buf, Prefix & "  " & CurTag.Name.all & ": false") ;
-                end if ;
-                writeline(TestFile, buf) ;
-              when TAG_INT =>
-                write(buf, Prefix & "  " & CurTag.Name.all & ": " & to_string(CurTag.ValueInt)) ;
-                writeline(TestFile, buf) ;
-              when TAG_REAL =>
-                write(buf, Prefix & "  " & CurTag.Name.all & ": " & RealToCompactString(CurTag.ValueReal)) ;
-                writeline(TestFile, buf) ;
-              when TAG_TIME =>
-                WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, to_string(CurTag.ValueTime, DefaultTimeUnitsVar)) ;
-              when TAG_STD_LOGIC =>
-                WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, std_logic'image(CurTag.ValueStdLogic)) ;
-            end case ;
-          end if ;
-          CurTag := CurTag.NextTag ;
-        end loop ;
-
-        -- TagSummaryVisibility controls whether tags should be shown in summary tables.
-        -- Default is TRUE for all tags.
-        write(buf, Prefix & "TagSummaryVisibility:") ;
-        writeline(TestFile, buf) ;
-        CurTag := TestTagHead ;
-        while CurTag /= null loop
-          if CurTag.Name /= null then
-            if CurTag.ShowInSummary then
-              write(buf, Prefix & "  " & CurTag.Name.all & ": true") ;
-            else
-              write(buf, Prefix & "  " & CurTag.Name.all & ": false") ;
-            end if ;
-            writeline(TestFile, buf) ;
-          end if ;
-          CurTag := CurTag.NextTag ;
-        end loop ;
-
-        -- TagTypes provides explicit tag type information for downstream tools.
-        write(buf, Prefix & "TagTypes:") ;
-        writeline(TestFile, buf) ;
-        CurTag := TestTagHead ;
-        while CurTag /= null loop
-          if CurTag.Name /= null then
-            WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, TagTypeToString(CurTag.TagType)) ;
+            WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag) ;
           end if ;
           CurTag := CurTag.NextTag ;
         end loop ;
