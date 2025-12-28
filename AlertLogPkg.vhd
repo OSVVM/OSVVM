@@ -1080,11 +1080,26 @@ package body AlertLogPkg is
 
     -- Test Description and Tags storage
     -- Tags are stored in a linked list.
+    -- Store tag values with explicit type information so tools do not need to infer type from strings.
+    type TagValueType is (
+      TAG_STRING,
+      TAG_BOOL,
+      TAG_INT,
+      TAG_REAL,
+      TAG_TIME,
+      TAG_STD_LOGIC
+    ) ;
     type TagRec ;
     type TagRecP is access TagRec ;
     type TagRec is record
       Name          : Line ;
-      Value         : Line ;
+      TagType       : TagValueType ;
+      ValueStr      : Line ;
+      ValueInt      : integer ;
+      ValueReal     : real ;
+      ValueBoolean  : boolean ;
+      ValueTime     : time ;
+      ValueStdLogic : std_logic ;
       ShowInSummary : boolean ;
       NextTag       : TagRecP ;
     end record TagRec ;
@@ -2334,6 +2349,9 @@ package body AlertLogPkg is
       WriteLine(TestFile, buf) ;
     end procedure WriteSettingsYaml ;
 
+    -- Forward declaration (used by WriteTestDescriptionYaml)
+    impure function RealToCompactString(Value : real) return string ;
+
     ------------------------------------------------------------
     --  pt local
     procedure WriteTestDescriptionYaml(file TestFile : text ; Prefix : string) is
@@ -2381,96 +2399,108 @@ package body AlertLogPkg is
         writeline(TestFile, localBuf) ;
       end procedure WriteYamlDoubleQuotedScalar ;
 
-      function IsTrimmedEqualIgnoreCase(S : string ; Ref : string) return boolean is
-        variable FirstNonSpace : integer ;
-        variable LastNonSpace  : integer ;
-        variable RefIndex      : integer ;
+      -- function IsTrimmedEqualIgnoreCase(S : string ; Ref : string) return boolean is
+      --   variable FirstNonSpace : integer ;
+      --   variable LastNonSpace  : integer ;
+      --   variable RefIndex      : integer ;
+      -- begin
+      --   if S'length = 0 then
+      --     return false ;
+      --   end if ;
+
+      --   FirstNonSpace := S'high + 1 ;
+      --   for i in S'range loop
+      --     if S(i) /= ' ' then
+      --       FirstNonSpace := i ;
+      --       exit ;
+      --     end if ;
+      --   end loop ;
+      --   if FirstNonSpace > S'high then
+      --     return false ;
+      --   end if ;
+
+      --   LastNonSpace := S'low - 1 ;
+      --   for i in S'reverse_range loop
+      --     if S(i) /= ' ' then
+      --       LastNonSpace := i ;
+      --       exit ;
+      --     end if ;
+      --   end loop ;
+      --   if LastNonSpace < FirstNonSpace then
+      --     return false ;
+      --   end if ;
+
+      --   if (LastNonSpace - FirstNonSpace + 1) /= Ref'length then
+      --     return false ;
+      --   end if ;
+
+      --   RefIndex := Ref'low ;
+      --   for i in FirstNonSpace to LastNonSpace loop
+      --     if to_lower(S(i)) /= to_lower(Ref(RefIndex)) then
+      --       return false ;
+      --     end if ;
+      --     RefIndex := RefIndex + 1 ;
+      --   end loop ;
+      --   return true ;
+      -- end function IsTrimmedEqualIgnoreCase ;
+
+      -- function YamlScalar(Value : string) return string is
+      --   variable FirstNonSpace : integer ;
+      --   variable LastNonSpace  : integer ;
+      -- begin
+      --   -- empty scalar => YAML null
+      --   if Value'length = 0 then
+      --     return "null" ;
+      --   end if ;
+
+      --   FirstNonSpace := Value'high + 1 ;
+      --   for i in Value'range loop
+      --     if Value(i) /= ' ' then
+      --       FirstNonSpace := i ;
+      --       exit ;
+      --     end if ;
+      --   end loop ;
+      --   if FirstNonSpace > Value'high then
+      --     return "null" ;
+      --   end if ;
+
+      --   LastNonSpace := Value'low - 1 ;
+      --   for i in Value'reverse_range loop
+      --     if Value(i) /= ' ' then
+      --       LastNonSpace := i ;
+      --       exit ;
+      --     end if ;
+      --   end loop ;
+      --   if LastNonSpace < FirstNonSpace then
+      --     return "null" ;
+      --   end if ;
+
+      --   if IsTrimmedEqualIgnoreCase(Value, "null") then
+      --     return "null" ;
+      --   elsif IsTrimmedEqualIgnoreCase(Value, "true") then
+      --     return "true" ;
+      --   elsif IsTrimmedEqualIgnoreCase(Value, "false") then
+      --     return "false" ;
+      --   elsif IsNumber(Value(FirstNonSpace to LastNonSpace)) then
+      --     return Value(FirstNonSpace to LastNonSpace) ;
+      --   elsif IsReal(Value(FirstNonSpace to LastNonSpace)) then
+      --     return Value(FirstNonSpace to LastNonSpace) ;
+      --   else
+      --     return """" & Value & """" ;
+      --   end if ;
+      -- end function YamlScalar ;
+
+      function TagTypeToString(T : TagValueType) return string is
       begin
-        if S'length = 0 then
-          return false ;
-        end if ;
-
-        FirstNonSpace := S'high + 1 ;
-        for i in S'range loop
-          if S(i) /= ' ' then
-            FirstNonSpace := i ;
-            exit ;
-          end if ;
-        end loop ;
-        if FirstNonSpace > S'high then
-          return false ;
-        end if ;
-
-        LastNonSpace := S'low - 1 ;
-        for i in S'reverse_range loop
-          if S(i) /= ' ' then
-            LastNonSpace := i ;
-            exit ;
-          end if ;
-        end loop ;
-        if LastNonSpace < FirstNonSpace then
-          return false ;
-        end if ;
-
-        if (LastNonSpace - FirstNonSpace + 1) /= Ref'length then
-          return false ;
-        end if ;
-
-        RefIndex := Ref'low ;
-        for i in FirstNonSpace to LastNonSpace loop
-          if to_lower(S(i)) /= to_lower(Ref(RefIndex)) then
-            return false ;
-          end if ;
-          RefIndex := RefIndex + 1 ;
-        end loop ;
-        return true ;
-      end function IsTrimmedEqualIgnoreCase ;
-
-      function YamlScalar(Value : string) return string is
-        variable FirstNonSpace : integer ;
-        variable LastNonSpace  : integer ;
-      begin
-        -- empty scalar => YAML null
-        if Value'length = 0 then
-          return "null" ;
-        end if ;
-
-        FirstNonSpace := Value'high + 1 ;
-        for i in Value'range loop
-          if Value(i) /= ' ' then
-            FirstNonSpace := i ;
-            exit ;
-          end if ;
-        end loop ;
-        if FirstNonSpace > Value'high then
-          return "null" ;
-        end if ;
-
-        LastNonSpace := Value'low - 1 ;
-        for i in Value'reverse_range loop
-          if Value(i) /= ' ' then
-            LastNonSpace := i ;
-            exit ;
-          end if ;
-        end loop ;
-        if LastNonSpace < FirstNonSpace then
-          return "null" ;
-        end if ;
-
-        if IsTrimmedEqualIgnoreCase(Value, "null") then
-          return "null" ;
-        elsif IsTrimmedEqualIgnoreCase(Value, "true") then
-          return "true" ;
-        elsif IsTrimmedEqualIgnoreCase(Value, "false") then
-          return "false" ;
-        elsif IsNumber(Value(FirstNonSpace to LastNonSpace)) then
-          return Value(FirstNonSpace to LastNonSpace) ;
-        elsif IsReal(Value(FirstNonSpace to LastNonSpace)) then
-          return Value(FirstNonSpace to LastNonSpace) ;
-        else
-          return """" & Value & """" ;
-        end if ;
-      end function YamlScalar ;
+        case T is
+          when TAG_STRING    => return "TAG_STRING" ;
+          when TAG_BOOL      => return "TAG_BOOL" ;
+          when TAG_INT       => return "TAG_INT" ;
+          when TAG_REAL      => return "TAG_REAL" ;
+          when TAG_TIME      => return "TAG_TIME" ;
+          when TAG_STD_LOGIC => return "TAG_STD_LOGIC" ;
+        end case ;
+      end function TagTypeToString ;
     begin
       -- Write title if set (plain text)
       if TestTitleVar /= null and TestTitleVar.all'length > 0 then
@@ -2491,8 +2521,32 @@ package body AlertLogPkg is
         CurTag := TestTagHead ;
         while CurTag /= null loop
           if CurTag.Name /= null then
-            write(buf, Prefix & "  " & CurTag.Name.all & ": " & YamlScalar(CurTag.Value.all)) ;
-            writeline(TestFile, buf) ;
+            case CurTag.TagType is
+              when TAG_STRING =>
+                if CurTag.ValueStr /= null then
+                  WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, CurTag.ValueStr.all) ;
+                else
+                  write(buf, Prefix & "  " & CurTag.Name.all & ": null") ;
+                  writeline(TestFile, buf) ;
+                end if ;
+              when TAG_BOOL =>
+                if CurTag.ValueBoolean then
+                  write(buf, Prefix & "  " & CurTag.Name.all & ": true") ;
+                else
+                  write(buf, Prefix & "  " & CurTag.Name.all & ": false") ;
+                end if ;
+                writeline(TestFile, buf) ;
+              when TAG_INT =>
+                write(buf, Prefix & "  " & CurTag.Name.all & ": " & to_string(CurTag.ValueInt)) ;
+                writeline(TestFile, buf) ;
+              when TAG_REAL =>
+                write(buf, Prefix & "  " & CurTag.Name.all & ": " & RealToCompactString(CurTag.ValueReal)) ;
+                writeline(TestFile, buf) ;
+              when TAG_TIME =>
+                WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, to_string(CurTag.ValueTime, DefaultTimeUnitsVar)) ;
+              when TAG_STD_LOGIC =>
+                WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, std_logic'image(CurTag.ValueStdLogic)) ;
+            end case ;
           end if ;
           CurTag := CurTag.NextTag ;
         end loop ;
@@ -2510,6 +2564,17 @@ package body AlertLogPkg is
               write(buf, Prefix & "  " & CurTag.Name.all & ": false") ;
             end if ;
             writeline(TestFile, buf) ;
+          end if ;
+          CurTag := CurTag.NextTag ;
+        end loop ;
+
+        -- TagTypes provides explicit tag type information for downstream tools.
+        write(buf, Prefix & "TagTypes:") ;
+        writeline(TestFile, buf) ;
+        CurTag := TestTagHead ;
+        while CurTag /= null loop
+          if CurTag.Name /= null then
+            WriteYamlDoubleQuotedScalar(TestFile, Prefix & "  ", CurTag.Name.all, TagTypeToString(CurTag.TagType)) ;
           end if ;
           CurTag := CurTag.NextTag ;
         end loop ;
@@ -3515,25 +3580,49 @@ package body AlertLogPkg is
       variable CurTag  : TagRecP ;
       variable PrevTag : TagRecP ;
       variable NewTag  : TagRecP ;
+
+      procedure FindTagByName(
+        TagNameIn : string ;
+        CurTagOut : out TagRecP ;
+        PrevTagOut : out TagRecP
+      ) is
+      begin
+        CurTagOut  := TestTagHead ;
+        PrevTagOut := null ;
+        while CurTagOut /= null loop
+          if CurTagOut.Name /= null and CurTagOut.Name.all = TagNameIn then
+            return ;
+          end if ;
+          PrevTagOut := CurTagOut ;
+          CurTagOut  := CurTagOut.NextTag ;
+        end loop ;
+      end procedure FindTagByName ;
     begin
-      -- Check if tag already exists and update it
-      CurTag  := TestTagHead ;
-      PrevTag := null ;
-      while CurTag /= null loop
-        if CurTag.Name /= null and CurTag.Name.all = TagName then
-          Deallocate(CurTag.Value) ;
-          CurTag.Value := new string'(TagValue) ;
-          CurTag.ShowInSummary := ShowInSummary ;
-          return ;
-        end if ;
-        PrevTag := CurTag ;
-        CurTag  := CurTag.NextTag ;
-      end loop ;
+      FindTagByName(TagName, CurTag, PrevTag) ;
+
+      if CurTag /= null then
+        Deallocate(CurTag.ValueStr) ;
+        CurTag.TagType       := TAG_STRING ;
+        CurTag.ValueStr      := new string'(TagValue) ;
+        CurTag.ValueInt      := 0 ;
+        CurTag.ValueReal     := 0.0 ;
+        CurTag.ValueBoolean  := FALSE ;
+        CurTag.ValueTime     := 0 ns ;
+        CurTag.ValueStdLogic := 'U' ;
+        CurTag.ShowInSummary := ShowInSummary ;
+        return ;
+      end if ;
 
       -- Add new tag (append)
       NewTag := new TagRec'(
         Name          => new string'(TagName),
-        Value         => new string'(TagValue),
+        TagType       => TAG_STRING,
+        ValueStr      => new string'(TagValue),
+        ValueInt      => 0,
+        ValueReal     => 0.0,
+        ValueBoolean  => FALSE,
+        ValueTime     => 0 ns,
+        ValueStdLogic => 'U',
         ShowInSummary => ShowInSummary,
         NextTag       => null
       ) ;
@@ -3548,22 +3637,139 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
+      variable CurTag  : TagRecP ;
+      variable PrevTag : TagRecP ;
+      variable NewTag  : TagRecP ;
     begin
-      AddTestTag(TagName, boolean'image(TagValue), ShowInSummary) ;
+      CurTag  := TestTagHead ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          Deallocate(CurTag.ValueStr) ;
+          CurTag.TagType       := TAG_BOOL ;
+          CurTag.ValueStr      := null ;
+          CurTag.ValueInt      := 0 ;
+          CurTag.ValueReal     := 0.0 ;
+          CurTag.ValueBoolean  := TagValue ;
+          CurTag.ValueTime     := 0 ns ;
+          CurTag.ValueStdLogic := 'U' ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return ;
+        end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
+      end loop ;
+
+      NewTag := new TagRec'(
+        Name          => new string'(TagName),
+        TagType       => TAG_BOOL,
+        ValueStr      => null,
+        ValueInt      => 0,
+        ValueReal     => 0.0,
+        ValueBoolean  => TagValue,
+        ValueTime     => 0 ns,
+        ValueStdLogic => 'U',
+        ShowInSummary => ShowInSummary,
+        NextTag       => null
+      ) ;
+      if TestTagHead = null then
+        TestTagHead := NewTag ;
+      else
+        PrevTag.NextTag := NewTag ;
+      end if ;
+      NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
+      variable CurTag  : TagRecP ;
+      variable PrevTag : TagRecP ;
+      variable NewTag  : TagRecP ;
     begin
-      AddTestTag(TagName, to_string(TagValue), ShowInSummary) ;
+      CurTag  := TestTagHead ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          Deallocate(CurTag.ValueStr) ;
+          CurTag.TagType       := TAG_INT ;
+          CurTag.ValueStr      := null ;
+          CurTag.ValueInt      := TagValue ;
+          CurTag.ValueReal     := 0.0 ;
+          CurTag.ValueBoolean  := FALSE ;
+          CurTag.ValueTime     := 0 ns ;
+          CurTag.ValueStdLogic := 'U' ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return ;
+        end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
+      end loop ;
+
+      NewTag := new TagRec'(
+        Name          => new string'(TagName),
+        TagType       => TAG_INT,
+        ValueStr      => null,
+        ValueInt      => TagValue,
+        ValueReal     => 0.0,
+        ValueBoolean  => FALSE,
+        ValueTime     => 0 ns,
+        ValueStdLogic => 'U',
+        ShowInSummary => ShowInSummary,
+        NextTag       => null
+      ) ;
+      if TestTagHead = null then
+        TestTagHead := NewTag ;
+      else
+        PrevTag.NextTag := NewTag ;
+      end if ;
+      NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
+      variable CurTag  : TagRecP ;
+      variable PrevTag : TagRecP ;
+      variable NewTag  : TagRecP ;
     begin
-      AddTestTag(TagName, to_string(TagValue, DefaultTimeUnitsVar), ShowInSummary) ;
+      CurTag  := TestTagHead ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          Deallocate(CurTag.ValueStr) ;
+          CurTag.TagType       := TAG_TIME ;
+          CurTag.ValueStr      := null ;
+          CurTag.ValueInt      := 0 ;
+          CurTag.ValueReal     := 0.0 ;
+          CurTag.ValueBoolean  := FALSE ;
+          CurTag.ValueTime     := TagValue ;
+          CurTag.ValueStdLogic := 'U' ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return ;
+        end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
+      end loop ;
+
+      NewTag := new TagRec'(
+        Name          => new string'(TagName),
+        TagType       => TAG_TIME,
+        ValueStr      => null,
+        ValueInt      => 0,
+        ValueReal     => 0.0,
+        ValueBoolean  => FALSE,
+        ValueTime     => TagValue,
+        ValueStdLogic => 'U',
+        ShowInSummary => ShowInSummary,
+        NextTag       => null
+      ) ;
+      if TestTagHead = null then
+        TestTagHead := NewTag ;
+      else
+        PrevTag.NextTag := NewTag ;
+      end if ;
+      NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
@@ -3646,16 +3852,93 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
+      variable CurTag  : TagRecP ;
+      variable PrevTag : TagRecP ;
+      variable NewTag  : TagRecP ;
     begin
-      AddTestTag(TagName, RealToCompactString(TagValue), ShowInSummary) ;
+      CurTag  := TestTagHead ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          Deallocate(CurTag.ValueStr) ;
+          CurTag.TagType       := TAG_REAL ;
+          CurTag.ValueStr      := null ;
+          CurTag.ValueInt      := 0 ;
+          CurTag.ValueReal     := TagValue ;
+          CurTag.ValueBoolean  := FALSE ;
+          CurTag.ValueTime     := 0 ns ;
+          CurTag.ValueStdLogic := 'U' ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return ;
+        end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
+      end loop ;
+
+      NewTag := new TagRec'(
+        Name          => new string'(TagName),
+        TagType       => TAG_REAL,
+        ValueStr      => null,
+        ValueInt      => 0,
+        ValueReal     => TagValue,
+        ValueBoolean  => FALSE,
+        ValueTime     => 0 ns,
+        ValueStdLogic => 'U',
+        ShowInSummary => ShowInSummary,
+        NextTag       => null
+      ) ;
+      if TestTagHead = null then
+        TestTagHead := NewTag ;
+      else
+        PrevTag.NextTag := NewTag ;
+      end if ;
+      NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
+      variable CurTag  : TagRecP ;
+      variable PrevTag : TagRecP ;
+      variable NewTag  : TagRecP ;
     begin
-      -- Use std_logic'image so '0'/'1' do not get misinterpreted as YAML integers/booleans.
-      AddTestTag(TagName, std_logic'image(TagValue), ShowInSummary) ;
+      CurTag  := TestTagHead ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          Deallocate(CurTag.ValueStr) ;
+          CurTag.TagType       := TAG_STD_LOGIC ;
+          CurTag.ValueStr      := null ;
+          CurTag.ValueInt      := 0 ;
+          CurTag.ValueReal     := 0.0 ;
+          CurTag.ValueBoolean  := FALSE ;
+          CurTag.ValueTime     := 0 ns ;
+          CurTag.ValueStdLogic := TagValue ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return ;
+        end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
+      end loop ;
+
+      NewTag := new TagRec'(
+        Name          => new string'(TagName),
+        TagType       => TAG_STD_LOGIC,
+        ValueStr      => null,
+        ValueInt      => 0,
+        ValueReal     => 0.0,
+        ValueBoolean  => FALSE,
+        ValueTime     => 0 ns,
+        ValueStdLogic => TagValue,
+        ShowInSummary => ShowInSummary,
+        NextTag       => null
+      ) ;
+      if TestTagHead = null then
+        TestTagHead := NewTag ;
+      else
+        PrevTag.NextTag := NewTag ;
+      end if ;
+      NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
@@ -3685,7 +3968,7 @@ package body AlertLogPkg is
       while CurTag /= null loop
         NextTag := CurTag.NextTag ;
         Deallocate(CurTag.Name) ;
-        Deallocate(CurTag.Value) ;
+        Deallocate(CurTag.ValueStr) ;
         Deallocate(CurTag) ;
         CurTag := NextTag ;
       end loop ;
