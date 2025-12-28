@@ -528,16 +528,16 @@ package AlertLogPkg is
   -- Test Description and Tags for complex test scenarios
   procedure SetTestBrief(Brief : string ) ;
   procedure SetTestDescription(Description : string ) ;
-  procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) ;
-  procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) ;
-  procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) ;
-  procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) ;
-  procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : string    ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : boolean   ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : integer   ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : time      ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTag(TagName : string ; TagValue : real      ; ShowInSummary : boolean := TRUE ) ;
   procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) ;
 
-  -- Array-type tag helpers: avoid overloading SetTestTag on array types (string literals can match arrays)
-  procedure AddTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) ;
-  procedure AddTestTagSigned  (TagName : string ; TagValue : signed ;   ShowInSummary : boolean := TRUE ) ;
+  -- Array-type tag helpers: avoid overloading AddTestTag on array types (string literals can match arrays)
+  procedure AddTestTagUnsigned(TagName : string ; TagValue : unsigned         ; ShowInSummary : boolean := TRUE ) ;
+  procedure AddTestTagSigned  (TagName : string ; TagValue : signed           ; ShowInSummary : boolean := TRUE ) ;
   procedure AddTestTagSlv     (TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) ;
 
   procedure ClearTestTitle ;
@@ -1079,16 +1079,20 @@ package body AlertLogPkg is
     variable HasRequirementsVar          : boolean := FALSE ;
 
     -- Test Description and Tags storage
-    constant MAX_TEST_TAGS               : integer := 32 ;
-    type LineArrayType is array (integer range <>) of line ;
-    type BoolArrayType is array (integer range <>) of boolean ;
+    -- Tags are stored in a linked list.
+    type TagRec ;
+    type TagRecP is access TagRec ;
+    type TagRec is record
+      Name          : Line ;
+      Value         : Line ;
+      ShowInSummary : boolean ;
+      NextTag       : TagRecP ;
+    end record TagRec ;
     variable TestTitleVar                : Line := null ;
     variable TestBriefVar                : Line := null ;
     variable TestDescriptionVar          : Line := null ;
-    variable TestTagNameArray            : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
-    variable TestTagValueArray           : LineArrayType(1 to MAX_TEST_TAGS) := (others => null) ;
-    variable TestTagVisibleArray         : boolean_vector(1 to MAX_TEST_TAGS) := (others => TRUE) ;
-    variable NumTestTagsVar              : integer := 0 ;
+    variable TestTagHead                 : TagRecP := null ;
+    variable NumTestTagsVar              : natural := 0 ;
 
     ------------------------------------------------------------
     type AlertLogRecType is record
@@ -1182,6 +1186,7 @@ package body AlertLogPkg is
       InvalidID  : AlertLogIDType := ALERTLOG_DEFAULT_ID
     ) return AlertLogIDType is
     ------------------------------------------------------------
+      variable CurTag : TagRecP ;
     begin
       if AlertLogID < LowestID or AlertLogID > NumAlertLogIDsVar then
         Alert("Invalid AlertLogID") ;
@@ -2334,6 +2339,7 @@ package body AlertLogPkg is
     procedure WriteTestDescriptionYaml(file TestFile : text ; Prefix : string) is
     ------------------------------------------------------------
       variable buf : line ;
+      variable CurTag : TagRecP ;
 
       procedure WriteYamlDoubleQuotedScalar(
         file TestFile : text ;
@@ -2342,30 +2348,25 @@ package body AlertLogPkg is
         Value         : string
       ) is
         variable localBuf : line ;
-        constant BS : character := character'val(16#5C#) ;
-        constant LF : character := character'val(10) ;
-        constant CR : character := character'val(13) ;
-        constant HT : character := character'val(9) ;
-        constant DEL : character := character'val(127) ;
       begin
         write(localBuf, Prefix & KeyName & ": ") ;
         write(localBuf, '"') ;
         for i in Value'range loop
           case Value(i) is
             when '"' =>
-              write(localBuf, BS) ;
+              write(localBuf, '\') ;
               write(localBuf, '"') ;
-            when BS =>
-              write(localBuf, BS) ;
-              write(localBuf, BS) ;
+            when '\' =>
+              write(localBuf, '\') ;
+              write(localBuf, '\') ;
             when LF =>
-              write(localBuf, BS) ;
+              write(localBuf, '\') ;
               write(localBuf, 'n') ;
             when CR =>
-              write(localBuf, BS) ;
+              write(localBuf, '\') ;
               write(localBuf, 'r') ;
             when HT =>
-              write(localBuf, BS) ;
+              write(localBuf, '\') ;
               write(localBuf, 't') ;
             when others =>
               -- Remove other control chars that can break YAML/HTML tooling
@@ -2379,50 +2380,6 @@ package body AlertLogPkg is
         write(localBuf, '"') ;
         writeline(TestFile, localBuf) ;
       end procedure WriteYamlDoubleQuotedScalar ;
-
-      function ToLowerChar(C : character) return character is
-      begin
-        if (C >= 'A') and (C <= 'Z') then
-          return character'val(character'pos(C) + (character'pos('a') - character'pos('A'))) ;
-        else
-          return C ;
-        end if ;
-      end function ToLowerChar ;
-
-      function ToLowerStr(S : string) return string is
-        variable R : string(S'range) ;
-      begin
-        for i in S'range loop
-          R(i) := ToLowerChar(S(i)) ;
-        end loop ;
-        return R ;
-      end function ToLowerStr ;
-
-      function IsDigit(C : character) return boolean is
-      begin
-        return (C >= '0') and (C <= '9') ;
-      end function IsDigit ;
-
-      function IsInteger(S : string) return boolean is
-        variable j : integer ;
-      begin
-        if S'length = 0 then
-          return false ;
-        end if ;
-        j := S'low ;
-        if (S(j) = '+') or (S(j) = '-') then
-          if S'length = 1 then
-            return false ;
-          end if ;
-          j := j + 1 ;
-        end if ;
-        for k in j to S'high loop
-          if not IsDigit(S(k)) then
-            return false ;
-          end if ;
-        end loop ;
-        return true ;
-      end function IsInteger ;
 
       function IsTrimmedEqualIgnoreCase(S : string ; Ref : string) return boolean is
         variable FirstNonSpace : integer ;
@@ -2461,46 +2418,13 @@ package body AlertLogPkg is
 
         RefIndex := Ref'low ;
         for i in FirstNonSpace to LastNonSpace loop
-          if ToLowerChar(S(i)) /= ToLowerChar(Ref(RefIndex)) then
+          if to_lower(S(i)) /= to_lower(Ref(RefIndex)) then
             return false ;
           end if ;
           RefIndex := RefIndex + 1 ;
         end loop ;
         return true ;
       end function IsTrimmedEqualIgnoreCase ;
-
-      function IsReal(S : string) return boolean is
-        variable SawDot   : boolean := false ;
-        variable SawExp   : boolean := false ;
-        variable SawDigit : boolean := false ;
-        variable i : integer := S'low ;
-      begin
-        if S'length = 0 then
-          return false ;
-        end if ;
-        if (S(i) = '+') or (S(i) = '-') then
-          if S'length = 1 then
-            return false ;
-          end if ;
-          i := i + 1 ;
-        end if ;
-        for k in i to S'high loop
-          if IsDigit(S(k)) then
-            SawDigit := true ;
-          elsif (S(k) = '.') and (not SawDot) and (not SawExp) then
-            SawDot := true ;
-          elsif ((S(k) = 'e') or (S(k) = 'E')) and (not SawExp) and SawDigit then
-            SawExp := true ;
-          elsif (SawExp and ((S(k) = '+') or (S(k) = '-'))) then
-            if not ((k > S'low) and ((S(k-1) = 'e') or (S(k-1) = 'E'))) then
-              return false ;
-            end if ;
-          else
-            return false ;
-          end if ;
-        end loop ;
-        return SawDigit and (SawDot or SawExp) ;
-      end function IsReal ;
 
       function YamlScalar(Value : string) return string is
         variable FirstNonSpace : integer ;
@@ -2539,7 +2463,7 @@ package body AlertLogPkg is
           return "true" ;
         elsif IsTrimmedEqualIgnoreCase(Value, "false") then
           return "false" ;
-        elsif IsInteger(Value(FirstNonSpace to LastNonSpace)) then
+        elsif IsNumber(Value(FirstNonSpace to LastNonSpace)) then
           return Value(FirstNonSpace to LastNonSpace) ;
         elsif IsReal(Value(FirstNonSpace to LastNonSpace)) then
           return Value(FirstNonSpace to LastNonSpace) ;
@@ -2564,26 +2488,30 @@ package body AlertLogPkg is
       if NumTestTagsVar > 0 then
         write(buf, Prefix & "Tags:") ;
         writeline(TestFile, buf) ;
-        for i in 1 to NumTestTagsVar loop
-          if TestTagNameArray(i) /= null then
-            write(buf, Prefix & "  " & TestTagNameArray(i).all & ": " & YamlScalar(TestTagValueArray(i).all)) ;
+        CurTag := TestTagHead ;
+        while CurTag /= null loop
+          if CurTag.Name /= null then
+            write(buf, Prefix & "  " & CurTag.Name.all & ": " & YamlScalar(CurTag.Value.all)) ;
             writeline(TestFile, buf) ;
           end if ;
+          CurTag := CurTag.NextTag ;
         end loop ;
 
         -- TagSummaryVisibility controls whether tags should be shown in summary tables.
         -- Default is TRUE for all tags.
         write(buf, Prefix & "TagSummaryVisibility:") ;
         writeline(TestFile, buf) ;
-        for i in 1 to NumTestTagsVar loop
-          if TestTagNameArray(i) /= null then
-            if TestTagVisibleArray(i) then
-              write(buf, Prefix & "  " & TestTagNameArray(i).all & ": true") ;
+        CurTag := TestTagHead ;
+        while CurTag /= null loop
+          if CurTag.Name /= null then
+            if CurTag.ShowInSummary then
+              write(buf, Prefix & "  " & CurTag.Name.all & ": true") ;
             else
-              write(buf, Prefix & "  " & TestTagNameArray(i).all & ": false") ;
+              write(buf, Prefix & "  " & CurTag.Name.all & ": false") ;
             end if ;
             writeline(TestFile, buf) ;
           end if ;
+          CurTag := CurTag.NextTag ;
         end loop ;
       end if ;
     end procedure WriteTestDescriptionYaml ;
@@ -3494,9 +3422,9 @@ package body AlertLogPkg is
     begin
       -- Soft warning: keep titles short. Use Log so it does not affect fail-on-warning flows.
       if OSVVM_TEST_TITLE_MAX_LENGTH > 0 and Title'length > OSVVM_TEST_TITLE_MAX_LENGTH then
-        log(ALERTLOG_BASE_ID,
+        Alert(ALERTLOG_BASE_ID,
             "WARNING: Test title length (" & integer'image(Title'length) & ") exceeds max (" & integer'image(OSVVM_TEST_TITLE_MAX_LENGTH) & ")",
-            INFO) ;
+            WARNING) ;
       end if ;
       Deallocate(TestTitleVar) ;
       TestTitleVar := new string'(Title) ;
@@ -3543,9 +3471,9 @@ package body AlertLogPkg is
     begin
       -- Soft warning: keep briefs brief. Use Log so it does not affect fail-on-warning flows.
       if OSVVM_TEST_BRIEF_MAX_LENGTH > 0 and Brief'length > OSVVM_TEST_BRIEF_MAX_LENGTH then
-        log(ALERTLOG_BASE_ID,
+        Alert(ALERTLOG_BASE_ID,
             "WARNING: Test brief length (" & integer'image(Brief'length) & ") exceeds max (" & integer'image(OSVVM_TEST_BRIEF_MAX_LENGTH) & ")",
-            INFO) ;
+            WARNING) ;
       end if ;
       Deallocate(TestBriefVar) ;
       TestBriefVar := new string'(Brief) ;
@@ -3582,53 +3510,61 @@ package body AlertLogPkg is
     end function GetTestDescription ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
+    procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
-      variable FoundExisting : boolean := FALSE ;
+      variable CurTag  : TagRecP ;
+      variable PrevTag : TagRecP ;
+      variable NewTag  : TagRecP ;
     begin
       -- Check if tag already exists and update it
-      for i in 1 to NumTestTagsVar loop
-        if TestTagNameArray(i) /= null and TestTagNameArray(i).all = TagName then
-          Deallocate(TestTagValueArray(i)) ;
-          TestTagValueArray(i) := new string'(TagValue) ;
-          TestTagVisibleArray(i) := ShowInSummary ;
-          FoundExisting := TRUE ;
-          exit ;
+      CurTag  := TestTagHead ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          Deallocate(CurTag.Value) ;
+          CurTag.Value := new string'(TagValue) ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return ;
         end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
       end loop ;
-      -- Add new tag if not found and space available
-      if not FoundExisting then
-        if NumTestTagsVar < MAX_TEST_TAGS then
-          NumTestTagsVar := NumTestTagsVar + 1 ;
-          TestTagNameArray(NumTestTagsVar) := new string'(TagName) ;
-          TestTagValueArray(NumTestTagsVar) := new string'(TagValue) ;
-          TestTagVisibleArray(NumTestTagsVar) := ShowInSummary ;
-        else
-          Alert("SetTestTag: Maximum number of test tags reached (" & to_string(MAX_TEST_TAGS) & ")", WARNING) ;
-        end if ;
+
+      -- Add new tag (append)
+      NewTag := new TagRec'(
+        Name          => new string'(TagName),
+        Value         => new string'(TagValue),
+        ShowInSummary => ShowInSummary,
+        NextTag       => null
+      ) ;
+      if TestTagHead = null then
+        TestTagHead := NewTag ;
+      else
+        PrevTag.NextTag := NewTag ;
       end if ;
-    end procedure SetTestTag ;
+      NumTestTagsVar := NumTestTagsVar + 1 ;
+    end procedure AddTestTag ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
+    procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
-      SetTestTag(TagName, boolean'image(TagValue), ShowInSummary) ;
-    end procedure SetTestTag ;
+      AddTestTag(TagName, boolean'image(TagValue), ShowInSummary) ;
+    end procedure AddTestTag ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
+    procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
-      SetTestTag(TagName, to_string(TagValue), ShowInSummary) ;
-    end procedure SetTestTag ;
+      AddTestTag(TagName, to_string(TagValue), ShowInSummary) ;
+    end procedure AddTestTag ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
+    procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
-      SetTestTag(TagName, to_string(TagValue, DefaultTimeUnitsVar), ShowInSummary) ;
-    end procedure SetTestTag ;
+      AddTestTag(TagName, to_string(TagValue, DefaultTimeUnitsVar), ShowInSummary) ;
+    end procedure AddTestTag ;
 
     ------------------------------------------------------------
     impure function RealToCompactString(Value : real) return string is
@@ -3708,19 +3644,19 @@ package body AlertLogPkg is
     end function RealToCompactString ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
+    procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
-      SetTestTag(TagName, RealToCompactString(TagValue), ShowInSummary) ;
-    end procedure SetTestTag ;
+      AddTestTag(TagName, RealToCompactString(TagValue), ShowInSummary) ;
+    end procedure AddTestTag ;
 
     ------------------------------------------------------------
-    procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
+    procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
     begin
       -- Use std_logic'image so '0'/'1' do not get misinterpreted as YAML integers/booleans.
-      SetTestTag(TagName, std_logic'image(TagValue), ShowInSummary) ;
-    end procedure SetTestTag ;
+      AddTestTag(TagName, std_logic'image(TagValue), ShowInSummary) ;
+    end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure ClearTestDescription is
@@ -3741,14 +3677,19 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     procedure ClearTestTags is
     ------------------------------------------------------------
+      variable CurTag  : TagRecP ;
+      variable NextTag : TagRecP ;
     begin
-      for i in 1 to NumTestTagsVar loop
-        Deallocate(TestTagNameArray(i)) ;
-        Deallocate(TestTagValueArray(i)) ;
-        TestTagNameArray(i) := null ;
-        TestTagValueArray(i) := null ;
-        TestTagVisibleArray(i) := TRUE ;
+      -- Deallocate all tags in the linked list
+      CurTag := TestTagHead ;
+      while CurTag /= null loop
+        NextTag := CurTag.NextTag ;
+        Deallocate(CurTag.Name) ;
+        Deallocate(CurTag.Value) ;
+        Deallocate(CurTag) ;
+        CurTag := NextTag ;
       end loop ;
+      TestTagHead := null ;
       NumTestTagsVar := 0 ;
     end procedure ClearTestTags ;
 
@@ -7156,79 +7097,79 @@ package body AlertLogPkg is
   end procedure SetTestDescription ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    AlertLogStruct.AddTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
-  end procedure SetTestTag ;
+  end procedure AddTestTag ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    AlertLogStruct.AddTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
-  end procedure SetTestTag ;
+  end procedure AddTestTag ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    AlertLogStruct.AddTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
-  end procedure SetTestTag ;
+  end procedure AddTestTag ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    AlertLogStruct.AddTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
-  end procedure SetTestTag ;
+  end procedure AddTestTag ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    AlertLogStruct.AddTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
-  end procedure SetTestTag ;
+  end procedure AddTestTag ;
 
   ------------------------------------------------------------
-  procedure SetTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestTag(TagName, TagValue, ShowInSummary) ;
+    AlertLogStruct.AddTestTag(TagName, TagValue, ShowInSummary) ;
     -- synthesis translate_on
-  end procedure SetTestTag ;
+  end procedure AddTestTag ;
 
   ------------------------------------------------------------
-  procedure SetTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTagUnsigned(TagName : string ; TagValue : unsigned ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
-    SetTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
-  end procedure SetTestTagUnsigned ;
+    AddTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
+  end procedure AddTestTagUnsigned ;
 
   ------------------------------------------------------------
-  procedure SetTestTagSigned(TagName : string ; TagValue : signed ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTagSigned(TagName : string ; TagValue : signed ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
-    SetTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
-  end procedure SetTestTagSigned ;
+    AddTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
+  end procedure AddTestTagSigned ;
 
   ------------------------------------------------------------
-  procedure SetTestTagSlv(TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) is
+  procedure AddTestTagSlv(TagName : string ; TagValue : std_logic_vector ; ShowInSummary : boolean := TRUE ) is
   ------------------------------------------------------------
   begin
-    SetTestTag(TagName, to_hxstring(std_ulogic_vector(TagValue)), ShowInSummary) ;
-  end procedure SetTestTagSlv ;
+    AddTestTag(TagName, to_hxstring(TagValue), ShowInSummary) ;
+  end procedure AddTestTagSlv ;
 
   ------------------------------------------------------------
   procedure ClearTestDescription is

@@ -69,6 +69,7 @@ package TextUtilPkg is
   function IsHexOrStdLogic (constant Char : character ) return boolean ;
   function IsNumber (constant Char : character ) return boolean ;
   function IsNumber (Name : string ) return boolean ;
+  function IsReal(Str : string) return boolean ;
   function isstd_logic (constant Char : character ) return boolean ;
 
   -- Conversions
@@ -342,6 +343,41 @@ package body TextUtilPkg is
     end loop ;
     return TRUE ;
   end function IsNumber ;
+
+  ------------------------------------------------------------
+  function IsReal(Str : string) return boolean is
+  ------------------------------------------------------------
+    variable SawDot   : boolean := false ;
+    variable SawExp   : boolean := false ;
+    variable SawDigit : boolean := false ;
+    variable i : integer := Str'low ;
+  begin
+    if Str'length = 0 then
+      return false ;
+    end if ;
+    if (Str(i) = '+') or (Str(i) = '-') then
+      if Str'length = 1 then
+        return false ;
+      end if ;
+      i := i + 1 ;
+    end if ;
+    for k in i to Str'high loop
+      if IsNumber(Str(k)) then
+        SawDigit := true ;
+      elsif (Str(k) = '.') and (not SawDot) and (not SawExp) then
+        SawDot := true ;
+      elsif ((Str(k) = 'e') or (Str(k) = 'E')) and (not SawExp) and SawDigit then
+        SawExp := true ;
+      elsif (SawExp and ((Str(k) = '+') or (Str(k) = '-'))) then
+        if not ((k > Str'low) and ((Str(k-1) = 'e') or (Str(k-1) = 'E'))) then
+          return false ;
+        end if ;
+      else
+        return false ;
+      end if ;
+    end loop ;
+    return SawDigit and (SawDot or SawExp) ;
+  end function IsReal ;
 
   ------------------------------------------------------------
   function isstd_logic (constant Char : character ) return boolean is
