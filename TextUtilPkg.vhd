@@ -350,33 +350,34 @@ package body TextUtilPkg is
     variable SawDot   : boolean := false ;
     variable SawExp   : boolean := false ;
     variable SawDigit : boolean := false ;
-    variable i : integer := Str'low ;
+    alias aStr : string(1 to Str'length) is Str ; 
+    variable i : integer := aStr'low ;
   begin
-    if Str'length = 0 then
+    if aStr'length = 0 then
       return false ;
     end if ;
-    if (Str(i) = '+') or (Str(i) = '-') then
-      if Str'length = 1 then
+    if (aStr(i) = '+') or (aStr(i) = '-') then
+      if aStr'length = 1 then
         return false ;
       end if ;
       i := i + 1 ;
     end if ;
-    for k in i to Str'high loop
-      if IsNumber(Str(k)) then
+    for k in i to aStr'high loop
+      if IsNumber(aStr(k)) then
         SawDigit := true ;
-      elsif (Str(k) = '.') and (not SawDot) and (not SawExp) then
+      elsif (aStr(k) = '.') and (not SawDot) and (not SawExp) then
         SawDot := true ;
-      elsif ((Str(k) = 'e') or (Str(k) = 'E')) and (not SawExp) and SawDigit then
+      elsif ((aStr(k) = 'e') or (aStr(k) = 'E')) and (not SawExp) and SawDigit then
         SawExp := true ;
-      elsif (SawExp and ((Str(k) = '+') or (Str(k) = '-'))) then
-        if not ((k > Str'low) and ((Str(k-1) = 'e') or (Str(k-1) = 'E'))) then
+      elsif (SawExp and ((aStr(k) = '+') or (aStr(k) = '-'))) then
+        if not ((k > aStr'low) and ((aStr(k-1) = 'e') or (aStr(k-1) = 'E'))) then
           return false ;
         end if ;
       else
         return false ;
       end if ;
     end loop ;
-    return SawDigit and (SawDot or SawExp) ;
+    return SawDigit and SawDot  ;
   end function IsReal ;
 
   ------------------------------------------------------------

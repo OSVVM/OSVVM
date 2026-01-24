@@ -1095,9 +1095,9 @@ package body AlertLogPkg is
       TAG_TIME,
       TAG_STD_LOGIC
     ) ;
-    type TagRec ;
-    type TagRecP is access TagRec ;
-    type TagRec is record
+    type TagRecType ;
+    type TagRecPtrType is access TagRecType ;
+    type TagRecType is record
       Name          : Line ;
       TagType       : TagValueType ;
       ValueStr      : Line ;
@@ -1109,10 +1109,10 @@ package body AlertLogPkg is
       ShowInSummary : boolean ;
       NextTag       : TagRecP ;
     end record TagRec ;
-    variable TestTitleVar                : Line := null ;
-    variable TestBriefVar                : Line := null ;
-    variable TestDescriptionVar          : Line := null ;
-    variable TestTagHead                 : TagRecP := null ;
+    variable TestTitlePtr                : Line := null ;
+    variable TestBriefPtr                : Line := null ;
+    variable TestDescriptionPtr          : Line := null ;
+    variable TestTagHeadPtr                 : TagRecPtrType := null ;
     variable NumTestTagsVar              : natural := 0 ;
 
     ------------------------------------------------------------
@@ -2378,20 +2378,15 @@ package body AlertLogPkg is
         for i in Value'range loop
           case Value(i) is
             when '"' =>
-              write(localBuf, '\') ;
-              write(localBuf, '"') ;
+              swrite(localBuf, "\""") ;
             when '\' =>
-              write(localBuf, '\') ;
-              write(localBuf, '\') ;
+              swrite(localBuf, "\\") ;
             when LF =>
-              write(localBuf, '\') ;
-              write(localBuf, 'n') ;
+              swrite(localBuf, "\n") ; 
             when CR =>
-              write(localBuf, '\') ;
-              write(localBuf, 'r') ;
+              swrite(localBuf, "\r") ; 
             when HT =>
-              write(localBuf, '\') ;
-              write(localBuf, 't') ;
+              swrite(localBuf, "\t") ; 
             when others =>
               -- Remove other control chars that can break YAML/HTML tooling
               if (character'pos(Value(i)) < 32) or (Value(i) = DEL) then
@@ -2632,7 +2627,7 @@ package body AlertLogPkg is
         -- Always quote the key to support spaces/special chars.
         WriteYamlDoubleQuotedValue(localBuf, TagName) ;
 
-        std.textio.write(localBuf, string'(": {Value: ")) ;
+        swrite(localBuf, ": {Value: ") ;
         case TagP.TagType is
           when TAG_STRING =>
             if TagP.ValueStr /= null then
@@ -3919,17 +3914,16 @@ package body AlertLogPkg is
       -- This avoids simulator-dependent real'image formatting (which can emit scientific notation).
       write(L, Value, right, 0, 6) ;
 
-      FirstNonSpace := L.all'high + 1 ;
-      for i in L.all'range loop
-        if L.all(i) /= ' ' then
-          FirstNonSpace := i ;
-          exit ;
-        end if ;
-      end loop ;
-      if FirstNonSpace > L.all'high then
+      NotFoundLoop : loop 
+        for i in L.all'range loop
+          if L.all(i) /= ' ' then
+            FirstNonSpace := i ;
+            exit NotFoundLoop ;
+          end if ;
+        end loop ;       
         deallocate(L) ;
         return "0" ;
-      end if ;
+      end loop NotFoundLoop ;
 
       LastNonSpace := L.all'low - 1 ;
       for i in L.all'reverse_range loop
