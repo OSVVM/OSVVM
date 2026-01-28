@@ -101,6 +101,13 @@ package TextUtilPkg is
   function to_string_max ( I : integer) return string ;
 
   ------------------------------------------------------------
+  -- RealToCompactString
+  --   Format a real using to_string(..., Digits) then trim
+  --   whitespace and unnecessary trailing zeros.
+  ------------------------------------------------------------
+  function RealToCompactString(RealVal : real ; Digits : natural := 6) return string ;
+
+  ------------------------------------------------------------
   -- Justify
   --   w/ Fill Character
   --   w/o Fill character, Parameter order & names sensible
@@ -567,6 +574,66 @@ package body TextUtilPkg is
       return to_string(I) ;
     end if ; 
   end function to_string_max ;
+
+  ------------------------------------------------------------
+  function RealToCompactString(RealVal : real ; Digits : natural := 6) return string is
+  ------------------------------------------------------------
+    -- Use to_string to avoid textio.write padding behavior and work only with strings.
+    constant CONST_STR : string := to_string(RealVal, Digits) ;
+    -- Ensure ascending range for simpler indexing.
+    variable StrVal : string(1 to CONST_STR'length) := CONST_STR ;
+    variable FirstNonSpace : integer ;
+    variable LastNonSpace  : integer ;
+    variable DotPos        : integer := 0 ;
+    variable TrimLast      : integer ;
+  begin
+    -- Trim any leading/trailing whitespace (some implementations may pad).
+    FirstNonSpace := StrVal'low ;
+    while (FirstNonSpace <= StrVal'high) and (StrVal(FirstNonSpace) = ' ') loop
+      FirstNonSpace := FirstNonSpace + 1 ;
+    end loop ;
+    if FirstNonSpace > StrVal'high then
+      return "0" ;
+    end if ;
+
+    LastNonSpace := StrVal'high ;
+    while (LastNonSpace >= FirstNonSpace) and (StrVal(LastNonSpace) = ' ') loop
+      LastNonSpace := LastNonSpace - 1 ;
+    end loop ;
+    if LastNonSpace < FirstNonSpace then
+      return "0" ;
+    end if ;
+
+    -- Locate decimal point, if any.
+    for i in FirstNonSpace to LastNonSpace loop
+      if StrVal(i) = '.' then
+        DotPos := i ;
+        exit ;
+      end if ;
+    end loop ;
+
+    -- Trim trailing zeros, then trailing '.'
+    TrimLast := LastNonSpace ;
+    if DotPos /= 0 then
+      while (TrimLast > DotPos) and (StrVal(TrimLast) = '0') loop
+        TrimLast := TrimLast - 1 ;
+      end loop ;
+      if TrimLast = DotPos then
+        TrimLast := TrimLast - 1 ;
+      end if ;
+    end if ;
+
+    if TrimLast < FirstNonSpace then
+      return "0" ;
+    end if ;
+
+    -- Normalize "-0" to "0" after trimming.
+    if (TrimLast = FirstNonSpace + 1) and (StrVal(FirstNonSpace) = '-') and (StrVal(FirstNonSpace + 1) = '0') then
+      return "0" ;
+    end if ;
+
+    return StrVal(FirstNonSpace to TrimLast) ;
+  end function RealToCompactString ;
 
   ------------------------------------------------------------
   -- Justify

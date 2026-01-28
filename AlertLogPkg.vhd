@@ -2351,8 +2351,7 @@ package body AlertLogPkg is
       WriteLine(TestFile, buf) ;
     end procedure WriteSettingsYaml ;
 
-    -- Forward declaration (used by YAML tag formatting helpers)
-    impure function RealToCompactString(Value : real) return string ;
+    -- Uses TextUtilPkg.RealToCompactString for real tag formatting.
 
     ------------------------------------------------------------
     --  pt local YAML helper
@@ -2360,13 +2359,13 @@ package body AlertLogPkg is
       file TestFile : text ;
       Prefix        : string ;
       KeyName       : string ;
-      Value         : string
+      YamlText      : string
     ) is
       variable localBuf : line ;
     begin
       write(localBuf, Prefix & KeyName & ": """) ;
-      for i in Value'range loop
-        case Value(i) is
+      for i in YamlText'range loop
+        case YamlText(i) is
           when '"' =>
             swrite(localBuf, "\""") ;
           when '\' =>
@@ -2379,10 +2378,10 @@ package body AlertLogPkg is
             swrite(localBuf, "\t") ; 
           when others =>
             -- Remove other control chars that can break YAML/HTML tooling
-            if (character'pos(Value(i)) < 32) or (Value(i) = DEL) then
+            if (character'pos(YamlText(i)) < 32) or (YamlText(i) = DEL) then
               write(localBuf, ' ') ;
             else
-              write(localBuf, Value(i)) ;
+              write(localBuf, YamlText(i)) ;
             end if ;
         end case ;
       end loop ;
@@ -2395,7 +2394,7 @@ package body AlertLogPkg is
     procedure WriteYamlLiteralBlockScalar_WriteOneLine(
       file TestFile  : text ;
       Prefix         : string ;
-      Value          : string ;
+      YamlText       : string ;
       StartIndex     : integer ;
       EndIndex       : integer
     ) is
@@ -2411,7 +2410,7 @@ package body AlertLogPkg is
       FirstNonSpace := StartIndex ;
       if StartIndex <= EndIndex then
         while FirstNonSpace <= EndIndex loop
-          exit when (Value(FirstNonSpace) /= ' ') and (Value(FirstNonSpace) /= HT) ;
+          exit when (YamlText(FirstNonSpace) /= ' ') and (YamlText(FirstNonSpace) /= HT) ;
           FirstNonSpace := FirstNonSpace + 1 ;
         end loop ;
       end if ;
@@ -2419,15 +2418,15 @@ package body AlertLogPkg is
       if StartIndex <= EndIndex then
         for j in StartIndex to EndIndex loop
           -- For block scalars, no escaping needed.  Replace control chars.
-          if (j = FirstNonSpace) and (Value(j) = '#') then
+          if (j = FirstNonSpace) and (YamlText(j) = '#') then
             write(lineBuf, BACKSLASH) ;
             write(lineBuf, '#') ;
-          elsif (Value(j) = HT) then
+          elsif (YamlText(j) = HT) then
             write(lineBuf, ' ') ;
-          elsif (character'pos(Value(j)) < 32) or (Value(j) = DEL) then
+          elsif (character'pos(YamlText(j)) < 32) or (YamlText(j) = DEL) then
             write(lineBuf, ' ') ;
           else
-            write(lineBuf, Value(j)) ;
+            write(lineBuf, YamlText(j)) ;
           end if ;
         end loop ;
       end if ;
@@ -2440,7 +2439,7 @@ package body AlertLogPkg is
       file TestFile : text ;
       Prefix        : string ;
       KeyName       : string ;
-      Value         : string
+      YamlText      : string
     ) is
       variable localBuf   : line ;
       variable LineStart  : integer ;
@@ -2451,25 +2450,25 @@ package body AlertLogPkg is
       write(localBuf, Prefix & KeyName & ": |") ;
       writeline(TestFile, localBuf) ;
 
-      LineStart := Value'low ;
-      Index := Value'low ;
-      while Index <= Value'high loop
-        if (Value(Index) = LF) or (Value(Index) = CR) then
+      LineStart := YamlText'low ;
+      Index := YamlText'low ;
+      while Index <= YamlText'high loop
+        if (YamlText(Index) = LF) or (YamlText(Index) = CR) then
           LineEnd := Index - 1 ;
-          WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, Value, LineStart, LineEnd) ;
+          WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, YamlText, LineStart, LineEnd) ;
           -- Handle CRLF as a single newline
-          if (Value(Index) = CR) and (Index < Value'high) and (Value(Index+1) = LF) then
+          if (YamlText(Index) = CR) and (Index < YamlText'high) and (YamlText(Index+1) = LF) then
             Index := Index + 1 ;
           end if ;
           LineStart := Index + 1 ;
         end if ;
         Index := Index + 1 ;
       end loop ;
-      if LineStart <= Value'high then
-        WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, Value, LineStart, Value'high) ;
-      elsif (Value'length > 0) and ((Value(Value'high) = LF) or (Value(Value'high) = CR)) then
+      if LineStart <= YamlText'high then
+        WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, YamlText, LineStart, YamlText'high) ;
+      elsif (YamlText'length > 0) and ((YamlText(YamlText'high) = LF) or (YamlText(YamlText'high) = CR)) then
         -- Value ended with newline: preserve trailing blank line in the block
-        WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, Value, 1, 0) ;
+        WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, YamlText, 1, 0) ;
       end if ;
     end procedure WriteYamlLiteralBlockScalar ;
 
@@ -2491,12 +2490,12 @@ package body AlertLogPkg is
     --  pt local YAML helper
     procedure WriteYamlDoubleQuotedValue(
       Buf   : inout line ;
-      Value : string
+      YamlText : string
     ) is
     begin
       write(Buf, '"') ;
-      for i in Value'range loop
-        case Value(i) is
+      for i in YamlText'range loop
+        case YamlText(i) is
           when '"' =>
             swrite(Buf, "\""") ;
           when '\' =>
@@ -2508,10 +2507,10 @@ package body AlertLogPkg is
           when HT =>
             swrite(Buf, "\t") ; 
           when others =>
-            if (character'pos(Value(i)) < 32) or (Value(i) = DEL) then
+            if (character'pos(YamlText(i)) < 32) or (YamlText(i) = DEL) then
               write(Buf, ' ') ;
             else
-              write(Buf, Value(i)) ;
+              write(Buf, YamlText(i)) ;
             end if ;
         end case ;
       end loop ;
@@ -3785,82 +3784,6 @@ package body AlertLogPkg is
       end if ;
       NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
-
-    ------------------------------------------------------------
-    impure function RealToCompactString(Value : real) return string is
-    ------------------------------------------------------------
-      variable L : line ;
-      variable FirstNonSpace : integer ;
-      variable LastNonSpace  : integer ;
-      variable DotPos        : integer := 0 ;
-      variable TrimLast      : integer ;
-      variable ResultBuf     : string(1 to 256) ;
-      variable ResultLen     : integer := 0 ;
-    begin
-      -- Write as fixed-point, then trim trailing zeros/dot.
-      -- This avoids simulator-dependent real'image formatting (which can emit scientific notation).
-      write(L, Value, right, 0, 6) ;
-
-      NotFoundLoop : loop 
-        for i in L.all'range loop
-          if L.all(i) /= ' ' then
-            FirstNonSpace := i ;
-            exit NotFoundLoop ;
-          end if ;
-        end loop ;       
-        deallocate(L) ;
-        return "0" ;
-      end loop NotFoundLoop ;
-
-      LastNonSpace := L.all'low - 1 ;
-      for i in L.all'reverse_range loop
-        if L.all(i) /= ' ' then
-          LastNonSpace := i ;
-          exit ;
-        end if ;
-      end loop ;
-      if LastNonSpace < FirstNonSpace then
-        deallocate(L) ;
-        return "0" ;
-      end if ;
-
-      for i in FirstNonSpace to LastNonSpace loop
-        if L.all(i) = '.' then
-          DotPos := i ;
-          exit ;
-        end if ;
-      end loop ;
-
-      TrimLast := LastNonSpace ;
-      if DotPos /= 0 then
-        while (TrimLast > DotPos) and (L.all(TrimLast) = '0') loop
-          TrimLast := TrimLast - 1 ;
-        end loop ;
-        if TrimLast = DotPos then
-          TrimLast := TrimLast - 1 ;
-        end if ;
-      end if ;
-
-      -- Copy into a fixed buffer so we can deallocate L before returning.
-      ResultLen := 0 ;
-      for i in FirstNonSpace to TrimLast loop
-        exit when ResultLen = ResultBuf'length ;
-        ResultLen := ResultLen + 1 ;
-        ResultBuf(ResultLen) := L.all(i) ;
-      end loop ;
-      deallocate(L) ;
-
-      if ResultLen = 0 then
-        return "0" ;
-      end if ;
-
-      -- Normalize "-0" to "0" after trimming.
-      if ResultLen = 2 and ResultBuf(1) = '-' and ResultBuf(2) = '0' then
-        return "0" ;
-      else
-        return ResultBuf(1 to ResultLen) ;
-      end if ;
-    end function RealToCompactString ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
