@@ -3621,44 +3621,36 @@ package body AlertLogPkg is
     end function GetTestDescription ;
 
     ------------------------------------------------------------
-    procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
+    -- PT Local
+    -- Find tag by name; if not found, create a new tag record and append it.
+    -- Returns a pointer to the tag record to update.
+    impure function FindTagInsertLocation(
+      TagName        : string ;
+      TagType        : TagValueType ;
+      ShowInSummary  : boolean := TRUE
+    ) return TagRecPtrType is
     ------------------------------------------------------------
       variable CurTag  : TagRecPtrType ;
       variable PrevTag : TagRecPtrType ;
       variable NewTag  : TagRecPtrType ;
-
-      procedure FindTagByName(
-        TagNameIn : string ;
-        CurTagOut : out TagRecPtrType ;
-        PrevTagOut : out TagRecPtrType
-      ) is
-      begin
-        CurTagOut  := TestTagHeadPtr ;
-        PrevTagOut := null ;
-        while CurTagOut /= null loop
-          if CurTagOut.Name /= null and CurTagOut.Name.all = TagNameIn then
-            return ;
-          end if ;
-          PrevTagOut := CurTagOut ;
-          CurTagOut  := CurTagOut.NextTag ;
-        end loop ;
-      end procedure FindTagByName ;
     begin
-      FindTagByName(TagName, CurTag, PrevTag) ;
-
-      if CurTag /= null then
-        Deallocate(CurTag.ValueStr) ;
-        CurTag.TagType       := TAG_STRING ;
-        CurTag.ValueStr      := new string'(TagValue) ;
-        CurTag.ShowInSummary := ShowInSummary ;
-        return ;
-      end if ;
+      CurTag  := TestTagHeadPtr ;
+      PrevTag := null ;
+      while CurTag /= null loop
+        if CurTag.Name /= null and CurTag.Name.all = TagName then
+          CurTag.TagType       := TagType ;
+          CurTag.ShowInSummary := ShowInSummary ;
+          return CurTag ;
+        end if ;
+        PrevTag := CurTag ;
+        CurTag  := CurTag.NextTag ;
+      end loop ;
 
       -- Add new tag (append)
       NewTag               := new TagRecType ;
       NewTag.Name          := new string'(TagName) ;
-      NewTag.TagType       := TAG_STRING ;
-      NewTag.ValueStr      := new string'(TagValue) ;
+      NewTag.TagType       := TagType ;
+      NewTag.ValueStr      := null ;
       NewTag.ShowInSummary := ShowInSummary ;
       NewTag.NextTag       := null ;
       if TestTagHeadPtr = null then
@@ -3667,194 +3659,71 @@ package body AlertLogPkg is
         PrevTag.NextTag := NewTag ;
       end if ;
       NumTestTagsVar := NumTestTagsVar + 1 ;
+      return NewTag ;
+    end function FindTagInsertLocation ;
+
+    ------------------------------------------------------------
+    procedure AddTestTag(TagName : string ; TagValue : string ; ShowInSummary : boolean := TRUE ) is
+    ------------------------------------------------------------
+      variable CurTag  : TagRecPtrType ;
+    begin
+      CurTag := FindTagInsertLocation(TagName, TAG_STRING, ShowInSummary) ;
+      Deallocate(CurTag.ValueStr) ;
+      CurTag.ValueStr := new string'(TagValue) ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : boolean ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
       variable CurTag  : TagRecPtrType ;
-      variable PrevTag : TagRecPtrType ;
-      variable NewTag  : TagRecPtrType ;
     begin
-      CurTag  := TestTagHeadPtr ;
-      PrevTag := null ;
-      while CurTag /= null loop
-        if CurTag.Name /= null and CurTag.Name.all = TagName then
-          Deallocate(CurTag.ValueStr) ;
-          CurTag.TagType       := TAG_BOOL ;
-          if TagValue then
-            CurTag.ValueStr := new string'("true") ;
-          else
-            CurTag.ValueStr := new string'("false") ;
-          end if ;
-          CurTag.ShowInSummary := ShowInSummary ;
-          return ;
-        end if ;
-        PrevTag := CurTag ;
-        CurTag  := CurTag.NextTag ;
-      end loop ;
-
-      NewTag               := new TagRecType ;
-      NewTag.Name          := new string'(TagName) ;
-      NewTag.TagType       := TAG_BOOL ;
+      CurTag := FindTagInsertLocation(TagName, TAG_BOOL, ShowInSummary) ;
+      Deallocate(CurTag.ValueStr) ;
       if TagValue then
-        NewTag.ValueStr := new string'("true") ;
+        CurTag.ValueStr := new string'("true") ;
       else
-        NewTag.ValueStr := new string'("false") ;
+        CurTag.ValueStr := new string'("false") ;
       end if ;
-      NewTag.ShowInSummary := ShowInSummary ;
-      NewTag.NextTag       := null ;
-
-      if TestTagHeadPtr = null then
-        TestTagHeadPtr := NewTag ;
-      else
-        PrevTag.NextTag := NewTag ;
-      end if ;
-      NumTestTagsVar := NumTestTagsVar + 1 ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : integer ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
       variable CurTag  : TagRecPtrType ;
-      variable PrevTag : TagRecPtrType ;
-      variable NewTag  : TagRecPtrType ;
     begin
-      CurTag  := TestTagHeadPtr ;
-      PrevTag := null ;
-      while CurTag /= null loop
-        if CurTag.Name /= null and CurTag.Name.all = TagName then
-          Deallocate(CurTag.ValueStr) ;
-          CurTag.TagType       := TAG_INT ;
-          CurTag.ValueStr      := new string'(to_string(TagValue)) ;
-          CurTag.ShowInSummary := ShowInSummary ;
-          return ;
-        end if ;
-        PrevTag := CurTag ;
-        CurTag  := CurTag.NextTag ;
-      end loop ;
-
-      NewTag               := new TagRecType ;
-      NewTag.Name          := new string'(TagName) ;
-      NewTag.TagType       := TAG_INT ;
-      NewTag.ValueStr      := new string'(to_string(TagValue)) ;
-      NewTag.ShowInSummary := ShowInSummary ;
-      NewTag.NextTag       := null ;
-
-      if TestTagHeadPtr = null then
-        TestTagHeadPtr := NewTag ;
-      else
-        PrevTag.NextTag := NewTag ;
-      end if ;
-      NumTestTagsVar := NumTestTagsVar + 1 ;
+      CurTag := FindTagInsertLocation(TagName, TAG_INT, ShowInSummary) ;
+      Deallocate(CurTag.ValueStr) ;
+      CurTag.ValueStr := new string'(to_string(TagValue)) ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : time ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
       variable CurTag  : TagRecPtrType ;
-      variable PrevTag : TagRecPtrType ;
-      variable NewTag  : TagRecPtrType ;
     begin
-      CurTag  := TestTagHeadPtr ;
-      PrevTag := null ;
-      while CurTag /= null loop
-        if CurTag.Name /= null and CurTag.Name.all = TagName then
-          Deallocate(CurTag.ValueStr) ;
-          CurTag.TagType       := TAG_TIME ;
-          CurTag.ValueStr      := new string'(to_string(TagValue, DefaultTimeUnitsVar)) ;
-          CurTag.ShowInSummary := ShowInSummary ;
-          return ;
-        end if ;
-        PrevTag := CurTag ;
-        CurTag  := CurTag.NextTag ;
-      end loop ;
-
-      NewTag               := new TagRecType ;
-      NewTag.Name          := new string'(TagName) ;
-      NewTag.TagType       := TAG_TIME ;
-      NewTag.ValueStr      := new string'(to_string(TagValue, DefaultTimeUnitsVar)) ;
-      NewTag.ShowInSummary := ShowInSummary ;
-      NewTag.NextTag       := null ;
-
-      if TestTagHeadPtr = null then
-        TestTagHeadPtr := NewTag ;
-      else
-        PrevTag.NextTag := NewTag ;
-      end if ;
-      NumTestTagsVar := NumTestTagsVar + 1 ;
+      CurTag := FindTagInsertLocation(TagName, TAG_TIME, ShowInSummary) ;
+      Deallocate(CurTag.ValueStr) ;
+      CurTag.ValueStr := new string'(to_string(TagValue, DefaultTimeUnitsVar)) ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : real ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
       variable CurTag  : TagRecPtrType ;
-      variable PrevTag : TagRecPtrType ;
-      variable NewTag  : TagRecPtrType ;
     begin
-      CurTag  := TestTagHeadPtr ;
-      PrevTag := null ;
-      while CurTag /= null loop
-        if CurTag.Name /= null and CurTag.Name.all = TagName then
-          Deallocate(CurTag.ValueStr) ;
-          CurTag.TagType       := TAG_REAL ;
-          CurTag.ValueStr      := new string'(RealToCompactString(TagValue)) ;
-          CurTag.ShowInSummary := ShowInSummary ;
-          return ;
-        end if ;
-        PrevTag := CurTag ;
-        CurTag  := CurTag.NextTag ;
-      end loop ;
-
-      NewTag               := new TagRecType ;
-      NewTag.Name          := new string'(TagName) ;
-      NewTag.TagType       := TAG_REAL ;
-      NewTag.ValueStr      := new string'(RealToCompactString(TagValue)) ;
-      NewTag.ShowInSummary := ShowInSummary ;
-      NewTag.NextTag       := null ;
-
-      if TestTagHeadPtr = null then
-        TestTagHeadPtr := NewTag ;
-      else
-        PrevTag.NextTag := NewTag ;
-      end if ;
-      NumTestTagsVar := NumTestTagsVar + 1 ;
+      CurTag := FindTagInsertLocation(TagName, TAG_REAL, ShowInSummary) ;
+      Deallocate(CurTag.ValueStr) ;
+      CurTag.ValueStr := new string'(RealToCompactString(TagValue)) ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
     procedure AddTestTag(TagName : string ; TagValue : std_logic ; ShowInSummary : boolean := TRUE ) is
     ------------------------------------------------------------
       variable CurTag  : TagRecPtrType ;
-      variable PrevTag : TagRecPtrType ;
-      variable NewTag  : TagRecPtrType ;
     begin
-      CurTag  := TestTagHeadPtr ;
-      PrevTag := null ;
-      while CurTag /= null loop
-        if CurTag.Name /= null and CurTag.Name.all = TagName then
-          Deallocate(CurTag.ValueStr) ;
-          CurTag.TagType       := TAG_STD_LOGIC ;
-          CurTag.ValueStr      := new string'(std_logic'image(TagValue)) ;
-          CurTag.ShowInSummary := ShowInSummary ;
-          return ;
-        end if ;
-        PrevTag := CurTag ;
-        CurTag  := CurTag.NextTag ;
-      end loop ;
-
-      NewTag               := new TagRecType ;
-      NewTag.Name          := new string'(TagName) ;
-      NewTag.TagType       := TAG_STD_LOGIC ;
-      NewTag.ValueStr      := new string'(std_logic'image(TagValue)) ;
-      NewTag.ShowInSummary := ShowInSummary ;
-      NewTag.NextTag       := null ;
-
-      if TestTagHeadPtr = null then
-        TestTagHeadPtr := NewTag ;
-      else
-        PrevTag.NextTag := NewTag ;
-      end if ;
-      NumTestTagsVar := NumTestTagsVar + 1 ;
+      CurTag := FindTagInsertLocation(TagName, TAG_STD_LOGIC, ShowInSummary) ;
+      Deallocate(CurTag.ValueStr) ;
+      CurTag.ValueStr := new string'(std_logic'image(TagValue)) ;
     end procedure AddTestTag ;
 
     ------------------------------------------------------------
