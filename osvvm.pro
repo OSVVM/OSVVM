@@ -97,6 +97,8 @@ if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
 
 
 analyze YamlUtilPkg.vhd
+analyze TagPkg.vhd
+analyze TestDescriptionPkg.vhd
 analyze AlertLogPkg.vhd
 
 
