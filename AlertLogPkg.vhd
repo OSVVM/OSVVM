@@ -774,6 +774,7 @@ end AlertLogPkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 use work.NamePkg.all ;
+use work.YamlUtilPkg.all ;
 
 package body AlertLogPkg is
 
@@ -1097,6 +1098,19 @@ package body AlertLogPkg is
       TAG_TIME,
       TAG_STD_LOGIC
     ) ;
+
+    function TagValueTypeToString(A : TagValueType) return string is
+    begin
+      case A is
+        when TAG_STRING    => return "TAG_STRING" ;
+        when TAG_BOOL      => return "TAG_BOOL" ;
+        when TAG_INT       => return "TAG_INT" ;
+        when TAG_REAL      => return "TAG_REAL" ;
+        when TAG_TIME      => return "TAG_TIME" ;
+        when TAG_STD_LOGIC => return "TAG_STD_LOGIC" ;
+      end case ;
+    end function TagValueTypeToString ;
+
     type TagRecType ;
     type TagRecPtrType is access TagRecType ;
     type TagRecType is record
@@ -2355,42 +2369,6 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     --  pt local YAML helper
-    procedure WriteYamlDoubleQuotedScalar(
-      file TestFile : text ;
-      Prefix        : string ;
-      KeyName       : string ;
-      YamlText      : string
-    ) is
-      variable localBuf : line ;
-    begin
-      write(localBuf, Prefix & KeyName & ": """) ;
-      for i in YamlText'range loop
-        case YamlText(i) is
-          when '"' =>
-            swrite(localBuf, "\""") ;
-          when '\' =>
-            swrite(localBuf, "\\") ;
-          when LF =>
-            swrite(localBuf, "\n") ; 
-          when CR =>
-            swrite(localBuf, "\r") ; 
-          when HT =>
-            swrite(localBuf, "\t") ; 
-          when others =>
-            -- Remove other control chars that can break YAML/HTML tooling
-            if (character'pos(YamlText(i)) < 32) or (YamlText(i) = DEL) then
-              write(localBuf, ' ') ;
-            else
-              write(localBuf, YamlText(i)) ;
-            end if ;
-        end case ;
-      end loop ;
-      write(localBuf, '"') ;
-      writeline(TestFile, localBuf) ;
-    end procedure WriteYamlDoubleQuotedScalar ;
-
-    ------------------------------------------------------------
-    --  pt local YAML helper
     procedure WriteYamlLiteralBlockScalar_WriteOneLine(
       file TestFile  : text ;
       Prefix         : string ;
@@ -2473,124 +2451,6 @@ package body AlertLogPkg is
     end procedure WriteYamlLiteralBlockScalar ;
 
     ------------------------------------------------------------
-    --  pt local YAML helper
-    function TagTypeToString(T : TagValueType) return string is
-    begin
-      case T is
-        when TAG_STRING    => return "TAG_STRING" ;
-        when TAG_BOOL      => return "TAG_BOOL" ;
-        when TAG_INT       => return "TAG_INT" ;
-        when TAG_REAL      => return "TAG_REAL" ;
-        when TAG_TIME      => return "TAG_TIME" ;
-        when TAG_STD_LOGIC => return "TAG_STD_LOGIC" ;
-      end case ;
-    end function TagTypeToString ;
-
-    ------------------------------------------------------------
-    --  pt local YAML helper
-    procedure WriteYamlDoubleQuotedValue(
-      Buf   : inout line ;
-      YamlText : string
-    ) is
-    begin
-      write(Buf, '"') ;
-      for i in YamlText'range loop
-        case YamlText(i) is
-          when '"' =>
-            swrite(Buf, "\""") ;
-          when '\' =>
-            swrite(Buf, "\\") ;
-          when LF =>
-            swrite(Buf, "\n") ; 
-          when CR =>
-            swrite(Buf, "\r") ; 
-          when HT =>
-            swrite(Buf, "\t") ; 
-          when others =>
-            if (character'pos(YamlText(i)) < 32) or (YamlText(i) = DEL) then
-              write(Buf, ' ') ;
-            else
-              write(Buf, YamlText(i)) ;
-            end if ;
-        end case ;
-      end loop ;
-      write(Buf, '"') ;
-    end procedure WriteYamlDoubleQuotedValue ;
-
-    ------------------------------------------------------------
-    --  pt local YAML helper
-    procedure WriteYamlInlineTagRecord(
-      file TestFile : text ;
-      Prefix        : string ;
-      TagName       : string ;
-      variable TagP : TagRecPtrType
-    ) is
-      variable localBuf : line ;
-    begin
-      if TagP = null then
-        return ;
-      end if ;
-
-      std.textio.write(localBuf, Prefix & "  ") ;
-
-      -- Always quote the key to support spaces/special chars.
-      WriteYamlDoubleQuotedValue(localBuf, TagName) ;
-
-      swrite(localBuf, ": {Value: ") ;
-      case TagP.TagType is
-        when TAG_STRING =>
-          if TagP.ValueStr /= null then
-            WriteYamlDoubleQuotedValue(localBuf, TagP.ValueStr.all) ;
-          else
-            std.textio.write(localBuf, string'("null")) ;
-          end if ;
-        when TAG_BOOL =>
-          if TagP.ValueStr /= null and TagP.ValueStr.all'length > 0 then
-            -- Keep YAML boolean unquoted.
-            std.textio.write(localBuf, TagP.ValueStr.all) ;
-          else
-            std.textio.write(localBuf, string'("false")) ;
-          end if ;
-        when TAG_INT =>
-          if TagP.ValueStr /= null then
-            std.textio.write(localBuf, TagP.ValueStr.all) ;
-          else
-            std.textio.write(localBuf, string'("0")) ;
-          end if ;
-        when TAG_REAL =>
-          if TagP.ValueStr /= null then
-            std.textio.write(localBuf, TagP.ValueStr.all) ;
-          else
-            std.textio.write(localBuf, string'("0")) ;
-          end if ;
-        when TAG_TIME =>
-          if TagP.ValueStr /= null then
-            WriteYamlDoubleQuotedValue(localBuf, TagP.ValueStr.all) ;
-          else
-            WriteYamlDoubleQuotedValue(localBuf, string'("0 ns")) ;
-          end if ;
-        when TAG_STD_LOGIC =>
-          if TagP.ValueStr /= null then
-            WriteYamlDoubleQuotedValue(localBuf, TagP.ValueStr.all) ;
-          else
-            WriteYamlDoubleQuotedValue(localBuf, std_logic'image('U')) ;
-          end if ;
-      end case ;
-
-      std.textio.write(localBuf, string'(", Type: ")) ;
-      WriteYamlDoubleQuotedValue(localBuf, TagTypeToString(TagP.TagType)) ;
-
-      std.textio.write(localBuf, string'(", Visibility: {Summary: ")) ;
-      if TagP.ShowInSummary then
-        std.textio.write(localBuf, string'("true")) ;
-      else
-        std.textio.write(localBuf, string'("false")) ;
-      end if ;
-      std.textio.write(localBuf, string'("}}")) ;
-      std.textio.writeline(TestFile, localBuf) ;
-    end procedure WriteYamlInlineTagRecord ;
-
-    ------------------------------------------------------------
     --  pt local
     procedure WriteTestDescriptionYaml(file TestFile : text ; Prefix : string) is
     ------------------------------------------------------------
@@ -2616,7 +2476,50 @@ package body AlertLogPkg is
         CurTag := TestTagHeadPtr ;
         while CurTag /= null loop
           if CurTag.Name /= null then
-            WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag) ;
+            case CurTag.TagType is
+              when TAG_STRING =>
+                if CurTag.ValueStr /= null then
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag.ValueStr.all, TRUE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                else
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, "", TRUE, TRUE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                end if ;
+
+              when TAG_BOOL =>
+                -- Keep YAML boolean unquoted.
+                if CurTag.ValueStr /= null and CurTag.ValueStr.all'length > 0 then
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag.ValueStr.all, FALSE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                else
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, "false", FALSE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                end if ;
+
+              when TAG_INT =>
+                if CurTag.ValueStr /= null then
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag.ValueStr.all, FALSE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                else
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, "0", FALSE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                end if ;
+
+              when TAG_REAL =>
+                if CurTag.ValueStr /= null then
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag.ValueStr.all, FALSE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                else
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, "0", FALSE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                end if ;
+
+              when TAG_TIME =>
+                if CurTag.ValueStr /= null then
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag.ValueStr.all, TRUE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                else
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, "0 ns", TRUE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                end if ;
+
+              when TAG_STD_LOGIC =>
+                if CurTag.ValueStr /= null then
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, CurTag.ValueStr.all, TRUE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                else
+                  WriteYamlInlineTagRecord(TestFile, Prefix, CurTag.Name.all, std_logic'image('U'), TRUE, FALSE, TagValueTypeToString(CurTag.TagType), CurTag.ShowInSummary) ;
+                end if ;
+            end case ;
           end if ;
           CurTag := CurTag.NextTag ;
         end loop ;
