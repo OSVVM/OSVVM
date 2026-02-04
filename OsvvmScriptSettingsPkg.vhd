@@ -44,6 +44,10 @@ package OsvvmScriptSettingsPkg is
   constant OSVVM_TRANSCRIPT_YAML_FILE   : string ;  -- "OSVVM_transcript.yml" unless you have edited OSVVM scripts
   constant OSVVM_REVISION               : string ;  -- Current Revision / Release
   constant OSVVM_SETTINGS_REVISION      : string ;  -- Purpose: use new release, but keep settings to match an older release - See OsvvmSettingsPkg_default
+  constant ALERT_YAML_VERSION           : string ;  -- Version settings for YAML file - may all be the same.
+  constant SCOREBOARD_YAML_VERSION      : string ; 
+  constant COVERAGE_YAML_VERSION        : string ; 
+  constant REQUIREMENTS_YAML_VERSION    : string ; 
 end package OsvvmScriptSettingsPkg ;
 
 -- For the package body with the deferred constant values, see

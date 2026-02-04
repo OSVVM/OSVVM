@@ -5424,7 +5424,7 @@ package body CoveragePkg is
       variable buf : line ;
     begin
       file_open(CovYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
-      swrite(buf, "Version: ""1.0""" & LF) ;
+      swrite(buf, "Version: "  & '"' & COVERAGE_YAML_VERSION & '"' & LF) ;
       swrite(buf, "Coverage: " & to_string(Coverage, 2) ) ;
       writeline(CovYamlFile, buf) ;
       WriteSettingsYaml(CovYamlFile) ;
