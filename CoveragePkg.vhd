@@ -627,6 +627,7 @@ package CoveragePkg is
   impure function GetBinValLength (ID : CoverageIDType) return integer ;  -- Length of BinVal
   impure function GetBinAction    (ID : CoverageIDType; BinIndex : integer) return integer ;
   impure function GetBinName      (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string ;
+  procedure SetBinName            (ID : CoverageIDType; BinIndex : integer; Name : string) ;
   
   impure function GetPointAction  (ID : CoverageIDType; CovPoint : integer_vector) return integer ;
   impure function GetPointAction  (ID : CoverageIDType; CovPoint : integer) return integer ;
@@ -1173,6 +1174,7 @@ package CoveragePkg is
     impure function GetBinValLength (ID : CoverageIDType) return integer ;  -- Length of BinVal
     impure function GetBinAction    (ID : CoverageIDType; BinIndex : integer) return integer ;
     impure function GetBinName      (ID : CoverageIDType; BinIndex : integer; DefaultName : string := "" ) return string ;
+    procedure SetBinName            (ID : CoverageIDType; BinIndex : integer; Name : string) ;
 
     impure function GetPointAction  (ID : CoverageIDType; CovPoint : integer_vector) return integer ;
 
@@ -1457,7 +1459,7 @@ package CoveragePkg is
     impure function GetBinInfo ( BinIndex : integer ) return CovBinBaseType ;
     impure function GetBinValLength return integer ;
     impure function GetBinName ( BinIndex : integer; DefaultName : string := "" ) return string ;
-    
+
     -- GetBin returns an internal value of the coverage data structure
     impure function GetBin ( BinIndex : integer ) return CovBinBaseType ;
     impure function GetBin ( BinIndex : integer ) return CovMatrix2BaseType  ;
@@ -4279,7 +4281,17 @@ package body CoveragePkg is
       else
         return DefaultName ;
       end if;
-    end function GetBinName;
+    end function GetBinName ;
+
+    -- ------------------------------------------------------------
+    procedure SetBinName  (ID : CoverageIDType; BinIndex : integer; Name : string ) is
+    -- ------------------------------------------------------------
+    begin
+      if CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name /= NULL then
+        deallocate(CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name) ;
+      end if ; 
+      CovStructPtr(ID.ID).CovBinPtr(BinIndex).Name := new string'(Name) ;
+    end procedure SetBinName ;
 
     ------------------------------------------------------------
     impure function GetPointAction(ID : CoverageIDType; CovPoint : integer_vector) return integer is
@@ -9016,6 +9028,11 @@ package body CoveragePkg is
   begin
     return CoverageStore.GetBinName (ID, BinIndex, DefaultName) ;
   end function GetBinName ;
+
+  procedure SetBinName  (ID : CoverageIDType; BinIndex : integer; Name : string ) is
+  begin
+    CoverageStore.SetBinName (ID, BinIndex, Name) ;
+  end procedure SetBinName ;
 
   impure function GetPointAction(ID : CoverageIDType; CovPoint : integer_vector) return integer is
   begin
