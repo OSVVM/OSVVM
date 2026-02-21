@@ -47,7 +47,9 @@ package OsvvmTypesPkg is
 
   type slv_vector is array (integer range <>) of std_logic_vector ; 
   type uv_vector is array (integer range <>) of unsigned ; 
+  subtype unsigned_vector is uv_vector ; 
   type sv_vector is array (integer range <>) of signed ; 
-  
+  subtype signed_vector is sv_vector ; 
+
 end OsvvmTypesPkg ;
 
