@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2026.01   |  Minor feature additions + Further integration of 2019 Features
 | 2025.06   |  Added FileUtilPkg - some refactored from TextUtilPkg.  WaitForClock with ClkActive that supports ?=
 | 2025.04   |  Small refactor of OSVVM.pro
 | 2025.02   |  Track requirements with Functional Coverage as well as Alerts
@@ -84,7 +85,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2025.06 June/July 2025
+## Revision 2026.01 January/February 2025
 
 ### Current Revision and Compile Order
 
@@ -93,85 +94,125 @@ files that need to be compiled first. Be sure to turn on the VHDL-2008
 compile switch. You may also use the OSVVM script - osvvm.pro -- details
 how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
-  | File Name                                          | Revision Date  |
-  -----------------------------------------------------|-----------------
-  | IfElsePkg.vhd                                      | 2024.07  |
-  | OsvvmTypesPkg.vhd                                  | 2022.01  |
-  | OsvvmScriptSettingsPkg.vhd                         | 2024.03  |
-  | OsvvmSettingsPkg.vhd                               | 2025.02  |
-  | TextUtilPkg.vhd                                    | ** 2025.06 ** |
-  | FileUtilPkg.vhd                                    | ** 2025.06 ** |
-  | ResolutionPkg.vhd                                  | 2021.06  |
-  | NamePkg.vhd                                        | 2024.03  |
-  | OsvvmGlobalPkg.vhd                                 | 2024.03  |
-  | If Aldec                                           |          |
-  |     CoverageVendorApiPkg_Aldec.vhd                 | 2020.01  |
-  | Elsif NVC and Version 1.15.2                       |          |
-  |     CoverageVendorApiPkg_NVC.vhd                   | 2024.11  |
-  | Else                                               |          |
-  |     CoverageVendorApiPkg.vhd                       | 2020.01  |
-  | TranscriptPkg.vhd                                  | 2023.01  |
-  | If Supports2019FilePath                             |          |
-  |     FileLinePathPkg.vhd                            | 2025.02  |
-  | If not Supports2019FilePath                         |          |
-  |     deprecated/FileLinePathPkg_c.vhd               | 2025.02  |
-  | If version >= 2019                                 |          |
-  |     LanguageSupport2019Pkg.vhd                     | 2024.07  |
-  | If version < 2019                                  |          |
-  |     deprecated/LanguageSupport2019Pkg_c.vhd        | 2024.07  |
-  | AlertLogPkg.vhd                                    | 2025.02  |
-  | TbUtilPkg.vhd                                      | ** 2025.06 ** |
-  | NameStorePkg.vhd                                   | 2024.07  |
-  | MessageListPkg.vhd                                 | 2021.07  |
-  | SortListPkg_int.vhd                                | 2020.01  |
-  | RandomBasePkg.vhd                                  | 2024.11  |
-  | RandomPkg.vhd                                      | 2024.11  |
-  | RandomProcedurePkg.vhd                             | 2021.05  |
-  | CoveragePkg.vhd                                    | 2025.02  |
-  | DelayCoveragePkg.vhd                               | 2024.11  |
-  | If ClockResetVersion                               |          |
-  |    ClockResetPkg.vhd                               | 2024.09  |
-  | else                                               |          |
-  |    deprecated/ClockResetPkg_2024_05.vhd            | 2024.07  |
-  | ResizePkg.vhd                                      | 2024.03  |
-  | If Support Generic Packages                        |          |
-  |     ScoreboardGenericPkg.vhd                       | 2025.02  |
-  |     ScoreboardPkg_slv.vhd                          | 2022.04  |
-  |     ScoreboardPkg_int.vhd                          | 2020.01  |
-  |     ScoreboardPkg_signed.vhd                       | 2024.07  |
-  |     ScoreboardPkg_unsigned.vhd                     | 2024.07  |
-  |     ScoreboardPkg_IntV.vhd                         | 2024.07  |
-  | If NotSupport Generic Packages                     |          |
-  |     deprecated/ScoreboardPkg_slv_c.vhd             | 2024.07  |
-  |     deprecated/ScoreboardPkg_int_c.vhd             | 2024.07  |
-  |     deprecated/ScoreboardPkg_signed.vhd            | 2024.07  |
-  |     deprecated/ScoreboardPkg_unsigned.vhd          | 2024.07  |
-  |     deprecated/ScoreboardPkg_IntV.vhd              | 2024.07  |
-  | MemorySupportPkg.vhd                               | 2022.10  |
-  | If Support Generic Packages                        |          |
-  |     If not Xilinx                                  |          |
-  |         MemoryGenericPkg.vhd                       | 2024.09  |
-  |     If Xilinx                                      |          |
-  |         deprecated/MemoryGenericPkg_xilinx.vhd     | 2024.03  |
-  |     MemoryPkg.vhd                                  | 2022.10  |
-  | If Not Support Generic Packages                    |          |
-  |     MemoryPkg_c.vhd                                | 2024.03  |
-  |     MemoryPkg_orig_c.vhd                           | 2022.11  |
-  | ReportPkg.vhd                                      | 2024.07  |
-  | OsvvmTypesPkg.vhd                                  | 2024.11  |
-  | If version >= 2019                                 |          |
-  |     RandomPkg2019.vhd                              | 2024.11  |
-  | If version < 2019                                  |          |
-  |     deprecated/RandomPkg2019_c.vhd                 | 2024.09  |
-  | OsvvmContext.vhd                                   | 2025.02  |
-  | If exist OsvvmScriptSettingsPkg_generated.vhd      |          |
-  |     OsvvmScriptSettingsPkg_generated.vhd           | Generated  |
-  | If not exist OsvvmScriptSettingsPkg_generated.vhd  |          |
-  |     OsvvmScriptSettingsPkg_default.vhd             | 2024.03  |
-  | If exist OsvvmSettingsPkg_local.vhd                |          |
-  |     OsvvmSettingsPkg_local.vhd                     | User Created |
-  | If not exist OsvvmSettingsPkg_local.vhd            |          |
-  |     OsvvmSettingsPkg_default.vhd                   | 2025.02  |
+  | File Name                                                     | Revision Date  |
+  ----------------------------------------------------------------|-----------------
+  | IfElsePkg.vhd                                                 | 2024.07  |
+  | OsvvmTypesPkg.vhd                                             | ** 2026.01 ** |
+  | OsvvmScriptSettingsPkg.vhd                                    | ** 2026.01 ** |
+  | OsvvmSettingsPkg.vhd                                          | ** 2026.01 ** |
+  | If exist OsvvmScriptSettingsPkg_generated.vhd                 |          |
+  |   TRUE:   <SettingsDir>/OsvvmScriptSettingsPkg_generated.vhd  | Generated  |
+  |   FALSE:  OsvvmScriptSettingsPkg_default.vhd                  | ** 2026.01 ** |
+  | If exist OsvvmSettingsPkg_local.vhd                           |          |
+  |   TRUE:   <SettingsDir>/OsvvmSettingsPkg_local.vhd            | User Created |
+  |   FALSE:  OsvvmSettingsPkg_default.vhd                        | ** 2026.01 ** |
+  | if not XSIM                                                   |          |
+  |   TRUE:   TextUtilPkg.vhd                                     | 2025.06  |
+  |   FALSE:  TextUtilPkg_xilinx.vhd                              | 2025.06  |
+  | FileUtilPkg.vhd                                               | 2025.06  |
+  | ResolutionPkg.vhd                                             | 2021.06  |
+  | NamePkg.vhd                                                   | 2024.03  |
+  | OsvvmGlobalPkg.vhd                                            | 2024.03  |
+  | If Aldec                                                      |          |
+  |     CoverageVendorApiPkg_Aldec.vhd                            | 2020.01  |
+  | Elsif NVC and Version 1.15.2                                  |          |
+  |     CoverageVendorApiPkg_NVC.vhd                              | 2024.11  |
+  | Else                                                          |          |
+  |     CoverageVendorApiPkg.vhd                                  | 2020.01  |
+  | TranscriptPkg.vhd                                             | 2023.01  |
+  | If version >= 2019                                            |          |
+  |   TRUE    LanguageSupportPkg2019.vhd                          | ** 2026.01 ** |
+  |   FALSE   deprecated/LanguageSupportPkg2019_2.vhd             | ** 2026.01 ** |
+  | If Supports2019FilePath and version >= 2019                   |          |
+  |   TRUE    FileLinePathPkg.vhd                                 | ** 2026.01 ** |
+  |   FALSE   deprecated/FileLinePathPkg_c.vhd                    | ** 2026.01 ** |
+  | If Supports2019AssertApi and version >= 2019                  |          |
+  |   TRUE    AssertApiPkg.vhd                                    | ** 2026.01 ** |
+  |   FALSE   deprecated/AssertApiPkg_c.vhd                       | ** 2026.01 ** |
+  | AlertLogPkg.vhd                                               | ** 2026.01 ** |
+  | if not XSIM                                                   |          |
+  |   TRUE    TbUtilPkg.vhd                                       | 2025.06  |
+  |   FALSE   TbUtilPkg_xilinx.vhd                                | 2025.06  |
+  | NameStorePkg.vhd                                              | 2024.07  |
+  | MessageListPkg.vhd                                            | 2021.07  |
+  | SortListPkg_int.vhd                                           | 2020.01  |
+  | RandomBasePkg.vhd                                             | 2024.11  |
+  | RandomPkg.vhd                                                 | ** 2026.01 ** |
+  | RandomProcedurePkg.vhd                                        | 2021.05  |
+  | CoveragePkg.vhd                                               | ** 2026.01 ** |
+  | DelayCoveragePkg.vhd                                          | 2024.11  |
+  | If ClockResetVersion  >= 2024.05                              |          |
+  |  TRUE    ClockResetPkg.vhd                                    | 2024.09  |
+  |  FALSE   deprecated/ClockResetPkg_2024_05.vhd                 | 2024.07  |
+  | ResizePkg.vhd                                                 | 2024.03  |
+  | If Support Generic Packages                                   |          |
+  |     If not XSIM                                               |          |
+  |         ScoreboardGenericPkg.vhd                              | 2025.02  |
+  |         ScoreboardPkg_IntV.vhd                                | 2024.07  |
+  |     If XSIM                                                   |          |
+  |         deprecated/ScoreboardGenericPkg_pure.vhd              | 2025.02  |
+  |         deprecated/ScoreboardPkg_IntV_c.vhd                   | 2024.07  |
+  |     ScoreboardPkg_slv.vhd                                     | 2022.04  |
+  |     ScoreboardPkg_int.vhd                                     | 2020.01  |
+  |     ScoreboardPkg_signed.vhd                                  | 2024.07  |
+  |     ScoreboardPkg_unsigned.vhd                                | 2024.07  |
+  | If NotSupport Generic Packages                                |          |
+  |     deprecated/ScoreboardPkg_slv_c.vhd                        | 2024.07  |
+  |     deprecated/ScoreboardPkg_int_c.vhd                        | 2024.07  |
+  |     deprecated/ScoreboardPkg_signed_c.vhd                     | 2024.07  |
+  |     deprecated/ScoreboardPkg_unsigned_c.vhd                   | 2024.07  |
+  |     deprecated/ScoreboardPkg_IntV_c.vhd                       | 2024.07  |
+  | MemorySupportPkg.vhd                                          | 2022.10  |
+  | If Support Generic Packages                                   |          |
+  |     If not XSIM                                               |          |
+  |         MemoryGenericPkg.vhd                                  | 2024.09  |
+  |     If XSIM                                                   |          |
+  |         deprecated/MemoryGenericPkg_xilinx.vhd                | 2024.03  |
+  |     MemoryPkg.vhd                                             | 2022.10  |
+  | If Not Support Generic Packages                               |          |
+  |     deprecated/MemoryPkg_c.vhd                                | 2024.03  |
+  |     deprecated/MemoryPkg_orig_c.vhd                           | 2022.11  |
+  | ReportPkg.vhd                                                 | 2024.07  |
+  | If Supports2019ImpureFunctions and version >= 2019            |          |
+  |     TRUE    RandomPkg2019.vhd                                 | ** 2026.01 ** |
+  |     FALSE   deprecated/RandomPkg2019_c.vhd                    | 2024.09  |
+  | OsvvmContext.vhd                                              | ** 2026.01 ** |
+  
+
+###  AlertLogPkg.vhd   2026.01
+For VHDL-2019 releases, incorporated in VHDL Asserts into OSVVM ReportAlerts and Yaml ouput.
+
+### ScoreboardGenericPkg.vhd 2026.01
+Updated FindAndFlush s.t. the one found reports as a check and PASSED or in not found ERROR
+
+###  CoveragePkg.vhd   2026.01
+Added SetBinName
+
+###  OsvvmContext.vhd   2026.01
+Added LanguageSupport2019Pkg, FilelinePathPkg, AssertApiPkg
+
+### FileLinePathPkg 2026.01
+Added aliases to 2019 functions if in VHDL-2019
+
+### LanugageSupportPkg2019 2026.01
+Added aliases to 2019 functions if in VHDL-2019
+LanugageSupportPkg2019_c - removed functions illegal in 2008
+
+### OsvvmScriptSettingsPkg.vhd   2026.01 
+Added constants for *_YAML_VERSION.  Allows one place to control all versions
+
+### OsvvmSettingsPkg.vhd         2026.01 
+Added ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS and ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS
+
+### RandomPkg and RandomPkg2019         2026.01 
+Updated message in DistInt in the event of integer overflow to support either 32 or 64 bit integers
+
+### OsvvmTypes.vhd         2026.01 
+Added unsigned_vector as subtype of uv_vector
+Added signed_vector as subtype of sv_vector
+
+
+## Revision 2025.06 June/July 2025
 
 ### TextUtilPkg.vhd   2025.06
 Moved FileExists to FileUtilPkg.vhd
