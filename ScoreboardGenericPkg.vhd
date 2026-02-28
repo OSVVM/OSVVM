@@ -21,6 +21,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    10/2025   2025.10    Updated FindAndFlush s.t. the one found is a check and remaining are dropped. 
 --    02/2025   2025.02    Replaced alias Empty with function Empty to work around Q bug. 
 --    09/2024   2024.09    Updated Data Structure.  Added FindAndDelete and FindAndFlush.  
 --    07/2024   2024.07    Made function generics impure. Added IsInitialized.  Updated Yaml.  
@@ -1997,39 +1998,6 @@ package body ScoreboardGenericPkg is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
     begin
---!!        if LocalOutOfRange(Index, "Find") then
---!!          return integer'low ; -- error reporting in LocalOutOfRange
---!!        end if ;
---!!        CurPtr := SbPtr(Index).HeadPtr ;
---!!        loop
---!!          if CurPtr = NULL then
---!!            -- Failed to find it
---!!            SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
---!!            if Tag /= "" then
---!!              Alert(SbPtr(Index).AlertLogID,
---!!                    GetName & " Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData),
---!!                    ERROR ) ;
---!!            else
---!!              Alert(SbPtr(Index).AlertLogID,
---!!                    GetName & " Did not find Actual Data: " & actual_to_string(ActualData),
---!!                    ERROR ) ;
---!!            end if ;
---!!  --          return integer'low ;
---!!            LocalItemNumber := integer'low ;
---!!            exit ;
---!!  
---!!          elsif CurPtr.TagPtr.all = Tag and
---!!            Match(ActualData, CurPtr.ExpectedPtr.all) then
---!!            -- Found it.  Return Index.
---!!  --          return CurPtr.ItemNumber ;
---!!            LocalItemNumber := CurPtr.ItemNumber ;
---!!            exit ; 
---!!  
---!!          else  -- Descend
---!!            CurPtr := CurPtr.NextPtr ;
---!!          end if ;
---!!        end loop ;
---!!        return LocalItemNumber ; 
       LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "Find") ; 
 
       if FindPtr = NULL then
@@ -2156,18 +2124,16 @@ package body ScoreboardGenericPkg is
     
     ------------------------------------------------------------
     -- Tagged Scoreboards 
-    -- Find Element with Matching Tag and ActualData and Delete it
-    procedure FindAndDelete (
+    -- Delete item already found
+    procedure LocalDelete (
     ------------------------------------------------------------
-      constant Index       :  in  integer ;
-      constant Tag         :  in  string ;
-      constant ActualData  :  in  ActualType
+      variable FindPtr       : inout ListPtrType ;
+      variable FindParentPtr : inout ListPtrType ;
+      constant Index         :  in  integer ;
+      constant Tag           :  in  string ;
+      constant ActualData    :  in  ActualType 
     ) is
-      variable FindPtr       : ListPtrType ;
-      variable FindParentPtr : ListPtrType ;
     begin
-      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndDelete") ; 
-
       if FindPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
         AffirmIf( SbPtr(Index).AlertLogID, FALSE,
@@ -2199,22 +2165,35 @@ package body ScoreboardGenericPkg is
         deallocate(FindPtr.ExpectedPtr) ;
         deallocate(FindPtr) ;
       end if ; 
-    end procedure FindAndDelete ;
-    
+    end procedure LocalDelete ;
+
     ------------------------------------------------------------
-    -- Scoreboard no tag
-    -- Find Element with Matching Tag and ActualData
-    -- Returns integer'low if no match found
+    -- Tagged Scoreboards 
+    -- Find Element with Matching Tag and ActualData and Delete it
     procedure FindAndDelete (
     ------------------------------------------------------------
       constant Index       :  in  integer ;
+      constant Tag         :  in  string ;
       constant ActualData  :  in  ActualType
     ) is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
+    begin
+      LocalFind   (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndDelete") ; 
+      LocalDelete (FindPtr, FindParentPtr, Index, Tag, ActualData) ; 
+    end procedure FindAndDelete ;
+    
+    ------------------------------------------------------------
+    -- Scoreboard no tag
+    -- Delete item already found
+    procedure LocalDelete (
+    ------------------------------------------------------------
+      variable FindPtr        : inout ListPtrType ;
+      variable FindParentPtr  : inout ListPtrType ;
+      constant Index          : in    integer ;
+      constant ActualData     : in    ActualType
+    ) is
     begin 
-      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndDelete") ; 
-
       if FindPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
         AffirmIf( SbPtr(Index).AlertLogID, FALSE,
@@ -2246,6 +2225,21 @@ package body ScoreboardGenericPkg is
         deallocate(FindPtr.ExpectedPtr) ;
         deallocate(FindPtr) ;
       end if ; 
+    end procedure LocalDelete ;
+
+    ------------------------------------------------------------
+    -- Scoreboard no tag
+    -- Find Element with Matching Tag and ActualData
+    procedure FindAndDelete (
+    ------------------------------------------------------------
+      constant Index       :  in  integer ;
+      constant ActualData  :  in  ActualType
+    ) is
+      variable FindPtr       : ListPtrType ;
+      variable FindParentPtr : ListPtrType ;
+    begin 
+      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndDelete") ; 
+      LocalDelete (FindPtr, FindParentPtr, Index, ActualData) ; 
     end procedure FindAndDelete ;
 
     ------------------------------------------------------------
@@ -2257,20 +2251,37 @@ package body ScoreboardGenericPkg is
       constant Tag         :  in  string ;
       constant ActualData  :  in  ActualType
     ) is
-      variable FindPtr       : ListPtrType ;
-      variable FindParentPtr : ListPtrType ;
+      variable FindPtr           : ListPtrType ;
+      variable FindParentPtr     : ListPtrType ;
+      variable FlushToItemNumber : integer := integer'low ; 
+      variable CurrentDropCount  : integer ; 
+      variable LocalDropCount    : integer ; 
     begin
-      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndFlush") ; 
-
-      if FindPtr = NULL then
-        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
-              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag & "  was not found." ) ;
-      else
-        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
-              "Flush up to Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag ) ;
-        Flush(Index, Tag, FindPtr.ItemNumber) ;
+      LocalFind   (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndFlush") ; 
+      if FindPtr /= NULL then 
+        FlushToItemNumber := FindPtr.ItemNumber - 1 ; 
       end if ; 
+      LocalDelete (FindPtr, FindParentPtr, Index, Tag, ActualData) ;
+      -- Flush if there are things to flush 
+      if GetFifoCount > 0 and FlushToItemNumber > 0 then 
+        CurrentDropCount := SbPtr(Index).DropCount ; 
+        Flush(Index, Tag, FlushToItemNumber) ;
+        LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ; 
+        If LocalDropCount > 0 then 
+          log(SbPtr(Index).AlertLogID, "FindAndFlush dropped " & 
+              to_string(LocalDropCount) & " items in tag: " & tag, INFO ) ; 
+        end if ;
+      end if ; 
+      
+--!!      if FindPtr = NULL then
+--!!        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+--!!        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
+--!!              "Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag & "  was not found." ) ;
+--!!      else
+--!!        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
+--!!              "Flush up to Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag ) ;
+--!!        Flush(Index, Tag, FindPtr.ItemNumber) ;
+--!!      end if ; 
     end procedure FindAndFlush ;
     
     ------------------------------------------------------------
@@ -2282,20 +2293,37 @@ package body ScoreboardGenericPkg is
       constant Index       :  in  integer ;
       constant ActualData  :  in  ActualType
     ) is
-      variable FindPtr       : ListPtrType ;
-      variable FindParentPtr : ListPtrType ;
+      variable FindPtr           : ListPtrType ;
+      variable FindParentPtr     : ListPtrType ;
+      variable FlushToItemNumber : integer := integer'low ; 
+      variable CurrentDropCount  : integer ; 
+      variable LocalDropCount    : integer ; 
     begin 
-      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndFlush") ; 
-
-      if FindPtr = NULL then
-        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
-              "Received: " & actual_to_string(ActualData) & "  was not found." ) ;
-      else
-        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
-              "Flush up to Received: " & actual_to_string(ActualData)) ;
-        Flush(Index, FindPtr.ItemNumber) ;
+      LocalFind   (FindPtr, FindParentPtr, Index, ActualData, "FindAndFlush") ; 
+      if FindPtr /= NULL then 
+        FlushToItemNumber := FindPtr.ItemNumber - 1 ; 
       end if ; 
+      LocalDelete (FindPtr, FindParentPtr, Index, ActualData) ;
+      -- Flush if there are things to flush 
+      if GetFifoCount > 0 and FlushToItemNumber > 0 then 
+        CurrentDropCount := SbPtr(Index).DropCount ; 
+        Flush(Index, FlushToItemNumber) ;
+        LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ; 
+        If LocalDropCount > 0 then 
+          log(SbPtr(Index).AlertLogID, "FindAndFlush dropped " & 
+              to_string(LocalDropCount) & " items", INFO ) ; 
+        end if ;
+      end if ; 
+
+--!!      if FindPtr = NULL then
+--!!        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+--!!        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
+--!!              "Received: " & actual_to_string(ActualData) & "  was not found." ) ;
+--!!      else
+--!!        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
+--!!              "Flush up to Received: " & actual_to_string(ActualData)) ;
+--!!        Flush(Index, FindPtr.ItemNumber) ;
+--!!      end if ; 
     end procedure FindAndFlush ;
 
     ------------------------------------------------------------
@@ -2315,17 +2343,11 @@ package body ScoreboardGenericPkg is
       write(buf, NAME_PREFIX & "- Name:         " & '"' & string'(GetAlertLogName(SbPtr(Index).AlertLogID)) & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ParentName:   " & '"' & string'(GetAlertLogName(GetAlertLogParentID(SbPtr(Index).AlertLogID))) & '"' & LF) ;
       write(buf, NAME_PREFIX & "  ItemCount:    " & to_string(SbPtr(Index).ItemNumber)  & LF) ;
-      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(SbPtr(Index).ErrorCount)      & LF) ;
+      write(buf, NAME_PREFIX & "  ErrorCount:   " & to_string(SbPtr(Index).ErrorCount)  & LF) ;
       write(buf, NAME_PREFIX & "  ItemsChecked: " & to_string(SbPtr(Index).CheckCount)  & LF) ;
       write(buf, NAME_PREFIX & "  ItemsPopped:  " & to_string(SbPtr(Index).PopCount)    & LF) ;
       write(buf, NAME_PREFIX & "  ItemsDropped: " & to_string(SbPtr(Index).DropCount)   & LF) ;
-      write(buf, NAME_PREFIX & "  FifoCount: "    & to_string(GetFifoCount(Index))   ) ;
---      write(buf, NAME_PREFIX & "  ItemCount:    " & '"' & to_string(SbPtr(Index).ItemNumber)       & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ErrorCount:   " & '"' & to_string(SbPtr(Index).ErrorCount)           & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsChecked: " & '"' & to_string(SbPtr(Index).CheckCount)       & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsPopped:  " & '"' & to_string(SbPtr(Index).PopCount)         & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  ItemsDropped: " & '"' & to_string(SbPtr(Index).DropCount)        & '"' & LF) ;
---      write(buf, NAME_PREFIX & "  FifoCount: "    & '"' & to_string(GetFifoCount(Index))        & '"' ) ;
+      write(buf, NAME_PREFIX & "  FifoCount:    " & to_string(GetFifoCount(Index))          ) ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteScoreboardYaml ;
     
@@ -2345,7 +2367,7 @@ package body ScoreboardGenericPkg is
         return ;
       end if ;
 
-      swrite(buf, "Version: ""1.1""" & LF) ;
+      swrite(buf, "Version: "  & '"' & SCOREBOARD_YAML_VERSION & '"' & LF) ;
       swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
       swrite(buf, "Scoreboards: ") ;
       writeline(SbYamlFile, buf) ;

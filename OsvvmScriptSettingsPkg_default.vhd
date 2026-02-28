@@ -42,7 +42,10 @@ package body OsvvmScriptSettingsPkg is
   constant OSVVM_BASE_DIRECTORY         : string := "";  -- Optional directory to contain all OSVVM output.  Often just ""
   constant OSVVM_BUILD_YAML_FILE        : string := "OsvvmRun.yml" ;
   constant OSVVM_TRANSCRIPT_YAML_FILE   : string := "OSVVM_transcript.yml" ;
-  constant OSVVM_REVISION               : string := "2024.01" ;
---  constant OSVVM_SETTINGS_REVISION      : string := "2023.99" ;  -- Purpose: use new release, but keep settings to match 2023 releases - See OsvvmSettingsPkg_default
-  constant OSVVM_SETTINGS_REVISION      : string := "2024.01" ;  -- Purpose: use new release and new settings - See OsvvmSettingsPkg_default
+  constant OSVVM_REVISION               : string := "2026.01" ;
+  constant OSVVM_SETTINGS_REVISION      : string := "2026.01" ;  -- Purpose: use new release and new settings - See OsvvmSettingsPkg_default
+  constant ALERT_YAML_VERSION           : string := "0.1"; 
+  constant SCOREBOARD_YAML_VERSION      : string := "0.1"; 
+  constant COVERAGE_YAML_VERSION        : string := "0.1"; 
+  constant REQUIREMENTS_YAML_VERSION    : string := "0.1"; 
 end package body OsvvmScriptSettingsPkg ;

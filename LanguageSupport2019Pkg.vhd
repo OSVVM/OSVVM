@@ -48,9 +48,26 @@ use ieee.std_logic_1164.all ;
 use ieee.numeric_std.all ; 
 
 package LanguageSupport2019Pkg is
+  constant TOOL_USES_32_BIT_INTEGERS : boolean := 
+    -- GHDL does not support writing -2**31 so using -2**30 - 2**30
+    -- 2's complement               or  1's complement
+    (integer'left = -2**30 - 2**30) or (integer'left = 1 -2**30 - 2**30) ; 
+    
+  ------------------------------------------------------------
+  -- Language built in
+  ------------------------------------------------------------
+  alias to_string is std.standard.to_string [integer_vector return string] ;
+  
+  ------------------------------------------------------------
+  -- ToolVersionApi
+  ------------------------------------------------------------
+  alias VHDL_VERSION is std.env.VHDL_VERSION [return STRING] ;
+  alias TOOL_TYPE    is std.env.TOOL_TYPE    [return STRING] ;
+  alias TOOL_VENDOR  is std.env.TOOL_VENDOR  [return STRING] ;
+  alias TOOL_NAME    is std.env.TOOL_NAME    [return STRING] ;
+  alias TOOL_EDITION is std.env.TOOL_EDITION [return STRING] ;
+  alias TOOL_VERSION is std.env.TOOL_VERSION [return STRING] ;
 
-  -- implemented directly by 1076-2019
-  -- function to_string ( A : integer_vector) return string ;
 
 end LanguageSupport2019Pkg ;
   
@@ -59,6 +76,5 @@ end LanguageSupport2019Pkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 package body LanguageSupport2019Pkg is
-
 
 end package body LanguageSupport2019Pkg ;

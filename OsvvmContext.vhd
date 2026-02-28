@@ -62,7 +62,6 @@ context OsvvmContext is
   use OSVVM.SortListPkg_int.all ;
   use OSVVM.RandomBasePkg.all ;
   use OSVVM.RandomPkg.all ;
-  use OSVVM.RandomPkg2019.all ;     -- for non-2019 tools this is empty
   use OSVVM.CoveragePkg.all ;
   use OSVVM.DelayCoveragePkg.all ;
   use OSVVM.MemoryPkg.all ;
@@ -71,7 +70,12 @@ context OsvvmContext is
   use OSVVM.TbUtilPkg.all ;
   use OSVVM.ClockResetPkg.all ;
   use OSVVM.ReportPkg.all ;
-  use OSVVM.LanguageSupport2019Pkg.all ;  -- for non-2019 tools this has stub subprograms that allow a graceful degradation of 2019 features
-  use OSVVM.FilelinePathPkg.all ;
+  --  Use VHDL-2019.  If not 2019, package is empty
+  use OSVVM.RandomPkg2019.all ;            -- for non-2019 tools this is empty
+  -- Stubs that stand in for missing VHDL-2019 features
+  use OSVVM.LanguageSupport2019Pkg.all ;   -- to_string[integer_vector return string] and VHDL_VERSION, TOOL_VENDOR, ...
+  use OSVVM.FilelinePathPkg.all ;          -- Alias's to std.env are not ambiguous just like for ieee.std_logic_textio
+  use OSVVM.AssertApiPkg.all ;             -- Alias's to std.env are not ambiguous just like for ieee.std_logic_textio
+
 end context OsvvmContext ; 
 
