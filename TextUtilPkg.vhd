@@ -69,6 +69,7 @@ package TextUtilPkg is
   function IsHexOrStdLogic (constant Char : character ) return boolean ;
   function IsNumber (constant Char : character ) return boolean ;
   function IsNumber (Name : string ) return boolean ;
+  function IsReal(Str : string) return boolean ;
   function isstd_logic (constant Char : character ) return boolean ;
 
   -- Conversions
@@ -98,6 +99,13 @@ package TextUtilPkg is
   --   If value is integer'high or integer'low, return that instead of the string
   ------------------------------------------------------------
   function to_string_max ( I : integer) return string ;
+
+  ------------------------------------------------------------
+  -- RealToCompactString
+  --   Format a real using to_string(..., Digits) then trim
+  --   whitespace and unnecessary trailing zeros.
+  ------------------------------------------------------------
+  function RealToCompactString(RealVal : real ; Digits : natural := 6) return string ;
 
   ------------------------------------------------------------
   -- Justify
@@ -344,6 +352,42 @@ package body TextUtilPkg is
   end function IsNumber ;
 
   ------------------------------------------------------------
+  function IsReal(Str : string) return boolean is
+  ------------------------------------------------------------
+    variable SawDot   : boolean := false ;
+    variable SawExp   : boolean := false ;
+    variable SawDigit : boolean := false ;
+    alias aStr : string(1 to Str'length) is Str ; 
+    variable i : integer := aStr'low ;
+  begin
+    if aStr'length = 0 then
+      return false ;
+    end if ;
+    if (aStr(i) = '+') or (aStr(i) = '-') then
+      if aStr'length = 1 then
+        return false ;
+      end if ;
+      i := i + 1 ;
+    end if ;
+    for k in i to aStr'high loop
+      if IsNumber(aStr(k)) then
+        SawDigit := true ;
+      elsif (aStr(k) = '.') and (not SawDot) and (not SawExp) then
+        SawDot := true ;
+      elsif ((aStr(k) = 'e') or (aStr(k) = 'E')) and (not SawExp) and SawDigit then
+        SawExp := true ;
+      elsif (SawExp and ((aStr(k) = '+') or (aStr(k) = '-'))) then
+        if not ((k > aStr'low) and ((aStr(k-1) = 'e') or (aStr(k-1) = 'E'))) then
+          return false ;
+        end if ;
+      else
+        return false ;
+      end if ;
+    end loop ;
+    return SawDigit and SawDot  ;
+  end function IsReal ;
+
+  ------------------------------------------------------------
   function isstd_logic (constant Char : character ) return boolean is
   ------------------------------------------------------------
   begin
@@ -530,6 +574,66 @@ package body TextUtilPkg is
       return to_string(I) ;
     end if ; 
   end function to_string_max ;
+
+  ------------------------------------------------------------
+  function RealToCompactString(RealVal : real ; Digits : natural := 6) return string is
+  ------------------------------------------------------------
+    -- Use to_string to avoid textio.write padding behavior and work only with strings.
+    constant CONST_STR : string := to_string(RealVal, Digits) ;
+    -- Ensure ascending range for simpler indexing.
+    variable StrVal : string(1 to CONST_STR'length) := CONST_STR ;
+    variable FirstNonSpace : integer ;
+    variable LastNonSpace  : integer ;
+    variable DotPos        : integer := 0 ;
+    variable TrimLast      : integer ;
+  begin
+    -- Trim any leading/trailing whitespace (some implementations may pad).
+    FirstNonSpace := StrVal'low ;
+    while (FirstNonSpace <= StrVal'high) and (StrVal(FirstNonSpace) = ' ') loop
+      FirstNonSpace := FirstNonSpace + 1 ;
+    end loop ;
+    if FirstNonSpace > StrVal'high then
+      return "0" ;
+    end if ;
+
+    LastNonSpace := StrVal'high ;
+    while (LastNonSpace >= FirstNonSpace) and (StrVal(LastNonSpace) = ' ') loop
+      LastNonSpace := LastNonSpace - 1 ;
+    end loop ;
+    if LastNonSpace < FirstNonSpace then
+      return "0" ;
+    end if ;
+
+    -- Locate decimal point, if any.
+    for i in FirstNonSpace to LastNonSpace loop
+      if StrVal(i) = '.' then
+        DotPos := i ;
+        exit ;
+      end if ;
+    end loop ;
+
+    -- Trim trailing zeros, then trailing '.'
+    TrimLast := LastNonSpace ;
+    if DotPos /= 0 then
+      while (TrimLast > DotPos) and (StrVal(TrimLast) = '0') loop
+        TrimLast := TrimLast - 1 ;
+      end loop ;
+      if TrimLast = DotPos then
+        TrimLast := TrimLast - 1 ;
+      end if ;
+    end if ;
+
+    if TrimLast < FirstNonSpace then
+      return "0" ;
+    end if ;
+
+    -- Normalize "-0" to "0" after trimming.
+    if (TrimLast = FirstNonSpace + 1) and (StrVal(FirstNonSpace) = '-') and (StrVal(FirstNonSpace + 1) = '0') then
+      return "0" ;
+    end if ;
+
+    return StrVal(FirstNonSpace to TrimLast) ;
+  end function RealToCompactString ;
 
   ------------------------------------------------------------
   -- Justify

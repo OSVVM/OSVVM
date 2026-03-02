@@ -519,8 +519,8 @@ package AlertLogPkg is
 
   procedure ReportLogEnables ;
 
-  procedure SetTestName(Name : string ) ;
-  alias SetAlertLogName is SetTestName [string] ;
+  procedure SetTestName(Name : string ; Title : string := "" ) ;
+  alias SetAlertLogName is SetTestName [string, string] ;
 
   -- synthesis translate_off
   impure function GetTestName return string ;
@@ -743,6 +743,8 @@ end AlertLogPkg ;
 --- ///////////////////////////////////////////////////////////////////////////
 
 use work.NamePkg.all ;
+use work.YamlUtilPkg.all ;
+use work.TestDescriptionPkg.all ;
 
 package body AlertLogPkg is
 
@@ -875,7 +877,8 @@ package body AlertLogPkg is
     -- AlertLog Structure Creation and Interaction Methods
 
     ------------------------------------------------------------
-    procedure SetTestName(Name : string ) ;
+    procedure SetTestName(Name : string ; Title : string := "" ) ;
+    -- WriteTestDescriptionYaml is a pt local procedure (file parameters not allowed in protected type interface)
     procedure SetNumAlertLogIDs (NewNumAlertLogIDs : AlertLogIDType) ;
     impure function FindID(Name : string ) return AlertLogIDType ;
     impure function FindID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
@@ -1034,6 +1037,8 @@ package body AlertLogPkg is
 
     -- Calculated by GetReqID
     variable HasRequirementsVar          : boolean := FALSE ;
+
+    -- Test Title/Brief/Description/Tags storage is in TestDescriptionPkg
 
     ------------------------------------------------------------
     type AlertLogRecType is record
@@ -2274,6 +2279,92 @@ package body AlertLogPkg is
       WriteLine(TestFile, buf) ;
     end procedure WriteSettingsYaml ;
 
+    -- Uses TextUtilPkg.RealToCompactString for real tag formatting.
+
+    ------------------------------------------------------------
+    --  pt local YAML helper
+    procedure WriteYamlLiteralBlockScalar_WriteOneLine(
+      file TestFile  : text ;
+      Prefix         : string ;
+      YamlText       : string ;
+      StartIndex     : integer ;
+      EndIndex       : integer
+    ) is
+      variable lineBuf : line ;
+      variable FirstNonSpace : integer ;
+      constant BACKSLASH : character := character'val(92) ;
+    begin
+      write(lineBuf, Prefix & "  ") ;
+
+      -- Some Tcl YAML parsers strip comment lines that start with '#'
+      -- even inside literal block scalars.  To keep markdown headings
+      -- (##, ###, etc.) lossless, prefix a single backslash before a leading '#'.
+      FirstNonSpace := StartIndex ;
+      if StartIndex <= EndIndex then
+        while FirstNonSpace <= EndIndex loop
+          exit when (YamlText(FirstNonSpace) /= ' ') and (YamlText(FirstNonSpace) /= HT) ;
+          FirstNonSpace := FirstNonSpace + 1 ;
+        end loop ;
+      end if ;
+
+      if StartIndex <= EndIndex then
+        for j in StartIndex to EndIndex loop
+          -- For block scalars, no escaping needed.  Replace control chars.
+          if (j = FirstNonSpace) and (YamlText(j) = '#') then
+            write(lineBuf, BACKSLASH) ;
+            write(lineBuf, '#') ;
+          elsif (YamlText(j) = HT) then
+            write(lineBuf, ' ') ;
+          elsif (character'pos(YamlText(j)) < 32) or (YamlText(j) = DEL) then
+            write(lineBuf, ' ') ;
+          else
+            write(lineBuf, YamlText(j)) ;
+          end if ;
+        end loop ;
+      end if ;
+      writeline(TestFile, lineBuf) ;
+    end procedure WriteYamlLiteralBlockScalar_WriteOneLine ;
+
+    ------------------------------------------------------------
+    --  pt local YAML helper
+    procedure WriteYamlLiteralBlockScalar(
+      file TestFile : text ;
+      Prefix        : string ;
+      KeyName       : string ;
+      YamlText      : string
+    ) is
+      variable localBuf   : line ;
+      variable LineStart  : integer ;
+      variable LineEnd    : integer ;
+      variable Index      : integer ;
+    begin
+      -- YAML literal block scalar (|) keeps newlines and is readable in YAML.
+      write(localBuf, Prefix & KeyName & ": |") ;
+      writeline(TestFile, localBuf) ;
+
+      LineStart := YamlText'low ;
+      Index := YamlText'low ;
+      while Index <= YamlText'high loop
+        if (YamlText(Index) = LF) or (YamlText(Index) = CR) then
+          LineEnd := Index - 1 ;
+          WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, YamlText, LineStart, LineEnd) ;
+          -- Handle CRLF as a single newline
+          if (YamlText(Index) = CR) and (Index < YamlText'high) and (YamlText(Index+1) = LF) then
+            Index := Index + 1 ;
+          end if ;
+          LineStart := Index + 1 ;
+        end if ;
+        Index := Index + 1 ;
+      end loop ;
+      if LineStart <= YamlText'high then
+        WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, YamlText, LineStart, YamlText'high) ;
+      elsif (YamlText'length > 0) and ((YamlText(YamlText'high) = LF) or (YamlText(YamlText'high) = CR)) then
+        -- Value ended with newline: preserve trailing blank line in the block
+        WriteYamlLiteralBlockScalar_WriteOneLine(TestFile, Prefix, YamlText, 1, 0) ;
+      end if ;
+    end procedure WriteYamlLiteralBlockScalar ;
+
+    ------------------------------------------------------------
     ------------------------------------------------------------
     --  pt local
     procedure WriteAlertYaml (
@@ -2300,7 +2391,11 @@ package body AlertLogPkg is
         Prefix                   => Prefix,
         TimeOut                  => TimeOut, 
         ExternalErrors           => ExternalErrors
-      ) ; 
+      ) ;
+
+      -- Write test description and tags if available
+      WriteTestDescriptionYaml(TestFile, Prefix) ;
+
 --      CalcTopTotalErrors (
 --        ExternalErrors           => ExternalErrors         ,
 --        TotalErrors              => TotalErrors            ,
@@ -3170,13 +3265,18 @@ package body AlertLogPkg is
     -- AlertLog Structure Creation and Interaction Methods
 
     ------------------------------------------------------------
-    procedure SetTestName(Name : string ) is
+    procedure SetTestName(Name : string ; Title : string := "" ) is
     ------------------------------------------------------------
     begin
       Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).Name) ;
       AlertLogPtr(ALERTLOG_BASE_ID).Name := new string'(Name) ;
       Deallocate(AlertLogPtr(ALERTLOG_BASE_ID).NameLower) ;
       AlertLogPtr(ALERTLOG_BASE_ID).NameLower  := new string'(to_lower(NAME)) ;
+
+      -- Optional: set Title when provided; do not clear Title when empty.
+      if Title'length > 0 then
+        SetTestTitle(Title) ;
+      end if ;
     end procedure SetTestName ;
 
     ------------------------------------------------------------
@@ -4389,6 +4489,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       DefaultTimeUnitsVar := A ; 
+      SetTestTagDefaultTimeUnits(A) ;
     end procedure SetOsvvmDefaultTimeUnits ; 
     
     ------------------------------------------------------------
@@ -6547,11 +6648,11 @@ package body AlertLogPkg is
   end ReportLogEnables ;
 
  ------------------------------------------------------------
-  procedure SetTestName(Name : string ) is
+  procedure SetTestName(Name : string ; Title : string := "" ) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    AlertLogStruct.SetTestName(Name) ;
+    AlertLogStruct.SetTestName(Name, Title) ;
     -- synthesis translate_on
   end procedure SetTestName ;
 
