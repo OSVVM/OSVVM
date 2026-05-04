@@ -1992,8 +1992,9 @@ package body ScoreboardGenericPkg is
     impure function Find (
     ------------------------------------------------------------
       constant Index       :  in  integer ;
-      constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
+      constant Tag         :  in  string ;
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
@@ -2001,9 +2002,11 @@ package body ScoreboardGenericPkg is
       LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "Find") ; 
 
       if FindPtr = NULL then
-        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-        Alert(SbPtr(Index).AlertLogID, 
-                  "Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData)) ; 
+        if ErrorOnFail then
+          SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+          Alert(SbPtr(Index).AlertLogID,
+                    "Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData)) ;
+        end if ;
         return integer'low ; 
       else
         -- Found it somewhere else in the List
@@ -2017,7 +2020,8 @@ package body ScoreboardGenericPkg is
     impure function Find (
     ------------------------------------------------------------
       constant Index       :  in  integer ;
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
@@ -2026,9 +2030,11 @@ package body ScoreboardGenericPkg is
       LocalFind (FindPtr, FindParentPtr, Index, ActualData, "Find") ; 
 
       if FindPtr = NULL then
-        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-        Alert(SbPtr(Index).AlertLogID, 
-                  "Did not find Actual Data: " & actual_to_string(ActualData)) ; 
+        if ErrorOnFail then
+          SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
+          Alert(SbPtr(Index).AlertLogID,
+                    "Did not find Actual Data: " & actual_to_string(ActualData)) ;
+        end if ;
         return integer'low ; 
       else
         -- Found it somewhere else in the List
