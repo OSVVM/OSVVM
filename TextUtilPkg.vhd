@@ -59,6 +59,8 @@ library ieee ;
 use ieee.std_logic_1164.all ;
 use ieee.numeric_std.all ;
 
+use work.IfElsePkg.all ;
+
 package TextUtilPkg is
   ------------------------------------------------------------
   -- Character tests
@@ -79,7 +81,7 @@ package TextUtilPkg is
 
   ------------------------------------------------------------
   procedure RemoveSpace (variable S : inout string ; variable Len : InOut integer) ;
-  
+
   -- Only needed for non-compliant simulators -- X
   procedure RemoveCrLf (S : string ; variable Len : out integer) ;
   function  RemoveCrLf( S : string ) return string ;
@@ -94,10 +96,18 @@ package TextUtilPkg is
   function to_hxstring ( A : signed) return string ;
 
   ------------------------------------------------------------
-  -- to_string_max
-  --   If value is integer'high or integer'low, return that instead of the string
+  -- format
+  --   Selected to_string replacements that do smarter things at boundaries (integer'low, ...)
   ------------------------------------------------------------
-  function to_string_max ( I : integer) return string ;
+  function format ( I : integer ) return string ;
+  function format ( R : Real ; RealDigits : natural ; FractionDigits : natural) return string ;
+  function format ( R : Real ; FractionDigits : natural ) return string ;
+  function format ( R:  Real ) return string ;
+  function format ( T : time ; TimeUnits : time ; FractionDigits : natural ) return string ;
+  function GetTimeUnits(T : time) return time ;
+  function format ( T : time ; FractionDigits : natural ) return string ;
+
+  alias to_string_max is format[integer return string] ;
 
   ------------------------------------------------------------
   -- Justify
@@ -372,12 +382,12 @@ package body TextUtilPkg is
   ------------------------------------------------------------
     alias aS : string (1 to S'length) is S ;
   begin
-    Len := 0 ; 
+    Len := 0 ;
     for i in aS'reverse_range loop
-      if not  (aS(i) = CR or aS(i) = LF) then 
+      if not  (aS(i) = CR or aS(i) = LF) then
         Len := i ;
-        exit ; 
-      end if ; 
+        exit ;
+      end if ;
     end loop ;
   end procedure RemoveCrLf ;
 
@@ -387,7 +397,7 @@ package body TextUtilPkg is
     alias aS : string(1 to S'length) is S ;
     variable Len : integer := 0 ;
   begin
-    RemoveCrLf(aS, Len) ; 
+    RemoveCrLf(aS, Len) ;
     return aS(1 to Len) ;
   end function RemoveCrLf ;
 
@@ -517,19 +527,93 @@ package body TextUtilPkg is
   end function to_hxstring ;
 
   ------------------------------------------------------------
-  -- to_string_max
+  -- to_string
   --   If value is integer'high or integer'low, return that instead of the string
   ------------------------------------------------------------
-  function to_string_max ( I : integer) return string is
+  function format ( I : integer ) return string is
   begin
-    if I = integer'high then 
-      return "integer'high" ; 
-    elsif I = integer'low then 
-      return "integer'low" ; 
-    else 
-      return to_string(I) ;
-    end if ; 
-  end function to_string_max ;
+    if I = integer'high then
+      return "integer'high" ;
+    elsif I = integer'low then
+      return "integer'low" ;
+    else
+      return std.standard.to_string(I) ;
+    end if ;
+  end function format ;
+
+  ------------------------------------------------------------
+  -- to_string
+  --   If value is real'high or real'low, return that instead of the string
+  ------------------------------------------------------------
+  function format ( R : Real ; RealDigits : natural ; FractionDigits : natural) return string is
+    variable HasFractionDigits : real  ;
+    constant ABS_R : real := abs(R) ;
+  begin
+    if R = real'high then
+      return "real'high" ;
+    elsif R = real'low then
+      return "real'low" ;
+    elsif ABS_R > 10.0 ** RealDigits then
+      -- Use exponents when too large
+      return to_string(R, "%0." & to_string(FractionDigits) & "e");
+    elsif R = 0.0 or ABS_R >= 1.0 then
+      -- Otherwise use fraction if have fraction bits
+      return std.standard.to_string(R, FractionDigits) ;
+    else
+      HasFractionDigits := ABS_R * 10.0**FractionDigits ;
+      if HasFractionDigits >= 1.0 then
+        return std.standard.to_string(R, FractionDigits) ;
+      else
+        return to_string(R, "%0." & to_string(FractionDigits) & "e");
+      end if ;
+    end if ;
+  end function format ;
+
+  function format ( R : Real ; FractionDigits : natural) return string is
+  begin
+    return format(R, work.OsvvmSettingsPkg.OSVVM_DIGITS_FOR_REAL_NUMBER, FractionDigits) ;
+  end function format ;
+
+  function format( R: Real ) return string is
+  begin
+    return format(R, work.OsvvmSettingsPkg.OSVVM_DIGITS_FOR_REAL_NUMBER, work.OsvvmSettingsPkg.OSVVM_DIGITS_FOR_REAL_FRACTION) ;
+  end function format ;
+
+  function format ( T : time ; TimeUnits : time ; FractionDigits : natural ) return string is
+    constant SCALE_FACTOR : integer := (10 ** FractionDigits) ;
+    constant SCALED_TIME  : time := T * SCALE_FACTOR ;
+  begin
+    return std.standard.to_string((SCALED_TIME - SCALED_TIME mod TimeUnits) / SCALE_FACTOR, TimeUnits) ;
+  end function format ;
+
+  function GetTimeUnits(T : time) return time is
+    constant POS_TIME : time := ifelse(T > 0 ns, T, -T) ;
+  begin
+    if T = 0 ns then
+      return work.OsvvmSettingsPkg.OSVVM_DEFAULT_TIME_UNITS ;
+    elsif T >= 1 hr then
+      return 1 hr ;
+    elsif T >= 1 min then
+      return 1 min ;
+    elsif T >= 1 sec then
+      return 1 sec ;
+    elsif T >= 1 ms then
+      return 1 ms ;
+    elsif T >= 1 ns then
+      return 1 ns ;
+    elsif T >= 1 ps then
+      return 1 ps ;
+    else
+      return 1 fs ;
+    end if ;
+  end function GetTimeUnits ;
+
+  function format ( T : time ; FractionDigits : natural ) return string is
+    constant TIME_UNITS   : time := GetTimeUnits(T) ;
+  begin
+    return format(T, TIME_UNITS, FractionDigits) ;
+  end function format ;
+
 
   ------------------------------------------------------------
   -- Justify
@@ -748,7 +832,7 @@ package body TextUtilPkg is
   begin
     Found := FALSE ;
     ReadLoop : loop
-      -- Skip White Space unless it is the delimiter.   
+      -- Skip White Space unless it is the delimiter.
       if Delimiter /= ' ' then
         SkipWhiteSpace(L) ;
       end if ;

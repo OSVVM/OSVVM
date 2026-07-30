@@ -67,7 +67,7 @@ package FileUtilPkg is
   -- dirname   - path without tail
   -- Root      - file name without file extension
   -- Extension - file extension
-  -- isfile    - 
+  -- isfile    -
   -- isdirectory -
 
 
@@ -92,13 +92,13 @@ package body FileUtilPkg is
     file_close(FileID) ;
     return status = OPEN_OK ;
   end function FileExists ;
-  
+
   ------------------------------------------------------------
   function Tail (A : string ; PathDelimiter : character := '/') return string is
   ------------------------------------------------------------
     alias aA : string(1 to A'length) is A ;
     variable LenA : integer := A'length ;
-    variable FoundAtIndex : integer ; 
+    variable FoundAtIndex : integer ;
   begin
     -- Remove ending PathDelimiter
     if aA(LenA) = PathDelimiter then
@@ -139,7 +139,9 @@ package body FileUtilPkg is
     constant LEN_A : integer := A'length ;
     alias aA : string(1 to LEN_A) is A ;
   begin
-    if aA(LEN_A) = Separator then
+    if LEN_A = 0 then
+      return "" ;
+    elsif aA(LEN_A) = Separator then
       return aA(1 to LEN_A-1) ;
     else
       return aA(1 to LEN_A) ;

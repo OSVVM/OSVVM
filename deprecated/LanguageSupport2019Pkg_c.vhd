@@ -45,24 +45,24 @@ library ieee ;
 use ieee.std_logic_1164.all ;
 use ieee.numeric_std.all ;
 
-use work.IfElsePkg.all ; 
+use work.IfElsePkg.all ;
 
 package LanguageSupport2019Pkg is
-  constant TOOL_USES_32_BIT_INTEGERS : boolean := 
-    -- GHDL does not support writing 2**31 - 1 so using 2**30
-    (integer'right = -1 + 2**30 + 2**30) ; 
---!!    -- 2's complement               or  1's complement
---!!    (integer'left = -2**30 - 2**30) or (integer'left = 1 -2**30 - 2**30) ; 
-    
-  constant INTEGER_WIDTH : integer := 
-    IfElse(TOOL_USES_32_BIT_INTEGERS, 32, 64) ;
+  constant INTEGER_32_LOW   : integer := -2**30 - 2**30 ;
+  constant INTEGER_32_LEFT  : integer := INTEGER_32_LOW ;
+  constant INTEGER_32_HIGH  : integer := -1 + 2**30 + 2**30 ;
+  constant INTEGER_32_RIGHT : integer := INTEGER_32_HIGH ;
+
+  constant TOOL_USES_32_BIT_INTEGERS : boolean := (integer'right = INTEGER_32_RIGHT) ;
+
+  constant INTEGER_WIDTH : integer := IfElse(TOOL_USES_32_BIT_INTEGERS, 32, 64) ;
 
   ------------------------------------------------------------
   -- to_string
   --   for integer_vector
   ------------------------------------------------------------
   impure function to_string ( A : integer_vector) return string ;
-  
+
   ------------------------------------------------------------
   -- ToolVersionApi
   ------------------------------------------------------------
@@ -72,7 +72,7 @@ package LanguageSupport2019Pkg is
   function TOOL_NAME return STRING;
   function TOOL_EDITION return STRING;
   function TOOL_VERSION return STRING;
-  
+
 end LanguageSupport2019Pkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ package body LanguageSupport2019Pkg is
   -- to_string
   impure function to_string ( A : integer_vector) return string is
   ------------------------------------------------------------
-    constant A_LEN : integer := A'length ; 
+    constant A_LEN : integer := A'length ;
     alias normalizedA : integer_vector(1 to A_LEN) is A ;
 
     variable buf : line ;
@@ -109,33 +109,33 @@ package body LanguageSupport2019Pkg is
 
     return local_to_string ;
   end function to_string ;
-  
+
   ------------------------------------------------------------
   -- ToolVersionApi
   ------------------------------------------------------------
   impure function VHDL_VERSION return STRING is
   begin
     return "2008" ;
-  end function VHDL_VERSION ; 
+  end function VHDL_VERSION ;
   function TOOL_TYPE return STRING is
   begin
     return "SIMULATION" ;
-  end function TOOL_TYPE ; 
+  end function TOOL_TYPE ;
   function TOOL_VENDOR return STRING is
   begin
     return "" ;
-  end function TOOL_VENDOR ; 
+  end function TOOL_VENDOR ;
   function TOOL_NAME return STRING is
   begin
     return "" ;
-  end function TOOL_NAME ; 
+  end function TOOL_NAME ;
   function TOOL_EDITION return STRING is
   begin
     return "" ;
-  end function TOOL_EDITION ; 
+  end function TOOL_EDITION ;
   function TOOL_VERSION return STRING is
   begin
     return "" ;
-  end function TOOL_VERSION ; 
-  
+  end function TOOL_VERSION ;
+
 end package body LanguageSupport2019Pkg ;

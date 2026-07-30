@@ -7,7 +7,7 @@
 #
 #
 #  Description:
-#        Script to compile the OSVVM library  
+#        Script to compile the OSVVM library
 #
 #  Developed for:
 #        SynthWorks Design Inc.
@@ -17,10 +17,10 @@
 #
 #  Revision History:
 #    Date      Version    Description
-#     7/2024   2024.07    Added signed, unsigned, and integer_vector scoreboards 
-#     3/2024   2024.03    Updated to handle Xilinx issues 
-#     5/2023   2023.05    Added BurstCoveragePkg 
-#     4/2023   2023.04    Updated handling of OsvvmScriptSettingsPkg since it 
+#     7/2024   2024.07    Added signed, unsigned, and integer_vector scoreboards
+#     3/2024   2024.03    Updated to handle Xilinx issues
+#     5/2023   2023.05    Added BurstCoveragePkg
+#     4/2023   2023.04    Updated handling of OsvvmScriptSettingsPkg since it
 #                         is now two pieces with deferred constants
 #     1/2023   2023.01    Added OsvvmScriptSettingsPkg and script to create it.
 #     8/2022   2022.08    Added MemorySupportPkg and MemoryGenericPkg
@@ -31,21 +31,21 @@
 #
 #
 #  This file is part of OSVVM.
-#  
-#  Copyright (c) 2016 - 2025 by SynthWorks Design Inc.  
-#  
+#
+#  Copyright (c) 2016 - 2025 by SynthWorks Design Inc.
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #      https://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-#  
+#
 
 library osvvm
 
@@ -75,6 +75,8 @@ analyze OsvvmGlobalPkg.vhd
 # Compile CoverageVendorApiPkg_***.vhd appropriate for the simulator
 analyze CoverageVendorApiPkg_${::osvvm::FunctionalCoverageIntegratedInSimulator}.vhd
 
+analyze NameStorePkg.vhd
+
 analyze TranscriptPkg.vhd
 
 if {$::osvvm::VhdlVersion >= 2019}  {
@@ -98,7 +100,7 @@ if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
 
 analyze AlertLogPkg.vhd
 
-analyze IdFifoPtPkg.vhd 
+analyze IdFifoPtPkg.vhd
 
 if {$::osvvm::ToolName ne "XSIM"}  {
   analyze TbUtilPkg.vhd
@@ -106,11 +108,9 @@ if {$::osvvm::ToolName ne "XSIM"}  {
   analyze deprecated/TbUtilPkg_xilinx.vhd
 }
 
-analyze NameStorePkg.vhd
-
 analyze MessageListPkg.vhd
 # PT based MessagePkg replaced by List based MessageListPkg
-# analyze MessagePkg.vhd      
+# analyze MessagePkg.vhd
 analyze SortListPkg_int.vhd
 analyze RandomBasePkg.vhd [NoNullRangeWarning]
 analyze RandomPkg.vhd [NoNullRangeWarning]
@@ -123,7 +123,7 @@ if {$::osvvm::ToolName ne "XSIM"}  {
 } else {
   analyze deprecated/CoveragePkg_xilinx.vhd [NoNullRangeWarning]
 }
-analyze CoveragePtPkg.vhd 
+analyze CoveragePtPkg.vhd
 analyze DelayCoveragePkg.vhd
 
 if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
@@ -134,12 +134,12 @@ if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
 
 analyze ResizePkg.vhd
 
-if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019Generics}  { 
-  analyze DynamicVectorGenericPkg.vhd 
+if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019Generics}  {
+  analyze DynamicVectorGenericPkg.vhd
   analyze DynamicVectorPkg_instances.vhd
 } else {
-  analyze deprecated/DynamicVectorPkg_IntV_c.vhd 
-  analyze deprecated/DynamicVectorPkg_slv_c.vhd 
+  analyze deprecated/DynamicVectorPkg_IntV_c.vhd
+  analyze deprecated/DynamicVectorPkg_slv_c.vhd
 }
 
 if {$::osvvm::ToolSupportsGenericPackages}  {
@@ -185,7 +185,7 @@ if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019ImpureFunctions}  {
   analyze  deprecated/RandomPkg2019_c.vhd
 }
 
-analyze OsvvmContext.vhd 
+analyze OsvvmContext.vhd
 
 
 # if {$::osvvm::ToolSupportsDeferredConstants}  {

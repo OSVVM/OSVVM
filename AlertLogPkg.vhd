@@ -34,15 +34,15 @@
 --    10/2025   2025.10    Connected settings from VhdlSettings:  ALERT_LOG_STOP_COUNT_FAILURE, ALERT_LOG_STOP_COUNT_ERROR, ALERT_LOG_STOP_COUNT_WARNING
 --                         Renamed GetAlertLogID (now alias) to GetID.
 --    02/2025   2025.02    Added NewReqID and FindID.  Updated requirement handling s.t. requirements can be anywhere in the hierarchy.
---    09/2024   2024.09    Added AffirmIfFilesMatch (renames AffirmIfNotDiff) and AlertIfFilesNotMatch (renames AlertIfDiff).  
+--    09/2024   2024.09    Added AffirmIfFilesMatch (renames AffirmIfNotDiff) and AlertIfFilesNotMatch (renames AlertIfDiff).
 --                         Above file compares support IgnoreSpaces and IgnoreEmptyLines
 --                         Moved GetAlertLogId out of deprecated.
 --    07/2024   2024.07    Updated PathTail to incorporate for generate indicies in the name.
 --                         Added AffirmIfEqual, AffirmIfNotEqual, AlertIfEqual, AlertIfNotEqual for integer_vector
 --                         Added TimeOut indication to ReportAlerts and WriteAlertYaml.
 --                         Added IsInitialized.
---    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg. 
---                         Allows setting constants for all tests rather than using SetAlertLogOptions.  
+--    03/2024   2024.03    Default values for settings are now constants in OsvvmSettingsPkg.
+--                         Allows setting constants for all tests rather than using SetAlertLogOptions.
 --                         Added AffirmIfTranscriptsMatch
 --    07/2023   2023.07    Added WriteRequirementsYaml.
 --    04/2023   2023.04    Added GetTranscriptName.
@@ -128,9 +128,9 @@ use work.TranscriptPkg.all ;
 use work.TextUtilPkg.all ;
 use work.FileUtilPkg.all ;
 use work.OsvvmSettingsPkg.all ;
-use work.LanguageSupport2019Pkg.all ; 
-use work.AssertApiPkg.all ; 
-use work.OsvvmSettingsPkg.all ; 
+use work.LanguageSupport2019Pkg.all ;
+use work.AssertApiPkg.all ;
+use work.OsvvmSettingsPkg.all ;
 
 library IEEE ;
 use ieee.std_logic_1164.all ;
@@ -140,8 +140,8 @@ package AlertLogPkg is
 
   subtype  AlertLogIDType           is integer ;
 --  type   AlertLogIDType           is range integer'low to integer'high ; -- Was in the plan.  Held off.  Likely to be breaking change.  Likely pursue a path toward other IDTypes
-  constant ALERTLOG_ID_UNINITIALZED : AlertLogIdType := AlertLogIDType'left ; 
-  
+  constant ALERTLOG_ID_UNINITIALZED : AlertLogIdType := AlertLogIDType'left ;
+
   type     AlertLogIDVectorType     is array (integer range <>) of AlertLogIDType ;
   type     AlertType                is (FAILURE, ERROR, WARNING) ;  -- NEVER
   subtype  AlertIndexType           is AlertType range FAILURE to WARNING ;
@@ -198,15 +198,15 @@ package AlertLogPkg is
   -- Similar to assert, except condition is positive
   procedure AlertIf( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR )  ;
   procedure AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) ;
-  impure function  AlertIf( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
-  impure function  AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  impure function AlertIf( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  impure function AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
 
   ------------------------------------------------------------
   -- Direct replacement for assert
   procedure AlertIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR )  ;
   procedure AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) ;
-  impure function  AlertIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
-  impure function  AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  impure function AlertIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  impure function AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean ;
 
   ------------------------------------------------------------
   -- overloading for common functionality
@@ -296,20 +296,20 @@ package AlertLogPkg is
   ) ;
 
   procedure AffirmIf(condition : boolean ; Message : string ;  Enable : boolean := FALSE ) ;
-  impure function  AffirmIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
-  impure function  AffirmIf( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIf( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
 
   ------------------------------------------------------------
   procedure AffirmIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) ;
   procedure AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) ;
-  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;
-  impure function  AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean ;
 
   ------------------------------------------------------------
   procedure AffirmIfNot( AlertLogID : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) ;
   procedure AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) ;
-  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
-  impure function  AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
+  impure function AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean ;
 
   ------------------------------------------------------------
   procedure AffirmPassed( AlertLogID : AlertLogIDType ; Message : string ; Enable : boolean := FALSE ) ;
@@ -407,7 +407,7 @@ package AlertLogPkg is
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0) ;
     ReportAll      : Boolean         := FALSE ;
-    TimeOut        : boolean         := FALSE 
+    TimeOut        : boolean         := FALSE
   ) ;
 
   procedure ReportNonZeroAlerts (
@@ -423,7 +423,7 @@ package AlertLogPkg is
     PrintSettings  : boolean := TRUE ;
     PrintChildren  : boolean := TRUE ;
     OpenKind       : File_Open_Kind := WRITE_MODE ;
-    TimeOut        : boolean 
+    TimeOut        : boolean
   ) ;
   procedure WriteAlertSummaryYaml (FileName : string := "" ; ExternalErrors : AlertCountType := (0,0,0) ; TimeOut : boolean := FALSE) ;
   procedure CreateYamlReport (ExternalErrors : AlertCountType := (0,0,0)) ;  -- Deprecated.  Use WriteAlertSummaryYaml.
@@ -546,7 +546,7 @@ package AlertLogPkg is
   alias GetAlertLogID is GetID[string, AlertLogIDType, Boolean, Boolean return AlertLogIDType] ;
   impure function NewReqID(
     Name            : string ;
-    Goal            : natural ; 
+    Goal            : natural ;
     ParentID        : AlertLogIDType          := REQUIREMENT_ALERTLOG_ID ;
     ReportMode      : AlertLogReportModeType  := ENABLED ;
     PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ;
@@ -556,7 +556,7 @@ package AlertLogPkg is
   impure function FindID(Name : string ) return AlertLogIDType ;
   impure function FindID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
   alias FindAlertLogID is FindID [string return AlertLogIDType] ;
-  alias FindAlertLogID is FindID [string, AlertLogIDType return AlertLogIDType] ;  
+  alias FindAlertLogID is FindID [string, AlertLogIDType return AlertLogIDType] ;
 
   impure function IsInitialized (ID : AlertLogIDType) return boolean ;
   procedure SetPassedGoal(AlertLogID : AlertLogIDType ; PassedGoal : integer ) ;
@@ -582,6 +582,16 @@ package AlertLogPkg is
   procedure IncAffirmPassedCount(AlertLogID : AlertLogIDType := ALERTLOG_BASE_ID) ;
   impure function GetAffirmPassedCount return natural ;
 
+  procedure SetExpectedAlertCount (Level : AlertType ; Count : integer) ;
+  procedure IncrementExpectedAlertCount (Level : AlertType ; Count : integer := 1) ;
+--  impure function GetExpectedAlertCount(Level : AlertType) return integer ;  -- can index return value
+  procedure SetExpectedAlertCount (Count : AlertCountType) ;
+  impure function GetExpectedAlertCount return AlertCountType ;
+  procedure SetManualCheck ;
+  impure function GetManualCheck return boolean ;
+
+  procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
+  procedure IncrementAlertStopCount(Level : AlertType ;  Count : integer) ;
   procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
   procedure SetAlertStopCount(Level : AlertType ;  Count : integer) ;
   impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
@@ -675,7 +685,7 @@ package AlertLogPkg is
 
   ------------------------------------------------------------
   -- Set/Get OsvvmDefaultTimeUnits
-  procedure SetOsvvmDefaultTimeUnits (A : time) ; 
+  procedure SetOsvvmDefaultTimeUnits (A : time) ;
   impure function GetOsvvmDefaultTimeUnits return time ;
 
   -- File Reading Utilities
@@ -718,11 +728,11 @@ package AlertLogPkg is
   --  ------------------------------------------------------------
   -- deprecated
   procedure AlertIf( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
-  impure function  AlertIf( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  impure function AlertIf( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
 
   -- deprecated
   procedure AlertIfNot( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR )  ;
-  impure function  AlertIfNot( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
+  impure function AlertIfNot( cond : boolean ; AlertLogID : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean ;
 
   -- deprecated
   procedure AffirmIf(
@@ -778,10 +788,10 @@ package body AlertLogPkg is
   ------------------------------------------------------------
     variable AssertCount : AlertCountType ;
   begin
-    AssertCount(FAILURE) := GetVhdlAssertCount(FAILURE) ;  
-    AssertCount(ERROR)   := GetVhdlAssertCount(ERROR) ; 
-    AssertCount(WARNING) := GetVhdlAssertCount(WARNING) ; 
-    return AssertCount ; 
+    AssertCount(FAILURE) := GetVhdlAssertCount(FAILURE) ;
+    AssertCount(ERROR)   := GetVhdlAssertCount(ERROR) ;
+    AssertCount(WARNING) := GetVhdlAssertCount(WARNING) ;
+    return AssertCount ;
   end function GetVhdlAlertCount ;
 
 
@@ -809,7 +819,7 @@ package body AlertLogPkg is
       ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := FALSE ;
       ReportWhenZero : boolean := TRUE ;
-      TimeOut        : boolean := FALSE 
+      TimeOut        : boolean := FALSE
     ) ;
     procedure WriteAlertYaml (
       FileName       : string ;
@@ -888,12 +898,12 @@ package body AlertLogPkg is
     impure function NewID(
       Name            : string ;
       ParentID        : AlertLogIDType ;
-      ParentIdSet     : boolean ; 
+      ParentIdSet     : boolean ;
       ReportMode      : AlertLogReportModeType ;
       PrintParent     : AlertLogPrintParentType ;
       CreateHierarchy : boolean ;
-      Goal            : integer ; 
-      PassedGoalSet   : boolean 
+      Goal            : integer ;
+      PassedGoalSet   : boolean
     ) return AlertLogIDType ;
     impure function IsValidID( AlertLogID : AlertLogIDType ) return boolean ;
     impure function IsInitialized (ID : AlertLogIDType) return boolean ;
@@ -920,7 +930,16 @@ package body AlertLogPkg is
     procedure IncAffirmPassedCount(AlertLogID : AlertLogIDType) ;
     impure function GetAffirmPassedCount return natural ;
 
-    procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
+    procedure SetExpectedAlertCount (Level : AlertType ; Count : integer) ;
+    procedure IncrementExpectedAlertCount (Level : AlertType ; Count : integer := 1) ;
+--    impure function GetExpectedAlertCount(Level : AlertType) return integer ;  -- replaced by index instead
+    procedure SetExpectedAlertCount (Count : AlertCountType) ;
+    impure function GetExpectedAlertCount return AlertCountType ;
+    procedure SetManualCheck ;
+    impure function GetManualCheck return boolean ;
+
+    procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
+    procedure SetAlertStopCount(UnverifiedAlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
     impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
 
     procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
@@ -1009,15 +1028,15 @@ package body AlertLogPkg is
 
     impure function GetAlertLogWriteTimeLast        return OsvvmOptionsType ;
 
-    procedure SetOsvvmDefaultTimeUnits (A : time) ; 
+    procedure SetOsvvmDefaultTimeUnits (A : time) ;
     impure function GetOsvvmDefaultTimeUnits return time ;
 
   end  protected AlertLogStructPType ;
 
   type AlertLogStructPType is protected body
-  
+
     variable buf : line ;  -- setup as a global to minimize creation and distruction.
-  
+
     -- ----------------------------------------------------------
     -- AlertLog State information
     -- ----------------------------------------------------------
@@ -1026,13 +1045,16 @@ package body AlertLogPkg is
     variable PassedCountVar            : natural := 0 ;
     variable ErrorCount                : integer := 0 ;
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
+    variable ExpectedAlertCountVar     : AlertCountType := (0, 0, 0) ;
+    variable ManualCheckVar            : boolean := FALSE ;
 
-    -- Calculated by NewID and GetReqID 
+    -- Calculated by NewID and GetReqID
     constant VHDL_ASSERT_ID_NAME           : string  := "VHDL Asserts" ;
+    constant EXPECTED_ERRORCOUNT_ID_NAME   : string  := "Expected" ;
     variable CalcAlertLogJustifyAmountVar  : integer := 0 ;
     variable CurAlertLogJustifyAmountVar   : integer := 0 ;
     constant CALC_REPORT_JUSTIFY_INIT      : integer := IfElse(ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS and SUPPORTS_2019_ASSERT_API, VHDL_ASSERT_ID_NAME'length + 2, 0) ; -- len + indent
-    variable CalcReportJustifyAmountVar    : integer := CALC_REPORT_JUSTIFY_INIT ; 
+    variable CalcReportJustifyAmountVar    : integer := CALC_REPORT_JUSTIFY_INIT ;
     variable CurReportJustifyAmountVar     : integer := 0 ;
     -- Calculated by NewID and GetReqID
     variable FoundReportHierVar          : boolean := FALSE ;    -- Calculated by NewID, GetReqID
@@ -1065,7 +1087,7 @@ package body AlertLogPkg is
       LogEnabled          : LogEnableType ;
       ReportMode          : AlertLogReportModeType ;
       PrintParent         : AlertLogPrintParentType ;
-      HierarchyLevel      : Integer ; 
+      HierarchyLevel      : Integer ;
       -- Used only by ReadTestSummaries
       TotalErrors         : integer ;
       AffirmPassedCount   : integer ;
@@ -1090,10 +1112,10 @@ package body AlertLogPkg is
     variable WriteTimeFirstVar : boolean := ALERT_LOG_WRITE_TIME_FIRST ;
     variable WriteTimeLastVar  : boolean := ALERT_LOG_WRITE_TIME_LAST ;
 
-    variable JustifyEnableVar            : boolean := ALERT_LOG_JUSTIFY_ENABLE ; 
+    variable JustifyEnableVar            : boolean := ALERT_LOG_JUSTIFY_ENABLE ;
     variable TimeJustifyAmountVar        : integer := ALERT_LOG_TIME_JUSTIFY_AMOUNT ;         -- LocalPrint
     variable DefaultTimeUnitsVar         : time    := OSVVM_DEFAULT_TIME_UNITS ;              -- LocalPrint
-    
+
     -- Global Alert on/off - nothing counted if FALSE
     variable GlobalAlertEnabledVar       : boolean := ALERT_LOG_GLOBAL_ALERT_ENABLE ;         -- Allows turn off and on
 
@@ -1183,6 +1205,55 @@ package body AlertLogPkg is
     end function GetAffirmPassedCount ;
 
     ------------------------------------------------------------
+    procedure SetExpectedAlertCount (Level : AlertType ; Count : integer) is
+    ------------------------------------------------------------
+    begin
+      ExpectedAlertCountVar(Level) := Count ;
+    end procedure SetExpectedAlertCount ;
+
+    ------------------------------------------------------------
+    procedure IncrementExpectedAlertCount (Level : AlertType ; Count : integer := 1) is
+    ------------------------------------------------------------
+    begin
+      ExpectedAlertCountVar(Level) := ExpectedAlertCountVar(Level) + Count ;
+    end procedure IncrementExpectedAlertCount ;
+
+-- index instead    ------------------------------------------------------------
+-- index instead    impure function GetExpectedAlertCount(Level : AlertType) return integer is
+-- index instead    ------------------------------------------------------------
+-- index instead    begin
+-- index instead      return ExpectedAlertCountVar(Level) ;
+-- index instead    end function GetExpectedAlertCount ;
+
+    ------------------------------------------------------------
+    procedure SetExpectedAlertCount (Count : AlertCountType) is
+    ------------------------------------------------------------
+    begin
+      ExpectedAlertCountVar := Count ;
+    end procedure SetExpectedAlertCount ;
+
+    ------------------------------------------------------------
+    impure function GetExpectedAlertCount return AlertCountType is
+    ------------------------------------------------------------
+    begin
+      return ExpectedAlertCountVar ;
+    end function GetExpectedAlertCount ;
+
+    ------------------------------------------------------------
+    procedure SetManualCheck is
+    ------------------------------------------------------------
+    begin
+      ManualCheckVar := TRUE ;
+    end procedure SetManualCheck ;
+
+    ------------------------------------------------------------
+    impure function GetManualCheck return boolean is
+    ------------------------------------------------------------
+    begin
+      return ManualCheckVar ;
+    end function GetManualCheck ;
+
+    ------------------------------------------------------------
     -- PT Local
     procedure IncrementAlertCount(
     ------------------------------------------------------------
@@ -1202,11 +1273,11 @@ package body AlertLogPkg is
         -- Propagate counts to parent(s)  -- Ascend Hierarchy
         if AlertLogID /= ALERTLOG_BASE_ID then
           ParentID := AlertLogPtr(AlertLogID).ParentID ;
-          if AlertLogID /= ParentID then 
+          if AlertLogID /= ParentID then
             IncrementAlertCount(ParentID, Level, StopDueToCount, IncrementByAmount) ;
           else
-            report "AlertLogPkg.IncrementAlertCount: Loop in data structure since AlertLogID = ParentID" severity failure ; 
-          end if ; 
+            report "AlertLogPkg.IncrementAlertCount: Loop in data structure since AlertLogID = ParentID" severity failure ;
+          end if ;
         end if ;
       else
         -- Disabled, increment disabled count
@@ -1260,7 +1331,7 @@ package body AlertLogPkg is
         end if ;
       end if ;
       -- Spacing before message - including prefix
-      swrite(buf, "  ") ; 
+      swrite(buf, "  ") ;
       -- Prefix
       if AlertLogPtr(AlertLogID).Prefix /= NULL then
         write(buf, AlertLogPtr(AlertLogID).Prefix.all & ' ') ;
@@ -1314,7 +1385,7 @@ package body AlertLogPkg is
 
         if StopDueToCount then
          -- Not using Alert since already reached stop count
-         write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME & 
+         write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME &
                         " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
@@ -1352,7 +1423,7 @@ package body AlertLogPkg is
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
-        write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME & 
+        write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME &
                         " Stop Count on " & ALERT_NAME(Level) & " reached") ;
           if FoundAlertHierVar then
             write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
@@ -1411,7 +1482,7 @@ package body AlertLogPkg is
     ) is
       -- constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
-      JustifyEnableVar := Enable ; 
+      JustifyEnableVar := Enable ;
       if Enable then
         -- (CalcAlertLogJustifyAmountVar, CalcReportJustifyAmountVar) := CalcJustify(AlertLogID, 0, 0, Separator'length) ;
         CurAlertLogJustifyAmountVar := CalcAlertLogJustifyAmountVar ;
@@ -1552,6 +1623,54 @@ package body AlertLogPkg is
     end procedure GetPassedAffirmCount ;
 
     ------------------------------------------------------------
+    --  pt local
+    -- Only used for top level
+    impure function CalcExpectedAlertCount(
+    ------------------------------------------------------------
+      ExternalErrors       : AlertCountType
+    ) return AlertCountType is
+      variable Result : AlertCountType ;
+    begin
+      if ExternalErrors(FAILURE) < 0 then
+        Result(FAILURE) := -ExternalErrors(FAILURE) + ExpectedAlertCountVar(FAILURE) ;
+      else
+        Result(FAILURE) := ExpectedAlertCountVar(FAILURE) ;
+      end if ;
+      if ExternalErrors(ERROR) < 0 then
+        Result(ERROR) := -ExternalErrors(ERROR) + ExpectedAlertCountVar(ERROR) ;
+      else
+        Result(ERROR) := ExpectedAlertCountVar(ERROR) ;
+      end if ;
+      if ExternalErrors(WARNING) < 0 then
+        Result(WARNING) := -ExternalErrors(WARNING) + ExpectedAlertCountVar(WARNING) ;
+      else
+        Result(WARNING) := ExpectedAlertCountVar(WARNING) ;
+      end if ;
+      return Result ;
+    end function CalcExpectedAlertCount ;
+
+    ------------------------------------------------------------
+    --  pt local
+    -- Only used for top level
+    impure function CalcExternalErrorCount(
+    ------------------------------------------------------------
+      ExternalErrors       : AlertCountType
+    ) return AlertCountType is
+      variable Result : AlertCountType := (0, 0, 0) ;
+    begin
+      if ExternalErrors(FAILURE) > 0 then
+        Result(FAILURE) := ExternalErrors(FAILURE) ;
+      end if ;
+      if ExternalErrors(ERROR) > 0 then
+        Result(ERROR) := ExternalErrors(ERROR) ;
+      end if ;
+      if ExternalErrors(WARNING) > 0 then
+        Result(WARNING) := ExternalErrors(WARNING) ;
+      end if ;
+      return Result ;
+    end function CalcExternalErrorCount ;
+
+    ------------------------------------------------------------
     -- Local
     procedure CalcTotalErrors (
     ------------------------------------------------------------
@@ -1564,21 +1683,21 @@ package body AlertLogPkg is
       variable TotalDisabledAlertErrors : out integer ;
       variable TotalRequirementsPassed  : out integer ;
       variable TotalRequirementsGoal    : out integer ;
-      variable TotalRequirementErrors   : out integer   
+      variable TotalRequirementErrors   : out integer
     ) is
       variable VhdlAssertCount  : AlertCountType ;
-      variable TotalAssertCount : integer ; 
+      variable TotalAssertCount : integer ;
     begin
       if FailOnVhdlAssertErrorsVar and (AlertLogID = ALERTLOG_BASE_ID) then
-        VhdlAssertCount  := GetVhdlAlertCount ; 
+        VhdlAssertCount  := GetVhdlAlertCount ;
       else
         VhdlAssertCount := (0, 0, 0) ;
       end if ;
-    
+
       -- Alert Count with ExternalErrors (includes ExpectedErrors)
       TotalAlertCount   := AlertLogPtr(AlertLogID).AlertCount + ExternalErrors + VhdlAssertCount ;
       TotalErrors       := SumAlertCount( RemoveNonFailingWarnings(TotalAlertCount)) ;
-      
+
       -- Account for Disabled Errors
       DisabledAlertCount        := GetDisabledAlertCount(AlertLogID) ;
       TotalDisabledAlertErrors  := SumAlertCount( RemoveNonFailingWarnings(DisabledAlertCount)) ;
@@ -1593,13 +1712,13 @@ package body AlertLogPkg is
         TotalErrors  := TotalErrors + TotalRequirementErrors ;
       end if ;
 
-     -- Timeout is an error that 
+     -- Timeout is an error that
       if TimeOut then
         TotalErrors := TotalErrors + 1 ;
-      end if ; 
-      
+      end if ;
+
     end procedure CalcTotalErrors ;
-    
+
     ------------------------------------------------------------
     -- Local
     impure function CalcTotalErrors (AlertLogID : AlertLogIDType) return integer is
@@ -1611,18 +1730,18 @@ package body AlertLogPkg is
       variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
       variable TotalRequirementErrors : integer ;
     begin
-    
+
       CalcTotalErrors (
-        AlertLogID                => AlertLogID              , 
-        ExternalErrors            => (others => 0)           , 
-        Timeout                   => FALSE                   , 
-        TotalAlertCount           => TotalAlertCount         , 
-        TotalErrors               => TotalErrors             , 
-        DisabledAlertCount        => DisabledAlertCount      , 
-        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
-        TotalRequirementsPassed   => TotalRequirementsPassed , 
-        TotalRequirementsGoal     => TotalRequirementsGoal   , 
-        TotalRequirementErrors    => TotalRequirementErrors  
+        AlertLogID                => AlertLogID              ,
+        ExternalErrors            => (others => 0)           ,
+        Timeout                   => FALSE                   ,
+        TotalAlertCount           => TotalAlertCount         ,
+        TotalErrors               => TotalErrors             ,
+        DisabledAlertCount        => DisabledAlertCount      ,
+        TotalDisabledAlertErrors  => TotalDisabledAlertErrors,
+        TotalRequirementsPassed   => TotalRequirementsPassed ,
+        TotalRequirementsGoal     => TotalRequirementsGoal   ,
+        TotalRequirementErrors    => TotalRequirementErrors
       ) ;
 
       return TotalErrors ;
@@ -1637,7 +1756,7 @@ package body AlertLogPkg is
       ExternalErrors              : AlertCountType ;
       variable HasDisabledAlerts  : inout Boolean ;
       variable TestFailed         : inout Boolean ;
-      TimeOut                     : boolean 
+      TimeOut                     : boolean
     ) is
       variable buf : line ;
       variable TotalErrors : integer ;
@@ -1647,16 +1766,16 @@ package body AlertLogPkg is
       variable PassedCount, AffirmCheckCount : integer ;
     begin
       CalcTotalErrors (
-        AlertLogID                => AlertLogID              , 
-        ExternalErrors            => ExternalErrors          , 
-        Timeout                   => Timeout                 , 
-        TotalAlertCount           => AlertCountVar           , 
-        TotalErrors               => TotalErrors             , 
-        DisabledAlertCount        => DisabledAlertCount      , 
-        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
-        TotalRequirementsPassed   => TotalRequirementsPassed , 
-        TotalRequirementsGoal     => TotalRequirementsGoal   , 
-        TotalRequirementErrors    => TotalRequirementErrors  
+        AlertLogID                => AlertLogID              ,
+        ExternalErrors            => ExternalErrors  - ExpectedAlertCountVar,
+        Timeout                   => Timeout                 ,
+        TotalAlertCount           => AlertCountVar           ,
+        TotalErrors               => TotalErrors             ,
+        DisabledAlertCount        => DisabledAlertCount      ,
+        TotalDisabledAlertErrors  => TotalDisabledAlertErrors,
+        TotalRequirementsPassed   => TotalRequirementsPassed ,
+        TotalRequirementsGoal     => TotalRequirementsGoal   ,
+        TotalRequirementErrors    => TotalRequirementErrors
       ) ;
 
 
@@ -1672,31 +1791,37 @@ package body AlertLogPkg is
       end if ;
 
       if not TestFailed then
-        if AffirmCheckCountVar = 0 then 
+        if ManualCheckVar then
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-            ALERT_LOG_NOCHECKS_NAME & "   " &  -- NoChecksName
+            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_MANUALCHECKS_NAME & "   " &
+            Name
+          ) ;
+        elsif AffirmCheckCountVar = 0 then
+          write(buf,
+            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_NOCHECKS_NAME & "   " &
             Name
           ) ;
         else
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-            ALERT_LOG_PASS_NAME & "   " &  -- PassName
+            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_PASS_NAME & "   " &
             Name
           ) ;
-        end if; 
+        end if;
       else
-        if TimeOut then 
+        if TimeOut then
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-            ALERT_LOG_TIMEOUT_NAME & "   " &  -- TimeOutName
+            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_TIMEOUT_NAME & "   " &
             Name
           ) ;
 
         else
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &  -- DoneName
-            ALERT_LOG_FAIL_NAME & "   " &  -- FailName
+            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_FAIL_NAME & "   " &
             Name
           ) ;
         end if ;
@@ -1738,6 +1863,45 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
+    procedure PrintExpectedAlertCount(
+    ------------------------------------------------------------
+      Prefix            : string ;
+      IndentAmount      : integer ;
+      ExternalErrors    : AlertCountType ;
+      ReportWhenZero    : boolean ;
+      HasDisabledErrors : boolean
+    ) is
+      variable buf : line ;
+      variable TotalExpectedAlertCount  : AlertCountType ;
+      variable ExpectedCount : integer ;
+    begin
+      TotalExpectedAlertCount  := CalcExpectedAlertCount(ExternalErrors) ;
+      ExpectedCount := SumAlertCount(TotalExpectedAlertCount) ;
+      if ReportWhenZero or ExpectedCount > 0 then
+        write(buf, Prefix & " " & LeftJustify(EXPECTED_ERRORCOUNT_ID_NAME, CurReportJustifyAmountVar - IndentAmount)) ;
+        write(buf, "  Failures: "  & to_string(- TotalExpectedAlertCount(FAILURE) ) ) ;
+        write(buf, "  Errors: "    & to_string(- TotalExpectedAlertCount(ERROR) ) ) ;
+        write(buf, "  Warnings: "  & to_string(- TotalExpectedAlertCount(WARNING) ) ) ;
+        if (HasDisabledErrors and FailOnDisabledErrorsVar) or PrintDisabledAlertsVar then
+          write(buf, string'("  Disabled Failures: 0" )) ;
+          write(buf, string'("  Errors: 0"  )) ;
+          write(buf, string'("  Warnings: 0" )) ;
+        end if ;
+        if PrintPassedVar or PrintRequirementsVar then
+          write(buf, string'("  Passed: 0")) ;
+        end if;
+        if PrintRequirementsVar then
+          write(buf, string'(" of 0")) ; -- Passed Goal
+        end if ;
+        if PrintAffirmationsVar then
+          write(buf, string'("  Affirmations: 0")) ;
+        end if ;
+        WriteLine(buf) ;
+      end if ;
+    end procedure PrintExpectedAlertCount ;
+
+    ------------------------------------------------------------
+    -- PT Local
     procedure PrintVhdlAssertCount(
     ------------------------------------------------------------
       Prefix            : string ;
@@ -1748,11 +1912,11 @@ package body AlertLogPkg is
     ) is
       variable buf : line ;
       variable VhdlAssertCount  : AlertCountType ;
-      variable TotalAssertCount : integer ; 
+      variable TotalAssertCount : integer ;
     begin
       if PrintVhdlAssertErrorsVar then
-        VhdlAssertCount  := GetVhdlAlertCount ; 
-        TotalAssertCount := SumAlertCount(VhdlAssertCount) ; 
+        VhdlAssertCount  := GetVhdlAlertCount ;
+        TotalAssertCount := SumAlertCount(VhdlAssertCount) ;
         if ReportWhenZero or HasErrors then
           write(buf, Prefix & " " & LeftJustify(VHDL_ASSERT_ID_NAME, CurReportJustifyAmountVar - IndentAmount)) ;
           write(buf, "  Failures: "  & to_string(VhdlAssertCount(FAILURE) ) ) ;
@@ -1853,7 +2017,7 @@ package body AlertLogPkg is
 --??        -- Print VHDL Asserts after default or other
 --??            if CurID = OSVVM_ALERTLOG_ID then -- ALERTLOG_DEFAULT_ID
 --??              PrintVhdlAssertCount ;
---??            end if ; 
+--??            end if ;
           IterateAndPrintChildren(
             AlertLogID         => CurID,
             Prefix             => Prefix & "  ",
@@ -1873,7 +2037,7 @@ package body AlertLogPkg is
       ExternalErrors : AlertCountType := (0,0,0) ;
       ReportAll      : boolean := FALSE ;
       ReportWhenZero : boolean := TRUE ;
-      TimeOut        : boolean := FALSE 
+      TimeOut        : boolean := FALSE
     ) is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
@@ -1910,6 +2074,13 @@ package body AlertLogPkg is
       if ReportAll or (FoundReportHierVar and ReportHierarchyVar and TestFailed) then
       -- (NumErrors /= 0 or (NumDisabledErrors /=0 and FailOnDisabledErrorsVar)) then
         -- Print VHDL Asserts before default
+        PrintExpectedAlertCount(
+          Prefix            => ALERT_LOG_PRINT_PREFIX & "  ",
+          IndentAmount      => 2,
+          ExternalErrors    => ExternalErrors,
+          ReportWhenZero    => ReportAll or ReportWhenZero,
+          HasDisabledErrors => HasDisabledErrors
+        ) ;
         PrintVhdlAssertCount(
           Prefix            => ALERT_LOG_PRINT_PREFIX & "  ",
           IndentAmount      => 2,
@@ -2008,46 +2179,30 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       if TotalErrors = 0 then
-        if TopLevel and AffirmCheckCountVar = 0 then 
+        if TopLevel and ManualCheckVar then
+          return "MANUALCHECK" ;
+        elsif TopLevel and AffirmCheckCountVar = 0 then
           return "NOCHECKS" ;
         else
-          return "PASSED" ; 
-        end if; 
+          return "PASSED" ;
+        end if;
       else
-        if TimeOut then 
-          return "TIMEOUT" ; 
+        if TimeOut then
+          return "TIMEOUT" ;
         else
-          return "FAILED" ; 
-        end if; 
+          return "FAILED" ;
+        end if;
       end if ;
     end function GetTestResultStatus ;
 
-    ------------------------------------------------------------
-    --  pt local
-    -- Only used for top level
-    function WriteExpectedCount( 
-    ------------------------------------------------------------
-      ExternalErrors       : AlertCountType 
-    ) return string is
-      variable buf : line ;
-      constant DELIMITER : string := ", " ;
-    begin
-      return 
-        DELIMITER & "ExpectedCount: {" &
-        "Failure: "            & to_string( ifelse(ExternalErrors(FAILURE) >= 0, 0, -ExternalErrors(FAILURE) ) )  & DELIMITER &
-        "Error: "              & to_string( ifelse(ExternalErrors(ERROR)   >= 0, 0, -ExternalErrors(ERROR) ) )    & DELIMITER &
-        "Warning: "            & to_string( ifelse(ExternalErrors(WARNING) >= 0, 0, -ExternalErrors(WARNING) ) )  &
-      "}" ;
-    end function WriteExpectedCount ;     
-    
     ------------------------------------------------------------
     --  pt local
     procedure WriteTopAlertYaml (
     ------------------------------------------------------------
       file TestFile        : text ;
       Prefix               : string ;
-      TimeOut              : boolean ; 
-      ExternalErrors       : AlertCountType  
+      TimeOut              : boolean ;
+      ExternalErrors       : AlertCountType
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
@@ -2056,18 +2211,22 @@ package body AlertLogPkg is
       variable TotalRequirementsPassed, TotalRequirementsGoal, TotalRequirementErrors : integer ;
       variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       variable PassedCount, AffirmCheckCount : integer ;
+      variable TotalExpectedAlertCount, TotalExternalErrors : AlertCountType ;
     begin
+      TotalExpectedAlertCount  := CalcExpectedAlertCount(ExternalErrors) ;
+      TotalExternalErrors      := CalcExternalErrorCount(ExternalErrors) ;
+
       CalcTotalErrors (
-        AlertLogID                => ALERTLOG_BASE_ID        , 
-        ExternalErrors            => ExternalErrors          , 
-        Timeout                   => Timeout                 , 
-        TotalAlertCount           => AlertCountVar           , 
-        TotalErrors               => TotalErrors             , 
-        DisabledAlertCount        => DisabledAlertCount      , 
-        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
-        TotalRequirementsPassed   => TotalRequirementsPassed , 
-        TotalRequirementsGoal     => TotalRequirementsGoal   , 
-        TotalRequirementErrors    => TotalRequirementErrors  
+        AlertLogID                => ALERTLOG_BASE_ID        ,
+        ExternalErrors            => ExternalErrors - ExpectedAlertCountVar,
+        Timeout                   => Timeout                 ,
+        TotalAlertCount           => AlertCountVar           ,
+        TotalErrors               => TotalErrors             ,
+        DisabledAlertCount        => DisabledAlertCount      ,
+        TotalDisabledAlertErrors  => TotalDisabledAlertErrors,
+        TotalRequirementsPassed   => TotalRequirementsPassed ,
+        TotalRequirementsGoal     => TotalRequirementsGoal   ,
+        TotalRequirementErrors    => TotalRequirementErrors
       ) ;
 
       AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
@@ -2091,8 +2250,17 @@ package body AlertLogPkg is
             "Failure: "            & to_string( DisabledAlertCount(FAILURE) )  & DELIMITER &
             "Error: "              & to_string( DisabledAlertCount(ERROR) )    & DELIMITER &
             "Warning: "            & to_string( DisabledAlertCount(WARNING) )  &
-          "}" & 
-          WriteExpectedCount(ExternalErrors) & 
+          "}" & DELIMITER &
+          "ExpectedCount: {" &
+            "Failure: "            & to_string( TotalExpectedAlertCount(FAILURE) )  & DELIMITER &
+            "Error: "              & to_string( TotalExpectedAlertCount(ERROR) )    & DELIMITER &
+            "Warning: "            & to_string( TotalExpectedAlertCount(WARNING) )  &
+          "}" & DELIMITER &
+          "ExternalErrors: {" &
+            "Failure: "            & to_string( TotalExternalErrors(FAILURE) )  & DELIMITER &
+            "Error: "              & to_string( TotalExternalErrors(ERROR) )    & DELIMITER &
+            "Warning: "            & to_string( TotalExternalErrors(WARNING) )  &
+          "}" &
         "}"
       ) ;
       WriteLine(TestFile, buf) ;
@@ -2104,16 +2272,16 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       file TestFile  : text ;
       FirstPrefix    : string := "" ;
-      Prefix         : string := "" 
+      Prefix         : string := ""
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
       variable VhdlAssertCount  : AlertCountType ;
-      variable TotalAssertCount : integer ; 
+      variable TotalAssertCount : integer ;
     begin
       if PrintVhdlAssertErrorsVar then
-        VhdlAssertCount  := GetVhdlAlertCount ; 
-        TotalAssertCount := SumAlertCount(RemoveNonFailingWarnings(VhdlAssertCount)) ; 
+        VhdlAssertCount  := GetVhdlAlertCount ;
+        TotalAssertCount := SumAlertCount(RemoveNonFailingWarnings(VhdlAssertCount)) ;
         Write(buf,
           FirstPrefix & "Name:  " & '"' & VHDL_ASSERT_ID_NAME & '"'  & LF  &
           Prefix & "Status: " & GetTestResultStatus(TotalAssertCount, FALSE, FALSE)        & LF  &
@@ -2124,20 +2292,20 @@ package body AlertLogPkg is
               "Error: "              & to_string( VhdlAssertCount(ERROR) )    & DELIMITER &
               "Warning: "            & to_string( VhdlAssertCount(WARNING) )  &
             "}" & DELIMITER &
-            "PassedCount: 0"        & DELIMITER & 
-            "AffirmCount: 0"        & DELIMITER & 
-            "RequirementsPassed: 0" & DELIMITER & 
-            "RequirementsGoal: 0"   & DELIMITER & 
+            "PassedCount: 0"        & DELIMITER &
+            "AffirmCount: 0"        & DELIMITER &
+            "RequirementsPassed: 0" & DELIMITER &
+            "RequirementsGoal: 0"   & DELIMITER &
             "DisabledAlertCount: {" &
               "Failure: 0"          & DELIMITER &
               "Error: 0"            & DELIMITER &
               "Warning: 0"          &
             "}" &
-          "}" & LF & 
+          "}" & LF &
           Prefix & "Children: []"
         ) ;
         WriteLine(TestFile, buf) ;
-      end if ; 
+      end if ;
     end procedure WriteVhdlAssertYaml ;
 
     ------------------------------------------------------------
@@ -2150,7 +2318,7 @@ package body AlertLogPkg is
       RequirementsPassed   : integer ;
       RequirementsGoal     : integer ;
       FirstPrefix          : string := "" ;
-      Prefix               : string := "" 
+      Prefix               : string := ""
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
@@ -2173,7 +2341,7 @@ package body AlertLogPkg is
             "Failure: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(FAILURE) )  & DELIMITER &
             "Error: "              & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(ERROR) )    & DELIMITER &
             "Warning: "            & to_string( AlertLogPtr(AlertLogID).DisabledAlertCount(WARNING) )  &
-          "}" & 
+          "}" &
         "}"
       ) ;
       WriteLine(TestFile, buf) ;
@@ -2190,14 +2358,14 @@ package body AlertLogPkg is
       variable buf : line ;
       variable CurID : AlertLogIDType ;
       variable RequirementsPassed, RequirementsGoal : integer ;
-      variable FoundChildToReport : boolean := FALSE ; 
+      variable FoundChildToReport : boolean := FALSE ;
     begin
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       if CurID >= ALERTLOG_BASE_ID then
         -- Write "Children:" at current level
         while CurID > ALERTLOG_BASE_ID loop
           -- Don't print requirements if there no requirements
---!!          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then 
+--!!          if CurID = REQUIREMENT_ALERTLOG_ID and HasRequirementsVar = FALSE then
           if CurID = REQUIREMENT_ALERTLOG_ID and (HasRequirementsVar = FALSE or AlertLogPtr(REQUIREMENT_ALERTLOG_ID).ChildID < ALERTLOG_BASE_ID) then
             CurID := AlertLogPtr(CurID).SiblingID ;
             next ;
@@ -2210,19 +2378,19 @@ package body AlertLogPkg is
             RequirementsGoal   := 0 ;
           end if ;
           if AlertLogPtr(CurID).ReportMode /= DISABLED then
-            if not FoundChildToReport then 
+            if not FoundChildToReport then
               Write(buf, Prefix & "Children: " ) ;
               WriteLine(TestFile, buf) ;
-              FoundChildToReport := TRUE ; 
-            end if ; 
-            if CurID = ALERTLOG_DEFAULT_ID then 
+              FoundChildToReport := TRUE ;
+            end if ;
+            if CurID = ALERTLOG_DEFAULT_ID then
               -- Print VHDL Asserts before default
               WriteVhdlAssertYaml (
                 TestFile             => TestFile,
                 FirstPrefix          => Prefix & "  - ",
                 Prefix               => string'(Prefix & "    ")
               ) ;
-            end if ; 
+            end if ;
             WriteOneAlertYaml(
               TestFile             => TestFile,
               AlertLogID           => CurID,
@@ -2240,11 +2408,11 @@ package body AlertLogPkg is
           end if ;
           CurID := AlertLogPtr(CurID).SiblingID ;
         end loop ;
-        if not FoundChildToReport then 
+        if not FoundChildToReport then
 --          Write(buf, Prefix & "Children: " & """""") ;
           Write(buf, Prefix & "Children: []") ;
           WriteLine(TestFile, buf) ;
-        end if ; 
+        end if ;
       else
         -- No Children, Print Empty List
 --req tcl 8.6        Write(buf, Prefix & "Children: {}" ) ;
@@ -2264,13 +2432,15 @@ package body AlertLogPkg is
     ) is
       variable buf : line ;
       constant DELIMITER : string := ", " ;
+      variable TotalExpectedError : AlertCountType ;
     begin
+      TotalExpectedError := ExternalErrors - ExpectedAlertCountVar ;
       Write(buf,
         Prefix & "Settings: {" &
           "ExternalErrors: {" &
-            "Failure: "                & to_string( ExternalErrors(FAILURE) )  & DELIMITER &
-            "Error: "                  & to_string( ExternalErrors(ERROR) )    & DELIMITER &
-            "Warning: "                & to_string( ExternalErrors(WARNING) )  &
+            "Failure: "                & to_string( TotalExpectedError(FAILURE) )  & DELIMITER &
+            "Error: "                  & to_string( TotalExpectedError(ERROR) )    & DELIMITER &
+            "Warning: "                & to_string( TotalExpectedError(WARNING) )  &
           "}" & DELIMITER &
           "FailOnDisabledErrors: "     & '"' & to_string( FailOnDisabledErrorsVar )     & '"' & DELIMITER &
           "FailOnRequirementErrors: "  & '"' & to_string( FailOnRequirementErrorsVar )  & '"' & DELIMITER &
@@ -2289,30 +2459,30 @@ package body AlertLogPkg is
       Prefix         : string ;
       PrintSettings  : boolean ;
       PrintChildren  : boolean ;
-      TimeOut        : boolean 
+      TimeOut        : boolean
     ) is
       -- Format:  Action Count min1 max1 min2 max2
 --      variable TotalErrors : integer ;
 --      variable TotalAlertCount : AlertCountType ;
 --      variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
-      variable buf : line ; 
+      variable buf : line ;
     begin
       if PrintSettings then
-        write(buf, Prefix & "Version: """ & ALERT_YAML_VERSION & '"') ; 
-        WriteLine(TestFile, buf) ; 
-      end if ; 
+        write(buf, Prefix & "Version: """ & ALERT_YAML_VERSION & '"') ;
+        WriteLine(TestFile, buf) ;
+      end if ;
       WriteTopAlertYaml (
-        TestFile                 => TestFile, 
+        TestFile                 => TestFile,
         Prefix                   => Prefix,
-        TimeOut                  => TimeOut, 
+        TimeOut                  => TimeOut,
         ExternalErrors           => ExternalErrors
-      ) ; 
+      ) ;
 --      CalcTopTotalErrors (
 --        ExternalErrors           => ExternalErrors         ,
 --        TotalErrors              => TotalErrors            ,
 --        TotalAlertCount          => TotalAlertCount        ,
 --        TotalRequirementsPassed  => TotalRequirementsPassed,
---        TotalRequirementsGoal    => TotalRequirementsGoal  , 
+--        TotalRequirementsGoal    => TotalRequirementsGoal  ,
 --        TimeOut                  => TimeOut
 --      ) ;
 --      WriteOneAlertYaml (
@@ -2323,7 +2493,7 @@ package body AlertLogPkg is
 --        RequirementsGoal         => TotalRequirementsGoal,
 --        FirstPrefix              => Prefix,
 --        Prefix                   => Prefix,
---        TimeOut                  => TimeOut, 
+--        TimeOut                  => TimeOut,
 --        TopLevel                 => TRUE,
 --        ExternalErrors           => ExternalErrors
 --      ) ;
@@ -2437,7 +2607,7 @@ package body AlertLogPkg is
         CurID := AlertLogPtr(CurID).SiblingID ;
       end loop ;
     end procedure IterateAndWriteRequirementsYaml ;
-    
+
     ------------------------------------------------------------
     procedure WriteRequirementsYaml (
     ------------------------------------------------------------
@@ -2448,7 +2618,7 @@ package body AlertLogPkg is
       file     FileID : text ;
       variable status : file_open_status ;
     begin
-      if HasRequirementsVar then 
+      if HasRequirementsVar then
         file_open(status, FileID, FileName, OpenKind) ;
         if status = OPEN_OK then
   --        WriteRequirementsYaml(FileID, AlertLogID) ;
@@ -2457,7 +2627,7 @@ package body AlertLogPkg is
         else
           Alert("WriteRequirementsYaml, File: " & FileName & " did not open for " & to_string(OpenKind)) ;
         end if ;
-      end if ; 
+      end if ;
     end procedure WriteRequirementsYaml ;
 
     ------------------------------------------------------------
@@ -2576,16 +2746,16 @@ package body AlertLogPkg is
       constant DELIMITER : string := ", " ;
     begin
       CalcTotalErrors (
-        AlertLogID                => AlertLogID              , 
-        ExternalErrors            => ExternalErrors          , 
-        Timeout                   => FALSE                   , 
-        TotalAlertCount           => TotalAlertCount         , 
-        TotalErrors               => TotalErrors             , 
-        DisabledAlertCount        => DisabledAlertCount      , 
-        TotalDisabledAlertErrors  => TotalDisabledAlertErrors, 
-        TotalRequirementsPassed   => TotalRequirementsPassed , 
-        TotalRequirementsGoal     => TotalRequirementsGoal   , 
-        TotalRequirementErrors    => TotalRequirementErrors  
+        AlertLogID                => AlertLogID              ,
+        ExternalErrors            => ExternalErrors          ,
+        Timeout                   => FALSE                   ,
+        TotalAlertCount           => TotalAlertCount         ,
+        TotalErrors               => TotalErrors             ,
+        DisabledAlertCount        => DisabledAlertCount      ,
+        TotalDisabledAlertErrors  => TotalDisabledAlertErrors,
+        TotalRequirementsPassed   => TotalRequirementsPassed ,
+        TotalRequirementsGoal     => TotalRequirementsGoal   ,
+        TotalRequirementErrors    => TotalRequirementErrors
       ) ;
 
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
@@ -3103,10 +3273,12 @@ package body AlertLogPkg is
     procedure ClearAlerts is
     ------------------------------------------------------------
     begin
-      AffirmCheckCountVar  := 0 ;
-      PassedCountVar       := 0 ;
-      AlertCount           := (0, 0, 0) ;
-      ErrorCount           := 0 ;
+      AffirmCheckCountVar    := 0 ;
+      PassedCountVar         := 0 ;
+      AlertCount             := (0, 0, 0) ;
+      ErrorCount             := 0 ;
+      ExpectedAlertCountVar  := (0, 0, 0) ;
+      ManualCheckVar         := FALSE ;
 
       ClearVhdlAssert ;
 
@@ -3228,7 +3400,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       variable CurID : AlertLogIDType ;
     begin
-      if AlertLogID = ParentID and AlertLogID /= ALERTLOG_BASE_ID then 
+      if AlertLogID = ParentID and AlertLogID /= ALERTLOG_BASE_ID then
         Alert(ALERT_DEFAULT_ID, "AlertLogID = ParentID for Alert Name: " & AlertLogPtr(AlertLogID).Name.all & ".  Setting ParentID to ALERTLOG_BASE_ID", WARNING) ;
         AlertLogPtr(AlertLogID).ParentIDSet := FALSE ;
         AlertLogPtr(AlertLogID).ParentID    := ALERTLOG_BASE_ID ;
@@ -3237,7 +3409,7 @@ package body AlertLogPkg is
         AlertLogPtr(AlertLogID).ParentIDSet := ParentIDSet ;
         AlertLogPtr(AlertLogID).ParentID    := ParentID ;
         AlertLogPtr(AlertLogID).SiblingID   := ALERTLOG_ID_NOT_ASSIGNED ;
-      end if ; 
+      end if ;
 
       if AlertLogPtr(ParentID).ChildID < ALERTLOG_BASE_ID then
         AlertLogPtr(ParentID).ChildID     := AlertLogID ;
@@ -3251,25 +3423,25 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     -- PT Local
     procedure NewAlertLogRec(
-      AlertLogID  : AlertLogIDType ; 
-      iName       : string ; 
-      ParentID    : AlertLogIDType; 
-      ReportMode  : AlertLogReportModeType := ENABLED; 
+      AlertLogID  : AlertLogIDType ;
+      iName       : string ;
+      ParentID    : AlertLogIDType;
+      ReportMode  : AlertLogReportModeType := ENABLED;
       PrintParent : AlertLogPrintParentType := PRINT_NAME_AND_PARENT;
-      ParentIdSet : boolean := TRUE 
+      ParentIdSet : boolean := TRUE
     ) is
     ------------------------------------------------------------
       variable AlertEnabled   : AlertEnableType ;
       variable AlertStopCount : AlertCountType ;
       variable LogEnabled     : LogEnableType ;
-      variable HierarchyLevel : integer := 1 ; 
+      variable HierarchyLevel : integer := 1 ;
     begin
       AlertLogPtr(AlertLogID) := new AlertLogRecType ;
       if AlertLogID = ALERTLOG_BASE_ID then
         AlertEnabled := (TRUE, TRUE, TRUE) ;
         LogEnabled   := (others => FALSE) ;
         AlertStopCount := ALERT_LOG_STOP_COUNT_DEFAULT ;
-        HierarchyLevel := 0 ; 
+        HierarchyLevel := 0 ;
         EnQueueID(AlertLogID, ALERTLOG_BASE_ID, TRUE) ;
       else
         if ParentID < ALERTLOG_BASE_ID then
@@ -3315,33 +3487,33 @@ package body AlertLogPkg is
     -- PT Local
     procedure CalcJustifyOneLevel(ID : AlertLogIDType) is
     ------------------------------------------------------------
-      variable ParentID : AlertLogIDType ; 
-      variable HierarchyLevel : integer := 1 ; 
-      variable IdNameLen : integer ; 
+      variable ParentID : AlertLogIDType ;
+      variable HierarchyLevel : integer := 1 ;
+      variable IdNameLen : integer ;
       variable LocalAlertLogJustifyAmount, LocalReportJustifyAmount : integer ;
     begin
       ParentID := AlertLogPtr(ID).ParentID ;
       if ParentID > ALERTLOG_BASE_ID then
-        HierarchyLevel := AlertLogPtr(ParentID).HierarchyLevel + 1 ; 
-      end if ; 
+        HierarchyLevel := AlertLogPtr(ParentID).HierarchyLevel + 1 ;
+      end if ;
       AlertLogPtr(ID).HierarchyLevel := HierarchyLevel ;
-      
+
       if AlertLogPtr(ID).ReportMode /= DISABLED then
-        IdNameLen := AlertLogPtr(ID).Name'length ; 
+        IdNameLen := AlertLogPtr(ID).Name'length ;
         LocalAlertLogJustifyAmount := IdNameLen + 1 ; -- 1 for comma
         LocalReportJustifyAmount   := IdNameLen + (HierarchyLevel * 2) ;
         -- Update LocalAlertLogJustifyAmountVar if PRINT_NAME_AND_PARENT
         if AlertLogPtr(ID).PrintParent = PRINT_NAME_AND_PARENT then
-          LocalAlertLogJustifyAmount := ALERT_LOG_ID_SEPARATOR'length + AlertLogPtr(ParentID).Name'length + LocalAlertLogJustifyAmount ; 
+          LocalAlertLogJustifyAmount := ALERT_LOG_ID_SEPARATOR'length + AlertLogPtr(ParentID).Name'length + LocalAlertLogJustifyAmount ;
         end if ;
         -- Integrate current values into global values
-        CalcAlertLogJustifyAmountVar  := maximum(CalcAlertLogJustifyAmountVar, LocalAlertLogJustifyAmount) ; 
-        CalcReportJustifyAmountVar    := maximum(CalcReportJustifyAmountVar,   LocalReportJustifyAmount) ; 
+        CalcAlertLogJustifyAmountVar  := maximum(CalcAlertLogJustifyAmountVar, LocalAlertLogJustifyAmount) ;
+        CalcReportJustifyAmountVar    := maximum(CalcReportJustifyAmountVar,   LocalReportJustifyAmount) ;
         if JustifyEnableVar then
           CurAlertLogJustifyAmountVar := CalcAlertLogJustifyAmountVar ;
           CurReportJustifyAmountVar   := CalcReportJustifyAmountVar ;
-        end if ; 
-      end if ; 
+        end if ;
+      end if ;
     end procedure CalcJustifyOneLevel ;
 
     ------------------------------------------------------------
@@ -3361,12 +3533,12 @@ package body AlertLogPkg is
       NewAlertLogRec(ALERTLOG_BASE_ID, "AlertLogTop", ALERTLOG_BASE_ID) ;
       -- Create DEFAULT AlertLogID
       NewAlertLogRec(ALERT_DEFAULT_ID, "Default", ALERTLOG_BASE_ID) ;
-      CalcJustifyOneLevel(ALERT_DEFAULT_ID) ; 
+      CalcJustifyOneLevel(ALERT_DEFAULT_ID) ;
       NumAlertLogIDsVar := ALERT_DEFAULT_ID ;
       -- Create OSVVM AlertLogID (if it differs from DEFAULT
       if OSVVM_ALERTLOG_ID /= ALERT_DEFAULT_ID then
         NewAlertLogRec(OSVVM_ALERTLOG_ID, "OSVVM", ALERTLOG_BASE_ID) ;
-        CalcJustifyOneLevel(OSVVM_ALERTLOG_ID) ; 
+        CalcJustifyOneLevel(OSVVM_ALERTLOG_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
       if REQUIREMENT_ALERTLOG_ID /= ALERT_DEFAULT_ID then
@@ -3376,14 +3548,14 @@ package body AlertLogPkg is
       end if ;
       if OSVVM_SCOREBOARD_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
         NewAlertLogRec(OSVVM_SCOREBOARD_ALERTLOG_ID, "Scoreboard", ALERTLOG_BASE_ID) ;
-        CalcJustifyOneLevel(OSVVM_SCOREBOARD_ALERTLOG_ID) ; 
+        CalcJustifyOneLevel(OSVVM_SCOREBOARD_ALERTLOG_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
       end if ;
       if OSVVM_COVERAGE_ALERTLOG_ID /= OSVVM_ALERTLOG_ID then
         NewAlertLogRec(OSVVM_COVERAGE_ALERTLOG_ID, "Coverage", ALERTLOG_BASE_ID) ;
-        CalcJustifyOneLevel(OSVVM_COVERAGE_ALERTLOG_ID) ; 
+        CalcJustifyOneLevel(OSVVM_COVERAGE_ALERTLOG_ID) ;
         NumAlertLogIDsVar := NumAlertLogIDsVar + 1 ;
-      end if ;     
+      end if ;
     end procedure LocalInitialize ;
 
     ------------------------------------------------------------
@@ -3418,7 +3590,7 @@ package body AlertLogPkg is
       -- Restore variables to their initial state
       GlobalAlertEnabledVar         := ALERT_LOG_GLOBAL_ALERT_ENABLE ; -- Allows turn off and on
 
-      JustifyEnableVar              := ALERT_LOG_JUSTIFY_ENABLE ; 
+      JustifyEnableVar              := ALERT_LOG_JUSTIFY_ENABLE ;
       TimeJustifyAmountVar          := ALERT_LOG_TIME_JUSTIFY_AMOUNT ;
 
       DefaultPassedGoalVar          := ALERT_LOG_DEFAULT_PASSED_GOAL ;
@@ -3448,7 +3620,7 @@ package body AlertLogPkg is
       PassedCountVar                := 0 ;
       ErrorCount                    := 0 ;
       AlertCount                    := (0, 0, 0) ;
-      
+
       CalcAlertLogJustifyAmountVar  := 0 ;
       CurAlertLogJustifyAmountVar   := 0 ;
       CalcReportJustifyAmountVar    := CALC_REPORT_JUSTIFY_INIT ;
@@ -3456,7 +3628,7 @@ package body AlertLogPkg is
 
       FoundReportHierVar            := FALSE ;
       FoundAlertHierVar             := FALSE ;
-      
+
       HasRequirementsVar            := FALSE ;
 
       NumAlertLogIDsVar             := 0 ;
@@ -3565,25 +3737,25 @@ package body AlertLogPkg is
         AlertLogPtr(AlertLogID).ParentIDSet := ParentIDSet ;
       end if ;
       --  Do not adjust ID as if something got the ID first, it can set the enables
-      --  AlertLogPtr(AlertLogID).AlertEnabled := AlertLogPtr(ParentID).AlertEnabled ; 
-      --  AlertLogPtr(AlertLogID).LogEnabled   := AlertLogPtr(ParentID).LogEnabled ; 
+      --  AlertLogPtr(AlertLogID).AlertEnabled := AlertLogPtr(ParentID).AlertEnabled ;
+      --  AlertLogPtr(AlertLogID).LogEnabled   := AlertLogPtr(ParentID).LogEnabled ;
     end procedure AdjustID ;
-    
+
     ------------------------------------------------------------
     impure function NewID(
       Name            : string ;
       ParentID        : AlertLogIDType ;
-      ParentIdSet     : boolean ; 
+      ParentIdSet     : boolean ;
       ReportMode      : AlertLogReportModeType ;
       PrintParent     : AlertLogPrintParentType ;
       CreateHierarchy : boolean ;
-      Goal            : integer ; 
-      PassedGoalSet   : boolean 
+      Goal            : integer ;
+      PassedGoalSet   : boolean
     ) return AlertLogIDType is
     ------------------------------------------------------------
       variable ResultID        : AlertLogIDType ;
       variable localParentID   : AlertLogIDType := ParentID;
-      variable localPassedGoal : integer ; 
+      variable localPassedGoal : integer ;
       variable localParentIdSet : boolean := ParentIdSet ;
     begin
       localPassedGoal := Goal when Goal >= 0 else DefaultPassedGoalVar ;
@@ -3602,7 +3774,7 @@ package body AlertLogPkg is
       else
         -- Found existing ID.  Update it.
         if AlertLogPtr(ResultID).ParentIDSet = FALSE then
-          AlertLogPtr(ResultID).ParentIDSet := localParentIdSet ; 
+          AlertLogPtr(ResultID).ParentIDSet := localParentIdSet ;
           if localParentIdSet or localParentID = REQUIREMENT_ALERTLOG_ID then
             -- Update ParentID and potentially relocate in the structure
             AdjustID(ResultID, localParentID, TRUE) ;
@@ -3613,21 +3785,21 @@ package body AlertLogPkg is
               AlertLogPtr(ResultID).PrintParent := PrintParent ;
             end if ;
             -- Update ReportMode
-            AlertLogPtr(ResultID).ReportMode := ReportMode ; 
+            AlertLogPtr(ResultID).ReportMode := ReportMode ;
           -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
           end if ;
         end if ;
         if AlertLogPtr(ResultID).PassedGoalSet = FALSE then
           AlertLogPtr(ResultID).PassedGoal    := localPassedGoal ;
-          AlertLogPtr(ResultID).PassedGoalSet := PassedGoalSet ; 
+          AlertLogPtr(ResultID).PassedGoalSet := PassedGoalSet ;
         end if ;
       end if ;
       -- Set Level and Justify amounts
       if localPassedGoal > 0 and not HasRequirementsVar then
-        CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ; 
+        CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ;
         HasRequirementsVar := TRUE ;
-      end if ; 
-      CalcJustifyOneLevel(ResultID) ; 
+      end if ;
+      CalcJustifyOneLevel(ResultID) ;
       return ResultID ;
     end function NewID ;
 
@@ -3657,8 +3829,8 @@ package body AlertLogPkg is
         AlertLogPtr(localAlertLogID).PassedGoal := DefaultPassedGoalVar ;
       end if ;
       if not HasRequirementsVar then
-        CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ; 
-      end if ; 
+        CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ;
+      end if ;
       HasRequirementsVar := TRUE ;
     end procedure SetPassedGoal ;
 
@@ -3752,39 +3924,88 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT LOCAL
-    procedure SetOneStopCount(
+    procedure IncrementOneStopCount(
     ------------------------------------------------------------
       AlertLogID   : AlertLogIDType ;
       Level        : AlertType ;
       Count        : integer
     ) is
+      variable CurrentCount : integer ;
     begin
-      if AlertLogPtr(AlertLogID).AlertStopCount(Level) = integer'high then
-        AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
-      else
-        AlertLogPtr(AlertLogID).AlertStopCount(Level) :=
-          AlertLogPtr(AlertLogID).AlertStopCount(Level) + Count ;
+      CurrentCount := AlertLogPtr(AlertLogID).AlertStopCount(Level) ;
+--      if CurrentCount = integer'high or CurrentCount <= 0 then
+      if CurrentCount <= 0 then
+        AlertLogPtr(AlertLogID).AlertStopCount(Level) := CurrentCount + 1 ;
+      elsif CurrentCount <= (integer'high - Count) then
+        AlertLogPtr(AlertLogID).AlertStopCount(Level) := CurrentCount + Count ;
       end if ;
-    end procedure SetOneStopCount ;
+    end procedure IncrementOneStopCount ;
 
     ------------------------------------------------------------
     -- PT Local
-    procedure LocalSetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    procedure LocalIncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
     ------------------------------------------------------------
     begin
-      SetOneStopCount(AlertLogID, Level, Count) ;
+      IncrementOneStopCount(AlertLogID, Level, Count) ;
       if AlertLogID /= ALERTLOG_BASE_ID then
-        LocalSetAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count) ;
+        LocalIncrementAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count) ;
       end if ;
-    end procedure LocalSetAlertStopCount ;
+    end procedure LocalIncrementAlertStopCount ;
 
     ------------------------------------------------------------
-    procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      LocalSetAlertStopCount(localAlertLogID, Level, Count) ;
+      LocalIncrementAlertStopCount(localAlertLogID, Level, Count) ;
+    end procedure IncrementAlertStopCount ;
+
+--!!    ------------------------------------------------------------
+--!!    -- PT LOCAL
+--!!    procedure SetOneStopCount(
+--!!    ------------------------------------------------------------
+--!!      AlertLogID   : AlertLogIDType ;
+--!!      Level        : AlertType ;
+--!!      Count        : integer
+--!!    ) is
+--!!    begin
+--!!      if AlertLogPtr(AlertLogID).AlertStopCount(Level) = integer'high then
+--!!        AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
+--!!      else
+--!!        AlertLogPtr(AlertLogID).AlertStopCount(Level) :=
+--!!          AlertLogPtr(AlertLogID).AlertStopCount(Level) + Count ;
+--!!      end if ;
+--!!    end procedure SetOneStopCount ;
+--!!
+--!!    ------------------------------------------------------------
+--!!    -- PT Local
+--!!    procedure LocalSetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+--!!    ------------------------------------------------------------
+--!!    begin
+--!!      SetOneStopCount
+--!!      if AlertLogID /= ALERTLOG_BASE_ID then
+--!!        LocalSetAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count) ;
+--!!      end if ;
+--!!    end procedure LocalSetAlertStopCount ;
+--!!
+    ------------------------------------------------------------
+    procedure SetAlertStopCount(UnverifiedAlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    ------------------------------------------------------------
+      variable AlertLogID   : AlertLogIDType ;
+      variable CurrentCount : integer ;
+    begin
+      AlertLogID := VerifyID(UnverifiedAlertLogID) ;
+      CurrentCount := AlertLogPtr(AlertLogID).AlertStopCount(Level) ;
+      AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
+      if AlertLogID /= ALERTLOG_BASE_ID then
+        if CurrentCount = integer'high or CurrentCount <= 0 then
+          CurrentCount := 0 ;
+        end if ;
+        -- Adjust the other counts by the amount this count increased (or decreased)
+        -- If the count decreased, the stop count will not be checked until the next alert is received
+        LocalIncrementAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count - CurrentCount) ;
+      end if ;
     end procedure SetAlertStopCount ;
 
     ------------------------------------------------------------
@@ -4017,29 +4238,29 @@ package body AlertLogPkg is
     end procedure ReportLogEnables ;
 
     ------------------------------------------------------------
-    --  Deprecated:   
+    --  Deprecated:
     --  SetAlertLogOptions
-    --  It is recommended to set these using the deferred constants in OsvvmSettingsPkg 
+    --  It is recommended to set these using the deferred constants in OsvvmSettingsPkg
     --  that will set them for all tests run rather than just one test case.
     -- ----------------------------------------------------------
     procedure SetAlertLogOptions (
     ------------------------------------------------------------
-      FailOnWarning            : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_FAIL_ON_WARNING ;           
-      FailOnDisabledErrors     : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_FAIL_ON_DISABLED_ERRORS ;   
+      FailOnWarning            : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_FAIL_ON_WARNING ;
+      FailOnDisabledErrors     : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_FAIL_ON_DISABLED_ERRORS ;
       FailOnRequirementErrors  : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_FAIL_ON_REQUIREMENT_ERRORS ;
       ReportHierarchy          : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_REPORT_HIERARCHY
       WriteAlertErrorCount     : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_ERRORCOUNT ;
-      WriteAlertLevel          : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_LEVEL ;     
-      WriteAlertName           : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_NAME ;      
-      WriteAlertTime           : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME ;      
+      WriteAlertLevel          : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_LEVEL ;
+      WriteAlertName           : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_NAME ;
+      WriteAlertTime           : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME ;
       WriteLogErrorCount       : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_ERRORCOUNT ;
-      WriteLogLevel            : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_LEVEL ;     
-      WriteLogName             : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_NAME ;      
-      WriteLogTime             : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME ;      
-      PrintPassed              : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_PASSED ;              
-      PrintAffirmations        : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_AFFIRMATIONS ;        
-      PrintDisabledAlerts      : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_DISABLED_ALERTS ;     
-      PrintRequirements        : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_REQUIREMENTS ;        
+      WriteLogLevel            : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_LEVEL ;
+      WriteLogName             : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_NAME ;
+      WriteLogTime             : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME ;
+      PrintPassed              : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_PASSED ;
+      PrintAffirmations        : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_AFFIRMATIONS ;
+      PrintDisabledAlerts      : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_DISABLED_ALERTS ;
+      PrintRequirements        : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_REQUIREMENTS ;
       PrintIfHaveRequirements  : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS ;
       DefaultPassedGoal        : integer ;            --  set using:  OsvvmSettingsPkg.ALERT_LOG_DEFAULT_PASSED_GOAL
       AlertPrefix              : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
@@ -4076,7 +4297,7 @@ package body AlertLogPkg is
       end if ;
       if WriteAlertTime /= OPT_INIT_PARM_DETECT then
         WriteAlertTimeVar := IsEnabled(WriteAlertTime) ;
---!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteAlertTime)", WARNING) ;  
+--!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteAlertTime)", WARNING) ;
       end if ;
       if WriteLogErrorCount /= OPT_INIT_PARM_DETECT then
         WriteLogErrorCountVar := IsEnabled(WriteLogErrorCount) ;
@@ -4089,7 +4310,7 @@ package body AlertLogPkg is
       end if ;
       if WriteLogTime /= OPT_INIT_PARM_DETECT then
         WriteLogTimeVar := IsEnabled(WriteLogTime) ;
---!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteLogTime)", WARNING) ;  
+--!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteLogTime)", WARNING) ;
       end if ;
       if PrintPassed /= OPT_INIT_PARM_DETECT then
         PrintPassedVar := IsEnabled(PrintPassed) ;
@@ -4110,30 +4331,30 @@ package body AlertLogPkg is
         DefaultPassedGoalVar := DefaultPassedGoal ;
       end if ;
       if AlertPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME replaced SetAlertLogOptions(AlertPrefix)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME replaced SetAlertLogOptions(AlertPrefix)", WARNING) ;
       end if ;
       if LogPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_LOG_NAME replaced SetAlertLogOptions(LogPrefix)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_LOG_NAME replaced SetAlertLogOptions(LogPrefix)", WARNING) ;
       end if ;
       if ReportPrefix /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX replaced SetAlertLogOptions(ReportPrefix)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX replaced SetAlertLogOptions(ReportPrefix)", WARNING) ;
       end if ;
       if DoneName /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_DONE_NAME replaced SetAlertLogOptions(DoneName)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_DONE_NAME replaced SetAlertLogOptions(DoneName)", WARNING) ;
       end if ;
       if PassName /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_PASS_NAME replaced SetAlertLogOptions(PassName)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_PASS_NAME replaced SetAlertLogOptions(PassName)", WARNING) ;
       end if ;
       if FailName /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME replaced SetAlertLogOptions(FailName)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME replaced SetAlertLogOptions(FailName)", WARNING) ;
       end if ;
       if IdSeparator /= OSVVM_STRING_INIT_PARM_DETECT then
-        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR replaced SetAlertLogOptions(IdSeparator)", WARNING) ;  
+        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR replaced SetAlertLogOptions(IdSeparator)", WARNING) ;
       end if ;
       if WriteTimeLast /= OPT_INIT_PARM_DETECT then
         WriteTimeLastVar := IsEnabled(WriteTimeLast) ;
         WriteTimeFirstVar := not WriteTimeLastVar ;
---!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteTimeLast)", WARNING) ;  
+--!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteTimeLast)", WARNING) ;
       end if ;
       if TimeJustifyAmount >= 0 then
         TimeJustifyAmountVar := TimeJustifyAmount ;
@@ -4178,7 +4399,7 @@ package body AlertLogPkg is
       swrite(buf, "PassNameVar:                " & ALERT_LOG_PASS_NAME    & LF ) ;        --!! Deprecated
       swrite(buf, "FailNameVar:                " & ALERT_LOG_FAIL_NAME    & LF ) ;        --!! Deprecated
 --!! Supported
-      swrite(buf, "WriteTimeLastVar:           " & to_string(WriteTimeLastVar ) & LF ) ; 
+      swrite(buf, "WriteTimeLastVar:           " & to_string(WriteTimeLastVar ) & LF ) ;
       swrite(buf, "TimeJustifyAmountVar:       " & to_string(TimeJustifyAmountVar     ) & LF ) ;
       writeline(buf) ;
     end procedure ReportAlertLogOptions ;
@@ -4251,7 +4472,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteAlertTimeVar) ;
---!!      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteAlertTime", WARNING) ;  
+--!!      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteAlertTime", WARNING) ;
 --!!      return to_OsvvmOptionsType(ALERT_LOG_WRITE_TIME_FIRST) ;
     end function GetAlertLogWriteAlertTime ;
 
@@ -4281,7 +4502,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteLogTimeVar) ;
---!!      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteLogTime", WARNING) ;  
+--!!      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteLogTime", WARNING) ;
 --!!      return to_OsvvmOptionsType(ALERT_LOG_WRITE_TIME_FIRST) ;
     end function GetAlertLogWriteLogTime ;
 
@@ -4326,15 +4547,15 @@ package body AlertLogPkg is
     begin
       return DefaultPassedGoalVar ;
     end function GetAlertLogDefaultPassedGoal ;
-    
+
     ------------------------------------------------------------
-    -- Local.  
+    -- Local.
     -- Bug work around.  Required for Xilinx 2023.02.
-    function to_s_4_x (A : string) return string is 
+    function to_s_4_x (A : string) return string is
     ------------------------------------------------------------
     begin
-      return A ; 
-    end function to_s_4_x ; 
+      return A ;
+    end function to_s_4_x ;
 
     ------------------------------------------------------------
     impure function GetAlertLogAlertPrefix          return string is
@@ -4391,18 +4612,18 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- Deprecated:   Instead set using SetAlertLogOptions.OSVVM_DEFAULT_TIME_UNITS
-    procedure SetOsvvmDefaultTimeUnits (A : time) is 
+    procedure SetOsvvmDefaultTimeUnits (A : time) is
     ------------------------------------------------------------
     begin
-      DefaultTimeUnitsVar := A ; 
-    end procedure SetOsvvmDefaultTimeUnits ; 
-    
+      DefaultTimeUnitsVar := A ;
+    end procedure SetOsvvmDefaultTimeUnits ;
+
     ------------------------------------------------------------
     impure function GetOsvvmDefaultTimeUnits return time is
     ------------------------------------------------------------
     begin
       return DefaultTimeUnitsVar ;
-    end function GetOsvvmDefaultTimeUnits ; 
+    end function GetOsvvmDefaultTimeUnits ;
 
   end protected body AlertLogStructPType ;
 
@@ -4484,7 +4705,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- useful in a loop:  exit when AlertIf( not ReadValid, failure, "Read Failed") ;
-  impure function  AlertIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function AlertIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -4496,7 +4717,7 @@ package body AlertLogPkg is
   end function AlertIf ;
 
   ------------------------------------------------------------
-  impure function  AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function AlertIf( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -4531,7 +4752,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- useful in a loop:  exit when AlertIfNot( not ReadValid, failure, "Read Failed") ;
-  impure function  AlertIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function AlertIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -4543,7 +4764,7 @@ package body AlertLogPkg is
   end function AlertIfNot ;
 
   ------------------------------------------------------------
-  impure function  AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function AlertIfNot( condition : boolean ; Message : string ; Level : AlertType := ERROR ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -4557,15 +4778,15 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   -- AddSpaceIfNotEmpty - package local function
   --
-  function AddSpaceIfNotEmpty (S : string) return string is 
+  function AddSpaceIfNotEmpty (S : string) return string is
   begin
     if S'length > 0 then
-      return S & " " ; 
+      return S & " " ;
     else
-      return "" ; 
-    end if ; 
+      return "" ;
+    end if ;
   end function AddSpaceIfNotEmpty ;
-  
+
   ------------------------------------------------------------
   -- AlertIfEqual with AlertLogID
   ------------------------------------------------------------
@@ -4640,7 +4861,10 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L = R" &
+        ",  L = " & to_string(L, ALERT_LOG_DIGITS_FOR_REAL_FRACTION) &
+        "   R = " & to_string(R, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
+        Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4764,7 +4988,10 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L = R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L = R" &
+        ",  L = " & to_string(L, ALERT_LOG_DIGITS_FOR_REAL_FRACTION) &
+        "   R = " & to_string(R, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
+        Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfEqual ;
@@ -4889,7 +5116,10 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(AlertLogID, AddSpaceIfNotEmpty(Message) & "L /= R" &
+        ",  L = " & to_string(L, ALERT_LOG_DIGITS_FOR_REAL_FRACTION) &
+        "   R = " & to_string(R, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
+        Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -5014,7 +5244,11 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     if L /= R then
-      AlertLogStruct.Alert(ALERT_DEFAULT_ID, AddSpaceIfNotEmpty(Message) & "L /= R,  L = " & to_string(L, 4) & "   R = " & to_string(R, 4), Level) ;
+      AlertLogStruct.Alert(ALERT_DEFAULT_ID,
+        AddSpaceIfNotEmpty(Message) & "L /= R" &
+        ",  L = " & to_string(L, ALERT_LOG_DIGITS_FOR_REAL_FRACTION) &
+        "   R = " & to_string(R, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
+        Level) ;
     end if ;
     -- synthesis translate_on
   end procedure AlertIfNotEqual ;
@@ -5073,23 +5307,23 @@ package body AlertLogPkg is
     variable LenS1 : integer := S1'length;
     variable LenS2 : integer := S2'length;
   begin
-    vS1 := S1 ; 
-    vS2 := S2 ; 
+    vS1 := S1 ;
+    vS2 := S2 ;
     if IgnoreSpaces then
-      RemoveSpace(vS1, LenS1) ; 
-      RemoveSpace(vS2, LenS2) ; 
+      RemoveSpace(vS1, LenS1) ;
+      RemoveSpace(vS2, LenS2) ;
     else
       -- only required for non-compliant simulators - X
-      RemoveCrLf(vS1, LenS1) ; 
-      RemoveCrLf(vS2, LenS2) ; 
-    end if ; 
-    
+      RemoveCrLf(vS1, LenS1) ;
+      RemoveCrLf(vS2, LenS2) ;
+    end if ;
+
 --q    return aS1(1 to EndLine1) /= aS2(1 to EndLine2) ;
-    if LenS1 = 0 and LenS2 = 0 then 
-      return FALSE ; 
+    if LenS1 = 0 and LenS2 = 0 then
+      return FALSE ;
     else
       return vS1(1 to LenS1) /= vS2(1 to LenS2) ;
-    end if ; 
+    end if ;
   end function LocalDiff ;
 
   ------------------------------------------------------------
@@ -5102,11 +5336,11 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     ReadLoop : loop
-      GetLine(File1, Buf1, LineCount1, EndOfFile1, IgnoreEmptyLines) ; 
-      GetLine(File2, Buf2, LineCount2, EndOfFile2, IgnoreEmptyLines) ; 
-      
-      exit ReadLoop when EndOfFile1 or EndOfFile2 ; 
-      
+      GetLine(File1, Buf1, LineCount1, EndOfFile1, IgnoreEmptyLines) ;
+      GetLine(File2, Buf2, LineCount2, EndOfFile2, IgnoreEmptyLines) ;
+
+      exit ReadLoop when EndOfFile1 or EndOfFile2 ;
+
 --!! if IgnoreEmptyLines, then the LineCount can be different and still compare.  Update messages below that report LineCount?  Different Reporting for IgnoreEmptyLines?
 --!!
       if LocalDiff(Buf1.all, Buf2.all, IgnoreSpaces) then
@@ -5114,7 +5348,7 @@ package body AlertLogPkg is
         exit ReadLoop ;
       end if ;
     end loop ReadLoop ;
-    
+
     if EndOfFile1 /= EndOfFile2 then
       if not EndOfFile1 then
         AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File1 longer than File2 " & to_string(LineCount2), Level) ;
@@ -5280,7 +5514,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- useful in a loop:  exit when AffirmIf( ID, not ReadValid, "Read Failed") ;
-  impure function  AffirmIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  impure function AffirmIf( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -5290,7 +5524,7 @@ package body AlertLogPkg is
   end function AffirmIf ;
 
   ------------------------------------------------------------
-  impure function  AffirmIf( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  impure function AffirmIf( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -5320,7 +5554,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- useful in a loop:  exit when AffirmIfNot( not ReadValid, failure, "Read Failed") ;
-  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
+  impure function AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -5330,7 +5564,7 @@ package body AlertLogPkg is
   end function AffirmIfNot ;
 
   ------------------------------------------------------------
-  impure function  AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
+  impure function AffirmIfNot( condition : boolean ; ReceivedMessage, ExpectedMessage : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -5359,7 +5593,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- useful in a loop:  exit when AffirmIfNot( not ReadValid, failure, "Read Failed") ;
-  impure function  AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  impure function AffirmIfNot( AlertLogID  : AlertLogIDType ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -5369,7 +5603,7 @@ package body AlertLogPkg is
   end function AffirmIfNot ;
 
   ------------------------------------------------------------
-  impure function  AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
+  impure function AffirmIfNot( condition : boolean ; Message : string ; Enable : boolean := FALSE ) return boolean is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -5377,7 +5611,6 @@ package body AlertLogPkg is
     -- synthesis translate_on
     return not condition ;
   end function AffirmIfNot ;
-
 
   ------------------------------------------------------------
   ------------------------------------------------------------
@@ -5423,7 +5656,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5435,7 +5669,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_string(Received),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5447,7 +5682,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5459,7 +5695,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5471,7 +5708,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5483,7 +5721,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5495,8 +5734,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4),
-      "= Expected : " & to_string(Expected, 4),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
+      "= Expected : " & to_string(Expected, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5507,7 +5747,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5519,7 +5760,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & Received,
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & Received,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5531,8 +5773,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, GetOsvvmDefaultTimeUnits),
-               "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received, GetOsvvmDefaultTimeUnits),
+      "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5543,8 +5786,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
-               "= Expected : " & to_string(Expected),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5556,7 +5800,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5568,7 +5813,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_string(Received),
       "?= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5580,7 +5826,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5592,7 +5839,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5604,7 +5852,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_hxstring(Received),
       "?= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5616,7 +5865,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5628,8 +5878,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4),
-      "= Expected : " & to_string(Expected, 4),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
+      "= Expected : " & to_string(Expected, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5640,7 +5891,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
       "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5652,7 +5904,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & Received,
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & Received,
       "= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5664,8 +5917,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits),
-                "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received, GetOsvvmDefaultTimeUnits),
+      "= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5677,8 +5931,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received = Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
-               "= Expected : " & to_string(Expected),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "   & to_string(Received),
+      "= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfEqual ;
@@ -5690,7 +5945,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5702,7 +5958,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_string(Received) &
       " ?/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5714,7 +5971,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5726,7 +5984,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5738,7 +5997,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5750,7 +6010,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5762,8 +6023,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4) &
-      " /= Expected : " & to_string(Expected, 4),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received, ALERT_LOG_DIGITS_FOR_REAL_FRACTION) &
+      " /= Expected : " & to_string(Expected, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -5774,7 +6036,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5786,7 +6049,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & Received &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & Received &
       " /= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5798,8 +6062,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, GetOsvvmDefaultTimeUnits) &
-              " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received, GetOsvvmDefaultTimeUnits) &
+      " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -5810,8 +6075,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(AlertLogID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
-               "/= Expected : " & to_string(Expected),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_string(Received),
+      "/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -5823,7 +6089,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5835,7 +6102,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_string(Received) &
       " ?/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5847,7 +6115,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5859,7 +6128,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5871,7 +6141,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, not MetaMatch(Received, Expected),
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_hxstring(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "      & to_hxstring(Received) &
       " ?/= Expected : " & to_hxstring(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5883,7 +6154,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5895,8 +6167,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received, 4) &
-      " /= Expected : " & to_string(Expected, 4),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received, ALERT_LOG_DIGITS_FOR_REAL_FRACTION) &
+      " /= Expected : " & to_string(Expected, ALERT_LOG_DIGITS_FOR_REAL_FRACTION),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -5907,7 +6180,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received) &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received) &
       " /= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
@@ -5919,7 +6193,8 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & Received &
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & Received &
       " /= Expected : " & Expected,
       Enable) ;
     -- synthesis translate_on
@@ -5931,8 +6206,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : "  & to_string(Received, GetOsvvmDefaultTimeUnits) &
-                " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "     & to_string(Received, GetOsvvmDefaultTimeUnits) &
+      " /= Expected : " & to_string(Expected, GetOsvvmDefaultTimeUnits),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -5943,8 +6219,9 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
     AffirmIf(ALERT_DEFAULT_ID, Received /= Expected,
-      AddSpaceIfNotEmpty(Message) & "Received : " & to_string(Received),
-               "/= Expected : " & to_string(Expected),
+      AddSpaceIfNotEmpty(Message) &
+      "Received : "    & to_string(Received),
+      "/= Expected : " & to_string(Expected),
       Enable) ;
     -- synthesis translate_on
   end procedure AffirmIfNotEqual ;
@@ -6000,7 +6277,7 @@ package body AlertLogPkg is
     AffirmIfFilesMatch(ALERT_DEFAULT_ID, File1, File2, Message, Enable, IgnoreSpaces, IgnoreEmptyLines ) ;
     -- synthesis translate_on
   end procedure AffirmIfFilesMatch ;
-  
+
   ------------------------------------------------------------
   procedure AffirmIfTranscriptsMatch (AlertLogID : AlertLogIDType ; PathToValidatedResults : string; Message : string := "" ; Enable : boolean := FALSE ; IgnoreSpaces : boolean := ALERT_LOG_IGNORE_SPACES ; IgnoreEmptyLines : boolean := ALERT_LOG_IGNORE_EMPTY_LINES ) is
   ------------------------------------------------------------
@@ -6075,7 +6352,7 @@ package body AlertLogPkg is
     AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
     ExternalErrors : AlertCountType  := (others => 0) ;
     ReportAll      : Boolean         := FALSE ;
-    TimeOut        : boolean         := FALSE 
+    TimeOut        : boolean         := FALSE
   ) is
   begin
     -- synthesis translate_off
@@ -6105,7 +6382,7 @@ package body AlertLogPkg is
     PrintSettings  : boolean := TRUE ;
     PrintChildren  : boolean := TRUE ;
     OpenKind       : File_Open_Kind := WRITE_MODE ;
-    TimeOut        : boolean 
+    TimeOut        : boolean
   ) is
   begin
     -- synthesis translate_off
@@ -6623,16 +6900,16 @@ package body AlertLogPkg is
     -- synthesis translate_on
     return result ;
   end function FindID ;
-  
+
   ------------------------------------------------------------
   -- Local Procedure
   procedure FailureInvalidParentID(WhoDidIt : string; ParentID : AlertLogIDType) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
-    if ParentID = integer'left then 
+    if ParentID = integer'left then
       Print(WhoDidIt & ": Invalid ParentID.  Likely missing 'wait for 0 ns'.") ;
-    end if ; 
+    end if ;
     Alert( WhoDidIt & ": Invalid ParentID = " & to_string_max(to_integer(ParentID)), FAILURE );
     -- synthesis translate_on
   end procedure FailureInvalidParentID ;
@@ -6648,22 +6925,22 @@ package body AlertLogPkg is
   ) return AlertLogIDType is
     variable result        : AlertLogIDType ;
     constant ParentIdSet   : boolean := TRUE ;  -- NewID always sets to true
-    variable localParentID : AlertLogIDType := ParentID ;     
+    variable localParentID : AlertLogIDType := ParentID ;
     constant Goal          : integer := 0 ;
     constant PassedGoalSet : boolean := FALSE ;
 	begin
     -- synthesis translate_off
-    if not AlertLogStruct.IsValidID(ParentID) then 
-      localParentID := ALERTLOG_BASE_ID ; 
+    if not AlertLogStruct.IsValidID(ParentID) then
+      localParentID := ALERTLOG_BASE_ID ;
       -- ParentIdSet   := FALSE ;  -- NewID always sets to true
-      FailureInvalidParentID("NewID", ParentID) ; 
-    end if ; 
+      FailureInvalidParentID("NewID", ParentID) ;
+    end if ;
 
-    if ReportMode = USE_PARENT_ID then 
-      result := localParentID ; 
+    if ReportMode = USE_PARENT_ID then
+      result := localParentID ;
     else
       result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
-    end if ; 
+    end if ;
     -- synthesis translate_on
     return result ;
   end function NewID ;
@@ -6671,28 +6948,28 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   -- Lookup ID.   Create placeholder ID via NewID if it does not exist.
   impure function GetID(
-    Name            : string ; 
-    ParentID        : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; 
-    CreateHierarchy : Boolean := TRUE ; 
+    Name            : string ;
+    ParentID        : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ;
+    CreateHierarchy : Boolean := TRUE ;
     DoNotReport     : Boolean := FALSE
   ) return AlertLogIDType is
   ------------------------------------------------------------
     variable result        : AlertLogIDType ;
     variable ParentIdSet   : boolean ;
-    variable localParentID : AlertLogIDType := ParentID ;     
+    variable localParentID : AlertLogIDType := ParentID ;
     constant Goal          : integer := 0 ;
     constant PassedGoalSet : boolean := FALSE ;
 		variable ReportMode    : AlertLogReportModeType := ENABLED ;
-    constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ; 
+    constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ;
 	begin
     -- synthesis translate_off
     ParentIdSet   := AlertLogStruct.IsValidID(ParentID) ;
-    if not ParentIdSet then 
-      localParentID := ALERTLOG_BASE_ID ; 
-      if ParentID /= ALERTLOG_ID_NOT_ASSIGNED then 
-        FailureInvalidParentID("GetID", ParentID) ;  
-      end if ; 
-    end if ; 
+    if not ParentIdSet then
+      localParentID := ALERTLOG_BASE_ID ;
+      if ParentID /= ALERTLOG_ID_NOT_ASSIGNED then
+        FailureInvalidParentID("GetID", ParentID) ;
+      end if ;
+    end if ;
 
     localParentID := ParentID when ParentIdSet else ALERTLOG_BASE_ID ;
 
@@ -6709,7 +6986,7 @@ package body AlertLogPkg is
   impure function NewReqID(
   ------------------------------------------------------------
     Name            : string ;
-    Goal            : natural ; 
+    Goal            : natural ;
     ParentID        : AlertLogIDType          := REQUIREMENT_ALERTLOG_ID ;
     ReportMode      : AlertLogReportModeType  := ENABLED ;
     PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ;
@@ -6717,17 +6994,17 @@ package body AlertLogPkg is
   ) return AlertLogIDType is
     variable result        : AlertLogIDType ;
     constant ParentIdSet   : boolean := TRUE ;  -- NewReqID always sets to true
-    variable localParentID : AlertLogIDType := ParentID ;     
+    variable localParentID : AlertLogIDType := ParentID ;
     variable PassedGoalSet : boolean ;
 	begin
     -- synthesis translate_off
-    if not AlertLogStruct.IsValidID(ParentID) then 
-      localParentID := REQUIREMENT_ALERTLOG_ID ; 
+    if not AlertLogStruct.IsValidID(ParentID) then
+      localParentID := REQUIREMENT_ALERTLOG_ID ;
       -- ParentIdSet   := FALSE ;  -- NewReqID always sets to true
-      FailureInvalidParentID("NewReqID", ParentID) ;  
-    end if ; 
-    PassedGoalSet := Goal > 0 ; 
-    
+      FailureInvalidParentID("NewReqID", ParentID) ;
+    end if ;
+    PassedGoalSet := Goal > 0 ;
+
     result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
     -- synthesis translate_on
     return result ;
@@ -6738,22 +7015,22 @@ package body AlertLogPkg is
   ------------------------------------------------------------
     variable result        : AlertLogIDType ;
     variable ParentIdSet   : boolean ;
-    variable localParentID : AlertLogIDType := ParentID ;     
+    variable localParentID : AlertLogIDType := ParentID ;
     variable PassedGoalSet : boolean ;
 		constant ReportMode    : AlertLogReportModeType  := ENABLED ;
-    constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ; 
-    -- alias Goal : integer is PassedGoal ; 
+    constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ;
+    -- alias Goal : integer is PassedGoal ;
 	begin
     -- synthesis translate_off
     ParentIdSet   := AlertLogStruct.IsValidID(ParentID) ;
-    if not ParentIdSet then 
-      localParentID := REQUIREMENT_ALERTLOG_ID ; 
-      if ParentID /= ALERTLOG_ID_NOT_ASSIGNED then 
-        FailureInvalidParentID("GetReqID", ParentID) ;  
-      end if ; 
-    end if ; 
-    PassedGoalSet := PassedGoal > 0 ; 
-    
+    if not ParentIdSet then
+      localParentID := REQUIREMENT_ALERTLOG_ID ;
+      if ParentID /= ALERTLOG_ID_NOT_ASSIGNED then
+        FailureInvalidParentID("GetReqID", ParentID) ;
+      end if ;
+    end if ;
+    PassedGoalSet := PassedGoal > 0 ;
+
     result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, PassedGoal, PassedGoalSet) ;
     -- synthesis translate_on
     return result ;
@@ -6913,6 +7190,94 @@ package body AlertLogPkg is
     -- synthesis translate_on
     return result ;
   end function GetAffirmPassedCount ;
+
+  ------------------------------------------------------------
+  procedure SetExpectedAlertCount (Level : AlertType ; Count : integer) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetExpectedAlertCount(Level, Count) ;
+    -- synthesis translate_on
+  end procedure SetExpectedAlertCount ;
+
+  ------------------------------------------------------------
+  procedure IncrementExpectedAlertCount (Level : AlertType ; Count : integer := 1) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.IncrementExpectedAlertCount (Level, Count) ;
+    -- synthesis translate_on
+  end procedure IncrementExpectedAlertCount ;
+
+--!! Can index return value instead
+--!!  ------------------------------------------------------------
+--!!  impure function GetExpectedAlertCount(Level : AlertType) return integer is
+--!!  ------------------------------------------------------------
+--!!    variable result : integer ;
+--!!  begin
+--!!    -- synthesis translate_off
+--!!    result := AlertLogStruct.GetExpectedAlertCount(Level) ;
+--!!    -- synthesis translate_on
+--!!    return result ;
+--!!  end function GetExpectedAlertCount ;
+
+  ------------------------------------------------------------
+  procedure SetExpectedAlertCount (Count : AlertCountType) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetExpectedAlertCount(Count) ;
+    -- synthesis translate_on
+  end procedure SetExpectedAlertCount ;
+
+  ------------------------------------------------------------
+  impure function GetExpectedAlertCount return AlertCountType is
+  ------------------------------------------------------------
+    variable result : AlertCountType ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetExpectedAlertCount ;
+    -- synthesis translate_on
+    return result ;
+  end function GetExpectedAlertCount ;
+
+  ------------------------------------------------------------
+  procedure SetManualCheck is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.SetManualCheck ;
+    -- synthesis translate_on
+  end procedure SetManualCheck ;
+
+  ------------------------------------------------------------
+  impure function GetManualCheck return boolean is
+  ------------------------------------------------------------
+    variable result : boolean ;
+  begin
+    -- synthesis translate_off
+    result := AlertLogStruct.GetManualCheck ;
+    -- synthesis translate_on
+    return result ;
+  end function GetManualCheck ;
+
+  ------------------------------------------------------------
+  procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.IncrementAlertStopCount(AlertLogID, Level, Count) ;
+    -- synthesis translate_on
+  end procedure IncrementAlertStopCount ;
+
+  ------------------------------------------------------------
+  procedure IncrementAlertStopCount(Level : AlertType ;  Count : integer) is
+  ------------------------------------------------------------
+  begin
+    -- synthesis translate_off
+    AlertLogStruct.IncrementAlertStopCount(ALERTLOG_BASE_ID, Level, Count) ;
+    -- synthesis translate_on
+  end procedure IncrementAlertStopCount ;
 
   ------------------------------------------------------------
   procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
@@ -7382,19 +7747,19 @@ package body AlertLogPkg is
   end function GetAlertLogWriteTimeLast ;
 
   ------------------------------------------------------------
-  procedure SetOsvvmDefaultTimeUnits (A : time) is 
+  procedure SetOsvvmDefaultTimeUnits (A : time) is
   ------------------------------------------------------------
   begin
-    AlertLogStruct.SetOsvvmDefaultTimeUnits(A) ; 
-  end procedure SetOsvvmDefaultTimeUnits ; 
+    AlertLogStruct.SetOsvvmDefaultTimeUnits(A) ;
+  end procedure SetOsvvmDefaultTimeUnits ;
 
   ------------------------------------------------------------
-  impure function GetOsvvmDefaultTimeUnits return time is 
+  impure function GetOsvvmDefaultTimeUnits return time is
   ------------------------------------------------------------
   begin
-    return AlertLogStruct.GetOsvvmDefaultTimeUnits ; 
-  end function GetOsvvmDefaultTimeUnits ; 
-  
+    return AlertLogStruct.GetOsvvmDefaultTimeUnits ;
+  end function GetOsvvmDefaultTimeUnits ;
+
 
 
   ------------------------------------------------------------
@@ -7416,7 +7781,7 @@ package body AlertLogPkg is
       LogLevel := INFO ;
       LogValid := TRUE ;
     else
-      print("Name = " & Name  & "...") ; 
+      print("Name = " & Name  & "...") ;
       LogLevel := ALWAYS ;
       LogValid := FALSE ;
     end if ;
@@ -7536,46 +7901,46 @@ package body AlertLogPkg is
     alias aA : string(1 to A'length) is A ;
     variable LenA : integer := A'length ;
     variable Result : string(1 to A'length) ;
-    variable FoundAtIndex, ResultLength : integer ; 
-    variable FoundLeftParen : boolean := FALSE ; 
+    variable FoundAtIndex, ResultLength : integer ;
+    variable FoundLeftParen : boolean := FALSE ;
   begin
     -- Factor out ending ':'
     if aA(LenA) = ':' then
       LenA := LenA - 1 ;
     end if ;
     -- Find ending characters from right until find ':'
-    ResultLength := LenA ; 
+    ResultLength := LenA ;
     FoundAtIndex := 1 ;
-    Result := aA ; 
+    Result := aA ;
     for i in LenA downto 1 loop
       if aA(i) = ':' then
         FoundAtIndex := i ;
-        ResultLength := LenA - i ; 
+        ResultLength := LenA - i ;
         Result(1 to ResultLength) := aA(i+1 to LenA) ;
         exit ;
       end if ;
     end loop ;
     -- Find characters that are within (12) and reformat as _12 at end of string
-    for i in 1 to FoundAtIndex - 1 loop 
+    for i in 1 to FoundAtIndex - 1 loop
       if aA(i) = '(' then
-        if FoundLeftParen then 
-          Alert("AlertLogPkg.PathTail: found second left parenthese before finding right") ; 
-        end if ; 
-        FoundLeftParen := TRUE ; 
-        ResultLength := ResultLength + 1 ; 
-        Result(ResultLength) := '_' ; 
-      elsif aA(i) = ')' then 
-        if not FoundLeftParen then 
-          Alert("AlertLogPkg.PathTail: found right parenthese before finding left") ; 
-        end if ; 
+        if FoundLeftParen then
+          Alert("AlertLogPkg.PathTail: found second left parenthese before finding right") ;
+        end if ;
+        FoundLeftParen := TRUE ;
+        ResultLength := ResultLength + 1 ;
+        Result(ResultLength) := '_' ;
+      elsif aA(i) = ')' then
+        if not FoundLeftParen then
+          Alert("AlertLogPkg.PathTail: found right parenthese before finding left") ;
+        end if ;
         FoundLeftParen := FALSE ;
-      else 
-        if FoundLeftParen then 
-          ResultLength := ResultLength + 1 ; 
-          Result(ResultLength) := aA(i) ; 
-        end if ; 
-      end if; 
-    end loop ; 
+      else
+        if FoundLeftParen then
+          ResultLength := ResultLength + 1 ;
+          Result(ResultLength) := aA(i) ;
+        end if ;
+      end if;
+    end loop ;
     return Result(1 to ResultLength) ;
   end function PathTail ;
 
@@ -7657,11 +8022,11 @@ package body AlertLogPkg is
   end function ResolvePrintParent ;
 
   -- synthesis translate_on
-  
+
   ------------------------------------------------------------
   function to_integer( A : AlertLogIdType) return integer is
   ------------------------------------------------------------
-    variable result : integer ; 
+    variable result : integer ;
   begin
     -- synthesis translate_off
     result := integer(A) ;
@@ -7672,7 +8037,7 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   function to_IDType( A : integer) return AlertLogIdType is
   ------------------------------------------------------------
-    variable result : AlertLogIdType ; 
+    variable result : AlertLogIdType ;
   begin
     -- synthesis translate_off
     result := AlertLogIDType(A) ;
@@ -7695,7 +8060,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- deprecated
-  impure function  AlertIf( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function AlertIf( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
     variable result : boolean ;
   begin
     -- synthesis translate_off
@@ -7715,7 +8080,7 @@ package body AlertLogPkg is
 
   ------------------------------------------------------------
   -- deprecated
-  impure function  AlertIfNot( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
+  impure function AlertIfNot( cond : boolean ; AlertLogID  : AlertLogIDType ; Message : string ; Level : AlertType := ERROR ) return boolean is
     variable result : boolean ;
   begin
     -- synthesis translate_off

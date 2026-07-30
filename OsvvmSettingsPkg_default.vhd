@@ -78,18 +78,20 @@ package body OsvvmSettingsPkg is
   constant  OSVVM_FAIL_NAME            : string := "FAILED" ;
 
   constant  OSVVM_DEFAULT_TIME_UNITS   : time := 1 ns ;
+  constant  OSVVM_DIGITS_FOR_REAL_NUMBER     : natural := 8 ;
+  constant  OSVVM_DIGITS_FOR_REAL_FRACTION   : natural := 4 ;
 
   -- ------------------------------------------
   -- Settings for CoveragePkg
   -- ------------------------------------------
   -- COVERAGE_REQUIREMENT_BY_BIN
-  --   if TRUE, each bin of a coverage model is one requirement. 
-  --   if FALSE, an entire coverage model is one requirement, 
-  constant  COVERAGE_REQUIREMENT_BY_BIN   : boolean := TRUE ;  
+  --   if TRUE, each bin of a coverage model is one requirement.
+  --   if FALSE, an entire coverage model is one requirement,
+  constant  COVERAGE_REQUIREMENT_BY_BIN   : boolean := TRUE ;
   constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024", string'("REMAIN"), "AT_LEAST") ;
   -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.
   constant  COVERAGE_USE_NEW_SEED_METHODS : boolean := TRUE ;
-  
+
   -- OUTPUT formatting
   constant  COVERAGE_PRINT_PREFIX         : string := OSVVM_PRINT_PREFIX ;
   constant  COVERAGE_PASS_NAME            : string := OSVVM_PASS_NAME ;
@@ -110,10 +112,11 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_TIME_FIRST           : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE
   constant  ALERT_LOG_WRITE_TIME_LAST            : boolean := not ALERT_LOG_WRITE_TIME_FIRST ;
   constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2024", 9, 0) ;  -- Justify time - particularly when at beginning
+  constant  ALERT_LOG_DIGITS_FOR_REAL_FRACTION   : natural := OSVVM_DIGITS_FOR_REAL_FRACTION ;
 
   -- File Match/Diff controls - defaults for AffirmIfTranscriptsMatch, AffirmIfFilesMatch, AlertIfDiff
-  constant  ALERT_LOG_IGNORE_SPACES                : boolean := FALSE ; -- Historic FALSE
-  constant  ALERT_LOG_IGNORE_EMPTY_LINES           : boolean := FALSE ; -- Historic FALSE
+  constant  ALERT_LOG_IGNORE_SPACES              : boolean := FALSE ; -- Historic FALSE
+  constant  ALERT_LOG_IGNORE_EMPTY_LINES         : boolean := FALSE ; -- Historic FALSE
 
   -- OUTPUT Formatting
   -- Boolean controls to print or not print fields in Alert/Log
@@ -124,6 +127,7 @@ package body OsvvmSettingsPkg is
 
   constant  ALERT_LOG_ALERT_NAME                 : string := "Alert" ;
   constant  ALERT_LOG_LOG_NAME                   : string := "Log  " ;
+  constant  ALERT_LOG_NAME_LENGTH                : integer := ALERT_LOG_ALERT_NAME'length ;
   constant  ALERT_LOG_ID_SEPARATOR               : string := ": " ;
   constant  ALERT_LOG_PRINT_PREFIX               : string := OSVVM_PRINT_PREFIX ;
   constant  ALERT_LOG_DONE_NAME                  : string := OSVVM_DONE_NAME ;
@@ -133,10 +137,11 @@ package body OsvvmSettingsPkg is
 --  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
 --  constant ALERT_LOG_NOCHECKS_NAME               : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024.07", "NOCHECKS", "PASSED") ;
   constant ALERT_LOG_NOCHECKS_NAME               : string := "NOCHECKS" ;
+  constant ALERT_LOG_MANUALCHECKS_NAME           : string := "MANUALCHECKS" ;
   constant ALERT_LOG_TIMEOUT_NAME                : string := "TIMEOUT" ;
 
   -- Defaults for Stop Counts
-  constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 0 ;
+  constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 1 ; -- stop when reach 1
   constant  ALERT_LOG_STOP_COUNT_ERROR           : integer := integer'high ; --  VUnit 1
   constant  ALERT_LOG_STOP_COUNT_WARNING         : integer := integer'high ;
 
@@ -150,7 +155,7 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_FAIL_ON_WARNING            : boolean := TRUE ;
   constant  ALERT_LOG_FAIL_ON_DISABLED_ERRORS    : boolean := TRUE ;
   constant  ALERT_LOG_FAIL_ON_REQUIREMENT_ERRORS : boolean := TRUE ;
---   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := TRUE ; 
+--   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := TRUE ;
   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026", TRUE, FALSE) ;
   constant  ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS   : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026", TRUE, FALSE) ;
 
