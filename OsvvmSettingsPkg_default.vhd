@@ -86,7 +86,7 @@ package body OsvvmSettingsPkg is
   constant  OSVVM_LONG_SECONDARY_PREFIX   : string  := OSVVM_SECONDARY_PREFIX & (OSVVM_SECONDARY_PREFIX'length+1 to OSVVM_LINE_WRAP => ' ') ;
 
   constant  OSVVM_DEFAULT_TIME_UNITS               : time := 1 ns ;
-  constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := 4 ;
+  constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := 3 ;
   constant  OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL  : natural := 8 ;
   constant  OSVVM_DIGITS_FOR_REAL_FRACTION         : natural := 4 ;
   constant  OSVVM_MAX_TIME_DECIMAL_DIGITS          : natural := 24 ; -- Max number of 10**Digits in 2**62 - 1. Should be around 19 + 1 for decimal point
