@@ -242,6 +242,7 @@ package body NameStorePkg is
       variable ID : integer ;
     begin
       ID := NewID(iName, ParentID, Search) ;
+    end procedure Insert ;
 
     ------------------------------------------------------------
     impure function IsInitialized (ID : NameIDType) return boolean is
