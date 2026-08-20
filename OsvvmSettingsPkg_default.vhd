@@ -72,14 +72,24 @@ package body OsvvmSettingsPkg is
   -- Settings shared by AlertLogPkg and CoveragePkg
   -- ------------------------------------------
   -- Output Formatting
-  constant  OSVVM_PRINT_PREFIX         : string := "%% " ;
-  constant  OSVVM_DONE_NAME            : string := "DONE" ;
-  constant  OSVVM_PASS_NAME            : string := "PASSED" ;
-  constant  OSVVM_FAIL_NAME            : string := "FAILED" ;
+  constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
+  constant  OSVVM_SECONDARY_PREFIX        : string  := "%%-- " ;
+  constant  OSVVM_PRINT_USES_PREFIX       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026.05", TRUE, FALSE) ;
+  constant  OSVVM_PRINT_OPTIONAL_PREFIX   : string  := IfElse(OSVVM_PRINT_USES_PREFIX, OSVVM_PRINT_PREFIX, "") ;
+  constant  OSVVM_DONE_NAME               : string  := "DONE" ;
+  constant  OSVVM_PASS_NAME               : string  := "PASSED" ;
+  constant  OSVVM_FAIL_NAME               : string  := "FAILED" ;
+  constant  OSVVM_HEADER_PREFIX           : string  := " " ;
+  constant  OSVVM_HEADER_SUFFIX           : string  := "*" ;
+  constant  OSVVM_LINE_LENGTH             : integer := 125 - OSVVM_PRINT_PREFIX'length ; -- For lines of "===" in headers such as LogHeader
+  constant  OSVVM_LINE_WRAP               : integer := 125 - OSVVM_PRINT_PREFIX'length ; -- For PrintLine - set to integer'high to disable
+  constant  OSVVM_LONG_SECONDARY_PREFIX   : string  := OSVVM_SECONDARY_PREFIX & (OSVVM_SECONDARY_PREFIX'length+1 to OSVVM_LINE_WRAP => ' ') ;
 
-  constant  OSVVM_DEFAULT_TIME_UNITS   : time := 1 ns ;
-  constant  OSVVM_DIGITS_FOR_REAL_NUMBER     : natural := 8 ;
-  constant  OSVVM_DIGITS_FOR_REAL_FRACTION   : natural := 4 ;
+  constant  OSVVM_DEFAULT_TIME_UNITS               : time := 1 ns ;
+  constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := 4 ;
+  constant  OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL  : natural := 8 ;
+  constant  OSVVM_DIGITS_FOR_REAL_FRACTION         : natural := 4 ;
+  constant  OSVVM_MAX_TIME_DECIMAL_DIGITS          : natural := 24 ; -- Max number of 10**Digits in 2**62 - 1. Should be around 19 + 1 for decimal point
 
   -- ------------------------------------------
   -- Settings for CoveragePkg
@@ -108,10 +118,12 @@ package body OsvvmSettingsPkg is
   -- Settings for AlertLogPkg
   -- ------------------------------------------
   -- Control printing of Alert/Log
-  constant  ALERT_LOG_JUSTIFY_ENABLE             : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE - Do not Justify printing
-  constant  ALERT_LOG_WRITE_TIME_FIRST           : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE
-  constant  ALERT_LOG_WRITE_TIME_LAST            : boolean := not ALERT_LOG_WRITE_TIME_FIRST ;
-  constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2024", 9, 0) ;  -- Justify time - particularly when at beginning
+  constant  ALERT_LOG_WRAP                       : boolean := FALSE ; -- Historic FALSE = Do not WRAP
+--  constant  ALERT_LOG_WRAP                       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", TRUE, FALSE) ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_JUSTIFY_ENABLE             : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE = Do not Justify printing
+  constant  ALERT_LOG_WRITE_TIME_FIRST           : boolean := IfElse(ALERT_LOG_WRAP, TRUE, IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE)) ; -- Historic FALSE - If ALERT_LOG_WRAP - then must be TRUE
+  constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", 16, IfElse(OSVVM_SETTINGS_REVISION >= "2024", 9, 0)) ;  -- Justify time. Historic 0. Particularly when at beginning
+  constant  ALERT_LOG_DIGITS_FOR_TIME_FRACTION   : integer := 1 ;
   constant  ALERT_LOG_DIGITS_FOR_REAL_FRACTION   : natural := OSVVM_DIGITS_FOR_REAL_FRACTION ;
 
   -- File Match/Diff controls - defaults for AffirmIfTranscriptsMatch, AffirmIfFilesMatch, AlertIfDiff
@@ -122,8 +134,8 @@ package body OsvvmSettingsPkg is
   -- Boolean controls to print or not print fields in Alert/Log
   constant  ALERT_LOG_WRITE_ERRORCOUNT           : boolean := FALSE ;  -- prefix message with # of errors - requested by Marco for Mike P.
   constant  ALERT_LOG_WRITE_NAME                 : boolean := TRUE ;   -- Print Alert/Log
-  constant  ALERT_LOG_WRITE_LEVEL                : boolean := TRUE ;   -- Print Level Name
-  constant  ALERT_LOG_WRITE_TIME                 : boolean := TRUE ;   -- Print Level Name
+  constant  ALERT_LOG_WRITE_LEVEL                : boolean := TRUE ;   -- Print Level - FAILURE, ERROR, WARNING, INFO, ...
+  constant  ALERT_LOG_WRITE_TIME                 : boolean := TRUE ;   -- Print time
 
   constant  ALERT_LOG_ALERT_NAME                 : string := "Alert" ;
   constant  ALERT_LOG_LOG_NAME                   : string := "Log  " ;
@@ -141,9 +153,9 @@ package body OsvvmSettingsPkg is
   constant ALERT_LOG_TIMEOUT_NAME                : string := "TIMEOUT" ;
 
   -- Defaults for Stop Counts
-  constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 1 ; -- stop when reach 1
-  constant  ALERT_LOG_STOP_COUNT_ERROR           : integer := integer'high ; --  VUnit 1
-  constant  ALERT_LOG_STOP_COUNT_WARNING         : integer := integer'high ;
+  constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 1 ; -- OSVVM 1
+  constant  ALERT_LOG_STOP_COUNT_ERROR           : integer := integer'high ; -- OSVVM 2**31-1, VUnit 1
+  constant  ALERT_LOG_STOP_COUNT_WARNING         : integer := integer'high ; -- OSVVM 2**31-1
 
   -- Allows disabling alerts at startup - and then turn them on at or near system reset
   constant  ALERT_LOG_GLOBAL_ALERT_ENABLE        : boolean := TRUE ;

@@ -9,7 +9,7 @@
 --
 --  Description:
 --        Generate Final Reports
---        Elements of these reports come from AlertLogPkg, CoveragePkg, and 
+--        Elements of these reports come from AlertLogPkg, CoveragePkg, and
 --        the ScoreboardGenericPkg instances of ScoreboardPkg_int and ScoreboardPkg_slv
 --
 --  Developed for:
@@ -20,13 +20,13 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2024   2024.07    Added timeout flag to EndOfTestReports. 
+--    07/2024   2024.07    Added timeout flag to EndOfTestReports.
 --                         Added scoreboard reporting for: unsigned, signed, and IntV
 --    12/2023   2024.01    Updated WriteCovSummaryYaml to print FunctionalCoverage:  "" when no functional coverage (to work with TCL 8.5).
 --    09/2023   2023.09    Added WriteSimTimeYaml.
 --    07/2023   2023.07    Added call to WriteRequirementsYaml.
---    04/2023   2023.04    Added TranscriptOpen without parameters 
---    01/2023   2023.01    OSVVM_TEMP_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    04/2023   2023.04    Added TranscriptOpen without parameters
+--    01/2023   2023.01    OSVVM_TEMP_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY
 --                         Added simple TranscriptOpen that uses GetTestName
 --    06/2022   2022.06    Minor reordering of EndOfTestReports
 --    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
@@ -52,7 +52,7 @@
 use std.textio.all ;
 
 use work.OsvvmScriptSettingsPkg.all ;
-use work.TranscriptPkg.all ; 
+use work.TranscriptBasePkg.all ;
 use work.AlertLogPkg.all ;
 use work.CoveragePkg.all ;
 use work.ScoreboardPkg_slv.all ;
@@ -67,16 +67,16 @@ package ReportPkg is
   impure function EndOfTestReports (
     ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
-    TimeOut        : boolean        := FALSE 
+    TimeOut        : boolean        := FALSE
   ) return integer ;
 
   procedure EndOfTestReports (
     ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
     Stop           : boolean        := FALSE ;
-    TimeOut        : boolean        := FALSE 
+    TimeOut        : boolean        := FALSE
   ) ;
-  
+
   procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
   procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
 
@@ -99,12 +99,12 @@ package body ReportPkg is
     variable buf : line ;
   begin
     file_open(OsvvmYamlFile, FileName, APPEND_MODE) ;
-    if GotCoverage then 
-      swrite(buf, "        FunctionalCoverage: " & to_string(GetCov, 2)) ; 
+    if GotCoverage then
+      swrite(buf, "        FunctionalCoverage: " & to_string(GetCov, 2)) ;
     else
-      swrite(buf, "        FunctionalCoverage:  " & """""") ; 
-    end if ; 
-    writeline(OsvvmYamlFile, buf) ; 
+      swrite(buf, "        FunctionalCoverage:  " & """""") ;
+    end if ;
+    writeline(OsvvmYamlFile, buf) ;
     file_close(OsvvmYamlFile) ;
   end procedure WriteCovSummaryYaml ;
 
@@ -116,8 +116,8 @@ package body ReportPkg is
     variable buf : line ;
   begin
     file_open(OsvvmYamlFile, FileName, APPEND_MODE) ;
-    swrite(buf, "        SimulationTime: """ & to_string(NOW) & '"') ; 
-    writeline(OsvvmYamlFile, buf) ; 
+    swrite(buf, "        SimulationTime: """ & to_string(NOW) & '"') ;
+    writeline(OsvvmYamlFile, buf) ;
     file_close(OsvvmYamlFile) ;
   end procedure WriteSimTimeYaml ;
 
@@ -126,52 +126,52 @@ package body ReportPkg is
   ------------------------------------------------------------
     ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
-    TimeOut        : boolean        := FALSE 
+    TimeOut        : boolean        := FALSE
   ) return integer is
   begin
-    if GotCoverage then 
+    if GotCoverage then
       WriteCovYaml (
         FileName      => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
       ) ;
       RecordCovRequirements ;
-    end if ; 
-    
-    if work.ScoreboardPkg_slv.GotScoreboards then 
+    end if ;
+
+    if work.ScoreboardPkg_slv.GotScoreboards then
       work.ScoreboardPkg_slv.WriteScoreboardYaml (
         FileName => "slv", FileNameIsBaseName => TRUE
       ) ;
-    end if ; 
-    
-    if work.ScoreboardPkg_unsigned.GotScoreboards then 
+    end if ;
+
+    if work.ScoreboardPkg_unsigned.GotScoreboards then
       work.ScoreboardPkg_unsigned.WriteScoreboardYaml (
         FileName => "unsigned", FileNameIsBaseName => TRUE
       ) ;
-    end if ; 
+    end if ;
 
-    if work.ScoreboardPkg_signed.GotScoreboards then 
+    if work.ScoreboardPkg_signed.GotScoreboards then
       work.ScoreboardPkg_signed.WriteScoreboardYaml (
         FileName => "signed", FileNameIsBaseName => TRUE
       ) ;
-    end if ; 
+    end if ;
 
-    if work.ScoreboardPkg_int.GotScoreboards then 
+    if work.ScoreboardPkg_int.GotScoreboards then
       work.ScoreboardPkg_int.WriteScoreboardYaml (
         FileName => "int", FileNameIsBaseName => TRUE
       ) ;
-    end if ; 
+    end if ;
 
-    if work.ScoreboardPkg_IntV.GotScoreboards then 
+    if work.ScoreboardPkg_IntV.GotScoreboards then
       work.ScoreboardPkg_IntV.WriteScoreboardYaml (
         FileName => "IntV", FileNameIsBaseName => TRUE
       ) ;
-    end if ; 
+    end if ;
 
-    if GotRequirements then 
+    if GotRequirements then
       WriteRequirementsYaml (
         FileName      => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_req.yml"
       ) ;
-    end if ; 
-    
+    end if ;
+
     -- Summarize Results Last to allow previous steps to update Alerts
     WriteCovSummaryYaml (
       FileName        => OSVVM_BUILD_YAML_FILE
@@ -179,21 +179,21 @@ package body ReportPkg is
     WriteSimTimeYaml (
       FileName        => OSVVM_BUILD_YAML_FILE
     ) ;
-    
-    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ; 
-    
+
+    ReportAlerts(ExternalErrors => ExternalErrors, ReportAll => ReportAll, TimeOut => TimeOut) ;
+
     WriteAlertSummaryYaml(
-      FileName        => OSVVM_BUILD_YAML_FILE, 
+      FileName        => OSVVM_BUILD_YAML_FILE,
       ExternalErrors  => ExternalErrors,
       TimeOut         => TimeOut
-    ) ; 
-	
+    ) ;
+
     WriteAlertYaml (
-      FileName        => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml", 
+      FileName        => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml",
       ExternalErrors  => ExternalErrors,
       TimeOut         => TimeOut
-    ) ; 
-    
+    ) ;
+
     TranscriptClose ; -- Close Transcript if open
 
     return SumAlertCount(GetAlertCount + ExternalErrors) ;
@@ -205,31 +205,31 @@ package body ReportPkg is
     ReportAll      : boolean        := FALSE ;
     ExternalErrors : AlertCountType := (0,0,0) ;
     Stop           : boolean        := FALSE ;
-    TimeOut        : boolean        := FALSE 
+    TimeOut        : boolean        := FALSE
   ) is
-    variable ErrorCount : integer ; 
+    variable ErrorCount : integer ;
   begin
     ErrorCount := EndOfTestReports(ReportAll, ExternalErrors, TimeOut) ;
-    if Stop then 
-      std.env.stop ; 
+    if Stop then
+      std.env.stop ;
     end if ;
   end procedure EndOfTestReports ;
 
   ------------------------------------------------------------
   procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
-    variable Status : FILE_OPEN_STATUS ; 
+    variable Status : FILE_OPEN_STATUS ;
   begin
     TranscriptOpen(Status, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
-  end procedure TranscriptOpen ; 
+  end procedure TranscriptOpen ;
 
   ------------------------------------------------------------
   procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
   ------------------------------------------------------------
   begin
     TranscriptOpen(Status, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
-  end procedure TranscriptOpen ; 
-  
+  end procedure TranscriptOpen ;
+
 
 
 end package body ReportPkg ;

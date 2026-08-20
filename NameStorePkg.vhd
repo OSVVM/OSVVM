@@ -239,10 +239,9 @@ package body NameStorePkg is
       ParentID : integer := LOCAL_ALERTLOG_BASE_ID ;
       Search   : NameSearchType := NAME
     ) is
-      variable ID : NameStoreIDType ;
+      variable ID : integer ;
     begin
       ID := NewID(iName, ParentID, Search) ;
-    end procedure Insert ;
 
     ------------------------------------------------------------
     impure function IsInitialized (ID : NameIDType) return boolean is

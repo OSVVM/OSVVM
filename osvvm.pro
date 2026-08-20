@@ -54,11 +54,15 @@ analyze OsvvmTypesPkg.vhd
 
 # Analyze package declarations
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+if {$::osvvm::OsvvmDevDerivePackageHeaders} {
+  MakePkgHeader       OsvvmSettingsPkg_default.vhd OsvvmSettingsPkg.vhd
+  MakePkgBodyTemplate OsvvmSettingsPkg_default.vhd OsvvmSettingsPkg_template.vhd
+  MakePkgSettings     OsvvmSettingsPkg_default.vhd OsvvmSettingsPkg_default.vset
+}
 analyze OsvvmSettingsPkg.vhd
-# if {!$::osvvm::ToolSupportsDeferredConstants}  {
-#   # Compile early in tools that do not support deferred constants
-#   include OsvvmVhdlSettings.pro
-# }
+
+# In OsvvmVhdlSettings, Add:
+# MakePkgBody OsvvmSettingsPkg_default.vset ${SettingsDir}/OsvvmSettingsPkg_local.vset OsvvmSettingsPkg_template.vhd OsvvmSettingsPkg_vset.vhd
 include OsvvmVhdlSettings.pro
 
 if {$::osvvm::ToolName ne "XSIM"}  {
@@ -77,26 +81,28 @@ analyze CoverageVendorApiPkg_${::osvvm::FunctionalCoverageIntegratedInSimulator}
 
 analyze NameStorePkg.vhd
 
-analyze TranscriptPkg.vhd
+analyze TranscriptBasePkg.vhd
 
 if {$::osvvm::VhdlVersion >= 2019}  {
   analyze LanguageSupport2019Pkg.vhd
 } else {
+  # Stub implementations for 2019 features
   analyze deprecated/LanguageSupport2019Pkg_c.vhd
 }
 
 if {$::osvvm::Supports2019FilePath && $::osvvm::VhdlVersion >= 2019} {
   analyze FileLinePathPkg.vhd
 } else {
+  # Stub implementations for 2019 features
   analyze deprecated/FileLinePathPkg_c.vhd
 }
 
 if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
   analyze AssertApiPkg.vhd
 } else {
+  # Stub implementations for 2019 features
   analyze deprecated/AssertApiPkg_c.vhd
 }
-
 
 analyze AlertLogPkg.vhd
 
@@ -125,12 +131,6 @@ if {$::osvvm::ToolName ne "XSIM"}  {
 }
 analyze CoveragePtPkg.vhd
 analyze DelayCoveragePkg.vhd
-
-if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
-  analyze ClockResetPkg.vhd
-} else {
-  analyze deprecated/ClockResetPkg_2024_05.vhd
-}
 
 analyze ResizePkg.vhd
 
@@ -172,11 +172,16 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
     analyze deprecated/MemoryGenericPkg_xilinx.vhd
   }
   analyze MemoryPkg.vhd
+  if {$::osvvm::UseMemoryPkg01} {
+    # replaces MemoryPkg with instance that uses 01 policy
+    analyze MemoryPkgIs01.vhd
+  }
 } else {
   analyze deprecated/MemoryPkg_c.vhd
   analyze deprecated/MemoryPkg_orig_c.vhd
 }
 
+analyze TranscriptPkg.vhd
 analyze ReportPkg.vhd
 
 if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019ImpureFunctions}  {
@@ -185,10 +190,11 @@ if {$::osvvm::VhdlVersion >= 2019 && $::osvvm::Supports2019ImpureFunctions}  {
   analyze  deprecated/RandomPkg2019_c.vhd
 }
 
+if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
+  analyze ClockResetPkg.vhd
+} else {
+  analyze deprecated/ClockResetPkg_2024_05.vhd
+}
+
+
 analyze OsvvmContext.vhd
-
-
-# if {$::osvvm::ToolSupportsDeferredConstants}  {
-#   include OsvvmVhdlSettings.pro
-# }
-

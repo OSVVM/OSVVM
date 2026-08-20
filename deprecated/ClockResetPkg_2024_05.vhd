@@ -19,7 +19,7 @@
 --    Date      Version    Description
 --    07/2024   2024.07    Moved Clock and Reset support from TbUtilPkg to here
 --                         This package has the unmodified version of CreateClock
---                         Select this package by setting the variable ClockResetVersion 
+--                         Select this package by setting the variable ClockResetVersion
 --                         to 2024.05 or less in OsvvmSettingsLocal.tcl
 --
 --
@@ -45,7 +45,7 @@ library ieee ;
 
   use work.AlertLogPkg.all ;
   use work.CoveragePkg.all ;
-  use work.TranscriptPkg.all ;
+  use work.TranscriptBasePkg.all ;
   use work.ResolutionPkg.all ;
   use work.OsvvmGlobalPkg.all ;
   use work.TbUtilPkg.all ;
