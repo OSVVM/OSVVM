@@ -258,6 +258,12 @@ package body TextUtilPkg is
   type NaturalString is array (Integer range <> ) of character ;
   constant DIGIT_TO_CHARACTER : NaturalString (0 to 9) := "0123456789" ;
 
+  constant ONE_MS : time := 1 sec / 1000 ;
+  constant ONE_US : time := ONE_MS  / 1000 ;
+  constant ONE_NS : time := ONE_US / 1000 ;
+  constant ONE_PS : time := ONE_NS / 1000 ;
+  constant ONE_FS : time := ONE_PS / 1000 ;
+
 
   ------------------------------------------------------------
   function "-" (R : character ; L : integer ) return character is
@@ -610,50 +616,58 @@ package body TextUtilPkg is
 
   ------------------------------------------------------------
   function GetMaxWholeTimeUnits(T : time) return time is
+  -- GetMaxWholeTimeUnits - ceiling for type time
   ------------------------------------------------------------
-    constant POS_TIME : time := ifelse(T > 0 ns, T, -T) ;
+    constant POS_TIME : time := ifelse(T >= 0 ns, T, -T) ;
   begin
-    if    T  = 0 ns  then      return work.OsvvmSettingsPkg.OSVVM_DEFAULT_TIME_UNITS ;
-    elsif T >= 1 hr  then      return 1 hr ;
-    elsif T >= 1 min then      return 1 min ;
-    elsif T >= 1 sec then      return 1 sec ;
-    elsif T >= 1 ms  then      return 1 ms ;
-    elsif T >= 1 us  then      return 1 us ;
-    elsif T >= 1 ns  then      return 1 ns ;
-    elsif T >= 1 ps  then      return 1 ps ;
-    else                       return 1 fs ;
+    if    POS_TIME  = 0 ns   then       return work.OsvvmSettingsPkg.OSVVM_DEFAULT_TIME_UNITS ;
+    elsif POS_TIME >= 1 hr   then       return 1 hr ;
+    elsif POS_TIME >= 1 min  then       return 1 min ;
+    elsif POS_TIME >= 1 sec  then       return 1 sec ;
+    elsif POS_TIME >= ONE_MS then       return ONE_MS ;
+    elsif POS_TIME >= ONE_US then       return ONE_US ;
+    elsif POS_TIME >= ONE_NS then       return ONE_NS ;
+    elsif POS_TIME >= ONE_PS then       return ONE_PS ;
+    else                                return ONE_FS ;
     end if ;
   end function GetMaxWholeTimeUnits ;
 
   ------------------------------------------------------------
   function GetTimeUnits(T : time) return string is
+  -- GetTimeUnits returns the time units
+  -- Input expected to be 1 time unit, but code is tolerant
   ------------------------------------------------------------
   begin
-    if    T = 1 hr  then   return " hr" ;
-    elsif T = 1 min then   return " min" ;
-    elsif T = 1 sec then   return " sec" ;
-    elsif T = 1 ms  then   return " ms" ;
-    elsif T = 1 us  then   return " us" ;
-    elsif T = 1 ns  then   return " ns" ;
-    elsif T = 1 ps  then   return " ps" ;
-    elsif T = 1 fs  then   return " fs" ;
-    else  report "GetTimeUnits: not a time unit" severity FAILURE ;   return " not a time unit" ;
+    if    T = 1 hr   then            return " hr" ;
+    elsif T = 1 min  then            return " min" ;
+    elsif T = 1 sec  then            return " sec" ;
+    elsif T = ONE_MS then            return " ms" ;
+    elsif T = ONE_US then            return " us" ;
+    elsif T = ONE_NS then            return " ns" ;
+    elsif T = ONE_PS then            return " ps" ;
+    elsif T = ONE_FS then            return " fs" ;
+    else
+      report "format/GetTimeUnits:  Not a time unit " & to_string(T)  severity error ;
+      return GetTimeUnits(GetMaxWholeTimeUnits(T)) ;
     end if ;
   end function GetTimeUnits ;
 
   ------------------------------------------------------------
   function GetTimeDigits(T : time) return integer is
+  -- Local:  GetTimeDigits.   Returns number of decimal digits to represent value.
   ------------------------------------------------------------
   begin
-    if    T = 1 hr  then   return 18 ;
-    elsif T = 1 min then   return 16 ;
-    elsif T = 1 sec then   return 15 ;
-    elsif T = 1 ms  then   return 12 ;
-    elsif T = 1 us  then   return 9 ;
-    elsif T = 1 ns  then   return 6 ;
-    elsif T = 1 ps  then   return 3 ;
-    elsif T = 1 fs  then   return 0 ;
-    else  report "GetTimeDigits: not a time unit" severity FAILURE ;   return -1 ;
+    if    T = 1 hr   then            return 18 ;
+    elsif T = 1 min  then            return 16 ;
+    elsif T = 1 sec  then            return 15 ;
+    elsif T = ONE_MS then            return 12 ;
+    elsif T = ONE_US then            return 9 ;
+    elsif T = ONE_NS then            return 6 ;
+    elsif T = ONE_PS then            return 3 ;
+    elsif T = ONE_FS then            return 0 ;
+    else
+      report "format:  Not a time unit " & to_string(T)  severity error ;
+      return GetTimeDigits(GetMaxWholeTimeUnits(T)) ;
     end if ;
   end function GetTimeDigits ;
 
@@ -662,8 +676,6 @@ package body TextUtilPkg is
   ------------------------------------------------------------
   function format ( T : time ; TimeUnits : time ; FractionDigits : natural := OSVVM_DIGITS_FOR_TIME_FRACTION ; RightJustify : natural := 0 ) return string is
   ------------------------------------------------------------
-    -- constant MAX_FRACTION_VALUE        : integer := maximum(1, TimeUnits / SIM_RESOLUTION) ;  -- 1, 10, 100, 1000
-    -- constant MAX_FRACTION_DIGITS       : integer := integer(ceil(log10(real(MAX_FRACTION_VALUE)))) ;
     constant MAX_FRACTION_DIGITS       : integer := GetTimeDigits(TimeUnits) - SIM_RESOLUTION_DIGITS ;
     constant RESOLVED_FRACTION_DIGITS  : integer := minimum(MAX_FRACTION_DIGITS, FractionDigits) ;
     constant EXTRA_DIGITS              : integer := MAX_FRACTION_DIGITS - RESOLVED_FRACTION_DIGITS ;
