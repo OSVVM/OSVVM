@@ -298,11 +298,11 @@ package body TranscriptPkg is
     end if ;
     -- Line 2+, LF (separate from previous line) + Prefix (for new line)
     for i in 2 to count loop
-      write(buf, OSVVM_PRINT_OPTIONAL_PREFIX & LF) ;
+      write(buf, OSVVM_BLANK_LINE_PREFIX & LF) ;
     end loop ;
     -- Line 1, Just Prefix
     -- Note The extra space is added since RP throws away LF if line ends in LF.  It is a reported RP issue.
-    write(buf, OSVVM_PRINT_OPTIONAL_PREFIX & " ") ;
+    write(buf, OSVVM_BLANK_LINE_PREFIX & " ") ;
     -- Output the whole set of lines
     WriteLine(buf) ;
   end procedure BlankLine ;
