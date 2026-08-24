@@ -99,6 +99,12 @@ package TextUtilPkg is
   function to_hxstring ( A : signed) return string ;
 
   ------------------------------------------------------------
+  -- FindCharacter, HasCharacter
+  ------------------------------------------------------------
+  function FindCharacter (S : in string ; C : in character ; StartIndex, EndIndex : in integer) return integer ;
+  function HasCharacter  (S : in string; C : in character) return boolean ;
+
+  ------------------------------------------------------------
   -- format
   --   Selected to_string replacements that do smarter things at boundaries (integer'low, ...)
   ------------------------------------------------------------
@@ -571,6 +577,49 @@ package body TextUtilPkg is
   begin
     return local_to_hxstring(std_ulogic_vector(A), IsSigned => TRUE) ;
   end function to_hxstring ;
+
+  ------------------------------------------------------------
+  function FindCharacter (S : in string ; C : in character ; StartIndex, EndIndex : in integer) return integer is
+  ------------------------------------------------------------
+    constant S_LENGTH : integer := s'length ;
+    alias aS : string(1 to S_LENGTH) is S ;
+  begin
+    for i in StartIndex to EndIndex loop
+      if aS(i) = C then
+        return i ;
+      end if ;
+    end loop ;
+    return 0 ;  -- not found
+  end function FindCharacter ;
+
+  ------------------------------------------------------------
+  function HasCharacter (S : in string; C : in character) return boolean is
+  ------------------------------------------------------------
+    constant S_LENGTH : integer := s'length ;
+    alias aS : string(1 to S_LENGTH) is S ;
+  begin
+    return FindCharacter(aS, C, 1, S_LENGTH) /= 0 ;
+  end function HasCharacter ;
+
+
+-- Move to TextUtilPkg
+--  ------------------------------------------------------------
+--  FindCharInStringReverse(s : in string ; c : in character ; StartIndex, EndIndex : in integer ; CharIndex : inout integer ; Found : out boolean) is
+--  ------------------------------------------------------------
+--    constant S_LENGTH : integer := s'length ;
+--    alias aS : string(1 to S_LENGTH) is s ;
+--  begin
+--    for i in EndIndex downto StartIndex loop
+--      if aS(i) = c then
+--        CharIndex := i ;
+--        Found := TRUE ;
+--        return ;
+--      end if ;
+--    end loop ;
+--    Found := FALSE ;
+--    CharIndex := 0 ;
+--  end procedure FindCharInStringReverse ;
+
 
   ------------------------------------------------------------
   -- format
