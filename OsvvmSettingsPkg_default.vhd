@@ -72,17 +72,16 @@ package body OsvvmSettingsPkg is
   -- Settings shared by AlertLogPkg and CoveragePkg
   -- ------------------------------------------
   -- Output Formatting
-  constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
-  constant  OSVVM_SECONDARY_PREFIX        : string  := "%%-- " ;
-  constant  OSVVM_PRINT_USES_PREFIX       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026.05", TRUE, FALSE) ;
-  constant  OSVVM_PRINT_OPTIONAL_PREFIX   : string  := IfElse(OSVVM_PRINT_USES_PREFIX, OSVVM_PRINT_PREFIX, "") ;
-  constant  OSVVM_DONE_NAME               : string  := "DONE" ;
   constant  OSVVM_PASS_NAME               : string  := "PASSED" ;
   constant  OSVVM_FAIL_NAME               : string  := "FAILED" ;
+  constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
+  constant  OSVVM_SECONDARY_PREFIX        : string  := "%%> " ;
+  -- constant  OSVVM_PRINT_USES_PREFIX       : boolean := IfElse(OSVVM_SETTINGS_REVISION > "2026.08", TRUE, FALSE) ;
+  constant  OSVVM_BLANK_LINE_PREFIX       : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", OSVVM_PRINT_PREFIX, "") ;
   constant  OSVVM_HEADER_PREFIX           : string  := " " ;
   constant  OSVVM_HEADER_SUFFIX           : string  := "*" ;
-  constant  OSVVM_LINE_LENGTH             : integer := 125 - OSVVM_PRINT_PREFIX'length ; -- For lines of "===" in headers such as LogHeader
-  constant  OSVVM_LINE_WRAP               : integer := 125 - OSVVM_PRINT_PREFIX'length ; -- For PrintLine - set to integer'high to disable
+  constant  OSVVM_LINE_LENGTH             : integer := 165 - OSVVM_PRINT_PREFIX'length ; -- For lines of "===" in headers such as LogHeader
+  constant  OSVVM_LINE_WRAP               : integer := 165 - OSVVM_PRINT_PREFIX'length ; -- For PrintLine - set to integer'high to disable
   constant  OSVVM_LONG_SECONDARY_PREFIX   : string  := OSVVM_SECONDARY_PREFIX & (OSVVM_SECONDARY_PREFIX'length+1 to OSVVM_LINE_WRAP => ' ') ;
 
   constant  OSVVM_DEFAULT_TIME_UNITS               : time := 1 ns ;
@@ -113,13 +112,13 @@ package body OsvvmSettingsPkg is
   constant COVERAGE_WRITE_COUNT       : boolean := TRUE ;
   constant COVERAGE_WRITE_ANY_ILLEGAL : boolean := FALSE ;
 
-
   -- ------------------------------------------
   -- Settings for AlertLogPkg
   -- ------------------------------------------
   -- Control printing of Alert/Log
-  constant  ALERT_LOG_WRAP                       : boolean := FALSE ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_WRAP                       : boolean := FALSE ; -- Do not WRAP.  Off by default.  Using LF at start or end of line turns it on
 --  constant  ALERT_LOG_WRAP                       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", TRUE, FALSE) ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_INDENTED_LENGTH            : integer := 21 ;
   constant  ALERT_LOG_JUSTIFY_ENABLE             : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ; -- Historic FALSE = Do not Justify printing
   constant  ALERT_LOG_WRITE_TIME_FIRST           : boolean := IfElse(ALERT_LOG_WRAP, TRUE, IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE)) ; -- Historic FALSE - If ALERT_LOG_WRAP - then must be TRUE
   constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", 16, IfElse(OSVVM_SETTINGS_REVISION >= "2024", 9, 0)) ;  -- Justify time. Historic 0. Particularly when at beginning
@@ -137,14 +136,17 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_LEVEL                : boolean := TRUE ;   -- Print Level - FAILURE, ERROR, WARNING, INFO, ...
   constant  ALERT_LOG_WRITE_TIME                 : boolean := TRUE ;   -- Print time
 
-  constant  ALERT_LOG_ALERT_NAME                 : string := "Alert" ;
-  constant  ALERT_LOG_LOG_NAME                   : string := "Log  " ;
+  constant  ALERT_LOG_DONE_NAME                  : string  := "DONE" ;
+  constant  ALERT_LOG_PASS_NAME                  : string  := OSVVM_PASS_NAME ;
+  constant  ALERT_LOG_FAIL_NAME                  : string  := OSVVM_FAIL_NAME ;
+  constant  ALERT_LOG_PRINT_PREFIX               : string  := OSVVM_PRINT_PREFIX ;
+  constant  ALERT_LOG_ALERT_NAME                 : string  := "Alert" ;
+  constant  ALERT_LOG_LOG_NAME                   : string  := "Log  " ;
   constant  ALERT_LOG_NAME_LENGTH                : integer := ALERT_LOG_ALERT_NAME'length ;
-  constant  ALERT_LOG_ID_SEPARATOR               : string := ": " ;
-  constant  ALERT_LOG_PRINT_PREFIX               : string := OSVVM_PRINT_PREFIX ;
-  constant  ALERT_LOG_DONE_NAME                  : string := OSVVM_DONE_NAME ;
-  constant  ALERT_LOG_PASS_NAME                  : string := OSVVM_PASS_NAME ;
-  constant  ALERT_LOG_FAIL_NAME                  : string := OSVVM_FAIL_NAME ;
+  constant  ALERT_LOG_ID_SEPARATOR               : string  := ": " ;
+  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", " ", "   ") ; -- Keeping 2 space between time and Alert/Log
+  constant  ALERT_LOG_SPACES_BEFORE_LEVEL        : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", " ", "  ") ;  -- Keeping 1 to equalize the length of DONE and Alert
+  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", "", "  ") ; -- has 1 in addition to this
 
 --  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
 --  constant ALERT_LOG_NOCHECKS_NAME               : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024.07", "NOCHECKS", "PASSED") ;
@@ -171,7 +173,7 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026", TRUE, FALSE) ;
   constant  ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS   : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2026", TRUE, FALSE) ;
 
-  -- ReportAlerts Settings
+  -- ReportAlerts Settings -- HTML report prints all of these.  These only impact the text report.
   constant ALERT_LOG_REPORT_HIERARCHY            : boolean := TRUE ;   -- ReportAerts
   constant ALERT_LOG_PRINT_PASSED                : boolean := TRUE ;   -- ReportAlerts: Print PassedCount
   constant ALERT_LOG_PRINT_AFFIRMATIONS          : boolean := FALSE ;  -- ReportAlerts: Print Affirmations Checked
@@ -179,6 +181,10 @@ package body OsvvmSettingsPkg is
   constant ALERT_LOG_PRINT_REQUIREMENTS          : boolean := FALSE ;  -- ReportAlerts: Print requirements
   constant ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS  : boolean := TRUE ;   -- ReportAlerts: Print requirements if have any
 
+  -- DEPRECATED:
+  -- DEPRECATED:   Use ALERT_LOG_DONE_NAME
+  -- DEPRECATED:
+  constant  OSVVM_DONE_NAME               : string  := "DONE" ;
 
 --!!  -- Defaults for Log Enables
 --!!  constant LOG_ENABLE_INFO             : boolean := FALSE ;
