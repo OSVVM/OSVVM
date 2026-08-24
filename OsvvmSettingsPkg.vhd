@@ -72,13 +72,12 @@ package OsvvmSettingsPkg is
   -- Settings shared by AlertLogPkg and CoveragePkg
   -- ------------------------------------------
   -- Output Formatting
-  constant  OSVVM_PRINT_PREFIX            : string  ;
-  constant  OSVVM_SECONDARY_PREFIX        : string  ;
-  constant  OSVVM_PRINT_USES_PREFIX       : boolean ;
-  constant  OSVVM_PRINT_OPTIONAL_PREFIX   : string  ;
-  constant  OSVVM_DONE_NAME               : string  ;
   constant  OSVVM_PASS_NAME               : string  ;
   constant  OSVVM_FAIL_NAME               : string  ;
+  constant  OSVVM_PRINT_PREFIX            : string  ;
+  constant  OSVVM_SECONDARY_PREFIX        : string  ;
+  -- constant  OSVVM_PRINT_USES_PREFIX       : boolean ;
+  constant  OSVVM_BLANK_LINE_PREFIX       : string  ;
   constant  OSVVM_HEADER_PREFIX           : string  ;
   constant  OSVVM_HEADER_SUFFIX           : string  ;
   constant  OSVVM_LINE_LENGTH             : integer ; -- For lines of "===" in headers such as LogHeader
@@ -113,13 +112,13 @@ package OsvvmSettingsPkg is
   constant COVERAGE_WRITE_COUNT       : boolean ;
   constant COVERAGE_WRITE_ANY_ILLEGAL : boolean ;
 
-
   -- ------------------------------------------
   -- Settings for AlertLogPkg
   -- ------------------------------------------
   -- Control printing of Alert/Log
-  constant  ALERT_LOG_WRAP                       : boolean ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_WRAP                       : boolean ; -- Do not WRAP.  Off by default.  Using LF at start or end of line turns it on
 --  constant  ALERT_LOG_WRAP                       : boolean ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_INDENTED_LENGTH            : integer ;
   constant  ALERT_LOG_JUSTIFY_ENABLE             : boolean ; -- Historic FALSE = Do not Justify printing
   constant  ALERT_LOG_WRITE_TIME_FIRST           : boolean ; -- Historic FALSE - If ALERT_LOG_WRAP - then must be TRUE
   constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer ;  -- Justify time. Historic 0. Particularly when at beginning
@@ -137,14 +136,17 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_LEVEL                : boolean ;   -- Print Level - FAILURE, ERROR, WARNING, INFO, ...
   constant  ALERT_LOG_WRITE_TIME                 : boolean ;   -- Print time
 
-  constant  ALERT_LOG_ALERT_NAME                 : string ;
-  constant  ALERT_LOG_LOG_NAME                   : string ;
+  constant  ALERT_LOG_DONE_NAME                  : string  ;
+  constant  ALERT_LOG_PASS_NAME                  : string  ;
+  constant  ALERT_LOG_FAIL_NAME                  : string  ;
+  constant  ALERT_LOG_PRINT_PREFIX               : string  ;
+  constant  ALERT_LOG_ALERT_NAME                 : string  ;
+  constant  ALERT_LOG_LOG_NAME                   : string  ;
   constant  ALERT_LOG_NAME_LENGTH                : integer ;
-  constant  ALERT_LOG_ID_SEPARATOR               : string ;
-  constant  ALERT_LOG_PRINT_PREFIX               : string ;
-  constant  ALERT_LOG_DONE_NAME                  : string ;
-  constant  ALERT_LOG_PASS_NAME                  : string ;
-  constant  ALERT_LOG_FAIL_NAME                  : string ;
+  constant  ALERT_LOG_ID_SEPARATOR               : string  ;
+  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  ; -- Keeping 2 space between time and Alert/Log
+  constant  ALERT_LOG_SPACES_BEFORE_LEVEL        : string  ;  -- Keeping 1 to equalize the length of DONE and Alert
+  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  ; -- has 1 in addition to this
 
 --  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
 --  constant ALERT_LOG_NOCHECKS_NAME               : string ;
@@ -171,7 +173,7 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean ;
   constant  ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS   : boolean ;
 
-  -- ReportAlerts Settings
+  -- ReportAlerts Settings -- HTML report prints all of these.  These only impact the text report.
   constant ALERT_LOG_REPORT_HIERARCHY            : boolean ;   -- ReportAerts
   constant ALERT_LOG_PRINT_PASSED                : boolean ;   -- ReportAlerts: Print PassedCount
   constant ALERT_LOG_PRINT_AFFIRMATIONS          : boolean ;  -- ReportAlerts: Print Affirmations Checked
@@ -179,6 +181,10 @@ package OsvvmSettingsPkg is
   constant ALERT_LOG_PRINT_REQUIREMENTS          : boolean ;  -- ReportAlerts: Print requirements
   constant ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS  : boolean ;   -- ReportAlerts: Print requirements if have any
 
+  -- DEPRECATED:
+  -- DEPRECATED:   Use ALERT_LOG_DONE_NAME
+  -- DEPRECATED:
+  constant  OSVVM_DONE_NAME               : string  ;
 
 --!!  -- Defaults for Log Enables
 --!!  constant LOG_ENABLE_INFO             : boolean ;

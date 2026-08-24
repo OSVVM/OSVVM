@@ -72,13 +72,12 @@ package body OsvvmSettingsPkg is
   -- Settings shared by AlertLogPkg and CoveragePkg
   -- ------------------------------------------
   -- Output Formatting
-  constant  OSVVM_PRINT_PREFIX            : string  := ${OSVVM_PRINT_PREFIX} ;
-  constant  OSVVM_SECONDARY_PREFIX        : string  := ${OSVVM_SECONDARY_PREFIX} ;
-  constant  OSVVM_PRINT_USES_PREFIX       : boolean := ${OSVVM_PRINT_USES_PREFIX} ;
-  constant  OSVVM_PRINT_OPTIONAL_PREFIX   : string  := ${OSVVM_PRINT_OPTIONAL_PREFIX} ;
-  constant  OSVVM_DONE_NAME               : string  := ${OSVVM_DONE_NAME} ;
   constant  OSVVM_PASS_NAME               : string  := ${OSVVM_PASS_NAME} ;
   constant  OSVVM_FAIL_NAME               : string  := ${OSVVM_FAIL_NAME} ;
+  constant  OSVVM_PRINT_PREFIX            : string  := ${OSVVM_PRINT_PREFIX} ;
+  constant  OSVVM_SECONDARY_PREFIX        : string  := ${OSVVM_SECONDARY_PREFIX} ;
+  -- constant  OSVVM_PRINT_USES_PREFIX       : boolean := ${OSVVM_PRINT_USES_PREFIX} ;
+  constant  OSVVM_BLANK_LINE_PREFIX       : string  := ${OSVVM_BLANK_LINE_PREFIX} ;
   constant  OSVVM_HEADER_PREFIX           : string  := ${OSVVM_HEADER_PREFIX} ;
   constant  OSVVM_HEADER_SUFFIX           : string  := ${OSVVM_HEADER_SUFFIX} ;
   constant  OSVVM_LINE_LENGTH             : integer := ${OSVVM_LINE_LENGTH} ; -- For lines of "===" in headers such as LogHeader
@@ -113,13 +112,13 @@ package body OsvvmSettingsPkg is
   constant COVERAGE_WRITE_COUNT       : boolean := ${COVERAGE_WRITE_COUNT} ;
   constant COVERAGE_WRITE_ANY_ILLEGAL : boolean := ${COVERAGE_WRITE_ANY_ILLEGAL} ;
 
-
   -- ------------------------------------------
   -- Settings for AlertLogPkg
   -- ------------------------------------------
   -- Control printing of Alert/Log
-  constant  ALERT_LOG_WRAP                       : boolean := ${ALERT_LOG_WRAP} ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_WRAP                       : boolean := ${ALERT_LOG_WRAP} ; -- Do not WRAP.  Off by default.  Using LF at start or end of line turns it on
 --  constant  ALERT_LOG_WRAP                       : boolean := ${ALERT_LOG_WRAP} ; -- Historic FALSE = Do not WRAP
+  constant  ALERT_LOG_INDENTED_LENGTH            : integer := ${ALERT_LOG_INDENTED_LENGTH} ;
   constant  ALERT_LOG_JUSTIFY_ENABLE             : boolean := ${ALERT_LOG_JUSTIFY_ENABLE} ; -- Historic FALSE = Do not Justify printing
   constant  ALERT_LOG_WRITE_TIME_FIRST           : boolean := ${ALERT_LOG_WRITE_TIME_FIRST} ; -- Historic FALSE - If ALERT_LOG_WRAP - then must be TRUE
   constant  ALERT_LOG_TIME_JUSTIFY_AMOUNT        : integer := ${ALERT_LOG_TIME_JUSTIFY_AMOUNT} ;  -- Justify time. Historic 0. Particularly when at beginning
@@ -137,14 +136,17 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_LEVEL                : boolean := ${ALERT_LOG_WRITE_LEVEL} ;   -- Print Level - FAILURE, ERROR, WARNING, INFO, ...
   constant  ALERT_LOG_WRITE_TIME                 : boolean := ${ALERT_LOG_WRITE_TIME} ;   -- Print time
 
-  constant  ALERT_LOG_ALERT_NAME                 : string := ${ALERT_LOG_ALERT_NAME} ;
-  constant  ALERT_LOG_LOG_NAME                   : string := ${ALERT_LOG_LOG_NAME} ;
+  constant  ALERT_LOG_DONE_NAME                  : string  := ${ALERT_LOG_DONE_NAME} ;
+  constant  ALERT_LOG_PASS_NAME                  : string  := ${ALERT_LOG_PASS_NAME} ;
+  constant  ALERT_LOG_FAIL_NAME                  : string  := ${ALERT_LOG_FAIL_NAME} ;
+  constant  ALERT_LOG_PRINT_PREFIX               : string  := ${ALERT_LOG_PRINT_PREFIX} ;
+  constant  ALERT_LOG_ALERT_NAME                 : string  := ${ALERT_LOG_ALERT_NAME} ;
+  constant  ALERT_LOG_LOG_NAME                   : string  := ${ALERT_LOG_LOG_NAME} ;
   constant  ALERT_LOG_NAME_LENGTH                : integer := ${ALERT_LOG_NAME_LENGTH} ;
-  constant  ALERT_LOG_ID_SEPARATOR               : string := ${ALERT_LOG_ID_SEPARATOR} ;
-  constant  ALERT_LOG_PRINT_PREFIX               : string := ${ALERT_LOG_PRINT_PREFIX} ;
-  constant  ALERT_LOG_DONE_NAME                  : string := ${ALERT_LOG_DONE_NAME} ;
-  constant  ALERT_LOG_PASS_NAME                  : string := ${ALERT_LOG_PASS_NAME} ;
-  constant  ALERT_LOG_FAIL_NAME                  : string := ${ALERT_LOG_FAIL_NAME} ;
+  constant  ALERT_LOG_ID_SEPARATOR               : string  := ${ALERT_LOG_ID_SEPARATOR} ;
+  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  := ${ALERT_LOG_SPACES_BEFORE_ALERT} ; -- Keeping 2 space between time and Alert/Log
+  constant  ALERT_LOG_SPACES_BEFORE_LEVEL        : string  := ${ALERT_LOG_SPACES_BEFORE_LEVEL} ;  -- Keeping 1 to equalize the length of DONE and Alert
+  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  := ${ALERT_LOG_SPACES_BEFORE_ID_NAME} ; -- has 1 in addition to this
 
 --  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
 --  constant ALERT_LOG_NOCHECKS_NAME               : string := ${ALERT_LOG_NOCHECKS_NAME} ;
@@ -171,7 +173,7 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS : boolean := ${ALERT_LOG_FAIL_ON_VHDL_ASSERT_ERRORS} ;
   constant  ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS   : boolean := ${ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS} ;
 
-  -- ReportAlerts Settings
+  -- ReportAlerts Settings -- HTML report prints all of these.  These only impact the text report.
   constant ALERT_LOG_REPORT_HIERARCHY            : boolean := ${ALERT_LOG_REPORT_HIERARCHY} ;   -- ReportAerts
   constant ALERT_LOG_PRINT_PASSED                : boolean := ${ALERT_LOG_PRINT_PASSED} ;   -- ReportAlerts: Print PassedCount
   constant ALERT_LOG_PRINT_AFFIRMATIONS          : boolean := ${ALERT_LOG_PRINT_AFFIRMATIONS} ;  -- ReportAlerts: Print Affirmations Checked
@@ -179,6 +181,10 @@ package body OsvvmSettingsPkg is
   constant ALERT_LOG_PRINT_REQUIREMENTS          : boolean := ${ALERT_LOG_PRINT_REQUIREMENTS} ;  -- ReportAlerts: Print requirements
   constant ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS  : boolean := ${ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS} ;   -- ReportAlerts: Print requirements if have any
 
+  -- DEPRECATED:
+  -- DEPRECATED:   Use ALERT_LOG_DONE_NAME
+  -- DEPRECATED:
+  constant  OSVVM_DONE_NAME               : string  := ${OSVVM_DONE_NAME} ;
 
 --!!  -- Defaults for Log Enables
 --!!  constant LOG_ENABLE_INFO             : boolean := ${LOG_ENABLE_INFO} ;
