@@ -677,6 +677,12 @@ package AlertLogPkg is
   procedure SetOsvvmDefaultTimeUnits (A : time) ;
   impure function GetOsvvmDefaultTimeUnits return time ;
 
+  -- Supports iteration of the data structure
+  impure function GetNumAlertLogIDs return integer ;
+
+  -- Creates one message for each log to check the ID name lengths
+  procedure LogAll( Message : string ; Level : LogType := ALWAYS ; Enable : boolean := TRUE) ;
+
   -- File Reading Utilities
   function IsLogEnableType (Name : String) return boolean ;
   procedure ReadLogEnables (file AlertLogInitFile : text) ;
@@ -685,6 +691,8 @@ package AlertLogPkg is
   -- String Helper Functions -- This should be in a more general string package
   function OldPathTail (A : string) return string ;
   impure function PathTail (A : string) return string ;
+
+
 
   ------------------------------------------------------------
   -- MetaMatch
@@ -1041,6 +1049,8 @@ package body AlertLogPkg is
 
     procedure ReportLogEnables ;
 
+    impure function GetNumIDs return integer ;
+
     ------------------------------------------------------------
 --  Deprecated:
 --  Deprecated:
@@ -1380,6 +1390,30 @@ package body AlertLogPkg is
     ) is
       variable ParentID : AlertLogIDType ;
       variable PrefixCharacters : integer ;
+      constant MESSAGE_LENGTH   : integer := Message'length ;
+      alias aMessage : string(1 to MESSAGE_LENGTH) is Message ;
+      variable MessageStart : integer := 1 ;
+      -----------------------------------
+      impure function GetPrefix return string is
+      begin
+        if AlertLogPtr(AlertLogID).Prefix /= NULL then
+          return  AlertLogPtr(AlertLogID).Prefix.all & " " ;
+          --      Differs here from GetAlertLogPrefix  ^^^
+        else
+          return  "" ;
+        end if ;
+      end function GetPrefix ;
+      -----------------------------------
+      impure function GetSuffix return string is
+      begin
+        if AlertLogPtr(AlertLogID).Suffix /= NULL then
+          return  " " & AlertLogPtr(AlertLogID).Suffix.all ;
+          --      ^^^ Differs here from GetAlertLogSuffix
+        else
+          return  "" ;
+        end if ;
+      end function GetSuffix ;
+      -----------------------------------
     begin
       write(buf, ALERT_LOG_PRINT_PREFIX ) ; -- Print
       -- Debug Mode
@@ -1393,49 +1427,47 @@ package body AlertLogPkg is
       -- Write Time
       if WriteTime and WriteTimeFirstVar then
 --!!      if ALERT_LOG_WRITE_TIME_FIRST then
---        write(buf, justify(to_string(NOW, DefaultTimeUnitsVar), TimeJustifyAmountVar, RIGHT) & "    ") ;
-        write(buf, format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION, TimeJustifyAmountVar) & "    ") ;
+        write(buf, format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION, TimeJustifyAmountVar) & " ") ;
       end if ;
       -- Alert or Log
-      write(buf, AlertLogName & "  ") ;   -- two spaces
+      write(buf, ALERT_LOG_SPACES_BEFORE_ALERT & AlertLogName & " ") ;
       -- Level Name, when enabled (default)
       if WriteLevel then
-        write(buf, LevelName & " ") ;
+        write(buf, ALERT_LOG_SPACES_BEFORE_LEVEL & LevelName & " ") ;
       end if ;
       -- AlertLog Name
       if FoundAlertHierVar and WriteName then
         if AlertLogPtr(AlertLogID).PrintParent = PRINT_NAME then
-          write(buf, "  in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
+          write(buf, ALERT_LOG_SPACES_BEFORE_ID_NAME & "in " & LeftJustify(AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
         else
           ParentID := AlertLogPtr(AlertLogID).ParentID ;
-          write(buf, "  in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ALERT_LOG_ID_SEPARATOR &
+          write(buf, ALERT_LOG_SPACES_BEFORE_ID_NAME & "in " & LeftJustify(AlertLogPtr(ParentID).Name.all & ALERT_LOG_ID_SEPARATOR &
             AlertLogPtr(AlertLogID).Name.all & ',', CurAlertLogJustifyAmountVar) & " " ) ;
         end if ;
       end if ;
       -- Spacing before message - including prefix
       swrite(buf, "  ") ;
-      if ALERT_LOG_WRAP then
+      if MESSAGE_LENGTH > 0 and aMessage(1) = LF then
+        -- Start message on next line at ALERT_LOG_INDENTED_LENGTH (OsvvmSettingsPkg)
+        -- Shuffle LF at start of Message to in front of Prefix
+        WrapToBuf(
+          buf              => buf,
+          s                => LF & GetPrefix & aMessage(2 to MESSAGE_LENGTH) & GetSuffix,
+          SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to ALERT_LOG_INDENTED_LENGTH),
+          WrapLength       => OSVVM_LINE_WRAP - ALERT_LOG_INDENTED_LENGTH
+        ) ;
+      elsif ALERT_LOG_WRAP or HasCharacter(Message, LF) then
+        -- Start message on same line as Alert / Log
         PrefixCharacters := buf'length ;
         WrapToBuf(
           buf              => buf,
-          s                =>
-              IfElse(AlertLogPtr(AlertLogID).Prefix /= NULL, AlertLogPtr(AlertLogID).Prefix.all & ' ', "") &  -- Prefix
-              Message &                                                                                       -- Message
-              IfElse(AlertLogPtr(AlertLogID).Suffix /= NULL, AlertLogPtr(AlertLogID).Suffix.all & ' ', ""),   -- Suffix
+          s                => GetPrefix & Message & GetSuffix,
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
           WrapLength       => OSVVM_LINE_WRAP - PrefixCharacters
         ) ;
       else
-        -- Prefix
-        if AlertLogPtr(AlertLogID).Prefix /= NULL then
-          write(buf, AlertLogPtr(AlertLogID).Prefix.all & ' ') ;
-        end if ;
-        -- Message
-        write(buf, Message) ;
-        -- Suffix
-        if AlertLogPtr(AlertLogID).Suffix /= NULL then
-          write(buf, ' ' & AlertLogPtr(AlertLogID).Suffix.all) ;
-        end if ;
+        -- Prefix + Message + Suffix
+        write(buf, GetPrefix & Message & GetSuffix) ;
         -- Time Last
         if WriteTime and WriteTimeLastVar then
   --!!      if not ALERT_LOG_WRITE_TIME_FIRST then
@@ -1886,25 +1918,25 @@ package body AlertLogPkg is
 --!!      if ALERT_LOG_WRITE_TIME_FIRST then
       if WriteTimeFirstVar then
 --!!        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  " & "  ") ;
-        write(buf, format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION, TimeJustifyAmountVar) & "  " & "  ") ;
+        write(buf, format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION, TimeJustifyAmountVar) & " " & ALERT_LOG_SPACES_BEFORE_ALERT) ;
       end if ;
 
       if not TestFailed then
         if ManualCheckVar then
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
             ALERT_LOG_MANUALCHECKS_NAME & "   " &
             Name
           ) ;
         elsif AffirmCheckCountVar = 0 then
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
             ALERT_LOG_NOCHECKS_NAME & "   " &
             Name
           ) ;
         else
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
             ALERT_LOG_PASS_NAME & "   " &
             Name
           ) ;
@@ -1912,14 +1944,14 @@ package body AlertLogPkg is
       else
         if TimeOut then
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
             ALERT_LOG_TIMEOUT_NAME & "   " &
             Name
           ) ;
 
         else
           write(buf,
-            ALERT_LOG_DONE_NAME & "   " &
+            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
             ALERT_LOG_FAIL_NAME & "   " &
             Name
           ) ;
@@ -2240,6 +2272,7 @@ package body AlertLogPkg is
     end procedure ReportRequirements ;
 
     ------------------------------------------------------------
+-- Deprecated
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) is
     ------------------------------------------------------------
       variable buf : line ;
@@ -3972,7 +4005,11 @@ package body AlertLogPkg is
       variable localAlertLogID : AlertLogIDType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      return AlertLogPtr(localAlertLogID).Prefix.all ;
+      if AlertLogPtr(localAlertLogID).Prefix /= NULL then
+        return AlertLogPtr(localAlertLogID).Prefix.all ;
+      else
+        return "" ;
+      end if ;
     end function GetAlertLogPrefix ;
 
     ------------------------------------------------------------
@@ -4002,7 +4039,11 @@ package body AlertLogPkg is
       variable localAlertLogID : AlertLogIDType ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
-      return AlertLogPtr(localAlertLogID).Suffix.all ;
+      if AlertLogPtr(localAlertLogID).Suffix /= NULL then
+        return AlertLogPtr(localAlertLogID).Suffix.all ;
+      else
+        return "" ;
+      end if ;
     end function GetAlertLogSuffix ;
 
     ------------------------------------------------------------
@@ -4340,6 +4381,13 @@ package body AlertLogPkg is
     end procedure ReportLogEnables ;
 
     ------------------------------------------------------------
+    impure function GetNumIDs return integer is
+    ------------------------------------------------------------
+    begin
+      return NumAlertLogIDsVar ;
+    end function GetNumIDs ;
+
+    ------------------------------------------------------------
 --  Deprecated:
 --  Deprecated:
 --  Deprecated:
@@ -4653,19 +4701,9 @@ package body AlertLogPkg is
     end function GetAlertLogDefaultPassedGoal ;
 
     ------------------------------------------------------------
-    -- Local.
-    -- Bug work around.  Required for Xilinx 2023.02.
-    function to_s_4_x (A : string) return string is
-    ------------------------------------------------------------
-    begin
-      return A ;
-    end function to_s_4_x ;
-
-    ------------------------------------------------------------
     impure function GetAlertLogAlertPrefix          return string is
     ------------------------------------------------------------
     begin
---!!      return to_s_4_x(AlertPrefixVar.Get(OSVVM_DEFAULT_ALERT_PREFIX)) ;
       return ALERT_LOG_ALERT_NAME ;
     end function GetAlertLogAlertPrefix ;
 
@@ -4673,7 +4711,6 @@ package body AlertLogPkg is
     impure function GetAlertLogLogPrefix            return string is
     ------------------------------------------------------------
     begin
---!!      return to_s_4_x(LogPrefixVar.Get(OSVVM_DEFAULT_LOG_PREFIX)) ;
       return ALERT_LOG_LOG_NAME ;
     end function GetAlertLogLogPrefix ;
 
@@ -8117,7 +8154,21 @@ package body AlertLogPkg is
     return AlertLogStruct.GetOsvvmDefaultTimeUnits ;
   end function GetOsvvmDefaultTimeUnits ;
 
+  ------------------------------------------------------------
+  impure function GetNumAlertLogIDs return integer is
+  ------------------------------------------------------------
+  begin
+    return AlertLogStruct.GetNumIDs ;
+  end function GetNumAlertLogIDs ;
 
+  ------------------------------------------------------------
+  procedure LogAll( Message : string ; Level : LogType := ALWAYS ; Enable : boolean := TRUE) is
+  ------------------------------------------------------------
+  begin
+    for i in 1 to AlertLogStruct.GetNumIDs loop
+      log (i, Message, Level, Enable) ;
+    end loop ;
+  end procedure LogAll ;
 
   ------------------------------------------------------------
   -- Package Local
