@@ -86,7 +86,6 @@ package NameStorePkg is
     Search   : NameSearchType := NAME
   ) return NameIDType ;
 
-  impure function GetOpt    (ID : NameIDType) return string ;
   impure function IsSet     (ID : NameIDType) return boolean ;
   procedure       Clear     (ID : NameIDType) ; -- clear name
   procedure       Deallocate(ID : NameIDType) ; -- effectively alias to clear name
@@ -142,11 +141,17 @@ package NameStorePkg is
       Search   : NameSearchType := NAME
     ) return boolean ;
 
-    impure function GetOpt    (ID : integer) return string ;
     impure function IsSet     (ID : integer) return boolean ;
     procedure       Clear     (ID : integer) ; -- clear name
     procedure       Deallocate(ID : integer) ; -- effectively alias to clear name
+
+    -- Deprecated
+    impure function GetOpt    (ID : integer) return string ;
   end protected NameStorePType ;
+
+
+  -- Deprecated
+  impure function GetOpt    (ID : NameIDType) return string ;
 
 end package NameStorePkg ;
 
@@ -336,17 +341,6 @@ package body NameStorePkg is
     end function Find ;
 
     ------------------------------------------------------------
-    impure function GetOpt (ID : integer) return string is
-    ------------------------------------------------------------
-    begin
-      if NameArrayPtr(ID).Name = NULL then
-        return NUL & "" ;
-      else
-        return NameArrayPtr(ID).Name.all ;
-      end if ;
-    end function GetOpt ;
-
-    ------------------------------------------------------------
     impure function IsSet (ID : integer) return boolean is
     ------------------------------------------------------------
     begin
@@ -366,6 +360,19 @@ package body NameStorePkg is
     begin
       Clear(ID) ;
     end procedure Deallocate ;
+
+    -- Deprecated
+    ------------------------------------------------------------
+    -- Deprecated
+    impure function GetOpt (ID : integer) return string is
+    ------------------------------------------------------------
+    begin
+      if NameArrayPtr(ID).Name = NULL then
+        return NUL & "" ;
+      else
+        return NameArrayPtr(ID).Name.all ;
+      end if ;
+    end function GetOpt ;
   end protected body NameStorePType ;
 
 
@@ -427,13 +434,6 @@ package body NameStorePkg is
   end function Find ;
 
   ------------------------------------------------------------
-  impure function GetOpt (ID : NameIDType) return string is
-  ------------------------------------------------------------
-  begin
-    return NameStore.Get(ID.ID) ;
-  end function GetOpt ;
-
-  ------------------------------------------------------------
   impure function IsSet (ID : NameIDType) return boolean is
   ------------------------------------------------------------
   begin
@@ -470,5 +470,14 @@ package body NameStorePkg is
     end if ;
     return result ;
   end function ResolveSearch ;
+
+  -- Deprecated
+  ------------------------------------------------------------
+  -- Deprecated
+  impure function GetOpt (ID : NameIDType) return string is
+  ------------------------------------------------------------
+  begin
+    return NameStore.Get(ID.ID) ;
+  end function GetOpt ;
 
 end package body NameStorePkg ;
