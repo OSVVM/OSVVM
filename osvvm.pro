@@ -52,6 +52,13 @@ library osvvm
 analyze IfElsePkg.vhd
 analyze OsvvmTypesPkg.vhd
 
+if {$::osvvm::ToolSupportsGenericPackages}  {
+  analyze SetGetBoundedGenericPkg.vhd
+  analyze SetGetBoundedPkg_Instances.vhd
+} else {
+  analyze deprecated/SetGetBoundedPkg_Instances.vhd
+}
+
 # Analyze package declarations
 analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
 if {$::osvvm::OsvvmDevDerivePackageHeaders} {

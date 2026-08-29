@@ -883,6 +883,9 @@ package body TextUtilPkg is
         -- Wrapping line, add LF
         write(buf, aS(StartIndex to FoundIndex) & LF & SubsequentPrefix) ;
       else
+--!!        -- An LF at end is dropped
+--!!        write(buf, aS(StartIndex to FoundIndex)) ;
+        -- An LF at the end results in a line feed after the text
         if S_LENGTH > 0 and aS(S_LENGTH) = LF then
           -- last line ends with LF
           write(buf, aS(StartIndex to FoundIndex) & LF & SubsequentPrefix) ;

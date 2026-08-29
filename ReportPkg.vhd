@@ -19,22 +19,23 @@
 --        http://www.SynthWorks.com
 --
 --  Revision History:
---    Date      Version    Description
---    07/2024   2024.07    Added timeout flag to EndOfTestReports.
---                         Added scoreboard reporting for: unsigned, signed, and IntV
---    12/2023   2024.01    Updated WriteCovSummaryYaml to print FunctionalCoverage:  "" when no functional coverage (to work with TCL 8.5).
---    09/2023   2023.09    Added WriteSimTimeYaml.
---    07/2023   2023.07    Added call to WriteRequirementsYaml.
---    04/2023   2023.04    Added TranscriptOpen without parameters
---    01/2023   2023.01    OSVVM_TEMP_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY
---                         Added simple TranscriptOpen that uses GetTestName
---    06/2022   2022.06    Minor reordering of EndOfTestReports
---    02/2022   2022.02    EndOfTestReports now calls WriteScoreboardYaml
---    10/2021   2021.10    Initial revision
+--    Version    Description
+--    2026.08    Moved TranscriptOpen to TranscriptPkg
+--    2024.07    Added timeout flag to EndOfTestReports.
+--               Added scoreboard reporting for: unsigned, signed, and IntV
+--    2024.01    Updated WriteCovSummaryYaml to print FunctionalCoverage:  "" when no functional coverage (to work with TCL 8.5).
+--    2023.09    Added WriteSimTimeYaml.
+--    2023.07    Added call to WriteRequirementsYaml.
+--    2023.04    Added TranscriptOpen without parameters
+--    2023.01    OSVVM_TEMP_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY
+--               Added simple TranscriptOpen that uses GetTestName
+--    2022.06    Minor reordering of EndOfTestReports
+--    2022.02    EndOfTestReports now calls WriteScoreboardYaml
+--    2021.10    Initial revision
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2021-2024 by SynthWorks Design Inc.
+--  Copyright (c) 2021-2026 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -76,9 +77,6 @@ package ReportPkg is
     Stop           : boolean        := FALSE ;
     TimeOut        : boolean        := FALSE
   ) ;
-
-  procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
-  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) ;
 
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean return integer] ;
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean, boolean] ;
@@ -129,6 +127,10 @@ package body ReportPkg is
     TimeOut        : boolean        := FALSE
   ) return integer is
   begin
+    if TimeOut then
+      Alert("TimeOut signaled to EndOFTestReports") ;
+    end if;
+
     if GotCoverage then
       WriteCovYaml (
         FileName      => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_cov.yml"
@@ -214,22 +216,5 @@ package body ReportPkg is
       std.env.stop ;
     end if ;
   end procedure EndOfTestReports ;
-
-  ------------------------------------------------------------
-  procedure TranscriptOpen (OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
-  ------------------------------------------------------------
-    variable Status : FILE_OPEN_STATUS ;
-  begin
-    TranscriptOpen(Status, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
-  end procedure TranscriptOpen ;
-
-  ------------------------------------------------------------
-  procedure TranscriptOpen (Status: InOut FILE_OPEN_STATUS; OpenKind: WRITE_APPEND_OPEN_KIND := WRITE_MODE) is
-  ------------------------------------------------------------
-  begin
-    TranscriptOpen(Status, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTranscriptName, OpenKind) ;
-  end procedure TranscriptOpen ;
-
-
 
 end package body ReportPkg ;
