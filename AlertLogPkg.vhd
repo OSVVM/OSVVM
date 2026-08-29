@@ -426,11 +426,13 @@ package AlertLogPkg is
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
   procedure ReportRequirements ;
   procedure ReportAlerts (
-    Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ;
-    AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
-    ExternalErrors : AlertCountType  := (others => 0) ;
-    ReportAll      : Boolean         := FALSE ;
-    TimeOut        : boolean         := FALSE
+    Name             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    AlertLogID       : AlertLogIDType := ALERTLOG_BASE_ID ;
+    ExternalErrors   : AlertCountType := (0,0,0) ;
+    ReportAll        : boolean := FALSE ;
+    ReportWhenZero   : boolean := TRUE ;
+    TimeOut          : boolean := FALSE ;
+    ReportVhdlAssert : boolean := TRUE
   ) ;
 
   procedure ReportNonZeroAlerts (
@@ -639,7 +641,8 @@ package AlertLogPkg is
   procedure SetExpectedAlertCount (Level : AlertType ; Count : integer) ;
   procedure SetExpectedAlertCount (Count : AlertCountType) ;
   procedure IncrementExpectedAlertCount (Level : AlertType ; Count : integer := 1) ;
---  impure function GetExpectedAlertCount(Level : AlertType) return integer ;  -- instead index the return value of GetExpectedAlertCount[return AlertCountType]
+-- The following is replaced by GetExpectedAlertCount[return AlertCountType](AlertType)
+--  impure function GetExpectedAlertCount(Level : AlertType) return integer ;
   impure function GetExpectedAlertCount return AlertCountType ;
   procedure SetManualCheck ;
   impure function GetManualCheck return boolean ;
@@ -762,12 +765,12 @@ package AlertLogPkg is
   impure function GetAlertLogWriteTimeLast            return OsvvmOptionsType ;  --  initialized by:  not OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST
 
   -- For new code, use the constant value instead.  The function returns that value
-  impure function GetAlertLogAlertPrefix              return string ;  --!! returns value of constant OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
-  impure function GetAlertLogLogPrefix                return string ;  --!! returns value of constant OsvvmSettingsPkg.ALERT_LOG_LOG_NAME
-  impure function GetAlertLogReportPrefix             return string ;  --!! returns value of constant OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX
-  impure function GetAlertLogDoneName                 return string ;  --!! returns value of constant OsvvmSettingsPkg.ALERT_LOG_DONE_NAME
-  impure function GetAlertLogPassName                 return string ;  --!! returns value of constant OsvvmSettingsPkg.ALERT_LOG_PASS_NAME
-  impure function GetAlertLogFailName                 return string ;  --!! returns value of constant OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME
+  impure function GetAlertLogAlertPrefix              return string ;  --DDD returns value of constant OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
+  impure function GetAlertLogLogPrefix                return string ;  --DDD returns value of constant OsvvmSettingsPkg.ALERT_LOG_LOG_NAME
+  impure function GetAlertLogReportPrefix             return string ;  --DDD returns value of constant OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX
+  impure function GetAlertLogDoneName                 return string ;  --DDD returns value of constant OsvvmSettingsPkg.ALERT_LOG_DONE_NAME
+  impure function GetAlertLogPassName                 return string ;  --DDD returns value of constant OsvvmSettingsPkg.ALERT_LOG_PASS_NAME
+  impure function GetAlertLogFailName                 return string ;  --DDD returns value of constant OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME
   -- only available as the constant OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR
 
   -- synthesis translate_on
@@ -825,13 +828,13 @@ package AlertLogPkg is
     PrintRequirements        : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_REQUIREMENTS ;
     PrintIfHaveRequirements  : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS
     DefaultPassedGoal        : integer             := integer'low ;         --  set using:  OsvvmSettingsPkg.ALERT_LOG_DEFAULT_PASSED_GOAL
-    AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
-    LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_LOG_NAME
-    ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX
-    DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_DONE_NAME
-    PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PASS_NAME
-    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME
-    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;    --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR
+    AlertPrefix              : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
+    LogPrefix                : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_LOG_NAME
+    ReportPrefix             : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX
+    DoneName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_DONE_NAME
+    PassName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PASS_NAME
+    FailName                 : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME
+    IdSeparator              : string := OSVVM_STRING_INIT_PARM_DETECT ;    --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR
     WriteTimeLast            : OsvvmOptionsType := OPT_INIT_PARM_DETECT ;   --  set using: not OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST
     TimeJustifyAmount        : integer             := integer'low           --  set using: OsvvmSettingsPkg.ALERT_LOG_TIME_JUSTIFY_AMOUNT
   ) ;
@@ -899,12 +902,13 @@ package body AlertLogPkg is
     procedure ReportAlerts ( Name : string ; AlertCount : AlertCountType ) ;
     procedure ReportRequirements ;
     procedure ReportAlerts (
-      Name           : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
-      ExternalErrors : AlertCountType := (0,0,0) ;
-      ReportAll      : boolean := FALSE ;
-      ReportWhenZero : boolean := TRUE ;
-      TimeOut        : boolean := FALSE
+      Name             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      AlertLogID       : AlertLogIDType := ALERTLOG_BASE_ID ;
+      ExternalErrors   : AlertCountType := (0,0,0) ;
+      ReportAll        : boolean := FALSE ;
+      ReportWhenZero   : boolean := TRUE ;
+      TimeOut          : boolean := FALSE ;
+      ReportVhdlAssert : boolean := TRUE
     ) ;
     procedure WriteAlertYaml (
       FileName       : string ;
@@ -1017,7 +1021,6 @@ package body AlertLogPkg is
 
     procedure SetExpectedAlertCount (Level : AlertType ; Count : integer) ;
     procedure IncrementExpectedAlertCount (Level : AlertType ; Count : integer := 1) ;
---    impure function GetExpectedAlertCount(Level : AlertType) return integer ;  -- replaced by index instead
     procedure SetExpectedAlertCount (Count : AlertCountType) ;
     impure function GetExpectedAlertCount return AlertCountType ;
     procedure SetManualCheck ;
@@ -1137,13 +1140,15 @@ package body AlertLogPkg is
     variable AlertCount                : AlertCountType := (0, 0, 0) ;
     variable ExpectedAlertCountVar     : AlertCountType := (0, 0, 0) ;
     variable ManualCheckVar            : boolean := FALSE ;
+    variable StopLimitVar              : boolean := FALSE ;
 
     -- Calculated by NewID and GetReqID
     constant VHDL_ASSERT_ID_NAME           : string  := "VHDL Asserts" ;
     constant EXPECTED_ERRORCOUNT_ID_NAME   : string  := "Expected" ;
     variable CalcAlertLogJustifyAmountVar  : integer := 0 ;
     variable CurAlertLogJustifyAmountVar   : integer := 0 ;
-    constant CALC_REPORT_JUSTIFY_INIT      : integer := IfElse(ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS and SUPPORTS_2019_ASSERT_API, VHDL_ASSERT_ID_NAME'length + 2, 0) ; -- len + indent
+--    constant CALC_REPORT_JUSTIFY_INIT      : integer := IfElse(ALERT_LOG_PRINT_VHDL_ASSERT_ERRORS and SUPPORTS_2019_ASSERT_API, VHDL_ASSERT_ID_NAME'length + 2, 0) ; -- len + indent
+    constant CALC_REPORT_JUSTIFY_INIT      : integer := VHDL_ASSERT_ID_NAME'length + 2 ; -- len + indent -- OK to use whether enabled  or not
     variable CalcReportJustifyAmountVar    : integer := CALC_REPORT_JUSTIFY_INIT ;
     variable CurReportJustifyAmountVar     : integer := 0 ;
     -- Calculated by NewID and GetReqID
@@ -1308,13 +1313,6 @@ package body AlertLogPkg is
       ExpectedAlertCountVar(Level) := ExpectedAlertCountVar(Level) + Count ;
     end procedure IncrementExpectedAlertCount ;
 
--- index instead    ------------------------------------------------------------
--- index instead    impure function GetExpectedAlertCount(Level : AlertType) return integer is
--- index instead    ------------------------------------------------------------
--- index instead    begin
--- index instead      return ExpectedAlertCountVar(Level) ;
--- index instead    end function GetExpectedAlertCount ;
-
     ------------------------------------------------------------
     procedure SetExpectedAlertCount (Count : AlertCountType) is
     ------------------------------------------------------------
@@ -1447,7 +1445,7 @@ package body AlertLogPkg is
       end if ;
       -- Spacing before message - including prefix
       swrite(buf, "  ") ;
-      if MESSAGE_LENGTH > 0 and aMessage(1) = LF then
+      if MESSAGE_LENGTH > 0 and (aMessage(1) = LF or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR) then
         -- Start message on next line at ALERT_LOG_INDENTED_LENGTH (OsvvmSettingsPkg)
         -- Shuffle LF at start of Message to in front of Prefix
         WrapToBuf(
@@ -1456,7 +1454,16 @@ package body AlertLogPkg is
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to ALERT_LOG_INDENTED_LENGTH),
           WrapLength       => OSVVM_LINE_WRAP - ALERT_LOG_INDENTED_LENGTH
         ) ;
-      elsif ALERT_LOG_WRAP or HasCharacter(Message, LF) then
+      elsif (MESSAGE_LENGTH > 0 and aMessage(1) = ALERT_LOG_WRAP_END_CHAR) then
+        -- Start message on same line as Alert / Log
+        PrefixCharacters := buf'length ;
+        WrapToBuf(
+          buf              => buf,
+          s                => GetPrefix & aMessage(2 to MESSAGE_LENGTH) & GetSuffix,
+          SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
+          WrapLength       => OSVVM_LINE_WRAP - PrefixCharacters
+        ) ;
+      elsif ALERT_LOG_WRAP then
         -- Start message on same line as Alert / Log
         PrefixCharacters := buf'length ;
         WrapToBuf(
@@ -1465,18 +1472,57 @@ package body AlertLogPkg is
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
           WrapLength       => OSVVM_LINE_WRAP - PrefixCharacters
         ) ;
+      elsif HasCharacter(Message, LF) then
+        -- Start message on same line as Alert / Log
+        PrefixCharacters := buf'length ;
+        WrapToBuf(
+          buf              => buf,
+          s                => GetPrefix & Message & GetSuffix,
+          SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
+          WrapLength       => integer'high/2   -- no wrap, just LF - /2 since it is used in expressions with "+"
+        ) ;
       else
         -- Prefix + Message + Suffix
         write(buf, GetPrefix & Message & GetSuffix) ;
         -- Time Last
         if WriteTime and WriteTimeLastVar then
   --!!      if not ALERT_LOG_WRITE_TIME_FIRST then
-  --!!        write(buf, " at " & to_string(NOW, DefaultTimeUnitsVar)) ;
           write(buf, " at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) ) ;
         end if ;
       end if ;
       writeline(buf) ;
     end procedure LocalPrint ;
+
+    ------------------------------------------------------------
+    procedure SignalStopLimitReached (
+    ------------------------------------------------------------
+      AlertLogID   : AlertLogIDType ;
+      level        : AlertType := ERROR
+    ) is
+    begin
+      StopLimitVar := TRUE ;  -- flag STOPLIMIT status
+      -- Not using Alert since already reached stop count
+      write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME &
+                    " Stop Count on " & ALERT_NAME(Level) & " reached") ;
+      if FoundAlertHierVar then
+        write(buf, " in " & AlertLogPtr(AlertLogID).Name.all) ;
+      end if ;
+      write(buf, " at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) & " ") ;
+      writeline(buf) ;
+      ReportAlerts(ReportWhenZero => TRUE) ;
+      if FileExists(OSVVM_BUILD_YAML_FILE) then
+  --          work.ReportPkg.EndOfTestReports ;  -- creates circular package issues
+        WriteAlertSummaryYaml(
+          FileName        => OSVVM_BUILD_YAML_FILE
+        ) ;
+        WriteAlertYaml (
+          FileName        => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml"
+        ) ;
+      end if ;
+      TranscriptClose ;  -- Close Transcript if open
+      std.env.stop ;
+      StopLimitVar := FALSE ;  -- reset flag in the event the simulation continues after STOPLIMIT
+    end procedure SignalStopLimitReached ;
 
     ------------------------------------------------------------
     procedure alert (
@@ -1512,27 +1558,7 @@ package body AlertLogPkg is
         end if ;
 
         if StopDueToCount then
-         -- Not using Alert since already reached stop count
-         write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME &
-                        " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          if FoundAlertHierVar then
-            write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
-          end if ;
---!!          write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
-          write(buf, " at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) & " ") ;
-          writeline(buf) ;
-          ReportAlerts(ReportWhenZero => TRUE) ;
-          if FileExists(OSVVM_BUILD_YAML_FILE) then
---          work.ReportPkg.EndOfTestReports ;  -- creates circular package issues
-            WriteAlertSummaryYaml(
-              FileName        => OSVVM_BUILD_YAML_FILE
-            ) ;
-            WriteAlertYaml (
-              FileName        => OSVVM_TEMP_OUTPUT_DIRECTORY &  GetTestName & "_alerts.yml"
-            ) ;
-          end if ;
-          TranscriptClose ;  -- Close Transcript if open
-          std.env.stop ;
+          SignalStopLimitReached(localAlertLogID, level) ;
         end if ;
       end if ;
     end procedure alert ;
@@ -1552,17 +1578,7 @@ package body AlertLogPkg is
         AlertCount := AlertLogPtr(ALERTLOG_BASE_ID).AlertCount;
         ErrorCount := SumAlertCount(AlertCount);
         if StopDueToCount then
-        write(buf, LF & ALERT_LOG_PRINT_PREFIX & ALERT_LOG_ALERT_NAME &
-                        " Stop Count on " & ALERT_NAME(Level) & " reached") ;
-          if FoundAlertHierVar then
-            write(buf, " in " & AlertLogPtr(localAlertLogID).Name.all) ;
-          end if ;
---!!          write(buf, " at " & to_string(NOW, 1 ns) & " ") ;
-          write(buf, " at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) & " ") ;
-          writeline(buf) ;
-          ReportAlerts(ReportWhenZero => TRUE) ;
-          TranscriptClose ;
-          std.env.stop ;
+          SignalStopLimitReached(localAlertLogID, level) ;
         end if ;
       end if ;
     end procedure IncAlertCount ;
@@ -1610,7 +1626,6 @@ package body AlertLogPkg is
       Enable      : boolean := TRUE ;
       AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID
     ) is
-      -- constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
       JustifyEnableVar := Enable ;
       if Enable then
@@ -1843,9 +1858,9 @@ package body AlertLogPkg is
       end if ;
 
      -- Timeout is an error that
-      if TimeOut then
-        TotalErrors := TotalErrors + 1 ;
-      end if ;
+--      if TimeOut then
+--        TotalErrors := TotalErrors + 1 ;
+--      end if ;
 
     end procedure CalcTotalErrors ;
 
@@ -1876,6 +1891,26 @@ package body AlertLogPkg is
 
       return TotalErrors ;
     end function CalcTotalErrors ;
+
+    ------------------------------------------------------------
+    --  pt local - ReportAlerts + WriteAlertYaml
+    impure function GetTestResultStatus (TotalErrors : integer ; TimeOut : boolean ; TopLevel : boolean) return string is
+    ------------------------------------------------------------
+    begin
+      if TopLevel and StopLimitVar then
+        return ALERT_LOG_STOPLIMIT_NAME ;
+      elsif TopLevel and TimeOut then
+        return ALERT_LOG_TIMEOUT_NAME ;
+      elsif TotalErrors /= 0 then
+        return ALERT_LOG_FAIL_NAME ;
+      elsif TopLevel and ManualCheckVar then
+        return ALERT_LOG_MANUALCHECKS_NAME ;
+      elsif TopLevel and AffirmCheckCountVar = 0 then
+        return ALERT_LOG_NOCHECKS_NAME ;
+      else
+        return ALERT_LOG_PASS_NAME ;
+      end if;
+    end function GetTestResultStatus ;
 
     ------------------------------------------------------------
     -- PT Local
@@ -1917,47 +1952,16 @@ package body AlertLogPkg is
       write(buf, ALERT_LOG_PRINT_PREFIX) ;
 --!!      if ALERT_LOG_WRITE_TIME_FIRST then
       if WriteTimeFirstVar then
---!!        write(buf, justify(to_string(NOW, 1 ns), TimeJustifyAmountVar, RIGHT) & "  " & "  ") ;
         write(buf, format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION, TimeJustifyAmountVar) & " " & ALERT_LOG_SPACES_BEFORE_ALERT) ;
       end if ;
 
-      if not TestFailed then
-        if ManualCheckVar then
-          write(buf,
-            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
-            ALERT_LOG_MANUALCHECKS_NAME & "   " &
-            Name
-          ) ;
-        elsif AffirmCheckCountVar = 0 then
-          write(buf,
-            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
-            ALERT_LOG_NOCHECKS_NAME & "   " &
-            Name
-          ) ;
-        else
-          write(buf,
-            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
-            ALERT_LOG_PASS_NAME & "   " &
-            Name
-          ) ;
-        end if;
-      else
-        if TimeOut then
-          write(buf,
-            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
-            ALERT_LOG_TIMEOUT_NAME & "   " &
-            Name
-          ) ;
+      write(buf,
+        ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
+        GetTestResultStatus(TotalErrors, TimeOut, TRUE) & "  " & ALERT_LOG_SPACES_BEFORE_ID_NAME &
+        Name
+      ) ;
 
-        else
-          write(buf,
-            ALERT_LOG_DONE_NAME & " " & ALERT_LOG_SPACES_BEFORE_LEVEL &
-            ALERT_LOG_FAIL_NAME & "   " &
-            Name
-          ) ;
-        end if ;
-      end if ;
---?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
+      --?  Also print when warnings exist and are hidden by FailOnWarningVar=FALSE
       if TestFailed then
         write(buf, "  Total Error(s) = " & to_string(TotalErrors) ) ;
         write(buf, "  Failures: "        & to_string(AlertCountVar(FAILURE)) ) ;
@@ -1987,7 +1991,6 @@ package body AlertLogPkg is
       end if ;
 --!!      if not ALERT_LOG_WRITE_TIME_FIRST then
       if WriteTimeLastVar then
---!!        write(buf, "  at " & to_string(NOW, 1 ns)) ;
         write(buf, " at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) ) ;
       end if ;
       WriteLine(buf) ;
@@ -2164,16 +2167,16 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     procedure ReportAlerts (
-      Name           : string := OSVVM_STRING_INIT_PARM_DETECT ;
-      AlertLogID     : AlertLogIDType := ALERTLOG_BASE_ID ;
-      ExternalErrors : AlertCountType := (0,0,0) ;
-      ReportAll      : boolean := FALSE ;
-      ReportWhenZero : boolean := TRUE ;
-      TimeOut        : boolean := FALSE
+      Name             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+      AlertLogID       : AlertLogIDType := ALERTLOG_BASE_ID ;
+      ExternalErrors   : AlertCountType := (0,0,0) ;
+      ReportAll        : boolean := FALSE ;
+      ReportWhenZero   : boolean := TRUE ;
+      TimeOut          : boolean := FALSE ;
+      ReportVhdlAssert : boolean := TRUE
     ) is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
-      -- constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -2213,13 +2216,15 @@ package body AlertLogPkg is
           ReportWhenZero    => ReportAll or ReportWhenZero,
           HasDisabledErrors => HasDisabledErrors
         ) ;
-        PrintVhdlAssertCount(
-          Prefix            => ALERT_LOG_PRINT_PREFIX & "  ",
-          IndentAmount      => 2,
-          ReportWhenZero    => ReportAll or ReportWhenZero,
-          HasErrors         => TestFailed,
-          HasDisabledErrors => HasDisabledErrors
-        ) ;
+        if ReportVhdlAssert then
+          PrintVhdlAssertCount(
+            Prefix            => ALERT_LOG_PRINT_PREFIX & "  ",
+            IndentAmount      => 2,
+            ReportWhenZero    => ReportAll or ReportWhenZero,
+            HasErrors         => TestFailed,
+            HasDisabledErrors => HasDisabledErrors
+          ) ;
+        end if ;
         IterateAndPrintChildren(
           AlertLogID         => localAlertLogID,
           Prefix             => ALERT_LOG_PRINT_PREFIX & "  ",
@@ -2238,7 +2243,6 @@ package body AlertLogPkg is
     procedure ReportRequirements is
     ------------------------------------------------------------
       variable TestFailed, HasDisabledErrors : boolean ;
---      constant ReportPrefix : string := ResolveOsvvmWritePrefix(ReportPrefixVar.GetOpt) ;
       variable TurnedOnJustify : boolean := FALSE ;
       variable SavedPrintRequirementsVar : boolean ;
     begin
@@ -2287,7 +2291,6 @@ package body AlertLogPkg is
           ALERT_LOG_PASS_NAME & "  " &  -- PassName
           Name
         ) ;
---!!        write(buf, "  at "  & to_string(NOW, 1 ns)) ;
         write(buf, "  at "  & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) ) ;
         WriteLine(buf) ;
       else
@@ -2302,33 +2305,10 @@ package body AlertLogPkg is
         write(buf, "  Failures: "  & to_string(AlertCount(FAILURE)) ) ;
         write(buf, "  Errors: "    & to_string(AlertCount(ERROR) ) ) ;
         write(buf, "  Warnings: "  & to_string(AlertCount(WARNING) ) ) ;
---!!        write(buf, "  at "  & to_string(NOW, 1 ns)) ;
         write(buf, "  at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) ) ;
         WriteLine(buf) ;
       end if ;
     end procedure ReportAlerts ;
-
-    ------------------------------------------------------------
-    --  pt local
-    impure function GetTestResultStatus (TotalErrors : integer ; TimeOut : boolean ; TopLevel : boolean) return string is
-    ------------------------------------------------------------
-    begin
-      if TotalErrors = 0 then
-        if TopLevel and ManualCheckVar then
-          return "MANUALCHECK" ;
-        elsif TopLevel and AffirmCheckCountVar = 0 then
-          return "NOCHECKS" ;
-        else
-          return "PASSED" ;
-        end if;
-      else
-        if TimeOut then
-          return "TIMEOUT" ;
-        else
-          return "FAILED" ;
-        end if;
-      end if ;
-    end function GetTestResultStatus ;
 
     ------------------------------------------------------------
     --  pt local
@@ -2369,7 +2349,7 @@ package body AlertLogPkg is
 
       Write(buf,
         Prefix & "Name: " & '"' & AlertLogPtr(ALERTLOG_BASE_ID).Name.all & '"'  & LF  &
-        Prefix & "Status: " & GetTestResultStatus(TotalErrors, TimeOut, TRUE)        & LF  &
+        Prefix & "Status: """ & GetTestResultStatus(TotalErrors, TimeOut, TRUE) & '"' & LF  &
         Prefix & "Results: {" &
           "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
           "AlertCount: {" &
@@ -2419,7 +2399,7 @@ package body AlertLogPkg is
         TotalAssertCount := SumAlertCount(RemoveNonFailingWarnings(VhdlAssertCount)) ;
         Write(buf,
           FirstPrefix & "Name:  " & '"' & VHDL_ASSERT_ID_NAME & '"'  & LF  &
-          Prefix & "Status: " & GetTestResultStatus(TotalAssertCount, FALSE, FALSE)        & LF  &
+          Prefix & "Status: """ & GetTestResultStatus(TotalAssertCount, FALSE, FALSE) & '"' & LF  &
           Prefix & "Results: {" &
             "TotalErrors: "          & to_string( TotalAssertCount )          & DELIMITER &
             "AlertCount: {" &
@@ -2460,7 +2440,7 @@ package body AlertLogPkg is
     begin
       Write(buf,
         FirstPrefix & "Name: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
-        Prefix & "Status: " & GetTestResultStatus(TotalErrors, FALSE, FALSE)        & LF  &
+        Prefix & "Status: """ & GetTestResultStatus(TotalErrors, FALSE, FALSE) & '"' & LF  &
         Prefix & "Results: {" &
           "TotalErrors: "        & to_string( TotalErrors )          & DELIMITER &
           "AlertCount: {" &
@@ -3057,7 +3037,6 @@ package body AlertLogPkg is
     procedure ReportTestSummaries is
     ------------------------------------------------------------
       variable IgnoredValue, OldReportJustifyAmount : integer ;
---      constant Separator : string := ResolveOsvvmIdSeparator(IdSeparatorVar.GetOpt) ;
     begin
       OldReportJustifyAmount  := CurReportJustifyAmountVar ;
       (IgnoredValue, CurReportJustifyAmountVar) := CalcJustify(REQUIREMENT_ALERTLOG_ID, 0, 0, ALERT_LOG_ID_SEPARATOR'length) ;
@@ -4104,34 +4083,6 @@ package body AlertLogPkg is
       LocalIncrementAlertStopCount(localAlertLogID, Level, Count) ;
     end procedure IncrementAlertStopCount ;
 
---!!    ------------------------------------------------------------
---!!    -- PT LOCAL
---!!    procedure SetOneStopCount(
---!!    ------------------------------------------------------------
---!!      AlertLogID   : AlertLogIDType ;
---!!      Level        : AlertType ;
---!!      Count        : integer
---!!    ) is
---!!    begin
---!!      if AlertLogPtr(AlertLogID).AlertStopCount(Level) = integer'high then
---!!        AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
---!!      else
---!!        AlertLogPtr(AlertLogID).AlertStopCount(Level) :=
---!!          AlertLogPtr(AlertLogID).AlertStopCount(Level) + Count ;
---!!      end if ;
---!!    end procedure SetOneStopCount ;
---!!
---!!    ------------------------------------------------------------
---!!    -- PT Local
---!!    procedure LocalSetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
---!!    ------------------------------------------------------------
---!!    begin
---!!      SetOneStopCount
---!!      if AlertLogID /= ALERTLOG_BASE_ID then
---!!        LocalSetAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count) ;
---!!      end if ;
---!!    end procedure LocalSetAlertStopCount ;
---!!
     ------------------------------------------------------------
     procedure SetAlertStopCount(UnverifiedAlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
     ------------------------------------------------------------
@@ -4415,13 +4366,13 @@ package body AlertLogPkg is
       PrintRequirements        : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_REQUIREMENTS ;
       PrintIfHaveRequirements  : OsvvmOptionsType ;   --  set using:  OsvvmSettingsPkg.ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS ;
       DefaultPassedGoal        : integer ;            --  set using:  OsvvmSettingsPkg.ALERT_LOG_DEFAULT_PASSED_GOAL
-      AlertPrefix              : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
-      LogPrefix                : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_LOG_NAME
-      ReportPrefix             : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX
-      DoneName                 : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_DONE_NAME
-      PassName                 : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PASS_NAME
-      FailName                 : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME
-      IdSeparator              : string ;   --!! Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR
+      AlertPrefix              : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ALERT_NAME
+      LogPrefix                : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_LOG_NAME
+      ReportPrefix             : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PRINT_PREFIX
+      DoneName                 : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_DONE_NAME
+      PassName                 : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_PASS_NAME
+      FailName                 : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_FAIL_NAME
+      IdSeparator              : string ;   --DDD Deprecated.  Can only be set using OsvvmSettingsPkg.ALERT_LOG_ID_SEPARATOR
       WriteTimeLast            : OsvvmOptionsType ;   --  set using: not OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST
       TimeJustifyAmount        : integer              --  set using: OsvvmSettingsPkg.ALERT_LOG_TIME_JUSTIFY_AMOUNT
     ) is
@@ -4449,7 +4400,7 @@ package body AlertLogPkg is
       end if ;
       if WriteAlertTime /= OPT_INIT_PARM_DETECT then
         WriteAlertTimeVar := IsEnabled(WriteAlertTime) ;
---!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteAlertTime)", WARNING) ;
+--DDD        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteAlertTime)", WARNING) ;
       end if ;
       if WriteLogErrorCount /= OPT_INIT_PARM_DETECT then
         WriteLogErrorCountVar := IsEnabled(WriteLogErrorCount) ;
@@ -4462,7 +4413,7 @@ package body AlertLogPkg is
       end if ;
       if WriteLogTime /= OPT_INIT_PARM_DETECT then
         WriteLogTimeVar := IsEnabled(WriteLogTime) ;
---!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteLogTime)", WARNING) ;
+--DDD        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteLogTime)", WARNING) ;
       end if ;
       if PrintPassed /= OPT_INIT_PARM_DETECT then
         PrintPassedVar := IsEnabled(PrintPassed) ;
@@ -4506,7 +4457,7 @@ package body AlertLogPkg is
       if WriteTimeLast /= OPT_INIT_PARM_DETECT then
         WriteTimeLastVar := IsEnabled(WriteTimeLast) ;
         WriteTimeFirstVar := not WriteTimeLastVar ;
---!!        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteTimeLast)", WARNING) ;
+--DDD        Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced SetAlertLogOptions(WriteTimeLast)", WARNING) ;
       end if ;
       if TimeJustifyAmount >= 0 then
         TimeJustifyAmountVar := TimeJustifyAmount ;
@@ -4543,13 +4494,13 @@ package body AlertLogPkg is
       swrite(buf, "PrintIfHaveRequirementsVar: " & to_string(PrintIfHaveRequirementsVar  ) & LF ) ;
 
       -- String
---!! Deprecated, but values print for historical reasons
-      swrite(buf, "AlertPrefixVar:             " & ALERT_LOG_ALERT_NAME   & LF ) ;        --!! Deprecated
-      swrite(buf, "LogPrefixVar:               " & ALERT_LOG_LOG_NAME     & LF ) ;        --!! Deprecated
-      swrite(buf, "ReportPrefixVar:            " & ALERT_LOG_PRINT_PREFIX & LF ) ;        --!! Deprecated
-      swrite(buf, "DoneNameVar:                " & ALERT_LOG_DONE_NAME    & LF ) ;        --!! Deprecated
-      swrite(buf, "PassNameVar:                " & ALERT_LOG_PASS_NAME    & LF ) ;        --!! Deprecated
-      swrite(buf, "FailNameVar:                " & ALERT_LOG_FAIL_NAME    & LF ) ;        --!! Deprecated
+--DDD Deprecated, but values print for historical reasons
+      swrite(buf, "AlertPrefixVar:             " & ALERT_LOG_ALERT_NAME   & LF ) ;        --DDD Deprecated
+      swrite(buf, "LogPrefixVar:               " & ALERT_LOG_LOG_NAME     & LF ) ;        --DDD Deprecated
+      swrite(buf, "ReportPrefixVar:            " & ALERT_LOG_PRINT_PREFIX & LF ) ;        --DDD Deprecated
+      swrite(buf, "DoneNameVar:                " & ALERT_LOG_DONE_NAME    & LF ) ;        --DDD Deprecated
+      swrite(buf, "PassNameVar:                " & ALERT_LOG_PASS_NAME    & LF ) ;        --DDD Deprecated
+      swrite(buf, "FailNameVar:                " & ALERT_LOG_FAIL_NAME    & LF ) ;        --DDD Deprecated
 --!! Supported
       swrite(buf, "WriteTimeLastVar:           " & to_string(WriteTimeLastVar ) & LF ) ;
       swrite(buf, "TimeJustifyAmountVar:       " & to_string(TimeJustifyAmountVar     ) & LF ) ;
@@ -4624,8 +4575,8 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteAlertTimeVar) ;
---!!      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteAlertTime", WARNING) ;
---!!      return to_OsvvmOptionsType(ALERT_LOG_WRITE_TIME_FIRST) ;
+--DDD      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteAlertTime", WARNING) ;
+--DDD      return to_OsvvmOptionsType(ALERT_LOG_WRITE_TIME_FIRST) ;
     end function GetAlertLogWriteAlertTime ;
 
     ------------------------------------------------------------
@@ -4654,8 +4605,8 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteLogTimeVar) ;
---!!      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteLogTime", WARNING) ;
---!!      return to_OsvvmOptionsType(ALERT_LOG_WRITE_TIME_FIRST) ;
+--DDD      Alert(ALERTLOG_DEFAULT_ID, "OsvvmSettingsPkg.ALERT_LOG_WRITE_TIME_FIRST replaced GetAlertLogWriteLogTime", WARNING) ;
+--DDD      return to_OsvvmOptionsType(ALERT_LOG_WRITE_TIME_FIRST) ;
     end function GetAlertLogWriteLogTime ;
 
     ------------------------------------------------------------
@@ -4747,7 +4698,7 @@ package body AlertLogPkg is
     ------------------------------------------------------------
     begin
       return to_OsvvmOptionsType(WriteTimeLastVar) ;
---!!      return to_OsvvmOptionsType(not ALERT_LOG_WRITE_TIME_FIRST) ;
+--DDD      return to_OsvvmOptionsType(not ALERT_LOG_WRITE_TIME_FIRST) ;
     end function GetAlertLogWriteTimeLast ;
 
 
@@ -5483,7 +5434,7 @@ package body AlertLogPkg is
       exit ReadLoop when EndOfFile1 or EndOfFile2 ;
 
 --!! if IgnoreEmptyLines, then the LineCount can be different and still compare.  Update messages below that report LineCount?  Different Reporting for IgnoreEmptyLines?
---!!
+--
       if LocalDiff(Buf1.all, Buf2.all, IgnoreSpaces) then
         AlertLogStruct.Alert(AlertLogID , AddSpaceIfNotEmpty(Message) & "File miscompare on line " & to_string(LineCount1), Level) ;
         exit ReadLoop ;
@@ -6674,15 +6625,17 @@ package body AlertLogPkg is
   ------------------------------------------------------------
   procedure ReportAlerts (
   ------------------------------------------------------------
-    Name           : string          := OSVVM_STRING_INIT_PARM_DETECT ;
-    AlertLogID     : AlertLogIDType  := ALERTLOG_BASE_ID ;
-    ExternalErrors : AlertCountType  := (others => 0) ;
-    ReportAll      : Boolean         := FALSE ;
-    TimeOut        : boolean         := FALSE
+    Name             : string := OSVVM_STRING_INIT_PARM_DETECT ;
+    AlertLogID       : AlertLogIDType := ALERTLOG_BASE_ID ;
+    ExternalErrors   : AlertCountType := (0,0,0) ;
+    ReportAll        : boolean := FALSE ;
+    ReportWhenZero   : boolean := TRUE ;
+    TimeOut          : boolean := FALSE ;
+    ReportVhdlAssert : boolean := TRUE
   ) is
   begin
     -- synthesis translate_off
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE, TimeOut) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE, TimeOut, ReportVhdlAssert) ;
     -- synthesis translate_on
   end procedure ReportAlerts ;
 
@@ -7602,18 +7555,6 @@ package body AlertLogPkg is
     AlertLogStruct.IncrementExpectedAlertCount (Level, Count) ;
     -- synthesis translate_on
   end procedure IncrementExpectedAlertCount ;
-
---!! Can index return value instead
---!!  ------------------------------------------------------------
---!!  impure function GetExpectedAlertCount(Level : AlertType) return integer is
---!!  ------------------------------------------------------------
---!!    variable result : integer ;
---!!  begin
---!!    -- synthesis translate_off
---!!    result := AlertLogStruct.GetExpectedAlertCount(Level) ;
---!!    -- synthesis translate_on
---!!    return result ;
---!!  end function GetExpectedAlertCount ;
 
   ------------------------------------------------------------
   procedure SetExpectedAlertCount (Count : AlertCountType) is
