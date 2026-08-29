@@ -76,7 +76,6 @@ package body OsvvmSettingsPkg is
   constant  OSVVM_FAIL_NAME               : string  := "FAILED" ;
   constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
   constant  OSVVM_SECONDARY_PREFIX        : string  := "%%> " ;
-  -- constant  OSVVM_PRINT_USES_PREFIX       : boolean := IfElse(OSVVM_SETTINGS_REVISION > "2026.08", TRUE, FALSE) ;
   constant  OSVVM_BLANK_LINE_PREFIX       : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", OSVVM_PRINT_PREFIX, "") ;
   constant  OSVVM_HEADER_PREFIX           : string  := " " ;
   constant  OSVVM_HEADER_SUFFIX           : string  := "*" ;
@@ -136,23 +135,26 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_LEVEL                : boolean := TRUE ;   -- Print Level - FAILURE, ERROR, WARNING, INFO, ...
   constant  ALERT_LOG_WRITE_TIME                 : boolean := TRUE ;   -- Print time
 
-  constant  ALERT_LOG_DONE_NAME                  : string  := "DONE" ;
+  constant  ALERT_LOG_DONE_NAME                  : string  := "DONE " ; -- Adjusted spacing to match Alert
   constant  ALERT_LOG_PASS_NAME                  : string  := OSVVM_PASS_NAME ;
   constant  ALERT_LOG_FAIL_NAME                  : string  := OSVVM_FAIL_NAME ;
   constant  ALERT_LOG_PRINT_PREFIX               : string  := OSVVM_PRINT_PREFIX ;
   constant  ALERT_LOG_ALERT_NAME                 : string  := "Alert" ;
-  constant  ALERT_LOG_LOG_NAME                   : string  := "Log  " ;
+  constant  ALERT_LOG_LOG_NAME                   : string  := "Log  " ;  -- Adjusted spacing to match Alert
   constant  ALERT_LOG_NAME_LENGTH                : integer := ALERT_LOG_ALERT_NAME'length ;
   constant  ALERT_LOG_ID_SEPARATOR               : string  := ": " ;
-  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", " ", "   ") ; -- Keeping 2 space between time and Alert/Log
+  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", " ", "   ") ; -- Adds to the 1 space already there
   constant  ALERT_LOG_SPACES_BEFORE_LEVEL        : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", " ", "  ") ;  -- Keeping 1 to equalize the length of DONE and Alert
-  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", "", "  ") ; -- has 1 in addition to this
+  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", "", "  ") ;   -- Adds to the 1 space already there
+  constant  ALERT_LOG_WRAP_INDENT_CHAR           : character  := '<' ;
+  constant  ALERT_LOG_WRAP_END_CHAR              : character  := '>' ;
 
 --  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
 --  constant ALERT_LOG_NOCHECKS_NAME               : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024.07", "NOCHECKS", "PASSED") ;
   constant ALERT_LOG_NOCHECKS_NAME               : string := "NOCHECKS" ;
   constant ALERT_LOG_MANUALCHECKS_NAME           : string := "MANUALCHECKS" ;
   constant ALERT_LOG_TIMEOUT_NAME                : string := "TIMEOUT" ;
+  constant ALERT_LOG_STOPLIMIT_NAME              : string := "STOPLIMIT" ;
 
   -- Defaults for Stop Counts
   constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer := 1 ; -- OSVVM 1
@@ -182,30 +184,30 @@ package body OsvvmSettingsPkg is
   constant ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS  : boolean := TRUE ;   -- ReportAlerts: Print requirements if have any
 
   -- DEPRECATED:
-  -- DEPRECATED:   Use ALERT_LOG_DONE_NAME
+  -- DEPRECATED:   Use OSVVM_DONE_NAME
   -- DEPRECATED:
   constant  OSVVM_DONE_NAME               : string  := "DONE" ;
 
 --!!  -- Defaults for Log Enables
---!!  constant LOG_ENABLE_INFO             : boolean := FALSE ;
---!!  constant LOG_ENABLE_DEBUG            : boolean := FALSE ;
---!!  constant LOG_ENABLE_PASSED           : boolean := FALSE ;
---!!  constant LOG_ENABLE_FINAL            : boolean := FALSE ;
+--!!  onstant LOG_ENABLE_INFO             : boolean := FALSE ;
+--!!  onstant LOG_ENABLE_DEBUG            : boolean := FALSE ;
+--!!  onstant LOG_ENABLE_PASSED           : boolean := FALSE ;
+--!!  onstant LOG_ENABLE_FINAL            : boolean := FALSE ;
 --!!
 --!!  -- Controls for default Alert enables
---!!  constant ALERT_ENABLE_FAILURE       : boolean := TRUE ; -- TRUE and not setable
---!!  constant ALERT_ENABLE_ERROR         : boolean := TRUE ; -- TRUE and not setable
---!!  constant ALERT_ENABLE_WARNING       : boolean := TRUE ; -- TRUE and not setable
+--!!  onstant ALERT_ENABLE_FAILURE       : boolean := TRUE ; -- TRUE and not setable
+--!!  onstant ALERT_ENABLE_ERROR         : boolean := TRUE ; -- TRUE and not setable
+--!!  onstant ALERT_ENABLE_WARNING       : boolean := TRUE ; -- TRUE and not setable
 --!!
 --!!  There does not seem to be any compelling reason for these
 --!!  Instead, I suspect code will be optimized better if these are merged into a single ALERT_LOG value
 --!!  -- Controls that split the Alert/Log controls separately
---!!  constant  ALERT_WRITE_ERRORCOUNT      : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
---!!  constant  ALERT_WRITE_LEVEL           : boolean := ALERT_LOG_WRITE_LEVEL     ;   -- Print FAILURE, ERROR, WARNING
---!!  constant  ALERT_WRITE_NAME            : boolean := ALERT_LOG_WRITE_NAME      ;   -- Print Alert Message
---!!  constant  LOG_WRITE_ERRORCOUNT        : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
---!!  constant  LOG_WRITE_LEVEL             : boolean := ALERT_LOG_WRITE_LEVEL     ;   -- Print ALWAYS, INFO, DEBUG, FINAL, PASSED
---!!  constant  LOG_WRITE_NAME              : boolean := ALERT_LOG_WRITE_NAME      ;   -- Print Log Message
+--!!  onstant  ALERT_WRITE_ERRORCOUNT      : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
+--!!  onstant  ALERT_WRITE_LEVEL           : boolean := ALERT_LOG_WRITE_LEVEL     ;   -- Print FAILURE, ERROR, WARNING
+--!!  onstant  ALERT_WRITE_NAME            : boolean := ALERT_LOG_WRITE_NAME      ;   -- Print Alert Message
+--!!  onstant  LOG_WRITE_ERRORCOUNT        : boolean := ALERT_LOG_WRITE_ERRORCOUNT ;  -- Prefix message with # of errors
+--!!  onstant  LOG_WRITE_LEVEL             : boolean := ALERT_LOG_WRITE_LEVEL     ;   -- Print ALWAYS, INFO, DEBUG, FINAL, PASSED
+--!!  onstant  LOG_WRITE_NAME              : boolean := ALERT_LOG_WRITE_NAME      ;   -- Print Log Message
 
 
 end package body OsvvmSettingsPkg ;

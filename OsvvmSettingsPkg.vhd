@@ -76,7 +76,6 @@ package OsvvmSettingsPkg is
   constant  OSVVM_FAIL_NAME               : string  ;
   constant  OSVVM_PRINT_PREFIX            : string  ;
   constant  OSVVM_SECONDARY_PREFIX        : string  ;
-  -- constant  OSVVM_PRINT_USES_PREFIX       : boolean ;
   constant  OSVVM_BLANK_LINE_PREFIX       : string  ;
   constant  OSVVM_HEADER_PREFIX           : string  ;
   constant  OSVVM_HEADER_SUFFIX           : string  ;
@@ -136,23 +135,26 @@ package OsvvmSettingsPkg is
   constant  ALERT_LOG_WRITE_LEVEL                : boolean ;   -- Print Level - FAILURE, ERROR, WARNING, INFO, ...
   constant  ALERT_LOG_WRITE_TIME                 : boolean ;   -- Print time
 
-  constant  ALERT_LOG_DONE_NAME                  : string  ;
+  constant  ALERT_LOG_DONE_NAME                  : string  ; -- Adjusted spacing to match Alert
   constant  ALERT_LOG_PASS_NAME                  : string  ;
   constant  ALERT_LOG_FAIL_NAME                  : string  ;
   constant  ALERT_LOG_PRINT_PREFIX               : string  ;
   constant  ALERT_LOG_ALERT_NAME                 : string  ;
-  constant  ALERT_LOG_LOG_NAME                   : string  ;
+  constant  ALERT_LOG_LOG_NAME                   : string  ;  -- Adjusted spacing to match Alert
   constant  ALERT_LOG_NAME_LENGTH                : integer ;
   constant  ALERT_LOG_ID_SEPARATOR               : string  ;
-  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  ; -- Keeping 2 space between time and Alert/Log
+  constant  ALERT_LOG_SPACES_BEFORE_ALERT        : string  ; -- Adds to the 1 space already there
   constant  ALERT_LOG_SPACES_BEFORE_LEVEL        : string  ;  -- Keeping 1 to equalize the length of DONE and Alert
-  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  ; -- has 1 in addition to this
+  constant  ALERT_LOG_SPACES_BEFORE_ID_NAME      : string  ;   -- Adds to the 1 space already there
+  constant  ALERT_LOG_WRAP_INDENT_CHAR           : character  ;
+  constant  ALERT_LOG_WRAP_END_CHAR              : character  ;
 
 --  Handled by scripts.   Generate NOCHECKS, scripts handles whether it is an error or PASSED.
 --  constant ALERT_LOG_NOCHECKS_NAME               : string ;
   constant ALERT_LOG_NOCHECKS_NAME               : string ;
   constant ALERT_LOG_MANUALCHECKS_NAME           : string ;
   constant ALERT_LOG_TIMEOUT_NAME                : string ;
+  constant ALERT_LOG_STOPLIMIT_NAME              : string ;
 
   -- Defaults for Stop Counts
   constant  ALERT_LOG_STOP_COUNT_FAILURE         : integer ; -- OSVVM 1
@@ -182,30 +184,30 @@ package OsvvmSettingsPkg is
   constant ALERT_LOG_PRINT_IF_HAVE_REQUIREMENTS  : boolean ;   -- ReportAlerts: Print requirements if have any
 
   -- DEPRECATED:
-  -- DEPRECATED:   Use ALERT_LOG_DONE_NAME
+  -- DEPRECATED:   Use OSVVM_DONE_NAME
   -- DEPRECATED:
   constant  OSVVM_DONE_NAME               : string  ;
 
 --!!  -- Defaults for Log Enables
---!!  constant LOG_ENABLE_INFO             : boolean ;
---!!  constant LOG_ENABLE_DEBUG            : boolean ;
---!!  constant LOG_ENABLE_PASSED           : boolean ;
---!!  constant LOG_ENABLE_FINAL            : boolean ;
+--!!  onstant LOG_ENABLE_INFO             : boolean ;
+--!!  onstant LOG_ENABLE_DEBUG            : boolean ;
+--!!  onstant LOG_ENABLE_PASSED           : boolean ;
+--!!  onstant LOG_ENABLE_FINAL            : boolean ;
 --!!
 --!!  -- Controls for default Alert enables
---!!  constant ALERT_ENABLE_FAILURE       : boolean ; -- TRUE and not setable
---!!  constant ALERT_ENABLE_ERROR         : boolean ; -- TRUE and not setable
---!!  constant ALERT_ENABLE_WARNING       : boolean ; -- TRUE and not setable
+--!!  onstant ALERT_ENABLE_FAILURE       : boolean ; -- TRUE and not setable
+--!!  onstant ALERT_ENABLE_ERROR         : boolean ; -- TRUE and not setable
+--!!  onstant ALERT_ENABLE_WARNING       : boolean ; -- TRUE and not setable
 --!!
 --!!  There does not seem to be any compelling reason for these
 --!!  Instead, I suspect code will be optimized better if these are merged into a single ALERT_LOG value
 --!!  -- Controls that split the Alert/Log controls separately
---!!  constant  ALERT_WRITE_ERRORCOUNT      : boolean ;  -- Prefix message with # of errors
---!!  constant  ALERT_WRITE_LEVEL           : boolean ;   -- Print FAILURE, ERROR, WARNING
---!!  constant  ALERT_WRITE_NAME            : boolean ;   -- Print Alert Message
---!!  constant  LOG_WRITE_ERRORCOUNT        : boolean ;  -- Prefix message with # of errors
---!!  constant  LOG_WRITE_LEVEL             : boolean ;   -- Print ALWAYS, INFO, DEBUG, FINAL, PASSED
---!!  constant  LOG_WRITE_NAME              : boolean ;   -- Print Log Message
+--!!  onstant  ALERT_WRITE_ERRORCOUNT      : boolean ;  -- Prefix message with # of errors
+--!!  onstant  ALERT_WRITE_LEVEL           : boolean ;   -- Print FAILURE, ERROR, WARNING
+--!!  onstant  ALERT_WRITE_NAME            : boolean ;   -- Print Alert Message
+--!!  onstant  LOG_WRITE_ERRORCOUNT        : boolean ;  -- Prefix message with # of errors
+--!!  onstant  LOG_WRITE_LEVEL             : boolean ;   -- Print ALWAYS, INFO, DEBUG, FINAL, PASSED
+--!!  onstant  LOG_WRITE_NAME              : boolean ;   -- Print Log Message
 
 
 end package OsvvmSettingsPkg ;
