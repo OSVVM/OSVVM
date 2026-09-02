@@ -55,7 +55,10 @@ package LanguageSupport2019Pkg is
   constant INTEGER_32_HIGH  : integer := -1 + 2**30 + 2**30 ;
   constant INTEGER_32_RIGHT : integer := INTEGER_32_HIGH ;
 
-  constant TOOL_USES_32_BIT_INTEGERS : boolean := (integer'right = INTEGER_32_RIGHT) ;
+  constant TOOL_USES_32_BIT_INTEGERS : boolean := (integer'high = INTEGER_32_HIGH) ;
+  constant SUPPORTS_2019_32_BIT_INTEGERS : boolean := TOOL_USES_32_BIT_INTEGERS ;
+  constant SUPPORTS_2019_64_BIT_INTEGERS : boolean := not TOOL_USES_32_BIT_INTEGERS ;
+  constant SUPPORTS_2019_INTEGER_64_BITS : boolean := not TOOL_USES_32_BIT_INTEGERS ;
 
   constant INTEGER_WIDTH : integer := IfElse(TOOL_USES_32_BIT_INTEGERS, 32, 64) ;
 
