@@ -64,6 +64,8 @@ package DynamicVectorPkg_slv is
   -- subtype IndexType   is VectorType'index ;
   -- type InternalVectorType is array (integer range <>) of ElementType ;
 
+  constant SUPPORTS_2019_GENERICS : boolean := FALSE ;
+
   subtype VectorType is std_logic_vector ;
   subtype ElementType is std_logic ;
   subtype IndexType   is natural ;

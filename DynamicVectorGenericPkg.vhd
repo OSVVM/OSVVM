@@ -59,6 +59,8 @@ use work.IdFifoPtPkg.all ;
 package DynamicVectorGenericPkg is
   generic (type VectorType is array (type is range <>) of type is private ) ;
 
+  constant SUPPORTS_2019_GENERICS : boolean := TRUE ;
+
   -- Package local definitions
   subtype ElementType is VectorType'element ;
   subtype IndexType   is VectorType'index ;

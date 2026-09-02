@@ -64,6 +64,8 @@ package DynamicVectorPkg_IntV is
   -- subtype IndexType   is VectorType'index ;
   -- type InternalVectorType is array (integer range <>) of ElementType ;
 
+  constant SUPPORTS_2019_GENERICS : boolean := FALSE ;
+
   subtype VectorType is integer_vector ;
   subtype ElementType is integer ;
   subtype IndexType   is natural ;
