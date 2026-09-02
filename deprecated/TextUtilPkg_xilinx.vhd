@@ -20,7 +20,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    02/2025   2025.02    Special Xilinx Version for to_hxstring
+--              2026.08    Added format, WrapOneLine
+--    02/2025   2025.02    Fixed bug in RemoveCrLf when only Cr/LF in line and no other characters.
 --    09/2024   2024.09    Added to_string_max, RemoveSpace, RemoveCrLf, GetLine
 --    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
 --                         ReadUntilDelimiterOrEOL now treats LF and CR as end of line indication
@@ -58,6 +59,10 @@ use std.textio.all ;
 library ieee ;
 use ieee.std_logic_1164.all ;
 use ieee.numeric_std.all ;
+use ieee.math_real.all ;
+
+use work.IfElsePkg.all ;
+use work.OsvvmSettingsPkg.all ;
 
 package TextUtilPkg is
   ------------------------------------------------------------
@@ -79,7 +84,7 @@ package TextUtilPkg is
 
   ------------------------------------------------------------
   procedure RemoveSpace (variable S : inout string ; variable Len : InOut integer) ;
-  
+
   -- Only needed for non-compliant simulators -- X
   procedure RemoveCrLf (S : string ; variable Len : out integer) ;
   function  RemoveCrLf( S : string ) return string ;
@@ -94,10 +99,23 @@ package TextUtilPkg is
   function to_hxstring ( A : signed) return string ;
 
   ------------------------------------------------------------
-  -- to_string_max
-  --   If value is integer'high or integer'low, return that instead of the string
+  -- FindCharacter, HasCharacter
   ------------------------------------------------------------
-  function to_string_max ( I : integer) return string ;
+  function FindCharacter (S : in string ; C : in character ; StartIndex, EndIndex : in integer) return integer ;
+  function HasCharacter  (S : in string; C : in character) return boolean ;
+
+  ------------------------------------------------------------
+  -- format
+  --   Selected to_string replacements that do smarter things at boundaries (integer'low, ...)
+  ------------------------------------------------------------
+  function format ( I : integer ) return string ;
+  function format ( R : Real ; FractionDigits : natural := OSVVM_DIGITS_FOR_REAL_FRACTION ; MaxFixedPointDigits : natural := OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL) return string ;
+  function GetMaxWholeTimeUnits(T : time) return time ;
+  function GetTimeUnits(T : time) return string ;
+  function format ( T : time ; TimeUnits : time ; FractionDigits : natural := OSVVM_DIGITS_FOR_TIME_FRACTION ; RightJustify : natural := 0  ) return string ;
+  function format ( T : time ; FractionDigits : natural := OSVVM_DIGITS_FOR_TIME_FRACTION ; RightJustify : natural := 0  ) return string ;
+
+  alias to_string_max is format[integer return string] ;
 
   ------------------------------------------------------------
   -- Justify
@@ -118,6 +136,37 @@ package TextUtilPkg is
     Amount  : natural ;
     Align   : AlignType := LEFT
   ) return string ;
+
+  ------------------------------------------------------------
+  procedure WrapOneLine(
+  ------------------------------------------------------------
+    s               : in string ;
+    NextStartIndex  : inout integer ;
+    FoundIndex      : inout integer ;
+    WrapLength      : in integer := OSVVM_LINE_WRAP
+  ) ;
+
+  ------------------------------------------------------------
+  procedure WrapToBuf(
+  ------------------------------------------------------------
+    buf              : inout line ;
+    s                : in string ;
+    SubsequentPrefix : in string ;
+    WrapLength       : in integer := OSVVM_LINE_WRAP
+  ) ;
+
+  ------------------------------------------------------------
+  procedure WrapToBuf(
+  ------------------------------------------------------------
+    buf              : inout line ;
+    s                : in string ;
+    InitialPrefix    : in string ;
+    SubsequentPrefix : in string ;
+    WrapLength       : in integer := OSVVM_LINE_WRAP
+  ) ;
+
+  ------------------------------------------------------------
+  procedure HeaderToBuf (buf : inout line ; S : string) ;
 
   ------------------------------------------------------------
   procedure GetLine(
@@ -208,6 +257,19 @@ package body TextUtilPkg is
   type stdulogic_indexby_stdulogic is array (std_ulogic) of std_ulogic;
 
   constant LOWER_TO_UPPER_OFFSET : integer := character'POS('a') - character'POS('A') ;
+
+  constant SIM_RESOLUTION     : time := std.env.resolution_limit ;
+  constant SIM_RESOLUTION10   : time := 10 * std.env.resolution_limit ;
+
+  type NaturalString is array (Integer range <> ) of character ;
+  constant DIGIT_TO_CHARACTER : NaturalString (0 to 9) := "0123456789" ;
+
+  constant ONE_MS : time := 1 sec / 1000 ;
+  constant ONE_US : time := ONE_MS  / 1000 ;
+  constant ONE_NS : time := ONE_US / 1000 ;
+  constant ONE_PS : time := ONE_NS / 1000 ;
+  constant ONE_FS : time := ONE_PS / 1000 ;
+
 
   ------------------------------------------------------------
   function "-" (R : character ; L : integer ) return character is
@@ -372,12 +434,12 @@ package body TextUtilPkg is
   ------------------------------------------------------------
     alias aS : string (1 to S'length) is S ;
   begin
-    Len := 0 ; 
+    Len := 0 ;
     for i in aS'reverse_range loop
-      if not  (aS(i) = CR or aS(i) = LF) then 
+      if not  (aS(i) = CR or aS(i) = LF) then
         Len := i ;
-        exit ; 
-      end if ; 
+        exit ;
+      end if ;
     end loop ;
   end procedure RemoveCrLf ;
 
@@ -387,7 +449,7 @@ package body TextUtilPkg is
     alias aS : string(1 to S'length) is S ;
     variable Len : integer := 0 ;
   begin
-    RemoveCrLf(aS, Len) ; 
+    RemoveCrLf(aS, Len) ;
     return aS(1 to Len) ;
   end function RemoveCrLf ;
 
@@ -481,15 +543,14 @@ package body TextUtilPkg is
         when "XXXX" => result(i) := 'X';
         when "ZZZZ" => result(i) := 'Z';
         when "WWWW" => result(i) := 'W';
--- In Xilinx the following matches everything.
 --        when "----" => result(i) := '-';
-        when others => 
-          if (HexVal = "----") then  
+--        when others => result(i) := '?';  PrintBinary := TRUE ;
+        when others =>
+          if (HexVal = "----") then
             result(i) := '-';
           else
             result(i) := '?';  PrintBinary := TRUE ;
-          end if ;
-      end case;
+          end if ;      end case;
     end loop;
     if PrintBinary then
       return result & " (" & to_string(A) & ")" ;
@@ -523,19 +584,211 @@ package body TextUtilPkg is
   end function to_hxstring ;
 
   ------------------------------------------------------------
-  -- to_string_max
-  --   If value is integer'high or integer'low, return that instead of the string
+  function FindCharacter (S : in string ; C : in character ; StartIndex, EndIndex : in integer) return integer is
   ------------------------------------------------------------
-  function to_string_max ( I : integer) return string is
+    constant S_LENGTH : integer := s'length ;
+    alias aS : string(1 to S_LENGTH) is S ;
   begin
-    if I = integer'high then 
-      return "integer'high" ; 
-    elsif I = integer'low then 
-      return "integer'low" ; 
-    else 
-      return to_string(I) ;
-    end if ; 
-  end function to_string_max ;
+    for i in StartIndex to EndIndex loop
+      if aS(i) = C then
+        return i ;
+      end if ;
+    end loop ;
+    return 0 ;  -- not found
+  end function FindCharacter ;
+
+  ------------------------------------------------------------
+  function HasCharacter (S : in string; C : in character) return boolean is
+  ------------------------------------------------------------
+    constant S_LENGTH : integer := s'length ;
+    alias aS : string(1 to S_LENGTH) is S ;
+  begin
+    return FindCharacter(aS, C, 1, S_LENGTH) /= 0 ;
+  end function HasCharacter ;
+
+
+-- Move to TextUtilPkg
+--  ------------------------------------------------------------
+--  FindCharInStringReverse(s : in string ; c : in character ; StartIndex, EndIndex : in integer ; CharIndex : inout integer ; Found : out boolean) is
+--  ------------------------------------------------------------
+--    constant S_LENGTH : integer := s'length ;
+--    alias aS : string(1 to S_LENGTH) is s ;
+--  begin
+--    for i in EndIndex downto StartIndex loop
+--      if aS(i) = c then
+--        CharIndex := i ;
+--        Found := TRUE ;
+--        return ;
+--      end if ;
+--    end loop ;
+--    Found := FALSE ;
+--    CharIndex := 0 ;
+--  end procedure FindCharInStringReverse ;
+
+
+  ------------------------------------------------------------
+  -- format
+  --   Selected to_string replacements that do smarter things at boundaries (integer'low, ...)
+  ------------------------------------------------------------
+  function format ( I : integer ) return string is
+  ------------------------------------------------------------
+  begin
+    if I = integer'high then
+      return "integer'high" ;
+    elsif I = integer'low then
+      return "integer'low" ;
+    else
+      return std.standard.to_string(I) ;
+    end if ;
+  end function format ;
+
+  ------------------------------------------------------------
+  function format ( R : Real ; FractionDigits : natural := OSVVM_DIGITS_FOR_REAL_FRACTION ; MaxFixedPointDigits : natural := OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL) return string is
+  ------------------------------------------------------------
+    variable HasFractionDigits : real  ;
+    constant ABS_R : real := abs(R) ;
+  begin
+    if R = real'high then
+      return "real'high" ;
+    elsif R = real'low then
+      return "real'low" ;
+    elsif ABS_R > 10.0 ** MaxFixedPointDigits then
+      -- Use exponents for large numbers
+      return to_string(R, "%0." & to_string(FractionDigits) & "e");
+    elsif R = 0.0 or ABS_R >= 1.0 then
+      -- Otherwise use fraction if have fraction bits
+      return std.standard.to_string(R, FractionDigits) ;
+    else
+      HasFractionDigits := ABS_R * 10.0**FractionDigits ;
+      if HasFractionDigits >= 1.0 then
+        return std.standard.to_string(R, FractionDigits) ;
+      else
+        return to_string(R, "%0." & to_string(FractionDigits) & "e");
+      end if ;
+    end if ;
+  end function format ;
+
+  ------------------------------------------------------------
+  function GetMaxWholeTimeUnits(T : time) return time is
+  -- GetMaxWholeTimeUnits - ceiling for type time
+  ------------------------------------------------------------
+    constant POS_TIME : time := ifelse(T >= 0 ns, T, -T) ;
+  begin
+    if    POS_TIME  = 0 ns   then       return work.OsvvmSettingsPkg.OSVVM_DEFAULT_TIME_UNITS ;
+    elsif POS_TIME >= 1 hr   then       return 1 hr ;
+    elsif POS_TIME >= 1 min  then       return 1 min ;
+    elsif POS_TIME >= 1 sec  then       return 1 sec ;
+    elsif POS_TIME >= ONE_MS then       return ONE_MS ;
+    elsif POS_TIME >= ONE_US then       return ONE_US ;
+    elsif POS_TIME >= ONE_NS then       return ONE_NS ;
+    elsif POS_TIME >= ONE_PS then       return ONE_PS ;
+    else                                return ONE_FS ;
+    end if ;
+  end function GetMaxWholeTimeUnits ;
+
+  ------------------------------------------------------------
+  function GetTimeUnits(T : time) return string is
+  -- GetTimeUnits returns the time units
+  -- Input expected to be 1 time unit, but code is tolerant
+  ------------------------------------------------------------
+  begin
+    if    T = 1 hr   then            return " hr" ;
+    elsif T = 1 min  then            return " min" ;
+    elsif T = 1 sec  then            return " sec" ;
+    elsif T = ONE_MS then            return " ms" ;
+    elsif T = ONE_US then            return " us" ;
+    elsif T = ONE_NS then            return " ns" ;
+    elsif T = ONE_PS then            return " ps" ;
+    elsif T = ONE_FS then            return " fs" ;
+    else
+      report "format/GetTimeUnits:  Not a time unit " & to_string(T)  severity error ;
+      return GetTimeUnits(GetMaxWholeTimeUnits(T)) ;
+    end if ;
+  end function GetTimeUnits ;
+
+  ------------------------------------------------------------
+  function GetTimeDigits(T : time) return integer is
+  -- Local:  GetTimeDigits.   Returns number of decimal digits to represent value.
+  ------------------------------------------------------------
+  begin
+    if    T = 1 hr   then            return 18 ;
+    elsif T = 1 min  then            return 16 ;
+    elsif T = 1 sec  then            return 15 ;
+    elsif T = ONE_MS then            return 12 ;
+    elsif T = ONE_US then            return 9 ;
+    elsif T = ONE_NS then            return 6 ;
+    elsif T = ONE_PS then            return 3 ;
+    elsif T = ONE_FS then            return 0 ;
+    else
+      report "format:  Not a time unit " & to_string(T)  severity error ;
+      return GetTimeDigits(GetMaxWholeTimeUnits(T)) ;
+    end if ;
+  end function GetTimeDigits ;
+
+  constant SIM_RESOLUTION_DIGITS : integer := GetTimeDigits(SIM_RESOLUTION) ;
+
+  ------------------------------------------------------------
+  function format ( T : time ; TimeUnits : time ; FractionDigits : natural := OSVVM_DIGITS_FOR_TIME_FRACTION ; RightJustify : natural := 0 ) return string is
+  ------------------------------------------------------------
+    constant MAX_FRACTION_DIGITS       : integer := GetTimeDigits(TimeUnits) - SIM_RESOLUTION_DIGITS ;
+    constant RESOLVED_FRACTION_DIGITS  : integer := minimum(MAX_FRACTION_DIGITS, FractionDigits) ;
+    constant EXTRA_DIGITS              : integer := MAX_FRACTION_DIGITS - RESOLVED_FRACTION_DIGITS ;
+
+    variable Index    : integer := 0 ;
+    variable TimeVal  : time ;
+    variable RoundVal : time ;
+    variable IntDigit : integer ;
+    constant ADJ_JUSTIFY : integer := RightJustify - ifelse(TimeUnits = min or TimeUnits = sec, 4, 3) ;
+    variable S        : string(maximum(ADJ_JUSTIFY, OSVVM_MAX_TIME_DECIMAL_DIGITS) downto 1) := (others => ' ') ;
+  begin
+    -- round value considering TimeUnits, FractionDigits, and Simulator resolution
+    if EXTRA_DIGITS /= 0 then
+      RoundVal := 0.5 * TimeUnits / 10**RESOLVED_FRACTION_DIGITS ;
+      -- Integer32 issues
+      if EXTRA_DIGITS <= 9 then
+        TimeVal  := (T + RoundVal) / (10**EXTRA_DIGITS) ; -- round and shift off extra digits
+      else
+        TimeVal  := (T + RoundVal) / (10**9) ; -- round and shift off extra digits in two steps
+        TimeVal  := TimeVal / (10**(EXTRA_DIGITS - 9)) ;
+      end if ;
+    else
+      TimeVal  := T ;  -- Fraction uses all digits
+    end if ;
+    -- Adjust TimeVal for minutes and hours
+    if TimeUnits = 1 min then
+      TimeVal := TimeVal / 6 ;    -- already divided by 10.
+    elsif TimeUnits = 1 hr then
+      TimeVal := TimeVal / 3.6 ;  -- already divided by 1000
+    end if ;
+
+    loop
+      Index    := Index + 1 ;
+      IntDigit := (TimeVal mod SIM_RESOLUTION10) / SIM_RESOLUTION  ;  -- Get the right most character
+      S(Index) := DIGIT_TO_CHARACTER(IntDigit) ;  -- lookup character in array
+      TimeVal  := TimeVal / 10 ;  -- advance to next digit
+      exit when TimeVal = 0 sec and Index > RESOLVED_FRACTION_DIGITS ;
+      if Index = RESOLVED_FRACTION_DIGITS then
+        Index := Index + 1 ;
+        S(Index) := '.' ;
+      end if ;
+    end loop ;
+    if ADJ_JUSTIFY <= Index then
+      return S(Index   downto 1) & GetTimeUnits(TimeUnits) ;
+    else
+      return S(ADJ_JUSTIFY downto 1) & GetTimeUnits(TimeUnits) ;
+-- Could skip the initialization and do this instead
+--      return (ADJ_JUSTIFY to Index+1 => ' ') & S(Index downto 1) & GetTimeUnits(TimeUnits) ;
+    end if ;
+  end function format ;
+
+  ------------------------------------------------------------
+  function format ( T : time ; FractionDigits : natural := OSVVM_DIGITS_FOR_TIME_FRACTION ; RightJustify : natural := 0 ) return string is
+  ------------------------------------------------------------
+    constant TIME_UNITS : time := GetMaxWholeTimeUnits(T) ;
+  begin
+    return format(T, TIME_UNITS, FractionDigits, RightJustify) ;
+  end function format ;
+
 
   ------------------------------------------------------------
   -- Justify
@@ -571,6 +824,114 @@ package body TextUtilPkg is
   begin
     return Justify(S, ' ', Amount, Align) ;
   end function Justify ;
+
+  ------------------------------------------------------------
+  procedure WrapOneLine(
+  ------------------------------------------------------------
+    s               : in string ;
+    NextStartIndex  : inout integer ;
+    FoundIndex      : inout integer ;
+    WrapLength      : in integer := OSVVM_LINE_WRAP
+  ) is
+    constant S_LENGTH : integer := s'length ;
+    alias aS : string(1 to S_LENGTH) is s ;
+    constant LAST_INDEX : integer := NextStartIndex + WrapLength - 1 ;
+    variable LastSpace : integer := 0 ;
+  begin
+    for i in NextStartIndex to minimum(S_LENGTH, LAST_INDEX) loop
+      if aS(i) = LF then
+        FoundIndex := i-1 ;
+        NextStartIndex := FoundIndex + 2 ;
+        return ;
+      end if ;
+      if aS(i) = ' ' then
+        LastSpace  := i ;
+      end if ;
+    end loop ;
+    if S_LENGTH <= LAST_INDEX then
+      -- Line length less than or matches wrap length
+      FoundIndex := S_LENGTH ;
+      NextStartIndex := FoundIndex + 1 ;
+    elsif aS(LAST_INDEX+1) = ' ' or aS(LAST_INDEX+1) = LF then
+      -- Space or LF follows WrapLength
+      FoundIndex := LAST_INDEX ;
+      NextStartIndex := FoundIndex + 2 ;
+    elsif LastSpace /= 0 then
+      -- found a space, break line there
+      FoundIndex := LastSpace-1 ;
+      NextStartIndex := FoundIndex + 2 ;
+    else
+      -- No spaces, break at WrapLength
+      FoundIndex := LAST_INDEX ;
+      NextStartIndex := FoundIndex + 1 ;
+    end if ;
+  end procedure WrapOneLine ;
+
+  ------------------------------------------------------------
+  procedure WrapToBuf(
+  ------------------------------------------------------------
+    buf              : inout line ;
+    s                : in string ;
+    SubsequentPrefix : in string ;
+    WrapLength       : in integer := OSVVM_LINE_WRAP
+  ) is
+    constant S_LENGTH        : integer := s'length ;
+    alias aS : string(1 to S_LENGTH) is s ;
+    variable StartIndex      : integer := 1 ;
+    variable NextStartIndex  : integer := 1 ;
+    variable FoundIndex      : integer ;
+  begin
+    loop
+      StartIndex := NextStartIndex ;
+      WrapOneLine(aS, NextStartIndex, FoundIndex, WrapLength) ;
+      if NextStartIndex <= S_LENGTH then
+        -- Wrapping line, add LF
+        write(buf, aS(StartIndex to FoundIndex) & LF & SubsequentPrefix) ;
+      else
+--!!        -- An LF at end is dropped
+--!!        write(buf, aS(StartIndex to FoundIndex)) ;
+        -- An LF at the end results in a line feed after the text
+        if S_LENGTH > 0 and aS(S_LENGTH) = LF then
+          -- last line ends with LF
+          write(buf, aS(StartIndex to FoundIndex) & LF & SubsequentPrefix) ;
+        else
+          -- last line does not end with LF
+          write(buf, aS(StartIndex to FoundIndex)) ;
+        end if ;
+        exit ;
+      end if ;
+    end loop ;
+  end procedure WrapToBuf ;
+
+  ------------------------------------------------------------
+  procedure WrapToBuf(
+  ------------------------------------------------------------
+    buf              : inout line ;
+    s                : in string ;
+    InitialPrefix    : in string ;
+    SubsequentPrefix : in string ;
+    WrapLength       : in integer := OSVVM_LINE_WRAP
+  ) is
+  begin
+    write(buf, InitialPrefix) ;
+    WrapToBuf(buf, s, SubsequentPrefix, WrapLength) ;
+  end procedure WrapToBuf ;
+
+  ------------------------------------------------------------
+  procedure HeaderToBuf (buf : inout line ; S : string) is
+  ------------------------------------------------------------
+  begin
+    for i in S'range loop
+      if S(i) = ' ' then
+        swrite(buf, OSVVM_PRINT_PREFIX ) ;
+      else
+        swrite(buf, OSVVM_PRINT_PREFIX  & (1 to OSVVM_LINE_LENGTH => S(i))) ;
+      end if ;
+      if i /= S'right then
+        write(buf, LF) ;
+      end if ;
+    end loop ;
+  end procedure HeaderToBuf ;
 
   ------------------------------------------------------------
   procedure GetLine(
@@ -754,7 +1115,7 @@ package body TextUtilPkg is
   begin
     Found := FALSE ;
     ReadLoop : loop
-      -- Skip White Space unless it is the delimiter.   
+      -- Skip White Space unless it is the delimiter.
       if Delimiter /= ' ' then
         SkipWhiteSpace(L) ;
       end if ;

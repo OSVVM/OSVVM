@@ -2181,18 +2181,22 @@ package body CoveragePkg is
         if WriteBinFileInit then
           -- Write to Local OsvvmCoverageWriteBinFile - Deprecated, recommend use TranscriptFile instead
           writeline(OsvvmCoverageWriteBinFile, buf) ;
-        elsif IsTranscriptEnabled then
-          if IsTranscriptMirrored then
-            -- Write to TranscriptFile and OUTPUT
-            tee(TranscriptFile, buf) ;
-          else
-            -- Write to TranscriptFile
-            writeline(TranscriptFile, buf) ;
-          end if ;
         else
-          -- Default Write to OUTPUT
-          writeline(OUTPUT, buf) ;
-        end if ;
+          WriteLine(buf) ;
+        end if;
+--!! This is all just WriteLine(buf)
+--!!       elsif IsTranscriptEnabled then
+--!!         if IsTranscriptMirrored then
+--!!           -- Write to TranscriptFile and OUTPUT
+--!!           tee(TranscriptFile, buf) ;
+--!!         else
+--!!           -- Write to TranscriptFile
+--!!           writeline(TranscriptFile, buf) ;
+--!!         end if ;
+--!!       else
+--!!         -- Default Write to OUTPUT
+--!!         writeline(OUTPUT, buf) ;
+--!!       end if ;
       end if ;
     end procedure WriteToCovFile ;
 
@@ -4790,8 +4794,7 @@ package body CoveragePkg is
 --        buf := NULL ;
 -- Tried the following work around but it did not work either
 --        FieldNameArray(FieldNameIndex) := new string'(buf.all) ;
-        deallocate(buf) ;
-        if FieldNameIndex = NumRangeItems then
+        deallocate(buf) ;        if FieldNameIndex = NumRangeItems then
           CovStructPtr(ID.ID).FieldName := new FieldNameArrayType'(FieldNameArray) ;
         end if ;
       end loop ReadLoop ;
@@ -6209,10 +6212,10 @@ package body CoveragePkg is
     ------------------------------------------------------------
     --  pt local
     -- Deprecated.  New versions use PercentCov.
-    procedure WriteCovHoles (ID : CoverageIDType; file f : text;  AtLeast : integer;  UsingLocalFile : boolean := FALSE ) is
+--    procedure WriteCovHoles (ID : CoverageIDType; file f : text;  AtLeast : integer;  UsingLocalFile : boolean := FALSE ) is
+    procedure WriteCovHoles (ID : CoverageIDType; variable buf : inout line;  AtLeast : integer;  UsingLocalFile : boolean := FALSE ) is
     ------------------------------------------------------------
       -- variable minAtLeast : integer ;
-      variable buf : line ;
     begin
       WriteBinName(ID, buf, "WriteCovHoles: ") ;
       if CovStructPtr(ID.ID).NumBins < 1 then
@@ -6220,10 +6223,11 @@ package body CoveragePkg is
           -- Duplicate Alert in specified file
           swrite(buf, "%% Alert FAILURE " & GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.WriteCovHoles:" &
                       " coverage model is empty.  Nothing to print.") ;
-          writeline(f, buf) ;
+--          writeline(f, buf) ;
         end if ;
         Alert(CovStructPtr(ID.ID).AlertLogID, GetNamePlus(ID, prefix => "in ", suffix => ", ") & "CoveragePkg.WriteCovHoles:" &
                       " coverage model is empty.  Nothing to print.", FAILURE) ;
+        return ;
       end if ;
       CovLoop : for i in 1 to CovStructPtr(ID.ID).NumBins loop
 --        minAtLeast := minimum(AtLeast,CovStructPtr(ID.ID).CovBinPtr(i).AtLeast) ;
@@ -6237,32 +6241,36 @@ package body CoveragePkg is
             -- Print Weight only when it is used
             write(buf, "  Weight = " & integer'image(CovStructPtr(ID.ID).CovBinPtr(i).Weight)) ;
           end if ;
-          writeline(f, buf) ;
+          write(buf, "" & LF) ;
+--          writeline(f, buf) ;
         end if ;
       end loop CovLoop ;
       swrite(buf, "") ;
-      writeline(f, buf) ;
+--      writeline(f, buf) ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
     -- Deprecated.  New versions use PercentCov.
     procedure WriteCovHoles (ID : CoverageIDType; AtLeast : integer ) is
     ------------------------------------------------------------
+      variable buf : line ;
     begin
-      if WriteBinFileInit then
-        -- Write to Local OsvvmCoverageWriteBinFile - Deprecated, recommend use TranscriptFile instead
-        WriteCovHoles(ID, OsvvmCoverageWriteBinFile, AtLeast) ;
-      elsif IsTranscriptEnabled then
-        -- Write to TranscriptFile
-        WriteCovHoles(ID, TranscriptFile, AtLeast) ;
-        if IsTranscriptMirrored then
-          -- Mirrored to OUTPUT
-          WriteCovHoles(ID, OUTPUT, AtLeast) ;
-        end if ;
-      else
-        -- Default Write to OUTPUT
-        WriteCovHoles(ID, OUTPUT, AtLeast) ;
-      end if;
+      WriteCovHoles(ID, buf, AtLeast) ;
+      WriteToCovFile(buf) ;
+--      if WriteBinFileInit then
+--        -- Write to Local OsvvmCoverageWriteBinFile - Deprecated, recommend use TranscriptFile instead
+--        WriteCovHoles(ID, OsvvmCoverageWriteBinFile, AtLeast) ;
+--      elsif IsTranscriptEnabled then
+--        -- Write to TranscriptFile
+--        WriteCovHoles(ID, TranscriptFile, AtLeast) ;
+--        if IsTranscriptMirrored then
+--          -- Mirrored to OUTPUT
+--          WriteCovHoles(ID, OUTPUT, AtLeast) ;
+--        end if ;
+--      else
+--        -- Default Write to OUTPUT
+--        WriteCovHoles(ID, OUTPUT, AtLeast) ;
+--      end if;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
@@ -6280,9 +6288,12 @@ package body CoveragePkg is
     procedure WriteCovHoles (ID : CoverageIDType; FileName : string;  AtLeast : integer ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
       file CovHoleFile : text ;
+      variable buf : line ;
     begin
       file_open(CovHoleFile, FileName, OpenKind) ;
-      WriteCovHoles(ID, CovHoleFile, AtLeast, TRUE) ;
+--      WriteCovHoles(ID, CovHoleFile, AtLeast, TRUE) ;
+      WriteCovHoles(ID, buf, AtLeast, TRUE) ;
+      writeline(CovHoleFile, buf) ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
@@ -7660,8 +7671,9 @@ package body CoveragePkg is
 
     if (NumBins1 /= NumBins2) then
       ErrorCount := ErrorCount + 1 ;
-      print("CoveragePkg.CompareBins: CoverageModels " & GetCovModelName(Bin1) & " and " & GetCovModelName(Bin2) &
+      write(buf, "CoveragePkg.CompareBins: CoverageModels " & GetCovModelName(Bin1) & " and " & GetCovModelName(Bin2) &
             " have different bin lengths") ;
+      writeline(buf) ;
       return ;
     end if ;
 
@@ -7830,7 +7842,6 @@ package body CoveragePkg is
       return iCovBin(1 to TotalBins) ;
     end if ;
   end function MakeBin ;
-
 
   ------------------------------------------------------------
   -- package local, Used by GenBin, IllegalBin, and IgnoreBin
