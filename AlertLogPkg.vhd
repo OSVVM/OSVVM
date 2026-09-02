@@ -148,8 +148,8 @@ package AlertLogPkg is
   type     AlertCountType           is array (AlertIndexType) of integer ;
   type     AlertEnableType          is array(AlertIndexType) of boolean ;
   type     LogType                  is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER  -- See function IsLogEnableType
-  subtype  SetLogType               is LogType range DEBUG to PASSED ;
-  subtype  LogIndexType             is SetLogType ;
+  subtype  LogIndexType             is LogType range DEBUG to PASSED ;
+  -- alias  SetLogType               is LogIndexType ;
   type     LogEnableType            is array (LogIndexType) of boolean ;
   type     AlertLogReportModeType   is (DISABLED, ENABLED, NONZERO, USE_PARENT_ID) ;
   type     AlertLogPrintParentType  is (PRINT_NAME, PRINT_NAME_AND_PARENT) ;
@@ -577,8 +577,8 @@ package AlertLogPkg is
   alias IsAlertEnabled is GetAlertEnable[AlertType return boolean] ;
 
   -- Log Enables
-  procedure SetLogEnable(Level : SetLogType ;  Enable : boolean) ;
-  procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : SetLogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
+  procedure SetLogEnable(Level : LogType ;  Enable : boolean) ;
+  procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
   impure function GetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType) return boolean ;
   impure function GetLogEnable(Level : LogType) return boolean ;
   alias IsLogEnabled is GetLogEnable [AlertLogIDType, LogType return boolean] ;  -- same as GetLogEnable
@@ -1055,8 +1055,8 @@ package body AlertLogPkg is
     procedure SetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
     impure function GetAlertEnable(AlertLogID : AlertLogIDType ;  Level : AlertType) return boolean ;
 
-    procedure SetLogEnable(Level : SetLogType ;  Enable : boolean) ;
-    procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : SetLogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
+    procedure SetLogEnable(Level : LogType ;  Enable : boolean) ;
+    procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) ;
     impure function GetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType) return boolean ;
 
     procedure ReportLogEnables ;
@@ -4243,7 +4243,7 @@ package body AlertLogPkg is
     end function GetAlertEnable ;
 
     ------------------------------------------------------------
-    procedure SetLogEnable(Level : SetLogType ;  Enable : boolean) is
+    procedure SetLogEnable(Level : LogType ;  Enable : boolean) is
     ------------------------------------------------------------
     begin
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
@@ -4253,7 +4253,7 @@ package body AlertLogPkg is
 
     ------------------------------------------------------------
     -- PT Local
-    procedure LocalSetLogEnable(AlertLogID : AlertLogIDType ;  Level : SetLogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+    procedure LocalSetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
     ------------------------------------------------------------
       variable CurID : AlertLogIDType ;
     begin
@@ -4268,7 +4268,7 @@ package body AlertLogPkg is
     end procedure LocalSetLogEnable ;
 
     ------------------------------------------------------------
-    procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : SetLogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+    procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
     begin
@@ -7180,7 +7180,7 @@ package body AlertLogPkg is
   end function GetAlertEnable ;
 
   ------------------------------------------------------------
-  procedure SetLogEnable(Level : SetLogType ;  Enable : boolean) is
+  procedure SetLogEnable(Level : LogType ;  Enable : boolean) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
@@ -7189,7 +7189,7 @@ package body AlertLogPkg is
   end procedure SetLogEnable ;
 
   ------------------------------------------------------------
-  procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : SetLogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
+  procedure SetLogEnable(AlertLogID : AlertLogIDType ;  Level : LogType ;  Enable : boolean ; DescendHierarchy : boolean := TRUE) is
   ------------------------------------------------------------
   begin
     -- synthesis translate_off
