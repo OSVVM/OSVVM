@@ -41,9 +41,6 @@
 --
 
 use std.textio.all ;
--- use std.env.all ;
-library osvvm ;
-use osvvm.TranscriptBasePkg.all ;
 
 package AssertApiPkg is
 
