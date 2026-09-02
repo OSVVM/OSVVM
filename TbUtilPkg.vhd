@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    08/2026   2026.08    Added WakeOnBarrier
 --    11/2024   2024.11    Replaced time with delay_length (0 to time'high) and integer with natural (in WaitForClock)
 --    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
 --    07/2024   2024.07    Added pre-defined barriers:

@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    08/2026   2026.08    Added WakeOnBarrier
 --    11/2024   2024.11    Replaced time with delay_length (0 to time'high) and integer with natural (in WaitForClock)
 --    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
 --    07/2024   2024.07    Added pre-defined barriers:
@@ -285,12 +286,16 @@ package TbUtilPkg is
   --   signal barrier1 : BarrierType ;                    -- Recommended
   --   signal barrier2 : resolved_barrier integer := 1 ;  -- Supported
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ) ;
+  procedure WakeOnBarrier  ( signal Sig : In    BarrierType) ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : delay_length ) ;
+
   -- std_logic support
   procedure WaitForBarrier ( signal Sig : InOut std_logic ) ;
+  procedure WakeOnBarrier  ( signal Sig : In    std_logic) ;
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : delay_length ) ;
+
   -- Using separate signals
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncInV : in  std_logic_vector ) ;
@@ -921,6 +926,11 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
+  procedure WakeOnBarrier ( signal Sig : In    std_logic ) is
+  begin
+    wait until Sig = 'H' ;
+  end procedure WakeOnBarrier ;
+
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') is
   begin
     Sig <= 'H' ;
@@ -970,6 +980,11 @@ package body TbUtilPkg is
     Sig <= 1 ;
     wait for 0 ns ;
   end procedure WaitForBarrier ;
+
+  procedure WakeOnBarrier ( signal Sig : In    BarrierType ) is
+  begin
+    wait until Sig = 0  ;
+  end procedure WakeOnBarrier ;
 
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') is
   begin
