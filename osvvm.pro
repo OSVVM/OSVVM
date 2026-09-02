@@ -59,18 +59,16 @@ if {$::osvvm::ToolSupportsGenericPackages}  {
   analyze deprecated/SetGetBoundedPkg_Instances.vhd
 }
 
-# Analyze package declarations
-analyze OsvvmScriptSettingsPkg.vhd    ; # package declaration.  See end for package body
+# Analyze OsvvmScriptSettingsPkg Header and Body are separate
+analyze OsvvmScriptSettingsPkg.vhd      ; # package declaration.  See end for package body
+analyze [FindOsvvmScriptSettingsPkg]    ;# Select between user and generated package
+
+# Analyze OsvvmSettingsPkg Header and Body are separate
 if {$::osvvm::OsvvmDevDerivePackageHeaders} {
-  MakePkgHeader       OsvvmSettingsPkg_default.vhd OsvvmSettingsPkg.vhd
-  MakePkgBodyTemplate OsvvmSettingsPkg_default.vhd OsvvmSettingsPkg_template.vhd
-  MakePkgSettings     OsvvmSettingsPkg_default.vhd OsvvmSettingsPkg_default.vset
+  MakeSettingsPkg OsvvmSettingsPkg
 }
 analyze OsvvmSettingsPkg.vhd
-
-# In OsvvmVhdlSettings, Add:
-# MakePkgBody OsvvmSettingsPkg_default.vset ${SettingsDir}/OsvvmSettingsPkg_local.vset OsvvmSettingsPkg_template.vhd OsvvmSettingsPkg_vset.vhd
-include OsvvmVhdlSettings.pro
+analyze  [FindSettingsPkgBody OsvvmSettingsPkg]  ;# nominally uses OsvvmSettingsPkg_default.vhd
 
 if {$::osvvm::ToolName ne "XSIM"}  {
   analyze TextUtilPkg.vhd
