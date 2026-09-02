@@ -49,6 +49,8 @@ use osvvm.TranscriptBasePkg.all ;
 
 package FileLinePathPkg is
 
+  constant SUPPORTS_2019_FILE_PATH : BOOLEAN := TRUE ;
+
   -- Alias's to std.env are not ambiguous just like for ieee.std_logic_textio
   alias FILE_NAME is std.env.FILE_NAME [return string] ;
   alias FILE_PATH is std.env.FILE_PATH [return string] ;
