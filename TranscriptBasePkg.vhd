@@ -10,7 +10,7 @@
 --
 --  Description:
 --     Low level Transcript handling required by other OSVVM capabilities
---     Not intended to be referenced outside of OSVVM
+--     Intended to be private to OSVVM - and not referenced outside OSVVM
 --     TranscriptPkg is the public interface and has aliases to all subprograms defined here
 --     Defines File Identifier
 --     Defines protected shared variables for control
@@ -75,16 +75,12 @@ package TranscriptBasePkg is
   procedure        TranscriptClose ;
   procedure        WriteLine(buf : inout line)  ;
 
-
-
   ------------------------------------------------------------
   shared variable TranscriptCurrentlyOpen : work.SetGetBoundedPkg_boolean.PType ;
   shared variable TranscriptMirror        : work.SetGetBoundedPkg_boolean.PType ;
   shared variable HasTranscriptBeenOpened : work.SetGetBoundedPkg_boolean.PType ;
   shared variable TranscriptNames         : NameStorePType ;
   shared variable CurrentTranscriptName   : NamePType ;
-
-
 
 end TranscriptBasePkg ;
 
@@ -154,9 +150,14 @@ package body TranscriptBasePkg is
   ------------------------------------------------------------
   procedure TranscriptClose is
   ------------------------------------------------------------
+    variable buf : line ;
   begin
     if TranscriptCurrentlyOpen.Get then
       file_close(TranscriptFile) ;
+      if not TranscriptMirror.Get then
+        swrite(buf, "%%x") ; -- X marks the spot to insert a link to html transcript file
+        WriteLine(OUTPUT, buf) ;
+      end if ;
     end if ;
     TranscriptCurrentlyOpen.Set(FALSE) ;
   end procedure TranscriptClose ;
