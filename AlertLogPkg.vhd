@@ -422,15 +422,6 @@ package AlertLogPkg is
   procedure AffirmIf( RequirementsIDName : string ; condition : boolean ; Message : string ; Enable : boolean := FALSE ) ;
 
   ------------------------------------------------------------
-  -- Stable checks
-  --   Call as:  AffirmIfStable(ID, Sig'event, 5 ns, "Sig: ") ;
-  --
-  procedure AffirmIfStable(AlertLogID : AlertLogIDType ; LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotStable(AlertLogID : AlertLogIDType ; LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfStable(LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) ;
-  procedure AffirmIfNotStable(LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) ;
-
-  ------------------------------------------------------------
   procedure SetAlertLogJustify (Enable : boolean := TRUE) ;
   procedure ReportAlerts ( Name : String ; AlertCount : AlertCountType ) ;
   procedure ReportRequirements ;
@@ -6603,52 +6594,6 @@ package body AlertLogPkg is
     AffirmIf(GetReqID(RequirementsIDName), condition, Message, Enable) ;
     -- synthesis translate_on
   end procedure AffirmIf ;
-
-  -- With AlertLogID
-  ------------------------------------------------------------
-  procedure AffirmIfStable(AlertLogID : AlertLogIDType ; LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) is
-  ------------------------------------------------------------
-  begin
-    -- synthesis translate_off
-    AffirmIf(AlertLogID, LastChange >= Stable,
-        Message & "Check Stable:  LastChange: " & format(LastChange) &
-        " >  Stable Requirement: " & format(Stable),
-        Enable
-      ) ;
-    -- synthesis translate_on
-  end procedure AffirmIfStable ;
-
-  ------------------------------------------------------------
-  procedure AffirmIfNotStable(AlertLogID : AlertLogIDType ; LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) is
-  ------------------------------------------------------------
-  begin
-    -- synthesis translate_off
-    AffirmIf(AlertLogID, LastChange < Stable,
-        Message & "Check Stable:  LastChange: " & format(LastChange) &
-        " <=  Stable Requirement: " & format(Stable),
-        Enable
-      ) ;
-    -- synthesis translate_on
-  end procedure AffirmIfNotStable ;
-
-  -- Without AlertLogID
-  ------------------------------------------------------------
-  procedure AffirmIfStable(LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) is
-  ------------------------------------------------------------
-  begin
-    -- synthesis translate_off
-    AffirmIfStable(ALERT_DEFAULT_ID, LastChange, Stable, Message, Enable) ;
-    -- synthesis translate_on
-  end procedure AffirmIfStable ;
-
-  ------------------------------------------------------------
-  procedure AffirmIfNotStable(LastChange, Stable : time ; Message : string ; Enable : boolean := FALSE ) is
-  ------------------------------------------------------------
-  begin
-    -- synthesis translate_off
-    AffirmIfNotStable(ALERT_DEFAULT_ID, LastChange, Stable, Message, Enable) ;
-    -- synthesis translate_on
-  end procedure AffirmIfNotStable ;
 
   ------------------------------------------------------------
   procedure SetAlertLogJustify (Enable : boolean := TRUE) is
