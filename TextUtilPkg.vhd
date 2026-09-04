@@ -258,9 +258,6 @@ package body TextUtilPkg is
 
   constant LOWER_TO_UPPER_OFFSET : integer := character'POS('a') - character'POS('A') ;
 
-  constant SIM_RESOLUTION     : time := std.env.resolution_limit ;
-  constant SIM_RESOLUTION10   : time := 10 * std.env.resolution_limit ;
-
   type NaturalString is array (Integer range <> ) of character ;
   constant DIGIT_TO_CHARACTER : NaturalString (0 to 9) := "0123456789" ;
 
@@ -270,6 +267,9 @@ package body TextUtilPkg is
   constant ONE_PS : time := ONE_NS / 1000 ;
   constant ONE_FS : time := ONE_PS / 1000 ;
 
+  constant SIM_RESOLUTION     : time := std.env.resolution_limit ;
+--  constant SIM_RESOLUTION     : time := ifelse(ONE_FS > 0 sec, ONE_FS, ifelse(ONE_PS > 0 sec, ONE_PS, ifelse(ONE_NS > 0 sec, ONE_NS, ONE_US))) ;  -- for Xilinx
+  constant SIM_RESOLUTION10   : time := 10 * SIM_RESOLUTION ;
 
   ------------------------------------------------------------
   function "-" (R : character ; L : integer ) return character is
@@ -756,13 +756,27 @@ package body TextUtilPkg is
       TimeVal := TimeVal / 3.6 ;  -- already divided by 1000
     end if ;
 
+    if MAX_FRACTION_DIGITS < FractionDigits then
+      -- If available fraction bits < requested, fill the extra bits with 0
+      for i in MAX_FRACTION_DIGITS to FractionDigits - 1 loop
+        Index := Index + 1 ;
+        S(Index) := '0' ;
+      end loop ;
+
+      -- If no availabe fraction bits add in the decimal point
+      if MAX_FRACTION_DIGITS = 0 then
+        Index := Index + 1 ;
+        S(Index) := '.' ;
+      end if ;
+    end if ;
+
     loop
       Index    := Index + 1 ;
       IntDigit := (TimeVal mod SIM_RESOLUTION10) / SIM_RESOLUTION  ;  -- Get the right most character
       S(Index) := DIGIT_TO_CHARACTER(IntDigit) ;  -- lookup character in array
       TimeVal  := TimeVal / 10 ;  -- advance to next digit
-      exit when TimeVal = 0 sec and Index > RESOLVED_FRACTION_DIGITS ;
-      if Index = RESOLVED_FRACTION_DIGITS then
+      exit when TimeVal = 0 sec and Index > FractionDigits ;
+      if Index = FractionDigits then
         Index := Index + 1 ;
         S(Index) := '.' ;
       end if ;
