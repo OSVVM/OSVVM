@@ -109,7 +109,11 @@ if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
   analyze deprecated/AssertApiPkg_c.vhd
 }
 
-analyze AlertLogPkg.vhd
+if {$::osvvm::ScriptBaseName ne "Siemens"} {
+  analyze AlertLogPkg.vhd
+} else {
+  analyze deprecated/AlertLogPkg_c.vhd
+}
 
 analyze IdFifoPtPkg.vhd
 
