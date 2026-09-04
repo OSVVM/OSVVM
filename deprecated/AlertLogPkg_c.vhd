@@ -29,7 +29,7 @@
 --    Date      Version    Description
 --    08/2026   2026.08    Added LogHeader, AffirmIfInRange, AffirmIfStable, AffirmIfNotStable,
 --                         Added SetExpectedAlertCount, GetExpectedAlertCount, IncrementExpectedAlertCount, SetManualCheck, GetManualCheck
---                         Alert and Log printing supports multiple line prints
+--                         Disabled:  Alert and Log printing supports multiple line prints
 --    05/2026   2026.05    Added USE_PARENT_ID to AlertLogReportModeType.  Allows data structures to select to create an ID or use the parent ID.
 --                         Is an alternative to using DISABLED which creates an ID.
 --    01/2026   2026.01    Added reporting for VHDL asserts for tools that support it.
@@ -1463,7 +1463,12 @@ package body AlertLogPkg is
       end if ;
       -- Spacing before message - including prefix
       swrite(buf, "  ") ;
+/*
+--
+-- Removed as they crash Questa when simulated with a single vsim flow vs. the vopt/vsim flow
+--
       if MESSAGE_LENGTH > 0 and (aMessage(1) = LF or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR) then
+
         -- Start message on next line at ALERT_LOG_INDENTED_LENGTH (OsvvmSettingsPkg)
         -- Shuffle LF at start of Message to in front of Prefix
         WrapToBuf(
@@ -1503,6 +1508,7 @@ package body AlertLogPkg is
           WrapLength       => integer'high/2   -- no wrap, just LF - /2 since it is used in expressions with "+"
         ) ;
       else
+ */
         -- Prefix + Message + Suffix
          write(buf, GetPrefix(AlertLogID) & Message & GetSuffix(AlertLogID)) ;
         -- Time Last
@@ -1510,7 +1516,7 @@ package body AlertLogPkg is
   --!!      if not ALERT_LOG_WRITE_TIME_FIRST then
           write(buf, " at " & format(NOW, DefaultTimeUnitsVar, ALERT_LOG_DIGITS_FOR_TIME_FRACTION) ) ;
         end if ;
-      end if ;
+--      end if ;
       writeline(buf) ;
     end procedure LocalPrint ;
 
