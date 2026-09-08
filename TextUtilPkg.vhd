@@ -734,7 +734,7 @@ package body TextUtilPkg is
     variable RoundVal : time ;
     variable IntDigit : integer ;
     constant ADJ_JUSTIFY : integer := RightJustify - ifelse(TimeUnits = min or TimeUnits = sec, 4, 3) ;
-    variable S        : string(maximum(ADJ_JUSTIFY, OSVVM_MAX_TIME_DECIMAL_DIGITS) downto 1) := (others => ' ') ;
+    variable S        : string(maximum(ADJ_JUSTIFY, OSVVM_MAX_TIME_DECIMAL_DIGITS + FractionDigits) downto 1) := (others => ' ') ;
   begin
     -- round value considering TimeUnits, FractionDigits, and Simulator resolution
     if EXTRA_DIGITS /= 0 then
