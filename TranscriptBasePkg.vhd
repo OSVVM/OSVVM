@@ -57,6 +57,7 @@
 
 use std.textio.all ;
 use work.OsvvmScriptSettingsPkg.all ;
+use work.OsvvmSettingsPkg.all ;
 use work.NamePkg.all ;
 use work.NameStorePkg.all ;
 use work.SetGetBoundedPkg_boolean.all ;
@@ -155,7 +156,7 @@ package body TranscriptBasePkg is
     if TranscriptCurrentlyOpen.Get then
       file_close(TranscriptFile) ;
       if not TranscriptMirror.Get then
-        swrite(buf, "%%x") ; -- X marks the spot to insert a link to html transcript file
+        swrite(buf, OSVVM_PREFIX_X_MARKS_THE_SPOT) ; -- Spot to insert a link to html transcript file
         WriteLine(OUTPUT, buf) ;
       end if ;
     end if ;
