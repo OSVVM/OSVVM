@@ -51,6 +51,8 @@ use work.IfElsePkg.all ;
 use work.OsvvmScriptSettingsPkg.all ;
 
 package OsvvmSettingsPkg is
+  -- CAUTION:  Changing this will break html log file generation
+  constant  OSVVM_PRINT_PREFIX            : string  ;
 
   -- ------------------------------------------
   -- Settings shared by all packages
@@ -171,7 +173,6 @@ package OsvvmSettingsPkg is
 -- *************************************************************************************************************
 
 -- CAUTION:  Changing these will break html log file generation
-  constant  OSVVM_PRINT_PREFIX            : string  ;
   constant  OSVVM_SECONDARY_PREFIX        : string  ;
   constant  OSVVM_BLANK_LINE_PREFIX       : string  ;
   constant  OSVVM_PREFIX_X_MARKS_THE_SPOT : string  ;
