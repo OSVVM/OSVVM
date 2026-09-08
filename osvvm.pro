@@ -17,6 +17,8 @@
 #
 #  Revision History:
 #    Date      Version    Description
+#     8/2026   2026.08    Updated OsvvmScriptSettingsPkg and OsvvmSettingsPkg handling.
+#                         Added SetGetBoundedGenericPkg, TransactionBasePkg.
 #     7/2024   2024.07    Added signed, unsigned, and integer_vector scoreboards
 #     3/2024   2024.03    Updated to handle Xilinx issues
 #     5/2023   2023.05    Added BurstCoveragePkg
@@ -32,7 +34,7 @@
 #
 #  This file is part of OSVVM.
 #
-#  Copyright (c) 2016 - 2025 by SynthWorks Design Inc.
+#  Copyright (c) 2016 - 2026 by SynthWorks Design Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -109,11 +111,13 @@ if {$::osvvm::Supports2019AssertApi  && $::osvvm::VhdlVersion >= 2019} {
   analyze deprecated/AssertApiPkg_c.vhd
 }
 
-if {$::osvvm::ScriptBaseName ne "Siemens"} {
-  analyze AlertLogPkg.vhd
-} else {
-  analyze deprecated/AlertLogPkg_c.vhd
-}
+analyze AlertLogPkg.vhd
+
+# if {$::osvvm::ScriptBaseName ne "Siemens"} {
+#   analyze AlertLogPkg.vhd
+# } else {
+#   analyze deprecated/AlertLogPkg_c.vhd
+# }
 
 analyze IdFifoPtPkg.vhd
 
