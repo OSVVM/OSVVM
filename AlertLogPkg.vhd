@@ -867,6 +867,7 @@ use work.NamePkg.all ;
 package body AlertLogPkg is
 
 -- synthesis translate_off
+  constant  OSVVM_LONG_SECONDARY_PREFIX   : string  := OSVVM_SECONDARY_PREFIX & (1 to OSVVM_LINE_WRAP => ' ') ;
 
   -- instead of justify(to_upper(to_string())), just look up the upper case, left justified values
   type     AlertNameType is array(AlertType) of string(1 to 7) ;
@@ -1467,10 +1468,11 @@ package body AlertLogPkg is
       if MESSAGE_LENGTH > 0 and (aMessage(1) = LF or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR) then
         -- Start message on next line at ALERT_LOG_INDENTED_LENGTH (OsvvmSettingsPkg)
         -- Shuffle LF at start of Message to in front of Prefix
+        PrefixCharacters := ALERT_LOG_INDENTED_LENGTH ;  --** reqiured to work around simulator bug
         WrapToBuf(
           buf              => buf,
           s                => LF & GetPrefix(AlertLogID) & aMessage(2 to MESSAGE_LENGTH) & GetSuffix(AlertLogID),
-          SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to ALERT_LOG_INDENTED_LENGTH),
+          SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
           WrapLength       => OSVVM_LINE_WRAP - ALERT_LOG_INDENTED_LENGTH
         ) ;
 
