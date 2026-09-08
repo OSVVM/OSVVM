@@ -81,6 +81,12 @@ package ReportPkg is
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean return integer] ;
   alias EndOfTestSummary is EndOfTestReports[boolean, AlertCountType, boolean, boolean] ;
 
+  -- Deprecated in this location.  These moved to TranscriptPkg.  Aliases to support backward compatibility
+  alias TranscriptOpen is work.TranscriptPkg.TranscriptOpen [FILE_OPEN_STATUS, WRITE_APPEND_OPEN_KIND] ;
+  alias TranscriptOpen is work.TranscriptPkg.TranscriptOpen [WRITE_APPEND_OPEN_KIND] ;
+  alias TranscriptOpen is work.TranscriptPkg.TranscriptOpen [FILE_OPEN_STATUS] ;
+  alias TranscriptOpen is work.TranscriptPkg.TranscriptOpen [] ;
+
 end ReportPkg ;
 
 --- ///////////////////////////////////////////////////////////////////////////
