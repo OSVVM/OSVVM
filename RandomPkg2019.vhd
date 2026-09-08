@@ -28,29 +28,29 @@
 --
 --  Revision History :
 --    Date       Version    Description
---    11/2024    2024.11    Added Scalar Exclude values to most (except RandIntV without unique value) 
---    09/2024    2024.09    Derived from RandomPkg 
+--    11/2024    2024.11    Added Scalar Exclude values to most (except RandIntV without unique value)
+--    09/2024    2024.09    Derived from RandomPkg
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2006 - 2024 by SynthWorks Design Inc.  
---  Copyright (C) 2021 - 2024 by OSVVM Authors   
---  
+--
+--  Copyright (c) 2006 - 2024 by SynthWorks Design Inc.
+--  Copyright (C) 2021 - 2024 by OSVVM Authors
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
-use work.OsvvmGlobalPkg.all ; 
-use work.AlertLogPkg.all ; 
+use work.OsvvmGlobalPkg.all ;
+use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
 use work.OsvvmSettingsPkg.all ;
@@ -68,6 +68,7 @@ use ieee.math_real.all ;
 
 package RandomPkg2019 is
 
+  constant SUPPORTS_2019_IMPURE_FUNCTIONS : boolean := TRUE ;
 
   -- Supports DistValInt functionality
   type DistRecType is record
@@ -75,17 +76,17 @@ package RandomPkg2019 is
     Weight : integer ;
   end record ;
   type DistType is array (natural range <>) of DistRecType ;
-  
+
   type RandomType is record
     Seed  : RandomSeedType ;
     Param : RandomParamType ;
-  end record ; 
+  end record ;
 
   -- Weight vectors not indexed by integers
   type NaturalVBoolType is array (boolean range <>) of natural;
   type NaturalVSlType   is array (std_logic range <>) of natural;
   type NaturalVBitType  is array (bit range <>) of natural;
-  
+
   procedure InitSeed  (variable RV : inout RandomType ;  S : string  ) ;
   procedure InitSeed  (variable RV : inout RandomType ;  I : integer ) ;
   procedure InitSeed  (variable RV : inout RandomType ;  T : time    ) ;
@@ -95,12 +96,12 @@ package RandomPkg2019 is
   impure function InitSeed  ( I : integer ) return RandomType ;
   impure function InitSeed  ( T : time    ) return RandomType ;
   impure function InitSeed  ( IV : integer_vector ) return RandomType ;
-  
+
   alias InitSeed  is GenRandSeed[string  return RandomSeedType] ;
   alias InitSeed  is GenRandSeed[integer return RandomSeedType] ;
   alias InitSeed  is GenRandSeed[time    return RandomSeedType] ;
   alias InitSeed  is GenRandSeed[integer_vector return RandomSeedType] ;
-  
+
   -- Save and restore seed values
   impure function SetSeed (RandomSeedIn : RandomSeedType) return RandomType ;
   procedure       SetSeed (variable RV : inout RandomType ;  RandomSeedIn : RandomSeedType ) ;
@@ -108,13 +109,13 @@ package RandomPkg2019 is
   alias SeedRandom is SetSeed [RandomSeedType return RandomType] ;
   alias SeedRandom is GetSeed [RandomType return RandomSeedType] ;
 
-  
+
   ------------------------------------------------------------
   --  Setting Randomization Parameters
   ------------------------------------------------------------
   procedure SetRandomParam (variable RV : inout RandomType ;  RandomParamIn : RandomParamType) ;
   procedure SetRandomParam (
-    variable RV  : inout RandomType ;  
+    variable RV  : inout RandomType ;
     Distribution : RandomDistType ;
     Mean         : Real := 0.0 ;
     Deviation    : Real := 0.0
@@ -175,7 +176,7 @@ package RandomPkg2019 is
   impure function Normal (variable RV : inout RandomType ; Mean, StdDeviation : real) return real ;
   impure function Normal (variable RV : inout RandomType ; Mean, StdDeviation, Min, Max : real) return real ;
   impure function Normal (
-    variable RV   : inout RandomType ; 
+    variable RV   : inout RandomType ;
     Mean          : real ;
     StdDeviation  : real ;
     Min           : integer ;
@@ -193,7 +194,7 @@ package RandomPkg2019 is
   impure function Poisson (variable RV : inout RandomType ; Mean : real) return real ;
   impure function Poisson (variable RV : inout RandomType ; Mean, Min, Max : real) return real ;
   impure function Poisson (
-    variable RV   : inout RandomType ; 
+    variable RV   : inout RandomType ;
     Mean          : real ;
     Min           : integer ;
     Max           : integer ;
@@ -346,7 +347,7 @@ package RandomPkg2019 is
   impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned) return unsigned ;
   impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : uv_vector)  return unsigned ;
 --!!  impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : unsigned)  return unsigned ;
-  
+
   impure function RandSlv      (variable RV : inout RandomType ; Size : natural) return std_logic_vector ;
   impure function RandSlv      (variable RV : inout RandomType ; Size : natural ; Exclude : slv_vector) return std_logic_vector ;
 --!!  impure function RandSlv      (variable RV : inout RandomType ; Size : natural ; Exclude : std_logic_vector) return std_logic_vector ;
@@ -354,7 +355,7 @@ package RandomPkg2019 is
   impure function RandSlv      (variable RV : inout RandomType ; Min, Max : std_logic_vector) return std_logic_vector ;
   impure function RandSlv      (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector ;
 --!!  impure function RandSlv      (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : std_logic_vector) return std_logic_vector ;
-  
+
   impure function RandSigned   (variable RV : inout RandomType ; Size : natural) return signed ;
   impure function RandSigned   (variable RV : inout RandomType ; Size : natural ; Exclude : sv_vector) return signed ;
 --!!  impure function RandSigned   (variable RV : inout RandomType ; Size : natural ; Exclude : signed) return signed ;
@@ -379,8 +380,8 @@ package RandomPkg2019 is
   impure function RandBool     (variable RV : inout RandomType ) return boolean;
   impure function RandSl       (variable RV : inout RandomType ) return std_logic;
   impure function RandBit      (variable RV : inout RandomType ) return bit;
-  
-  
+
+
   --- ///////////////////////////////////////////////////////////////////////////
   --
   --  Convenience Functions with Exclude as an scalar rather than a _vector
@@ -398,7 +399,7 @@ package RandomPkg2019 is
   impure function Normal     (variable RV : inout RandomType ; Mean, StdDeviation : real; Min, Max, Exclude : integer) return integer ;
   impure function Poisson    (variable RV : inout RandomType ; Mean : real; Min, Max, Exclude : integer) return integer ;
 
-  
+
   --- ///////////////////////////////////////////////////////////////////////////
   --
   --  Randomization with range and exclude
@@ -462,8 +463,8 @@ package RandomPkg2019 is
   impure function DistValSlv      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return std_logic_vector ;
   impure function DistValUnsigned (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return unsigned ;
   impure function DistValSigned   (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return signed ;
-    
-  
+
+
 end RandomPkg2019 ;
 
 --- ///////////////////////////////////////////////////////////////////////////
@@ -486,17 +487,17 @@ package body RandomPkg2019 is
   ---
   --- ///////////////////////////////////////////////////////////////////////////
  --!!  -----------------------------------------------------------------
- --!!  impure function Uniform return real is 
+ --!!  impure function Uniform return real is
  --!!  -----------------------------------------------------------------
- --!!    variable rRandom : real ; 
+ --!!    variable rRandom : real ;
  --!!  begin
  --!!    ieee.math_real.Uniform (RandomSeed(RandomSeed'left), RandomSeed(RandomSeed'right), rRandom) ;
- --!!    return rRandom ; 
+ --!!    return rRandom ;
  --!!  end function Uniform ;
   -----------------------------------------------------------------
   impure function Uniform (variable RV : inout RandomType) return real is
   -----------------------------------------------------------------
-    variable Result : real ; 
+    variable Result : real ;
   begin
     ieee.math_real.Uniform (RV.Seed(RV.Seed'left), RV.Seed(RV.Seed'right), Result) ;
     return result ;
@@ -511,16 +512,16 @@ package body RandomPkg2019 is
   procedure InitSeed  ( variable RV : inout RandomType ; S : string ) is
   ------------------------------------------------------------
   begin
-    RV.Seed :=  GenRandSeed(S) ;    
+    RV.Seed :=  GenRandSeed(S) ;
   end procedure InitSeed ;
 
   ------------------------------------------------------------
   procedure InitSeed  ( variable RV : inout RandomType ; I : integer ) is
   ------------------------------------------------------------
   begin
-    RV.Seed :=  GenRandSeed(I) ;    
+    RV.Seed :=  GenRandSeed(I) ;
   end procedure InitSeed ;
-  
+
   ------------------------------------------------------------
   procedure InitSeed  ( variable RV : inout RandomType ; T : time    ) is
   ------------------------------------------------------------
@@ -532,59 +533,59 @@ package body RandomPkg2019 is
   procedure InitSeed  ( variable RV : inout RandomType ; IV : integer_vector ) is
   ------------------------------------------------------------
   begin
-    RV.Seed :=  GenRandSeed(IV) ;    
+    RV.Seed :=  GenRandSeed(IV) ;
   end procedure InitSeed ;
 
   ------------------------------------------------------------
   impure function InitSeed  ( S : string ) return RandomType is
   ------------------------------------------------------------
-    variable RV : RandomType ; 
+    variable RV : RandomType ;
   begin
-    RV.Seed  :=  GenRandSeed(S) ; 
-    return RV ;    
+    RV.Seed  :=  GenRandSeed(S) ;
+    return RV ;
   end function InitSeed ;
 
   ------------------------------------------------------------
   impure function InitSeed  ( I : integer ) return RandomType is
   ------------------------------------------------------------
-    variable RV : RandomType ; 
+    variable RV : RandomType ;
   begin
-    RV.Seed  :=  GenRandSeed(I) ; 
-    return RV ;    
+    RV.Seed  :=  GenRandSeed(I) ;
+    return RV ;
   end function InitSeed ;
-  
+
   ------------------------------------------------------------
   impure function InitSeed  ( T : time    ) return RandomType is
   ------------------------------------------------------------
-    variable RV : RandomType ; 
+    variable RV : RandomType ;
   begin
-    RV.Seed  :=  GenRandSeed(T) ; 
-    return RV ;    
+    RV.Seed  :=  GenRandSeed(T) ;
+    return RV ;
   end function InitSeed ;
 
   ------------------------------------------------------------
   impure function InitSeed  ( IV : integer_vector ) return RandomType is
   ------------------------------------------------------------
-    variable RV : RandomType ; 
+    variable RV : RandomType ;
   begin
-    RV.Seed  :=  GenRandSeed(IV) ; 
-    return RV ;    
+    RV.Seed  :=  GenRandSeed(IV) ;
+    return RV ;
   end function InitSeed ;
 
   ------------------------------------------------------------
   impure function SetSeed (RandomSeedIn : RandomSeedType) return RandomType is
   ------------------------------------------------------------
-    variable RV : RandomType ; 
+    variable RV : RandomType ;
   begin
-    RV.Seed  :=  RandomSeedIn ; 
-    return RV ;    
+    RV.Seed  :=  RandomSeedIn ;
+    return RV ;
   end function SetSeed ;
-  
+
   ------------------------------------------------------------
   procedure       SetSeed (variable RV : inout RandomType ;  RandomSeedIn : RandomSeedType ) is
   ------------------------------------------------------------
   begin
-    RV.Seed  :=  RandomSeedIn ; 
+    RV.Seed  :=  RandomSeedIn ;
   end procedure SetSeed ;
 
   ------------------------------------------------------------
@@ -610,7 +611,7 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
   procedure SetRandomParam (
   ------------------------------------------------------------
-    variable RV  : inout RandomType ;  
+    variable RV  : inout RandomType ;
     Distribution : RandomDistType ;
     Mean         : Real := 0.0 ;
     Deviation    : Real := 0.0
@@ -702,7 +703,7 @@ package body RandomPkg2019 is
       return Max ;
     end if;
   end function CheckMinMax ;
-  
+
   --- ///////////////////////////////////////////////////////////////////////////
   ---
   --- Base Randomization Distributions
@@ -910,11 +911,11 @@ package body RandomPkg2019 is
     variable rRandomVal : real ;
   begin
     if Max < Min then
-       Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+       Alert(OSVVM_RANDOM_ALERTLOG_ID,
          "RandomPkg2019.Normal: Min: " & to_string(Min, 2) &
-             " >  Max: " & to_string(Max, 2),  
+             " >  Max: " & to_string(Max, 2),
          FAILURE) ;
-       return Mean ; 
+       return Mean ;
     else
       loop
         rRandomVal := Normal (RV, Mean, StdDeviation) ;
@@ -928,7 +929,7 @@ package body RandomPkg2019 is
   -- Normal + RandomVal >= Min and RandomVal <= Max
   impure function Normal (
   ------------------------------------------------------------
-    variable RV   : inout RandomType ; 
+    variable RV   : inout RandomType ;
     Mean          : real ;
     StdDeviation  : real ;
     Min           : integer ;
@@ -938,9 +939,9 @@ package body RandomPkg2019 is
     variable iRandomVal : integer ;
   begin
     if Max < Min then
-      Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
         "RandomPkg2019.Normal: Min: " & to_string(Min) &
-           " >  Max: " & to_string(Max),  
+           " >  Max: " & to_string(Max),
         FAILURE) ;
       return integer(round(Mean)) ;
     else
@@ -994,11 +995,11 @@ package body RandomPkg2019 is
     variable rRandomVal : real ;
   begin
     if Max < Min then
-      Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
          "RandomPkg2019.Poisson: Min: " & to_string(Min, 2) &
-             " >  Max: " & to_string(Max, 2),  
-         FAILURE) ;        
-      return Mean ; 
+             " >  Max: " & to_string(Max, 2),
+         FAILURE) ;
+      return Mean ;
     else
       loop
         rRandomVal := Poisson (RV, Mean) ;
@@ -1011,7 +1012,7 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
   impure function Poisson (
   ------------------------------------------------------------
-    variable RV   : inout RandomType ; 
+    variable RV   : inout RandomType ;
     Mean          : real ;
     Min           : integer ;
     Max           : integer ;
@@ -1020,11 +1021,11 @@ package body RandomPkg2019 is
     variable iRandomVal : integer ;
   begin
     if Max < Min then
-      Alert(OSVVM_RANDOM_ALERTLOG_ID, 
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
          "RandomPkg2019.Poisson: Min: " & to_string(Min) &
-             " >  Max: " & to_string(Max),  
-         FAILURE) ;        
-      return integer(round(Mean)) ; 
+             " >  Max: " & to_string(Max),
+         FAILURE) ;
+      return integer(round(Mean)) ;
     else
       loop
         iRandomVal := integer(round(  Poisson (RV, Mean)  )) ;
@@ -1034,7 +1035,7 @@ package body RandomPkg2019 is
     end if ;
     return iRandomVal ;
   end function  Poisson ;
-  
+
 
 
   --- ///////////////////////////////////////////////////////////////////////////
@@ -1059,7 +1060,7 @@ package body RandomPkg2019 is
         return integer'low ;
     end case ;
   end function LocalRandInt ;
-  
+
   ------------------------------------------------------------
   impure function RandInt (variable RV : inout RandomType ; Min, Max : integer) return integer is
   ------------------------------------------------------------
@@ -1108,14 +1109,14 @@ package body RandomPkg2019 is
   impure function RandIntV (variable RV : inout RandomType ; Min, Max : integer ; Unique : natural ; Size : natural) return integer_vector is
   ------------------------------------------------------------
     variable result : integer_vector(1 to Size) ;
-    variable iUnique : natural ; 
+    variable iUnique : natural ;
   begin
     -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
-    iUnique := Unique ; 
+    iUnique := Unique ;
     if Max-Min+1 < Unique then
       Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.(RandIntV | RandRealV | RandTimeV): Unique > number of values available", FAILURE) ;
-      iUnique := Max-Min+1 ; 
-    end if ; 
+      iUnique := Max-Min+1 ;
+    end if ;
     for i in result'range loop
       result(i) := RandInt(RV, Min, Max, result(maximum(1, 1 + i - iUnique) to Size)) ;
     end loop ;
@@ -1144,7 +1145,7 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
     constant CkMax : real := CheckMinMax("RandReal", Min, Max) ;
   begin
-    return LocalRandReal(RV, Min, CkMax) ; 
+    return LocalRandReal(RV, Min, CkMax) ;
   end function RandReal ;
 
   ------------------------------------------------------------
@@ -1188,14 +1189,14 @@ package body RandomPkg2019 is
     end loop ;
     return result ;
   end function RandTimeV ;
-  
+
   ------------------------------------------------------------
   impure function RandTimeV (variable RV : inout RandomType ; Min, Max : time ; Unique : natural ; Size : natural ; Unit : time := ns) return time_vector is
   ------------------------------------------------------------
     constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
   begin
     -- if Unique = 0, it is more efficient to call RandTimeV(Min, Max, Size)
-    return to_time_vector(RandIntV(RV, Min/Unit, CkMax/Unit, Unique, Size), Unit) ; 
+    return to_time_vector(RandIntV(RV, Min/Unit, CkMax/Unit, Unique, Size), Unit) ;
   end function RandTimeV ;
 
 
@@ -1294,7 +1295,7 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
     constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
   begin
-    return to_time_vector( RandIntV(RV, Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit), Size), Unit ) ; 
+    return to_time_vector( RandIntV(RV, Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit), Size), Unit ) ;
   end function RandTimeV ;
 
   ------------------------------------------------------------
@@ -1303,7 +1304,7 @@ package body RandomPkg2019 is
     constant CkMax  : time := CheckMinMax("RandTimeV", Min, Max) ;
   begin
     -- if Unique = 0, it is more efficient to call RandIntV(Min, Max, Size)
-    return to_time_vector( RandIntV(RV, Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit), Unique, Size), Unit ) ; 
+    return to_time_vector( RandIntV(RV, Min/Unit, CkMax/Unit, to_integer_vector(Exclude, Unit), Unique, Size), Unit ) ;
   end function RandTimeV ;
 
 
@@ -1373,15 +1374,15 @@ package body RandomPkg2019 is
   impure function RandIntV (variable RV : inout RandomType ; A : integer_vector ; Unique : natural ; Size : natural) return integer_vector is
   ------------------------------------------------------------
     variable result : integer_vector(1 to Size) ;
-    variable iUnique : natural ; 
+    variable iUnique : natural ;
   begin
     -- if Unique = 0, it is more efficient to call RandIntV(A, Size)
     -- require A'length >= Unique
-    iUnique := Unique ; 
+    iUnique := Unique ;
     if A'length < Unique then
       Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandIntV: Unique > length of set of values", FAILURE) ;
-      iUnique := A'length ; 
-    end if ; 
+      iUnique := A'length ;
+    end if ;
     for i in result'range loop
       result(i) := RandInt(RV, A, result(maximum(1, 1 + i - iUnique) to Size)) ;
     end loop ;
@@ -1533,11 +1534,11 @@ package body RandomPkg2019 is
     -- Remove Exclude from A
     RemoveExclude(A, Exclude, NewA, NewALength) ;
     -- Require NewALength >= Unique
-    iUnique := Unique ; 
-    if NewALength < Unique then 
+    iUnique := Unique ;
+    if NewALength < Unique then
       Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandIntV: Unique > Length of Set A - Exclude", FAILURE) ;
-      iUnique := NewALength ; 
-    end if ; 
+      iUnique := NewALength ;
+    end if ;
     -- Randomize using exclude list of Unique # of newly generated values
     for i in result'range loop
       result(i) := RandInt(RV, NewA(1 to NewALength), result(maximum(1, 1 + i - iUnique) to Size)) ;
@@ -1572,11 +1573,11 @@ package body RandomPkg2019 is
     -- Remove Exclude from A
     RemoveExclude(A, Exclude, NewA, NewALength) ;
     -- Require NewALength >= Unique
-    iUnique := Unique ; 
-    if NewALength < Unique then 
+    iUnique := Unique ;
+    if NewALength < Unique then
       Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandRealV: Unique > Length of Set A - Exclude", FAILURE) ;
-      iUnique := NewALength ; 
-    end if ; 
+      iUnique := NewALength ;
+    end if ;
     -- Randomize using exclude list of Unique # of newly generated values
     for i in result'range loop
       result(i) := RandReal(RV, NewA(1 to NewALength), result(maximum(1, 1 + i - iUnique) to Size)) ;
@@ -1611,11 +1612,11 @@ package body RandomPkg2019 is
     -- Remove Exclude from A
     RemoveExclude(A, Exclude, NewA, NewALength) ;
     -- Require NewALength >= Unique
-    iUnique := Unique ; 
-    if NewALength < Unique then 
+    iUnique := Unique ;
+    if NewALength < Unique then
       Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg2019.RandTimeV: Unique > Length of Set A - Exclude", FAILURE) ;
-      iUnique := NewALength ; 
-    end if ; 
+      iUnique := NewALength ;
+    end if ;
     -- Randomize using exclude list of Unique # of newly generated values
     for i in result'range loop
       result(i) := RandTime(RV, NewA(1 to NewALength), result(maximum(1, 1 + i - iUnique) to Size)) ;
@@ -1689,7 +1690,7 @@ package body RandomPkg2019 is
   begin
     for i in Weight'range loop
       FullWeight(boolean'pos(i)) := Weight(i) ;
-    end loop ; 
+    end loop ;
     return boolean'val(DistInt(RV, FullWeight)) ;
   end function DistBool ;
 
@@ -1700,7 +1701,7 @@ package body RandomPkg2019 is
   begin
     for i in Weight'range loop
       FullWeight(std_logic'pos(i)) := Weight(i) ;
-    end loop ; 
+    end loop ;
     return std_logic'val(DistInt(RV, FullWeight)) ;
   end function DistSl ;
 
@@ -1711,7 +1712,7 @@ package body RandomPkg2019 is
   begin
     for i in Weight'range loop
       FullWeight(bit'pos(i)) := Weight(i) ;
-    end loop ; 
+    end loop ;
     return bit'val(DistInt(RV, FullWeight)) ;
   end function DistBit ;
 
@@ -1854,13 +1855,13 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
     alias normA : unsigned (A'length downto 1) is A ;
   begin
-    for i in normA'range loop 
-      if normA(i) = '1' then 
-        return i ; 
-      end if ; 
+    for i in normA'range loop
+      if normA(i) = '1' then
+        return i ;
+      end if ;
     end loop ;
-    return -1 ; 
-  end function SizeByLeftMostBit ; 
+    return -1 ;
+  end function SizeByLeftMostBit ;
 
   ------------------------------------------------------------
   impure function RandUnsigned (variable RV : inout RandomType ; Size : natural) return unsigned is
@@ -1882,16 +1883,16 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
   impure function RandUnsigned (variable RV : inout RandomType ; Size : natural ; Exclude : uv_vector) return unsigned is
   ------------------------------------------------------------
-    variable Result : unsigned (Size - 1 downto 0) ; 
+    variable Result : unsigned (Size - 1 downto 0) ;
   begin
-    RandValLoop : loop 
-      Result := RandUnsigned(RV, Size) ; 
-      for i in Exclude'range loop 
-        next RandValLoop when Result = Exclude(i) ; 
+    RandValLoop : loop
+      Result := RandUnsigned(RV, Size) ;
+      for i in Exclude'range loop
+        next RandValLoop when Result = Exclude(i) ;
       end loop ;
       exit RandValLoop ;
-    end loop RandValLoop ; 
-    return Result ; 
+    end loop RandValLoop ;
+    return Result ;
   end function RandUnsigned ;
 
 --!!  ------------------------------------------------------------
@@ -1899,7 +1900,7 @@ package body RandomPkg2019 is
 --!!  ------------------------------------------------------------
 --!!    constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
 --!!  begin
---!!    return RandUnsigned(RV, Size, EXCLUDE_VECTOR) ; 
+--!!    return RandUnsigned(RV, Size, EXCLUDE_VECTOR) ;
 --!!  end function RandUnsigned ;
 
   ------------------------------------------------------------
@@ -1955,16 +1956,16 @@ package body RandomPkg2019 is
   impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : unsigned ; Exclude : uv_vector)  return unsigned is
   ------------------------------------------------------------
     constant LEN : integer := maximum(Max'length, Min'length) ;
-    variable Result : unsigned (LEN - 1 downto 0) ; 
+    variable Result : unsigned (LEN - 1 downto 0) ;
   begin
-    RandValLoop : loop 
-      Result := RandUnsigned(RV, Min, Max) ; 
-      for i in Exclude'range loop 
-        next RandValLoop when Result = Exclude(i) ; 
+    RandValLoop : loop
+      Result := RandUnsigned(RV, Min, Max) ;
+      for i in Exclude'range loop
+        next RandValLoop when Result = Exclude(i) ;
       end loop ;
       exit RandValLoop ;
-    end loop RandValLoop ; 
-    return Result ; 
+    end loop RandValLoop ;
+    return Result ;
   end function RandUnsigned ;
 
 --!!  ------------------------------------------------------------
@@ -1972,7 +1973,7 @@ package body RandomPkg2019 is
 --!!  ------------------------------------------------------------
 --!!    constant EXCLUDE_VECTOR : uv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
 --!!  begin
---!!    return RandUnsigned(RV, Min, Max, EXCLUDE_VECTOR) ; 
+--!!    return RandUnsigned(RV, Min, Max, EXCLUDE_VECTOR) ;
 --!!  end function RandUnsigned ;
 
   ------------------------------------------------------------
@@ -1992,16 +1993,16 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
   impure function RandSlv (variable RV : inout RandomType ; Size : natural ; Exclude : slv_vector) return std_logic_vector is
   ------------------------------------------------------------
-    variable Result : std_logic_vector (Size - 1 downto 0) ; 
+    variable Result : std_logic_vector (Size - 1 downto 0) ;
   begin
-    RandValLoop : loop 
-      Result := RandSlv(RV, Size) ; 
-      for i in Exclude'range loop 
-        next RandValLoop when Result = Exclude(i) ; 
+    RandValLoop : loop
+      Result := RandSlv(RV, Size) ;
+      for i in Exclude'range loop
+        next RandValLoop when Result = Exclude(i) ;
       end loop ;
       exit RandValLoop ;
-    end loop RandValLoop ; 
-    return Result ; 
+    end loop RandValLoop ;
+    return Result ;
   end function RandSlv ;
 
 --!!  ------------------------------------------------------------
@@ -2009,7 +2010,7 @@ package body RandomPkg2019 is
 --!!  ------------------------------------------------------------
 --!!    constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
 --!!  begin
---!!    return RandSlv(RV, Size, EXCLUDE_VECTOR) ; 
+--!!    return RandSlv(RV, Size, EXCLUDE_VECTOR) ;
 --!!  end function RandSlv ;
 
   ------------------------------------------------------------
@@ -2031,16 +2032,16 @@ package body RandomPkg2019 is
   impure function RandSlv (variable RV : inout RandomType ; Min, Max : std_logic_vector ; Exclude : slv_vector) return std_logic_vector is
   ------------------------------------------------------------
     constant LEN : integer := maximum(Max'length, Min'length) ;
-    variable Result : std_logic_vector (LEN - 1 downto 0) ; 
+    variable Result : std_logic_vector (LEN - 1 downto 0) ;
   begin
-    RandValLoop : loop 
-      Result := RandSlv(RV, Min, Max) ; 
-      for i in Exclude'range loop 
-        next RandValLoop when Result = Exclude(i) ; 
+    RandValLoop : loop
+      Result := RandSlv(RV, Min, Max) ;
+      for i in Exclude'range loop
+        next RandValLoop when Result = Exclude(i) ;
       end loop ;
       exit RandValLoop ;
-    end loop RandValLoop ; 
-    return Result ;   
+    end loop RandValLoop ;
+    return Result ;
   end function RandSlv ;
 
 --!!  ------------------------------------------------------------
@@ -2048,7 +2049,7 @@ package body RandomPkg2019 is
 --!!  ------------------------------------------------------------
 --!!    constant EXCLUDE_VECTOR : slv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
 --!!  begin
---!!    return RandSlv(RV, Min, Max, EXCLUDE_VECTOR) ; 
+--!!    return RandSlv(RV, Min, Max, EXCLUDE_VECTOR) ;
 --!!  end function RandSlv ;
 
   ------------------------------------------------------------
@@ -2057,20 +2058,20 @@ package body RandomPkg2019 is
   begin
     return signed(RandUnsigned(RV, Size)) ;
   end function RandSigned ;
-  
+
   ------------------------------------------------------------
   impure function RandSigned (variable RV : inout RandomType ; Size : natural ; Exclude : sv_vector) return signed is
   ------------------------------------------------------------
-    variable Result : signed (Size - 1 downto 0) ; 
+    variable Result : signed (Size - 1 downto 0) ;
   begin
-    RandValLoop : loop 
-      Result := RandSigned(RV, Size) ; 
-      for i in Exclude'range loop 
-        next RandValLoop when Result = Exclude(i) ; 
+    RandValLoop : loop
+      Result := RandSigned(RV, Size) ;
+      for i in Exclude'range loop
+        next RandValLoop when Result = Exclude(i) ;
       end loop ;
       exit RandValLoop ;
-    end loop RandValLoop ; 
-    return Result ; 
+    end loop RandValLoop ;
+    return Result ;
   end function RandSigned ;
 
 --!!  ------------------------------------------------------------
@@ -2078,7 +2079,7 @@ package body RandomPkg2019 is
 --!!  ------------------------------------------------------------
 --!!    constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
 --!!  begin
---!!    return RandSigned(RV, Size, EXCLUDE_VECTOR) ; 
+--!!    return RandSigned(RV, Size, EXCLUDE_VECTOR) ;
 --!!  end function RandSigned ;
 
   ------------------------------------------------------------
@@ -2112,16 +2113,16 @@ package body RandomPkg2019 is
   impure function RandSigned (variable RV : inout RandomType ; Min, Max : signed ; Exclude : sv_vector) return signed is
   ------------------------------------------------------------
     constant LEN : integer := maximum(Max'length, Min'length) ;
-    variable Result : signed (LEN - 1 downto 0) ; 
+    variable Result : signed (LEN - 1 downto 0) ;
   begin
-    RandValLoop : loop 
-      Result := RandSigned(RV, Min, Max) ; 
-      for i in Exclude'range loop 
-        next RandValLoop when Result = Exclude(i) ; 
+    RandValLoop : loop
+      Result := RandSigned(RV, Min, Max) ;
+      for i in Exclude'range loop
+        next RandValLoop when Result = Exclude(i) ;
       end loop ;
       exit RandValLoop ;
-    end loop RandValLoop ; 
-    return Result ; 
+    end loop RandValLoop ;
+    return Result ;
   end function RandSigned ;
 
 --!!  ------------------------------------------------------------
@@ -2129,7 +2130,7 @@ package body RandomPkg2019 is
 --!!  ------------------------------------------------------------
 --!!    constant EXCLUDE_VECTOR : sv_vector(1 to 1)(Exclude'range) := (1 => Exclude) ;
 --!!  begin
---!!    return RandSigned(RV, Min, Max, EXCLUDE_VECTOR) ; 
+--!!    return RandSigned(RV, Min, Max, EXCLUDE_VECTOR) ;
 --!!  end function RandSigned ;
 
 
@@ -2209,8 +2210,8 @@ package body RandomPkg2019 is
   begin
     return bit'val(RandInt(RV, 1));
   end function RandBit ;
-  
-  
+
+
   --- ///////////////////////////////////////////////////////////////////////////
   --
   --  Convenience Functions with Exclude as an scalar rather than a _vector
@@ -2224,24 +2225,24 @@ package body RandomPkg2019 is
   --- ///////////////////////////////////////////////////////////////////////////
   impure function Uniform    (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer is
   begin
-    return Uniform(RV, Min, Max, (0 => Exclude)) ; 
-  end function Uniform ; 
+    return Uniform(RV, Min, Max, (0 => Exclude)) ;
+  end function Uniform ;
   impure function FavorSmall (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer is
   begin
-    return FavorSmall(RV, Min, Max, (0 => Exclude)) ; 
-  end function FavorSmall ; 
+    return FavorSmall(RV, Min, Max, (0 => Exclude)) ;
+  end function FavorSmall ;
   impure function FavorBig   (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer) return integer is
   begin
-    return FavorBig(RV, Min, Max, (0 => Exclude)) ; 
-  end function FavorBig ; 
+    return FavorBig(RV, Min, Max, (0 => Exclude)) ;
+  end function FavorBig ;
   impure function Normal (variable RV : inout RandomType ; Mean, StdDeviation : real; Min, Max, Exclude : integer) return integer is
   begin
-    return Normal(RV, Mean, StdDeviation, Min, Max, (0 => Exclude)) ; 
-  end function Normal ; 
+    return Normal(RV, Mean, StdDeviation, Min, Max, (0 => Exclude)) ;
+  end function Normal ;
   impure function Poisson (variable RV : inout RandomType ; Mean : real; Min, Max, Exclude : integer) return integer is
   begin
-    return Poisson(RV, Mean, Min, Max, (0 => Exclude)) ; 
-  end function Poisson ; 
+    return Poisson(RV, Mean, Min, Max, (0 => Exclude)) ;
+  end function Poisson ;
 
   --- ///////////////////////////////////////////////////////////////////////////
   --
@@ -2250,43 +2251,43 @@ package body RandomPkg2019 is
   --- ///////////////////////////////////////////////////////////////////////////
   impure function RandInt      (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ) return integer is
   begin
-    return RandInt(RV, Min, Max, (0 => Exclude)) ; 
-  end function RandInt ; 
+    return RandInt(RV, Min, Max, (0 => Exclude)) ;
+  end function RandInt ;
 -- ambiguous if Unit has a default
 --    impure function RandTime     (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unit   : time := ns) return time is
   impure function RandTime     (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unit   : time ) return time is
   begin
-    return RandTime(RV, Min, Max, (0 => Exclude), Unit) ; 
-  end function RandTime ; 
+    return RandTime(RV, Min, Max, (0 => Exclude), Unit) ;
+  end function RandTime ;
   impure function RandSlv      (variable RV : inout RandomType ; Min, Max : natural ; Exclude : integer ; Size   : natural) return std_logic_vector is
   begin
-    return RandSlv(RV, Min, Max, (0 => Exclude), Size) ; 
-  end function RandSlv ; 
+    return RandSlv(RV, Min, Max, (0 => Exclude), Size) ;
+  end function RandSlv ;
   impure function RandUnsigned (variable RV : inout RandomType ; Min, Max : natural ; Exclude : integer ; Size   : natural) return Unsigned is
   begin
-    return RandUnsigned(RV, Min, Max, (0 => Exclude), Size) ; 
-  end function RandUnsigned ; 
+    return RandUnsigned(RV, Min, Max, (0 => Exclude), Size) ;
+  end function RandUnsigned ;
   impure function RandSigned   (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Size   : natural) return Signed is
   begin
-    return RandSigned(RV, Min, Max, (0 => Exclude), Size) ; 
-  end function RandSigned ; 
+    return RandSigned(RV, Min, Max, (0 => Exclude), Size) ;
+  end function RandSigned ;
 -- ambiguous with RandIntV(Min, Max, Unique, Size) return integer_vector ;
 --    impure function RandIntV     (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Size   : natural) return integer_vector is
 --    begin
---      return RandIntV(RV, Min, Max, (0 => Exclude), Size) ; 
---    end function RandIntV ; 
+--      return RandIntV(RV, Min, Max, (0 => Exclude), Size) ;
+--    end function RandIntV ;
   impure function RandIntV     (variable RV : inout RandomType ; Min, Max : integer ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector is
   begin
-    return RandIntV(RV, Min, Max, (0 => Exclude), Unique, Size) ; 
-  end function RandIntV ; 
+    return RandIntV(RV, Min, Max, (0 => Exclude), Unique, Size) ;
+  end function RandIntV ;
   impure function RandTimeV    (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Size   : natural ; Unit : in time := ns) return time_vector is
   begin
-    return RandTimeV(RV, Min, Max, (0 => Exclude), Size, Unit) ; 
-  end function RandTimeV ; 
+    return RandTimeV(RV, Min, Max, (0 => Exclude), Size, Unit) ;
+  end function RandTimeV ;
   impure function RandTimeV    (variable RV : inout RandomType ; Min, Max : time ;    Exclude : time ;    Unique : natural ; Size : natural ; Unit : in time := ns) return time_vector is
   begin
-    return RandTimeV(RV, Min, Max, (0 => Exclude), Unique, Size, Unit) ; 
-  end function RandTimeV ; 
+    return RandTimeV(RV, Min, Max, (0 => Exclude), Unique, Size, Unit) ;
+  end function RandTimeV ;
 
   --- ///////////////////////////////////////////////////////////////////////////
   --
@@ -2297,53 +2298,53 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
   impure function RandInt      (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer  ) return integer is
   begin
-    return RandInt(RV, A, (0 => Exclude)) ; 
-  end function RandInt ; 
+    return RandInt(RV, A, (0 => Exclude)) ;
+  end function RandInt ;
   impure function RandReal     (variable RV : inout RandomType ; A : real_vector    ; Exclude : real     ) return real is
   begin
-    return RandReal(RV, A, (0 => Exclude)) ; 
-  end function RandReal ; 
+    return RandReal(RV, A, (0 => Exclude)) ;
+  end function RandReal ;
   impure function RandTime     (variable RV : inout RandomType ; A : time_vector    ; Exclude : time     ) return time is
   begin
-    return RandTime(RV, A, (0 => Exclude)) ; 
-  end function RandTime ; 
+    return RandTime(RV, A, (0 => Exclude)) ;
+  end function RandTime ;
   impure function RandSlv      (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return std_logic_vector is
   begin
-    return RandSlv(RV, A, (0 => Exclude), Size) ; 
-  end function RandSlv ; 
+    return RandSlv(RV, A, (0 => Exclude), Size) ;
+  end function RandSlv ;
   impure function RandUnsigned (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return Unsigned is
   begin
-    return RandUnsigned(RV, A, (0 => Exclude), Size) ; 
-  end function RandUnsigned ; 
+    return RandUnsigned(RV, A, (0 => Exclude), Size) ;
+  end function RandUnsigned ;
   impure function RandSigned   (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural ) return Signed is
   begin
-    return RandSigned(RV, A, (0 => Exclude), Size) ; 
-  end function RandSigned ; 
+    return RandSigned(RV, A, (0 => Exclude), Size) ;
+  end function RandSigned ;
 -- ambiguous with RandIntV(RV, A, Unique, Size) return integer_vector ;
 --    impure function RandIntV     (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Size : natural) return integer_vector is
 --    begin
---      return RandIntV(RV, A, (0 => Exclude), Size) ; 
---    end function RandIntV ; 
+--      return RandIntV(RV, A, (0 => Exclude), Size) ;
+--    end function RandIntV ;
   impure function RandIntV     (variable RV : inout RandomType ; A : integer_vector ; Exclude : integer ; Unique : natural ; Size : natural) return integer_vector is
   begin
-    return RandIntV(RV, A, (0 => Exclude), Unique, Size) ; 
-  end function RandIntV ; 
+    return RandIntV(RV, A, (0 => Exclude), Unique, Size) ;
+  end function RandIntV ;
   impure function RandRealV    (variable RV : inout RandomType ; A : real_vector    ; Exclude : real    ; Size : natural) return real_vector is
   begin
-    return RandRealV(RV, A, (0 => Exclude), Size) ; 
-  end function RandRealV ; 
+    return RandRealV(RV, A, (0 => Exclude), Size) ;
+  end function RandRealV ;
   impure function RandRealV    (variable RV : inout RandomType ; A : real_vector    ; Exclude : real    ; Unique : natural ; Size : natural) return real_vector is
   begin
-    return RandRealV(RV, A, (0 => Exclude), Unique, Size) ; 
-  end function RandRealV ; 
+    return RandRealV(RV, A, (0 => Exclude), Unique, Size) ;
+  end function RandRealV ;
   impure function RandTimeV    (variable RV : inout RandomType ; A : time_vector    ; Exclude : time    ; Size : natural) return time_vector is
   begin
-    return RandTimeV(RV, A, (0 => Exclude), Size) ; 
-  end function RandTimeV ; 
+    return RandTimeV(RV, A, (0 => Exclude), Size) ;
+  end function RandTimeV ;
   impure function RandTimeV    (variable RV : inout RandomType ; A : time_vector    ; Exclude : time    ; Unique : natural ; Size : natural) return time_vector is
   begin
-    return RandTimeV(RV, A, (0 => Exclude), Unique, Size) ; 
-  end function RandTimeV ; 
+    return RandTimeV(RV, A, (0 => Exclude), Unique, Size) ;
+  end function RandTimeV ;
 
   --- ///////////////////////////////////////////////////////////////////////////
   --
@@ -2353,20 +2354,20 @@ package body RandomPkg2019 is
   --- ///////////////////////////////////////////////////////////////////////////
   impure function DistInt      (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ) return integer is
   begin
-    return DistInt(RV, Weight, (0 => Exclude)) ; 
-  end function DistInt ; 
+    return DistInt(RV, Weight, (0 => Exclude)) ;
+  end function DistInt ;
   impure function DistSlv      (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return std_logic_vector is
   begin
-    return DistSlv(RV, Weight, (0 => Exclude), Size) ; 
-  end function DistSlv ; 
+    return DistSlv(RV, Weight, (0 => Exclude), Size) ;
+  end function DistSlv ;
   impure function DistUnsigned (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return unsigned is
   begin
-    return DistUnsigned(RV, Weight, (0 => Exclude), Size) ; 
-  end function DistUnsigned ; 
+    return DistUnsigned(RV, Weight, (0 => Exclude), Size) ;
+  end function DistUnsigned ;
   impure function DistSigned   (variable RV : inout RandomType ; Weight : integer_vector ; Exclude : integer ; Size  : natural ) return signed is
   begin
-    return DistSigned(RV, Weight, (0 => Exclude), Size) ; 
-  end function DistSigned ; 
+    return DistSigned(RV, Weight, (0 => Exclude), Size) ;
+  end function DistSigned ;
 
   --- ///////////////////////////////////////////////////////////////////////////
   --
@@ -2378,19 +2379,19 @@ package body RandomPkg2019 is
   ------------------------------------------------------------
   impure function DistValInt      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ) return integer is
   begin
-    return DistValInt(RV, A, (0 => Exclude)) ; 
-  end function DistValInt ; 
+    return DistValInt(RV, A, (0 => Exclude)) ;
+  end function DistValInt ;
   impure function DistValSlv      (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return std_logic_vector is
   begin
-    return DistValSlv(RV, A, (0 => Exclude), Size) ; 
-  end function DistValSlv ; 
+    return DistValSlv(RV, A, (0 => Exclude), Size) ;
+  end function DistValSlv ;
   impure function DistValUnsigned (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return unsigned is
   begin
-    return DistValUnsigned(RV, A, (0 => Exclude), Size) ; 
-  end function DistValUnsigned ; 
+    return DistValUnsigned(RV, A, (0 => Exclude), Size) ;
+  end function DistValUnsigned ;
   impure function DistValSigned   (variable RV : inout RandomType ; A : DistType ; Exclude : integer ; Size  : natural) return signed is
   begin
-    return DistValSigned(RV, A, (0 => Exclude), Size) ; 
-  end function DistValSigned ; 
-  
+    return DistValSigned(RV, A, (0 => Exclude), Size) ;
+  end function DistValSigned ;
+
 end RandomPkg2019 ;
