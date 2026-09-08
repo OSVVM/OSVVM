@@ -98,8 +98,6 @@ use ieee.math_real.all ;
 
 package RandomPkg is
 
-  constant SUPPORTS_2019_IMPURE_FUNCTIONS : boolean := TRUE ;
-
   -- make things from SortListPkg_int visible
 --  alias sort    is work.SortListPkg_int.sort   [integer_vector return integer_vector] ;
 --  alias revsort is work.SortListPkg_int.revsort[integer_vector return integer_vector] ;
