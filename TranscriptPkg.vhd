@@ -106,6 +106,16 @@ package TranscriptPkg is
   procedure        Print(s : string) ;
 
   ------------------------------------------------------------
+  -- Print with a header and user defined prefix and suffix
+  procedure PrintHeader (s, Prefix, Suffix : string) ;
+  procedure PrintHeader (s, Prefix, Suffix : string ; Level : LogType ) ;
+  procedure PrintHeader (AlertLogID : AlertLogIDType ; s, Prefix, Suffix : string ; Level : LogType ) ;
+  -- Print with a header and default prefix and suffix - set by OsvvmSettingsPkg
+  procedure PrintHeader (s : string) ;
+  procedure PrintHeader (s : string ; Level : LogType ) ;
+  procedure PrintHeader (AlertLogID : AlertLogIDType ; s : string ; Level : LogType ) ;
+
+  ------------------------------------------------------------
   -- Create "count" number of blank lines
   procedure BlankLine (count : natural := 1) ;
   procedure BlankLine (count : natural; Level : LogType; Enable : boolean := FALSE ) ;
@@ -258,6 +268,68 @@ package body TranscriptPkg is
     work.TranscriptBasePkg.WriteLine(buf) ;
   end procedure Print ;
 
+  ------------------------------------------------------------
+  -- Print with a header and user defined prefix and suffix
+  ------------------------------------------------------------
+  procedure PrintHeader (s, Prefix, Suffix : string) is
+  ------------------------------------------------------------
+    variable buf : line ;
+  begin
+    if Prefix'length > 0 then
+      HeaderToBuf(buf, Prefix) ;
+    end if  ;
+    WrapToBuf(buf, s, OSVVM_PRINT_PREFIX, OSVVM_PRINT_PREFIX, OSVVM_LINE_WRAP) ;
+    if Suffix'length > 0 then
+      HeaderToBuf(buf, Suffix) ;
+    end if  ;
+    work.TranscriptBasePkg.WriteLine(buf) ;
+  end procedure PrintHeader ;
+
+  ------------------------------------------------------------
+  procedure PrintHeader (s, Prefix, Suffix : string ; Level : LogType ) is
+  ------------------------------------------------------------
+  begin
+    if IsLogEnabled(Level) then
+      PrintHeader(s, Prefix, Suffix) ;
+    end if ;
+  end procedure PrintHeader ;
+
+  ------------------------------------------------------------
+  procedure PrintHeader (AlertLogID : AlertLogIDType ; s, Prefix, Suffix : string ; Level : LogType ) is
+  ------------------------------------------------------------
+  begin
+    if IsLogEnabled(AlertLogID, Level) then
+      PrintHeader(s, Prefix, Suffix) ;
+    end if ;
+  end procedure PrintHeader ;
+
+  ------------------------------------------------------------
+  -- Print with a header and default prefix and suffix - set by OsvvmSettingsPkg
+  ------------------------------------------------------------
+  procedure PrintHeader (s : string) is
+  ------------------------------------------------------------
+    variable buf : line ;
+  begin
+    PrintHeader(s, OSVVM_HEADER_PREFIX, OSVVM_HEADER_SUFFIX) ;
+  end procedure PrintHeader ;
+
+  ------------------------------------------------------------
+  procedure PrintHeader (s : string ; Level : LogType ) is
+  ------------------------------------------------------------
+  begin
+    if IsLogEnabled(Level) then
+      PrintHeader(s, OSVVM_HEADER_PREFIX, OSVVM_HEADER_SUFFIX) ;
+    end if ;
+  end procedure PrintHeader ;
+
+  ------------------------------------------------------------
+  procedure PrintHeader (AlertLogID : AlertLogIDType ; s : string ; Level : LogType ) is
+  ------------------------------------------------------------
+  begin
+    if IsLogEnabled(AlertLogID, Level) then
+      PrintHeader(s, OSVVM_HEADER_PREFIX, OSVVM_HEADER_SUFFIX) ;
+    end if ;
+  end procedure PrintHeader ;
 
   ------------------------------------------------------------
   procedure BlankLine (count : natural := 1) is
@@ -314,7 +386,6 @@ package body TranscriptPkg is
     -- Output the whole set of lines
     work.TranscriptBasePkg.WriteLine(buf) ;
   end procedure Blank ;
-
 
   ------------------------------------------------------------
   procedure HeaderLine(S : string) is
