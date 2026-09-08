@@ -51,17 +51,14 @@ use work.IfElsePkg.all ;
 use work.OsvvmScriptSettingsPkg.all ;
 
 package body OsvvmSettingsPkg is
-  -- CAUTION:  Changing this will break html log file generation
-  constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
-
   -- ------------------------------------------
   -- Settings shared by all packages
   -- ------------------------------------------
   -- Output Formatting
   constant  OSVVM_HEADER_PREFIX           : string  := " " ;
   constant  OSVVM_HEADER_SUFFIX           : string  := "*" ;
-  constant  OSVVM_LINE_LENGTH             : integer := 165 - OSVVM_PRINT_PREFIX'length ; -- Number of times a character repeats in header lines
-  constant  OSVVM_LINE_WRAP               : integer := 165 - OSVVM_PRINT_PREFIX'length ; -- For PrintLine - set to integer'high to disable
+  constant  OSVVM_LINE_LENGTH             : integer := 162 ; -- Number of times a character repeats in header lines
+  constant  OSVVM_LINE_WRAP               : integer := 162 ; -- For PrintLine - set to integer'high to disable
 
   constant  OSVVM_DEFAULT_TIME_UNITS               : time := 1 ns ;
   constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := 3 ;
@@ -173,10 +170,10 @@ package body OsvvmSettingsPkg is
 -- *************************************************************************************************************
 
 -- CAUTION:  Changing these will break html log file generation
+  constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
   constant  OSVVM_SECONDARY_PREFIX        : string  := "%%> " ;
   constant  OSVVM_BLANK_LINE_PREFIX       : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", OSVVM_PRINT_PREFIX, "") ;
   constant  OSVVM_PREFIX_X_MARKS_THE_SPOT : string  := "%%+ " ;
-  constant  OSVVM_LONG_SECONDARY_PREFIX   : string  := OSVVM_SECONDARY_PREFIX & (OSVVM_SECONDARY_PREFIX'length+1 to OSVVM_LINE_WRAP => ' ') ;
   constant  OSVVM_PASS_NAME               : string  := "PASSED" ;
   constant  OSVVM_FAIL_NAME               : string  := "FAILED" ;
 
