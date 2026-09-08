@@ -29,7 +29,8 @@
 --    Date      Version    Description
 --    08/2026   2026.08    Added LogHeader, AffirmIfInRange, AffirmIfStable, AffirmIfNotStable,
 --                         Added SetExpectedAlertCount, GetExpectedAlertCount, IncrementExpectedAlertCount, SetManualCheck, GetManualCheck
---                         Disabled:  Alert and Log printing supports multiple line prints
+--                         If Stop Limit is reached, test stops with STOPLIMIT status.
+--                         Disabled for this version:  Alert and Log printing supports multiple line prints
 --    05/2026   2026.05    Added USE_PARENT_ID to AlertLogReportModeType.  Allows data structures to select to create an ID or use the parent ID.
 --                         Is an alternative to using DISABLED which creates an ID.
 --    01/2026   2026.01    Added reporting for VHDL asserts for tools that support it.
