@@ -1429,9 +1429,9 @@ package body AlertLogPkg is
     ) is
       variable ParentID : AlertLogIDType ;
       variable PrefixCharacters : integer ;
+      variable WrapLength       : integer ;
       constant MESSAGE_LENGTH   : integer := Message'length ;
       alias aMessage : string(1 to MESSAGE_LENGTH) is Message ;
-      variable MessageStart : integer := 1 ;
     begin
       write(buf, ALERT_LOG_PRINT_PREFIX ) ; -- Print
       -- Debug Mode
@@ -1469,11 +1469,17 @@ package body AlertLogPkg is
         -- Start message on next line at ALERT_LOG_INDENTED_LENGTH (OsvvmSettingsPkg)
         -- Shuffle LF at start of Message to in front of Prefix
         PrefixCharacters := ALERT_LOG_INDENTED_LENGTH ;  --** reqiured to work around simulator bug
+        -- Do WRAP if WRAP mode or WRAP character.
+        if ALERT_LOG_WRAP or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR then
+          WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
+        else
+          WrapLength := integer'high/2 ;  -- disable wrap do to line length
+        end if ;
         WrapToBuf(
           buf              => buf,
           s                => LF & GetPrefix(AlertLogID) & aMessage(2 to MESSAGE_LENGTH) & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => OSVVM_LINE_WRAP - ALERT_LOG_INDENTED_LENGTH
+          WrapLength       => WrapLength
         ) ;
 
       elsif (MESSAGE_LENGTH > 0 and aMessage(1) = ALERT_LOG_WRAP_END_CHAR) then
@@ -1503,7 +1509,7 @@ package body AlertLogPkg is
           buf              => buf,
           s                => GetPrefix(AlertLogID) & Message & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => integer'high/2   -- no wrap, just LF - /2 since it is used in expressions with "+"
+          WrapLength       => integer'high/2   -- disable wrap do to line length
         ) ;
       else
         -- Prefix + Message + Suffix
