@@ -1495,11 +1495,17 @@ package body AlertLogPkg is
       elsif ALERT_LOG_WRAP then
         -- Start message on same line as Alert / Log
         PrefixCharacters := buf.all'length ;
+        if MESSAGE_LENGTH > OSVVM_WRAP_THRESHOLD - PrefixCharacters then
+          WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
+        else
+          -- Disable WRAP if line length almost fits in the wrap length
+          WrapLength := integer'high/2 ;
+        end if ;
         WrapToBuf(
           buf              => buf,
           s                => GetPrefix(AlertLogID) & Message & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => OSVVM_LINE_WRAP - PrefixCharacters
+          WrapLength       => WrapLength
         ) ;
 
         elsif HasCharacter(Message, LF) then
