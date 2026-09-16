@@ -166,7 +166,7 @@ package TextUtilPkg is
   ) ;
 
   ------------------------------------------------------------
-  procedure HeaderToBuf (buf : inout line ; S : string) ;
+  procedure HeaderToBuf (buf : inout line ; S : string ; Len : natural := OSVVM_LINE_LENGTH) ;
 
   ------------------------------------------------------------
   procedure GetLine(
@@ -927,14 +927,14 @@ package body TextUtilPkg is
   end procedure WrapToBuf ;
 
   ------------------------------------------------------------
-  procedure HeaderToBuf (buf : inout line ; S : string) is
+  procedure HeaderToBuf (buf : inout line ; S : string ; Len : natural := OSVVM_LINE_LENGTH) is
   ------------------------------------------------------------
   begin
     for i in S'range loop
       if S(i) = ' ' then
         swrite(buf, OSVVM_PRINT_PREFIX ) ;
       else
-        swrite(buf, OSVVM_PRINT_PREFIX  & (1 to OSVVM_LINE_LENGTH => S(i))) ;
+        swrite(buf, OSVVM_PRINT_PREFIX  & (1 to Len => S(i))) ;
       end if ;
       if i /= S'right then
         write(buf, LF) ;
