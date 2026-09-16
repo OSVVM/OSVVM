@@ -59,7 +59,7 @@ package body OsvvmSettingsPkg is
   constant  OSVVM_HEADER_SUFFIX           : string  := ${OSVVM_HEADER_SUFFIX} ;
   constant  OSVVM_LINE_LENGTH             : integer := ${OSVVM_LINE_LENGTH} ; -- Number of times a character repeats in header lines
   constant  OSVVM_LINE_WRAP               : integer := ${OSVVM_LINE_WRAP} ; -- For PrintLine - set to integer'high to disable
-
+  constant  OSVVM_WRAP_THRESHOLD          : integer := ${OSVVM_WRAP_THRESHOLD} ;
   constant  OSVVM_DEFAULT_TIME_UNITS               : time := ${OSVVM_DEFAULT_TIME_UNITS} ;
   constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := ${OSVVM_DIGITS_FOR_TIME_FRACTION} ;
   constant  OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL  : natural := ${OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL} ;

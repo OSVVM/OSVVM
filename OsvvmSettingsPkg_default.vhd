@@ -59,7 +59,7 @@ package body OsvvmSettingsPkg is
   constant  OSVVM_HEADER_SUFFIX           : string  := "*" ;
   constant  OSVVM_LINE_LENGTH             : integer := 162 ; -- Number of times a character repeats in header lines
   constant  OSVVM_LINE_WRAP               : integer := 162 ; -- For PrintLine - set to integer'high to disable
-
+  constant  OSVVM_WRAP_THRESHOLD          : integer := integer(1.10 * real(OSVVM_LINE_WRAP)) ;
   constant  OSVVM_DEFAULT_TIME_UNITS               : time := 1 ns ;
   constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := 3 ;
   constant  OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL  : natural := 8 ;
@@ -171,9 +171,9 @@ package body OsvvmSettingsPkg is
 
 -- CAUTION:  Changing these will break html log file generation
   constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
-  constant  OSVVM_SECONDARY_PREFIX        : string  := "%%> " ;
+  constant  OSVVM_SECONDARY_PREFIX        : string  := "%%: " ;
   constant  OSVVM_BLANK_LINE_PREFIX       : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", OSVVM_PRINT_PREFIX, "") ;
-  constant  OSVVM_PREFIX_X_MARKS_THE_SPOT : string  := "%%+ " ;
+  constant  OSVVM_PREFIX_X_MARKS_THE_SPOT : string  := "%%x " ;
   constant  OSVVM_PASS_NAME               : string  := "PASSED" ;
   constant  OSVVM_FAIL_NAME               : string  := "FAILED" ;
 
