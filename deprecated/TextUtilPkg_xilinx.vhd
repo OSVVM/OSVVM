@@ -20,7 +20,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---              2026.08    Added format, WrapOneLine
+--              2026.09    Exposed the length on HeaderToBuf so it can be mapped
+--              2026.08    Added format, WrapOneLine, WrapToBuf, HeaderToBuf,
 --    02/2025   2025.02    Fixed bug in RemoveCrLf when only Cr/LF in line and no other characters.
 --    09/2024   2024.09    Added to_string_max, RemoveSpace, RemoveCrLf, GetLine
 --    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
@@ -166,7 +167,7 @@ package TextUtilPkg is
   ) ;
 
   ------------------------------------------------------------
-  procedure HeaderToBuf (buf : inout line ; S : string) ;
+  procedure HeaderToBuf (buf : inout line ; S : string ; Len : natural := OSVVM_LINE_LENGTH) ;
 
   ------------------------------------------------------------
   procedure GetLine(
@@ -270,7 +271,6 @@ package body TextUtilPkg is
 --  constant SIM_RESOLUTION     : time := std.env.resolution_limit ;
   constant SIM_RESOLUTION     : time := ifelse(ONE_FS > 0 sec, ONE_FS, ifelse(ONE_PS > 0 sec, ONE_PS, ifelse(ONE_NS > 0 sec, ONE_NS, ONE_US))) ;  -- for Xilinx
   constant SIM_RESOLUTION10   : time := 10 * SIM_RESOLUTION ;
-
 
   ------------------------------------------------------------
   function "-" (R : character ; L : integer ) return character is
@@ -740,7 +740,7 @@ package body TextUtilPkg is
     variable RoundVal : time ;
     variable IntDigit : integer ;
     constant ADJ_JUSTIFY : integer := RightJustify - ifelse(TimeUnits = min or TimeUnits = sec, 4, 3) ;
-    variable S        : string(maximum(ADJ_JUSTIFY, OSVVM_MAX_TIME_DECIMAL_DIGITS) downto 1) := (others => ' ') ;
+    variable S        : string(maximum(ADJ_JUSTIFY, OSVVM_MAX_TIME_DECIMAL_DIGITS + FractionDigits) downto 1) := (others => ' ') ;
   begin
     -- round value considering TimeUnits, FractionDigits, and Simulator resolution
     if EXTRA_DIGITS /= 0 then
@@ -933,14 +933,14 @@ package body TextUtilPkg is
   end procedure WrapToBuf ;
 
   ------------------------------------------------------------
-  procedure HeaderToBuf (buf : inout line ; S : string) is
+  procedure HeaderToBuf (buf : inout line ; S : string ; Len : natural := OSVVM_LINE_LENGTH) is
   ------------------------------------------------------------
   begin
     for i in S'range loop
       if S(i) = ' ' then
         swrite(buf, OSVVM_PRINT_PREFIX ) ;
       else
-        swrite(buf, OSVVM_PRINT_PREFIX  & (1 to OSVVM_LINE_LENGTH => S(i))) ;
+        swrite(buf, OSVVM_PRINT_PREFIX  & (1 to Len => S(i))) ;
       end if ;
       if i /= S'right then
         write(buf, LF) ;

@@ -24,6 +24,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2025   2025.09    Adjusted OSVVM_PREFIX_X_MARKS_THE_SPOT prefix constant
+--    08/2025   2025.08    Added additional prefix constants
 --    02/2025   2025.02    Added COVERAGE_REQUIREMENT_BY_BIN
 --    09/2024   2024.09    Added ALERT_LOG_IGNORE_SPACES and ALERT_LOG_IGNORE_EMPTY_LINES
 --    07/2024   2024.07    Added ALERT_LOG_NOCHECKS_NAME and ALERT_LOG_TIMEOUT_NAME
@@ -32,7 +34,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2023 - 2024 by SynthWorks Design Inc.
+--  Copyright (c) 2023 - 2026 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -55,12 +57,12 @@ package body OsvvmSettingsPkg is
   -- Settings shared by all packages
   -- ------------------------------------------
   -- Output Formatting
-  constant  OSVVM_HEADER_PREFIX           : string  := " " ;
-  constant  OSVVM_HEADER_SUFFIX           : string  := "*" ;
-  constant  OSVVM_LINE_LENGTH             : integer := 162 ; -- Number of times a character repeats in header lines
-  constant  OSVVM_LINE_WRAP               : integer := 162 ; -- For PrintLine - set to integer'high to disable
-  constant  OSVVM_WRAP_THRESHOLD          : integer := integer(1.10 * real(OSVVM_LINE_WRAP)) ;
-  constant  OSVVM_DEFAULT_TIME_UNITS               : time := 1 ns ;
+  constant  OSVVM_HEADER_PREFIX                    : string  := " " ;
+  constant  OSVVM_HEADER_SUFFIX                    : string  := "*" ;
+  constant  OSVVM_LINE_LENGTH                      : integer := 162 ; -- Number of times a character repeats in header lines
+  constant  OSVVM_LINE_WRAP                        : integer := 162 ; -- For PrintLine - set to integer'high to disable
+  constant  OSVVM_WRAP_THRESHOLD                   : integer := integer(1.10 * real(OSVVM_LINE_WRAP)) ;
+  constant  OSVVM_DEFAULT_TIME_UNITS               : time    := 1 ns ;
   constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := 3 ;
   constant  OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL  : natural := 8 ;
   constant  OSVVM_DIGITS_FOR_REAL_FRACTION         : natural := 4 ;
@@ -69,11 +71,11 @@ package body OsvvmSettingsPkg is
   -- ------------------------------------------
   -- Settings for Requirements Tracking
   -- ------------------------------------------
-  constant  ALERT_LOG_DEFAULT_PASSED_GOAL        : integer := 1 ;
+  constant  ALERT_LOG_DEFAULT_PASSED_GOAL          : integer := 1 ;
   -- COVERAGE_REQUIREMENT_BY_BIN
   --   if TRUE, each bin of a coverage model is one requirement.
   --   if FALSE, an entire coverage model is one requirement,
-  constant  COVERAGE_REQUIREMENT_BY_BIN   : boolean := TRUE ;
+  constant  COVERAGE_REQUIREMENT_BY_BIN            : boolean := TRUE ;
 
   -- ------------------------------------------
   -- Settings for RandomPkg
@@ -81,26 +83,26 @@ package body OsvvmSettingsPkg is
   -- RandomPkg.InitSeed:
   --   For new designs, make this TRUE.
   --   For old designs, changing it will change your randomization.  If you need that exact pattern, then do not change.
-  constant RANDOM_USE_NEW_SEED_METHODS : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
+  constant RANDOM_USE_NEW_SEED_METHODS             : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
 
   -- ------------------------------------------
   -- Settings for ScoreboardGenericPkg
   -- ------------------------------------------
   -- WriteScoreboardYaml
-  constant SCOREBOARD_YAML_IS_BASE_FILE_NAME : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
+  constant SCOREBOARD_YAML_IS_BASE_FILE_NAME       : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
 
   -- ------------------------------------------
   -- Settings for CoveragePkg
   -- ------------------------------------------
-  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024", string'("REMAIN"), "AT_LEAST") ;
+  constant  COVERAGE_DEFAULT_WEIGHT_MODE         : string := IfElse(OSVVM_SETTINGS_REVISION >= "2024", string'("REMAIN"), "AT_LEAST") ;
   -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.
-  constant  COVERAGE_USE_NEW_SEED_METHODS : boolean := TRUE ;
+  constant  COVERAGE_USE_NEW_SEED_METHODS        : boolean := TRUE ;
 
     -- WriteBin Settings - not relevant if you use the HTML reports
-  constant COVERAGE_WRITE_PASS_FAIL   : boolean := FALSE ;
-  constant COVERAGE_WRITE_BIN_INFO    : boolean := TRUE ;
-  constant COVERAGE_WRITE_COUNT       : boolean := TRUE ;
-  constant COVERAGE_WRITE_ANY_ILLEGAL : boolean := FALSE ;
+  constant COVERAGE_WRITE_PASS_FAIL              : boolean := FALSE ;
+  constant COVERAGE_WRITE_BIN_INFO               : boolean := TRUE ;
+  constant COVERAGE_WRITE_COUNT                  : boolean := TRUE ;
+  constant COVERAGE_WRITE_ANY_ILLEGAL            : boolean := FALSE ;
 
   -- ------------------------------------------
   -- Settings for AlertLogPkg
@@ -118,10 +120,10 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_STOP_COUNT_WARNING         : integer := integer'high ; -- OSVVM 2**31-1
 
   -- Defaults for Log Enables
-  constant LOG_ENABLE_INFO             : boolean := FALSE ;  -- VUnit sets this one to TRUE and does not have ALWAYS
-  constant LOG_ENABLE_DEBUG            : boolean := FALSE ;
-  constant LOG_ENABLE_PASSED           : boolean := FALSE ;
-  constant LOG_ENABLE_FINAL            : boolean := FALSE ;
+  constant LOG_ENABLE_INFO                       : boolean := FALSE ;  -- VUnit sets this one to TRUE and does not have ALWAYS
+  constant LOG_ENABLE_DEBUG                      : boolean := FALSE ;
+  constant LOG_ENABLE_PASSED                     : boolean := FALSE ;
+  constant LOG_ENABLE_FINAL                      : boolean := FALSE ;
 
   -- Alert/Log control what makes a test failure
   constant  ALERT_LOG_FAIL_ON_WARNING            : boolean := TRUE ;
@@ -172,17 +174,17 @@ package body OsvvmSettingsPkg is
 -- CAUTION:  Changing these will break html log file generation
   constant  OSVVM_PRINT_PREFIX            : string  := "%% " ;
   constant  OSVVM_SECONDARY_PREFIX        : string  := "%%: " ;
-  constant  OSVVM_BLANK_LINE_PREFIX       : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", OSVVM_PRINT_PREFIX, "") ;
+  constant  OSVVM_BLANK_LINE_PREFIX       : string  := IfElse(OSVVM_SETTINGS_REVISION >= "2026.08", OSVVM_PRINT_PREFIX, "") ; -- 2026.08 and beyond use prefix on blank lines
   constant  OSVVM_PREFIX_X_MARKS_THE_SPOT : string  := "%%x " ;
   constant  OSVVM_PASS_NAME               : string  := "PASSED" ;
   constant  OSVVM_FAIL_NAME               : string  := "FAILED" ;
 
--- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the OSVVM_ version.
+-- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the constant that defines them.
   constant  COVERAGE_PRINT_PREFIX         : string := OSVVM_PRINT_PREFIX ;
   constant  COVERAGE_PASS_NAME            : string := OSVVM_PASS_NAME ;
   constant  COVERAGE_FAIL_NAME            : string := OSVVM_FAIL_NAME ;
 
--- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the OSVVM_ version.
+-- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the constant that defines them.
   constant  ALERT_LOG_PRINT_PREFIX        : string  := OSVVM_PRINT_PREFIX ;
   constant  ALERT_LOG_PASS_NAME           : string  := OSVVM_PASS_NAME ;
   constant  ALERT_LOG_FAIL_NAME           : string  := OSVVM_FAIL_NAME ;
