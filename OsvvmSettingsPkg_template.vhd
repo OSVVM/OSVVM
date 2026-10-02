@@ -24,6 +24,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2025   2025.09    Adjusted OSVVM_PREFIX_X_MARKS_THE_SPOT prefix constant
+--    08/2025   2025.08    Added additional prefix constants
 --    02/2025   2025.02    Added COVERAGE_REQUIREMENT_BY_BIN
 --    09/2024   2024.09    Added ALERT_LOG_IGNORE_SPACES and ALERT_LOG_IGNORE_EMPTY_LINES
 --    07/2024   2024.07    Added ALERT_LOG_NOCHECKS_NAME and ALERT_LOG_TIMEOUT_NAME
@@ -32,7 +34,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2023 - 2024 by SynthWorks Design Inc.
+--  Copyright (c) 2023 - 2026 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -55,12 +57,12 @@ package body OsvvmSettingsPkg is
   -- Settings shared by all packages
   -- ------------------------------------------
   -- Output Formatting
-  constant  OSVVM_HEADER_PREFIX           : string  := ${OSVVM_HEADER_PREFIX} ;
-  constant  OSVVM_HEADER_SUFFIX           : string  := ${OSVVM_HEADER_SUFFIX} ;
-  constant  OSVVM_LINE_LENGTH             : integer := ${OSVVM_LINE_LENGTH} ; -- Number of times a character repeats in header lines
-  constant  OSVVM_LINE_WRAP               : integer := ${OSVVM_LINE_WRAP} ; -- For PrintLine - set to integer'high to disable
-  constant  OSVVM_WRAP_THRESHOLD          : integer := ${OSVVM_WRAP_THRESHOLD} ;
-  constant  OSVVM_DEFAULT_TIME_UNITS               : time := ${OSVVM_DEFAULT_TIME_UNITS} ;
+  constant  OSVVM_HEADER_PREFIX                    : string  := ${OSVVM_HEADER_PREFIX} ;
+  constant  OSVVM_HEADER_SUFFIX                    : string  := ${OSVVM_HEADER_SUFFIX} ;
+  constant  OSVVM_LINE_LENGTH                      : integer := ${OSVVM_LINE_LENGTH} ; -- Number of times a character repeats in header lines
+  constant  OSVVM_LINE_WRAP                        : integer := ${OSVVM_LINE_WRAP} ; -- For PrintLine - set to integer'high to disable
+  constant  OSVVM_WRAP_THRESHOLD                   : integer := ${OSVVM_WRAP_THRESHOLD} ;
+  constant  OSVVM_DEFAULT_TIME_UNITS               : time    := ${OSVVM_DEFAULT_TIME_UNITS} ;
   constant  OSVVM_DIGITS_FOR_TIME_FRACTION         : natural := ${OSVVM_DIGITS_FOR_TIME_FRACTION} ;
   constant  OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL  : natural := ${OSVVM_MAX_DIGITS_FOR_FIXED_POINT_REAL} ;
   constant  OSVVM_DIGITS_FOR_REAL_FRACTION         : natural := ${OSVVM_DIGITS_FOR_REAL_FRACTION} ;
@@ -69,11 +71,11 @@ package body OsvvmSettingsPkg is
   -- ------------------------------------------
   -- Settings for Requirements Tracking
   -- ------------------------------------------
-  constant  ALERT_LOG_DEFAULT_PASSED_GOAL        : integer := ${ALERT_LOG_DEFAULT_PASSED_GOAL} ;
+  constant  ALERT_LOG_DEFAULT_PASSED_GOAL          : integer := ${ALERT_LOG_DEFAULT_PASSED_GOAL} ;
   -- COVERAGE_REQUIREMENT_BY_BIN
   --   if TRUE, each bin of a coverage model is one requirement.
   --   if FALSE, an entire coverage model is one requirement,
-  constant  COVERAGE_REQUIREMENT_BY_BIN   : boolean := ${COVERAGE_REQUIREMENT_BY_BIN} ;
+  constant  COVERAGE_REQUIREMENT_BY_BIN            : boolean := ${COVERAGE_REQUIREMENT_BY_BIN} ;
 
   -- ------------------------------------------
   -- Settings for RandomPkg
@@ -81,26 +83,26 @@ package body OsvvmSettingsPkg is
   -- RandomPkg.InitSeed:
   --   For new designs, make this TRUE.
   --   For old designs, changing it will change your randomization.  If you need that exact pattern, then do not change.
-  constant RANDOM_USE_NEW_SEED_METHODS : boolean := ${RANDOM_USE_NEW_SEED_METHODS} ;  -- Historic FALSE
+  constant RANDOM_USE_NEW_SEED_METHODS             : boolean := ${RANDOM_USE_NEW_SEED_METHODS} ;  -- Historic FALSE
 
   -- ------------------------------------------
   -- Settings for ScoreboardGenericPkg
   -- ------------------------------------------
   -- WriteScoreboardYaml
-  constant SCOREBOARD_YAML_IS_BASE_FILE_NAME : boolean := ${SCOREBOARD_YAML_IS_BASE_FILE_NAME} ;  -- Historic FALSE
+  constant SCOREBOARD_YAML_IS_BASE_FILE_NAME       : boolean := ${SCOREBOARD_YAML_IS_BASE_FILE_NAME} ;  -- Historic FALSE
 
   -- ------------------------------------------
   -- Settings for CoveragePkg
   -- ------------------------------------------
-  constant  COVERAGE_DEFAULT_WEIGHT_MODE  : string := ${COVERAGE_DEFAULT_WEIGHT_MODE} ;
+  constant  COVERAGE_DEFAULT_WEIGHT_MODE         : string := ${COVERAGE_DEFAULT_WEIGHT_MODE} ;
   -- InitSeed:  When TRUE uses updated seed methods.  TRUE for coverage singleton.
-  constant  COVERAGE_USE_NEW_SEED_METHODS : boolean := ${COVERAGE_USE_NEW_SEED_METHODS} ;
+  constant  COVERAGE_USE_NEW_SEED_METHODS        : boolean := ${COVERAGE_USE_NEW_SEED_METHODS} ;
 
     -- WriteBin Settings - not relevant if you use the HTML reports
-  constant COVERAGE_WRITE_PASS_FAIL   : boolean := ${COVERAGE_WRITE_PASS_FAIL} ;
-  constant COVERAGE_WRITE_BIN_INFO    : boolean := ${COVERAGE_WRITE_BIN_INFO} ;
-  constant COVERAGE_WRITE_COUNT       : boolean := ${COVERAGE_WRITE_COUNT} ;
-  constant COVERAGE_WRITE_ANY_ILLEGAL : boolean := ${COVERAGE_WRITE_ANY_ILLEGAL} ;
+  constant COVERAGE_WRITE_PASS_FAIL              : boolean := ${COVERAGE_WRITE_PASS_FAIL} ;
+  constant COVERAGE_WRITE_BIN_INFO               : boolean := ${COVERAGE_WRITE_BIN_INFO} ;
+  constant COVERAGE_WRITE_COUNT                  : boolean := ${COVERAGE_WRITE_COUNT} ;
+  constant COVERAGE_WRITE_ANY_ILLEGAL            : boolean := ${COVERAGE_WRITE_ANY_ILLEGAL} ;
 
   -- ------------------------------------------
   -- Settings for AlertLogPkg
@@ -118,10 +120,10 @@ package body OsvvmSettingsPkg is
   constant  ALERT_LOG_STOP_COUNT_WARNING         : integer := ${ALERT_LOG_STOP_COUNT_WARNING} ; -- OSVVM 2**31-1
 
   -- Defaults for Log Enables
-  constant LOG_ENABLE_INFO             : boolean := ${LOG_ENABLE_INFO} ;  -- VUnit sets this one to TRUE and does not have ALWAYS
-  constant LOG_ENABLE_DEBUG            : boolean := ${LOG_ENABLE_DEBUG} ;
-  constant LOG_ENABLE_PASSED           : boolean := ${LOG_ENABLE_PASSED} ;
-  constant LOG_ENABLE_FINAL            : boolean := ${LOG_ENABLE_FINAL} ;
+  constant LOG_ENABLE_INFO                       : boolean := ${LOG_ENABLE_INFO} ;  -- VUnit sets this one to TRUE and does not have ALWAYS
+  constant LOG_ENABLE_DEBUG                      : boolean := ${LOG_ENABLE_DEBUG} ;
+  constant LOG_ENABLE_PASSED                     : boolean := ${LOG_ENABLE_PASSED} ;
+  constant LOG_ENABLE_FINAL                      : boolean := ${LOG_ENABLE_FINAL} ;
 
   -- Alert/Log control what makes a test failure
   constant  ALERT_LOG_FAIL_ON_WARNING            : boolean := ${ALERT_LOG_FAIL_ON_WARNING} ;
@@ -172,17 +174,17 @@ package body OsvvmSettingsPkg is
 -- CAUTION:  Changing these will break html log file generation
   constant  OSVVM_PRINT_PREFIX            : string  := ${OSVVM_PRINT_PREFIX} ;
   constant  OSVVM_SECONDARY_PREFIX        : string  := ${OSVVM_SECONDARY_PREFIX} ;
-  constant  OSVVM_BLANK_LINE_PREFIX       : string  := ${OSVVM_BLANK_LINE_PREFIX} ;
+  constant  OSVVM_BLANK_LINE_PREFIX       : string  := ${OSVVM_BLANK_LINE_PREFIX} ; -- 2026.08 and beyond use prefix on blank lines
   constant  OSVVM_PREFIX_X_MARKS_THE_SPOT : string  := ${OSVVM_PREFIX_X_MARKS_THE_SPOT} ;
   constant  OSVVM_PASS_NAME               : string  := ${OSVVM_PASS_NAME} ;
   constant  OSVVM_FAIL_NAME               : string  := ${OSVVM_FAIL_NAME} ;
 
--- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the OSVVM_ version.
+-- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the constant that defines them.
   constant  COVERAGE_PRINT_PREFIX         : string := ${COVERAGE_PRINT_PREFIX} ;
   constant  COVERAGE_PASS_NAME            : string := ${COVERAGE_PASS_NAME} ;
   constant  COVERAGE_FAIL_NAME            : string := ${COVERAGE_FAIL_NAME} ;
 
--- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the OSVVM_ version.
+-- Caution:  Changing these will break html log file generation.   In addition, they likely to be replaced by the constant that defines them.
   constant  ALERT_LOG_PRINT_PREFIX        : string  := ${ALERT_LOG_PRINT_PREFIX} ;
   constant  ALERT_LOG_PASS_NAME           : string  := ${ALERT_LOG_PASS_NAME} ;
   constant  ALERT_LOG_FAIL_NAME           : string  := ${ALERT_LOG_FAIL_NAME} ;
