@@ -1472,7 +1472,7 @@ package body AlertLogPkg is
         -- Shuffle LF at start of Message to in front of Prefix
         PrefixCharacters := ALERT_LOG_INDENTED_LENGTH ;  --** reqiured to work around simulator bug
         -- Do WRAP if WRAP mode or WRAP character.
-        if (MESSAGE_LENGTH > OSVVM_WRAP_THRESHOLD - PrefixCharacters) and (ALERT_LOG_WRAP or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR) then
+        if (MESSAGE_LENGTH + PrefixCharacters > OSVVM_WRAP_THRESHOLD + 1 ) and (ALERT_LOG_WRAP or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR) then  -- +1 for extra char at start
           WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
         else
           WrapLength := integer'high/2 ;  -- disable wrap do to line length
@@ -1487,7 +1487,7 @@ package body AlertLogPkg is
       elsif (MESSAGE_LENGTH > 0 and aMessage(1) = ALERT_LOG_WRAP_END_CHAR) then
         -- Start message on same line as Alert / Log
         PrefixCharacters := buf.all'length ;
-        if MESSAGE_LENGTH > OSVVM_WRAP_THRESHOLD - PrefixCharacters then
+        if MESSAGE_LENGTH + PrefixCharacters > OSVVM_WRAP_THRESHOLD + 1  then -- +1 for extra char at start
           WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
         else
           -- Disable WRAP if the only line is within the WRAP_THRESHOLD
