@@ -27,6 +27,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    09/2026   2026.09    Updated to Alert/Log wrap.  If start with LF, do LF + indent and wrap only if only do LF unless ALERT_LOG_WRAP.
+--                         Als do not WRAP if line length < threshold.
 --    08/2026   2026.08    Added LogHeader, AffirmIfInRange, AffirmIfStable, AffirmIfNotStable,
 --                         Added SetExpectedAlertCount, GetExpectedAlertCount, IncrementExpectedAlertCount, SetManualCheck, GetManualCheck
 --                         Alert and Log printing supports multiple line prints
@@ -1429,9 +1431,9 @@ package body AlertLogPkg is
     ) is
       variable ParentID : AlertLogIDType ;
       variable PrefixCharacters : integer ;
+      variable WrapLength       : integer ;
       constant MESSAGE_LENGTH   : integer := Message'length ;
       alias aMessage : string(1 to MESSAGE_LENGTH) is Message ;
-      variable MessageStart : integer := 1 ;
     begin
       write(buf, ALERT_LOG_PRINT_PREFIX ) ; -- Print
       -- Debug Mode
@@ -1469,31 +1471,50 @@ package body AlertLogPkg is
         -- Start message on next line at ALERT_LOG_INDENTED_LENGTH (OsvvmSettingsPkg)
         -- Shuffle LF at start of Message to in front of Prefix
         PrefixCharacters := ALERT_LOG_INDENTED_LENGTH ;  --** reqiured to work around simulator bug
+        -- Do WRAP if WRAP mode or WRAP character.
+        if (MESSAGE_LENGTH + PrefixCharacters > OSVVM_WRAP_THRESHOLD + 1 ) and (ALERT_LOG_WRAP or aMessage(1) = ALERT_LOG_WRAP_INDENT_CHAR) then  -- +1 for extra char at start
+          WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
+        else
+          WrapLength := integer'high/2 ;  -- disable wrap do to line length
+        end if ;
         WrapToBuf(
           buf              => buf,
           s                => LF & GetPrefix(AlertLogID) & aMessage(2 to MESSAGE_LENGTH) & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => OSVVM_LINE_WRAP - ALERT_LOG_INDENTED_LENGTH
+          WrapLength       => WrapLength
         ) ;
 
       elsif (MESSAGE_LENGTH > 0 and aMessage(1) = ALERT_LOG_WRAP_END_CHAR) then
         -- Start message on same line as Alert / Log
         PrefixCharacters := buf.all'length ;
+        if MESSAGE_LENGTH + PrefixCharacters > OSVVM_WRAP_THRESHOLD + 1  then -- +1 for extra char at start
+          WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
+        else
+          -- Disable WRAP if the only line is within the WRAP_THRESHOLD
+          WrapLength := integer'high/2 ;
+        end if ;
         WrapToBuf(
           buf              => buf,
+          -- Note:  Strips out first character of the message
           s                => GetPrefix(AlertLogID) & aMessage(2 to MESSAGE_LENGTH) & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => OSVVM_LINE_WRAP - PrefixCharacters
+          WrapLength       => WrapLength
         ) ;
 
       elsif ALERT_LOG_WRAP then
         -- Start message on same line as Alert / Log
         PrefixCharacters := buf.all'length ;
+        if MESSAGE_LENGTH > OSVVM_WRAP_THRESHOLD - PrefixCharacters then
+          WrapLength := OSVVM_LINE_WRAP - PrefixCharacters ;
+        else
+          -- Disable WRAP if the only line is within the WRAP_THRESHOLD
+          WrapLength := integer'high/2 ;
+        end if ;
         WrapToBuf(
           buf              => buf,
           s                => GetPrefix(AlertLogID) & Message & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => OSVVM_LINE_WRAP - PrefixCharacters
+          WrapLength       => WrapLength
         ) ;
 
         elsif HasCharacter(Message, LF) then
@@ -1503,7 +1524,7 @@ package body AlertLogPkg is
           buf              => buf,
           s                => GetPrefix(AlertLogID) & Message & GetSuffix(AlertLogID),
           SubsequentPrefix => OSVVM_LONG_SECONDARY_PREFIX(1 to PrefixCharacters),
-          WrapLength       => integer'high/2   -- no wrap, just LF - /2 since it is used in expressions with "+"
+          WrapLength       => integer'high/2   -- disable wrap do to line length
         ) ;
       else
         -- Prefix + Message + Suffix

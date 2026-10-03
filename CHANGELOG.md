@@ -2,6 +2,7 @@
 
 | Revision  |  Summary |
 ------------|-----------
+| 2026.09   |  Minor adjustments to line wrapping in Alert/Log and HeaderToBuf (TextUtilPkg)
 | 2026.08   |  Multi-line support in Alert, Log, LogHeader, PrintLine
 |           |  Refactored TranscriptBasePkg, TranscriptPkg, and ReportPkg
 |           |  Easier to set settings via OSVVM scripting
@@ -89,7 +90,7 @@ This file is part of OSVVM.
 Compile order for a given release is in the CHANGELOG that is distributed with that release.
 Hence, this file only has the compile order for the most recent release.
 
-## Revision 2026.05 May 2026
+## Revision 2026.09 September 2026
 
 ### Current Revision and Compile Order
 
@@ -100,12 +101,12 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
 
   | File Name                                                     | Revision Date  |
   ----------------------------------------------------------------|-----------------
-  | IfElsePkg.vhd                                                 | ** 2026.08 **  |
+  | IfElsePkg.vhd                                                 | 2026.08  |
   | OsvvmTypesPkg.vhd                                             | 2026.01  |
   | If ToolSupportsGenericPackages                                |          |
-  |   TRUE:   SetGetBoundedGenericPkg.vhd                         | ** 2026.08 **  |
-  |   TRUE:   SetGetBoundedPkg_instances.vhd                      | ** 2026.08 **  |
-  |   FALSE:  deprecated/SetGetBoundedPkg_instances.vhd           | ** 2026.08 **  |
+  |   TRUE:   SetGetBoundedGenericPkg.vhd                         | 2026.08  |
+  |   TRUE:   SetGetBoundedPkg_instances.vhd                      | 2026.08  |
+  |   FALSE:  deprecated/SetGetBoundedPkg_instances.vhd           | 2026.08  |
   | OsvvmScriptSettingsPkg.vhd                                    | 2026.01  |
   | If created <SettingsDir>/OsvvmScriptSettingsPkg_generated.vhd |          |
   |   TRUE:   <SettingsDir>/OsvvmScriptSettingsPkg_generated.vhd  | Generated  |
@@ -116,13 +117,13 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   | elsif exist <SettingsDir>/OsvvmSettingsPkg_local.vhd          | User Created |
   |   <SettingsDir>/OsvvmSettingsPkg_local.vhd                    | User Created |
   | else                                                          |          |
-  |   OsvvmSettingsPkg_default.vhd                                | ** 2026.08 **  |
+  |   OsvvmSettingsPkg_default.vhd                                | 2026.08  |
   | if not XSIM                                                   |          |
-  |   TRUE:   TextUtilPkg.vhd                                     | ** 2026.08 **  |
-  |   FALSE:  TextUtilPkg_xilinx.vhd                              | ** 2026.08 **  |
-  | FileUtilPkg.vhd                                               | ** 2026.08 **  |
+  |   TRUE:   TextUtilPkg.vhd                                     | ** 2026.09 **  |
+  |   FALSE:  TextUtilPkg_xilinx.vhd                              | ** 2026.09 **  |
+  | FileUtilPkg.vhd                                               | 2026.08  |
   | ResolutionPkg.vhd                                             | 2021.06  |
-  | NamePkg.vhd                                                   | ** 2026.08 **  |
+  | NamePkg.vhd                                                   | 2026.08  |
   | OsvvmGlobalPkg.vhd                                            | 2024.03  |
   | If Aldec                                                      |          |
   |     CoverageVendorApiPkg_Aldec.vhd                            | 2020.01  |
@@ -130,79 +131,87 @@ how to run it are in the scripts directory as well as Scripts_user_guide.pdf.
   |     CoverageVendorApiPkg_NVC.vhd                              | 2024.11  |
   | Else                                                          |          |
   |     CoverageVendorApiPkg.vhd                                  | 2020.01  |
-  | NameStorePkg.vhd                                              | ** 2026.08 **  |
-  | TranscriptBasePkg.vhd                                         | ** 2026.08 **  |
+  | NameStorePkg.vhd                                              | 2026.08  |
+  | TranscriptBasePkg.vhd                                         | 2026.08  |
   | If version >= 2019                                            |          |
-  |   TRUE    LanguageSupportPkg2019.vhd                          | ** 2026.08 **  |
-  |   FALSE   deprecated/LanguageSupportPkg2019_c.vhd             | ** 2026.08 **  |
+  |   TRUE    LanguageSupportPkg2019.vhd                          | 2026.08  |
+  |   FALSE   deprecated/LanguageSupportPkg2019_c.vhd             | 2026.08  |
   | If Supports2019FilePath and version >= 2019                   |          |
-  |   TRUE    FileLinePathPkg.vhd                                 | ** 2026.08 **  |
-  |   FALSE   deprecated/FileLinePathPkg_c.vhd                    | ** 2026.08 **  |
+  |   TRUE    FileLinePathPkg.vhd                                 | 2026.08  |
+  |   FALSE   deprecated/FileLinePathPkg_c.vhd                    | 2026.08  |
   | If Supports2019AssertApi and version >= 2019                  |          |
-  |   TRUE    AssertApiPkg.vhd                                    | ** 2026.08 **  |
-  |   FALSE   deprecated/AssertApiPkg_c.vhd                       | ** 2026.08 **  |
-  | If not VendorScripts_Siemens (aka vsim flow)                  |          |
-  |   TRUE    AlertLogPkg.vhd                                     | ** 2026.08 **  |
-  |   false   deprecated/AlertLogPkg_c.vhd                        | ** 2026.08 **  |
+  |   TRUE    AssertApiPkg.vhd                                    | 2026.08  |
+  |   FALSE   deprecated/AssertApiPkg_c.vhd                       | 2026.08  |
+  | AlertLogPkg.vhd                                               | ** 2026.09 **  |
   | IdFifoPtPkg.vhd                                               | 2026.05  |
   | if not XSIM                                                   |          |
-  |   TRUE    TbUtilPkg.vhd                                       | ** 2026.08 **  |
-  |   FALSE   TbUtilPkg_xilinx.vhd                                | ** 2026.08 **  |
+  |   TRUE    TbUtilPkg.vhd                                       | 2026.08  |
+  |   FALSE   TbUtilPkg_xilinx.vhd                                | 2026.08  |
   | MessageListPkg.vhd                                            | 2021.07  |
   | SortListPkg_int.vhd                                           | 2020.01  |
   | RandomBasePkg.vhd                                             | 2024.11  |
   | RandomPkg.vhd                                                 | 2026.01  |
   | RandomProcedurePkg.vhd                                        | 2021.05  |
   | IF not XSIM
-  |   TRUE:  CoveragePkg.vhd                                      | ** 2026.08 **  |
-  |   FALSE: deprecated/CoveragePkg_xilinx.vhd                    | ** 2026.08 **  |
-  | CoveragePtPkg.vhd                                             | ** 2026.08 **  |
+  |   TRUE:  CoveragePkg.vhd                                      | 2026.08  |
+  |   FALSE: deprecated/CoveragePkg_xilinx.vhd                    | 2026.08  |
+  | CoveragePtPkg.vhd                                             | 2026.08  |
   | DelayCoveragePkg.vhd                                          | 2024.11  |
   | ResizePkg.vhd                                                 | 2024.03  |
   | If 2019 and Supports2019Generics                              |          |
-  |     DynamicVectorGenericPkg.vhd                               | ** 2026.08 **  |
+  |     DynamicVectorGenericPkg.vhd                               | 2026.08  |
   |     DynamicVectorPkg_instances.vhd                            | 2026.05  |
   | If Not (2019 and Supports2019Generics)                        |          |
-  |     deprecated/DynamicVectorPkg_slv_c.vhd                     | ** 2026.08 **  |
-  |     deprecated/DynamicVectorPkg_IntV_c.vhd                    | ** 2026.08 **  |
+  |     deprecated/DynamicVectorPkg_slv_c.vhd                     | 2026.08  |
+  |     deprecated/DynamicVectorPkg_IntV_c.vhd                    | 2026.08  |
   | If Support Generic Packages                                   |          |
   |     If not XSIM                                               |          |
-  |         ScoreboardGenericPkg.vhd                              | ** 2026.08 **  |
+  |         ScoreboardGenericPkg.vhd                              | 2026.08  |
   |         ScoreboardPkg_IntV.vhd                                | 2024.07  |
   |     If XSIM                                                   |          |
-  |         deprecated/ScoreboardGenericPkg_pure.vhd              | ** 2026.08 **  |
-  |         deprecated/ScoreboardPkg_IntV_c.vhd                   | ** 2026.08 **  |
+  |         deprecated/ScoreboardGenericPkg_pure.vhd              | 2026.08  |
+  |         deprecated/ScoreboardPkg_IntV_c.vhd                   | 2026.08  |
   |     ScoreboardPkg_slv.vhd                                     | 2022.04  |
   |     ScoreboardPkg_int.vhd                                     | 2020.01  |
   |     ScoreboardPkg_signed.vhd                                  | 2024.07  |
   |     ScoreboardPkg_unsigned.vhd                                | 2024.07  |
   | If NotSupport Generic Packages                                |          |
-  |     deprecated/ScoreboardPkg_slv_c.vhd                        | ** 2026.08 **  |
-  |     deprecated/ScoreboardPkg_int_c.vhd                        | ** 2026.08 **  |
-  |     deprecated/ScoreboardPkg_signed_c.vhd                     | ** 2026.08 **  |
-  |     deprecated/ScoreboardPkg_unsigned_c.vhd                   | ** 2026.08 **  |
-  |     deprecated/ScoreboardPkg_IntV_c.vhd                       | ** 2026.08 **  |
-  | MemorySupportPkg.vhd                                          | ** 2026.08 **  |
+  |     deprecated/ScoreboardPkg_slv_c.vhd                        | 2026.08  |
+  |     deprecated/ScoreboardPkg_int_c.vhd                        | 2026.08  |
+  |     deprecated/ScoreboardPkg_signed_c.vhd                     | 2026.08  |
+  |     deprecated/ScoreboardPkg_unsigned_c.vhd                   | 2026.08  |
+  |     deprecated/ScoreboardPkg_IntV_c.vhd                       | 2026.08  |
+  | MemorySupportPkg.vhd                                          | 2026.08  |
   | If Support Generic Packages                                   |          |
   |     If not XSIM                                               |          |
-  |         MemoryGenericPkg.vhd                                  | ** 2026.08 **  |
+  |         MemoryGenericPkg.vhd                                  | 2026.08  |
   |     If XSIM                                                   |          |
-  |         deprecated/MemoryGenericPkg_xilinx.vhd                | ** 2026.08 **  |
-  |     MemoryPkg.vhd                                             | ** 2026.08 **  |
+  |         deprecated/MemoryGenericPkg_xilinx.vhd                | 2026.08  |
+  |     MemoryPkg.vhd                                             | 2026.08  |
   | If UseMemoryPkg01                                             |          |
-  |     MemoryPkgIs01.vhd                                         | ** 2026.08 **  |
+  |     MemoryPkgIs01.vhd                                         | 2026.08  |
   | If Not Support Generic Packages                               |          |
-  |     deprecated/MemoryPkg_c.vhd                                | ** 2026.08 **  |
-  |     deprecated/MemoryPkg_orig_c.vhd                           | ** 2026.08 **  |
-  | TranscriptPkg.vhd                                             | ** 2026.08 **  |
-  | ReportPkg.vhd                                                 | ** 2026.08 **  |
+  |     deprecated/MemoryPkg_c.vhd                                | 2026.08  |
+  |     deprecated/MemoryPkg_orig_c.vhd                           | 2026.08  |
+  | TranscriptPkg.vhd                                             | 2026.08  |
+  | ReportPkg.vhd                                                 | 2026.08  |
   | If Supports2019ImpureFunctions and version >= 2019            |          |
-  |     TRUE    RandomPkg2019.vhd                                 | ** 2026.08 **  |
-  |     FALSE   deprecated/RandomPkg2019_c.vhd                    | ** 2026.08 **  |
+  |     TRUE    RandomPkg2019.vhd                                 | 2026.08  |
+  |     FALSE   deprecated/RandomPkg2019_c.vhd                    | 2026.08  |
   | If ClockResetVersion  >= 2024.05                              |          |
   |  TRUE    ClockResetPkg.vhd                                    | 2024.09  |
   |  FALSE   deprecated/ClockResetPkg_2024_05.vhd                 | 2024.07  |
-  | OsvvmContext.vhd                                              | ** 2026.08 **  |
+  | OsvvmContext.vhd                                              | 2026.08  |
+
+
+###  AlertLogPkg.vhd    2026.09
+Minor adjustments to line wrap in Alert/Log
+
+### TextUtilPkg.vhd   2026.09
+Added length parameter to HeaderToBuf
+
+
+## Revision 2026.08 August 2026
 
 ###  AlertLogPkg.vhd    2026.08
 Alert and Log printing supports multiple line prints.
