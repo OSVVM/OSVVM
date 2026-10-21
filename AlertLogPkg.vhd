@@ -181,6 +181,7 @@ package AlertLogPkg is
   constant  ALERTLOG_ID_NOT_ASSIGNED       : AlertLogIDType := -1 ;
   constant  MIN_NUM_AL_IDS                 : AlertLogIDType := 32 ; -- Number IDs initially allocated
 
+  constant USE_DEFAULT_REQUIREMENTS        : integer := -1 ;
 
   -- synthesis translate_off
   -- Get VHDL Assert Count, return AlertCountType
@@ -635,7 +636,7 @@ package AlertLogPkg is
     PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ;
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType ;
-  impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
+  impure function GetReqID(Name : string ; PassedGoal : integer := USE_DEFAULT_REQUIREMENTS ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType ;
   impure function FindID(Name : string ) return AlertLogIDType ;
   impure function FindID(Name : string ; ParentID : AlertLogIDType) return AlertLogIDType ;
   alias FindAlertLogID is FindID [string return AlertLogIDType] ;
@@ -1011,7 +1012,7 @@ package body AlertLogPkg is
       PrintParent     : AlertLogPrintParentType ;
       CreateHierarchy : boolean ;
       Goal            : integer ;
-      PassedGoalSet   : boolean
+      IsARequirement  : boolean
     ) return AlertLogIDType ;
     impure function IsValidID( AlertLogID : AlertLogIDType ) return boolean ;
     impure function IsInitialized (ID : AlertLogIDType) return boolean ;
@@ -1194,6 +1195,7 @@ package body AlertLogPkg is
       PassedCount         : Integer ;
       AffirmCount         : Integer ;
       PassedGoal          : Integer ;
+      IsARequirement      : Boolean ;
       PassedGoalSet       : Boolean ;
       AlertStopCount      : AlertCountType ;
       AlertPrintCount     : AlertCountType ;
@@ -2531,7 +2533,7 @@ package body AlertLogPkg is
             next ;
           end if ;
           RequirementsGoal   := AlertLogPtr(CurID).PassedGoal ;
-          if AlertLogPtr(CurID).PassedGoalSet and (RequirementsGoal > 0) then
+          if AlertLogPtr(CurID).IsARequirement and (RequirementsGoal > 0) then
             RequirementsPassed := AlertLogPtr(CurID).PassedCount ;
           else
             RequirementsPassed := 0 ;
@@ -2753,7 +2755,7 @@ package body AlertLogPkg is
       CurID := AlertLogPtr(AlertLogID).ChildID ;
       while CurID > ALERTLOG_BASE_ID loop
         -- Print Requirement if this level is one
-        if AlertLogPtr(CurID).PassedGoalSet then
+        if AlertLogPtr(CurID).IsARequirement then
           WriteOneRequirementYaml(
             TestFile             => TestFile,
             AlertLogID           => CurID
@@ -3225,7 +3227,7 @@ package body AlertLogPkg is
           exit ReadLoop ;
         end loop ReadLoop ;
 --        AlertLogID := GetReqID(Name.all) ;  -- For new items, sets DefaultPassedGoalVar and PassedGoalSet = FALSE.
-        AlertLogID := GetReqID(Name => Name.all, PassedGoal => -1, ParentID=> ALERTLOG_ID_NOT_ASSIGNED, CreateHierarchy => TRUE) ;
+        AlertLogID := GetReqID(Name => Name.all, PassedGoal => USE_DEFAULT_REQUIREMENTS, ParentID=> ALERTLOG_ID_NOT_ASSIGNED, CreateHierarchy => TRUE) ;
         deallocate(Name) ;
         deallocate(Description) ;  -- not used
         -- Implementation 1:  Just put the values in
@@ -3245,6 +3247,7 @@ package body AlertLogPkg is
           end if ;
           AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ;
         end if ;
+        AlertLogPtr(AlertLogID).IsARequirement := TRUE ;
       end loop ReadFileLoop ;
 
       HasRequirementsVar := TRUE ;
@@ -3411,7 +3414,8 @@ package body AlertLogPkg is
 --
 --          AlertLogPtr(AlertLogID).AffirmCount         := ReqPassedCount + TotalErrorCount ;
 --        end if;
-        AlertLogPtr(AlertLogID).PassedGoalSet := TRUE ;
+        AlertLogPtr(AlertLogID).PassedGoalSet  := TRUE ;
+        AlertLogPtr(AlertLogID).IsARequirement := TRUE ;
       end loop ReadFileLoop ;
     end procedure ReadRequirements ;
 
@@ -3909,15 +3913,25 @@ package body AlertLogPkg is
       PrintParent     : AlertLogPrintParentType ;
       CreateHierarchy : boolean ;
       Goal            : integer ;
-      PassedGoalSet   : boolean
+      IsARequirement  : boolean
     ) return AlertLogIDType is
     ------------------------------------------------------------
-      variable ResultID        : AlertLogIDType ;
-      variable localParentID   : AlertLogIDType := ParentID;
-      variable localPassedGoal : integer ;
+      variable ResultID         : AlertLogIDType ;
+      variable localParentID    : AlertLogIDType := ParentID;
+      variable localPassedGoal  : integer ;
       variable localParentIdSet : boolean := ParentIdSet ;
+      variable localGoalIsSet   : boolean := FALSE ;
     begin
-      localPassedGoal := Goal when Goal >= 0 else DefaultPassedGoalVar ;
+      if IsARequirement then
+        if Goal >= 0 then
+          localPassedGoal := Goal ;
+          localGoalIsSet  := TRUE ;
+        else
+          localPassedGoal := DefaultPassedGoalVar ;
+        end if ;
+      else
+        localPassedGoal := 0 ;
+      end if ;
       ResultID      := LocalFindID(Name, localParentID, localParentIdSet) ;
       if ResultID = ALERTLOG_ID_NOT_FOUND then
         -- Create a new ID
@@ -3927,8 +3941,9 @@ package body AlertLogPkg is
         if CreateHierarchy and ReportMode /= DISABLED then
           FoundReportHierVar := TRUE ;
         end if ;
-        AlertLogPtr(ResultID).PassedGoal    := localPassedGoal ;
-        AlertLogPtr(ResultID).PassedGoalSet := PassedGoalSet ;
+        AlertLogPtr(ResultID).PassedGoal     := localPassedGoal ;
+        AlertLogPtr(ResultID).PassedGoalSet  := localGoalIsSet ;
+        AlertLogPtr(ResultID).IsARequirement := IsARequirement ;
         -- AlertLogPtr(ResultID).ParentIDSet   := localParentIdSet ;  -- Redundant.  Set by NewAlertLogRec
       else
         -- Found existing ID.  Update it.
@@ -3948,9 +3963,12 @@ package body AlertLogPkg is
           -- else -- do not update as ParentIDs are either same or input localParentID = ALERTLOG_ID_NOT_ASSIGNED
           end if ;
         end if ;
-        if AlertLogPtr(ResultID).PassedGoalSet = FALSE then
-          AlertLogPtr(ResultID).PassedGoal    := localPassedGoal ;
-          AlertLogPtr(ResultID).PassedGoalSet := PassedGoalSet ;
+        if IsARequirement then
+          AlertLogPtr(ResultID).IsARequirement := TRUE ;
+          if localGoalIsSet or not AlertLogPtr(ResultID).PassedGoalSet then
+            AlertLogPtr(ResultID).PassedGoal    := localPassedGoal ;
+            AlertLogPtr(ResultID).PassedGoalSet := localGoalIsSet ; -- FALSE if .PassedGoalSet is false and localGoalIsSet is false
+          end if ;
         end if ;
       end if ;
       -- Set Level and Justify amounts
@@ -3983,10 +4001,12 @@ package body AlertLogPkg is
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
       if PassedGoal >= 0 then
-        AlertLogPtr(localAlertLogID).PassedGoal := PassedGoal ;
+        AlertLogPtr(localAlertLogID).PassedGoal    := PassedGoal ;
+        AlertLogPtr(localAlertLogID).PassedGoalSet := TRUE ;
       else
-        AlertLogPtr(localAlertLogID).PassedGoal := DefaultPassedGoalVar ;
+        AlertLogPtr(localAlertLogID).PassedGoal    := DefaultPassedGoalVar ;
       end if ;
+      AlertLogPtr(localAlertLogID).IsARequirement  := TRUE ;
       if not HasRequirementsVar then
         CalcJustifyOneLevel(REQUIREMENT_ALERTLOG_ID) ;
       end if ;
@@ -6612,7 +6632,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
 --?? Set Goal to 1?  Should the ID already exist?
-    AffirmIf(GetReqID(RequirementsIDName), condition, ReceivedMessage, ExpectedMessage, Enable) ;
+    AffirmIf(GetReqID(RequirementsIDName, USE_DEFAULT_REQUIREMENTS), condition, ReceivedMessage, ExpectedMessage, Enable) ;
     -- synthesis translate_on
   end procedure AffirmIf ;
 
@@ -6622,7 +6642,7 @@ package body AlertLogPkg is
   begin
     -- synthesis translate_off
 --?? Set Goal to 1?  Should the ID already exist?
-    AffirmIf(GetReqID(RequirementsIDName), condition, Message, Enable) ;
+    AffirmIf(GetReqID(RequirementsIDName, USE_DEFAULT_REQUIREMENTS), condition, Message, Enable) ;
     -- synthesis translate_on
   end procedure AffirmIf ;
 
@@ -7249,11 +7269,11 @@ package body AlertLogPkg is
     PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ;
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType is
-    variable result        : AlertLogIDType ;
-    constant ParentIdSet   : boolean := TRUE ;  -- NewID always sets to true
-    variable localParentID : AlertLogIDType := ParentID ;
-    constant Goal          : integer := 0 ;
-    constant PassedGoalSet : boolean := FALSE ;
+    variable result         : AlertLogIDType ;
+    constant ParentIdSet    : boolean := TRUE ;  -- NewID always sets to true
+    variable localParentID  : AlertLogIDType := ParentID ;
+    constant Goal           : integer := 0 ;
+    constant IsARequirement : boolean := FALSE ;
 	begin
     if not AlertLogStruct.IsValidID(ParentID) then
       localParentID := ALERTLOG_BASE_ID ;
@@ -7264,7 +7284,7 @@ package body AlertLogPkg is
     if ReportMode = USE_PARENT_ID then
       result := localParentID ;
     else
-      result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+      result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, IsARequirement) ;
     end if ;
     return result ;
   end function NewID ;
@@ -7278,13 +7298,13 @@ package body AlertLogPkg is
     DoNotReport     : Boolean := FALSE
   ) return AlertLogIDType is
   ------------------------------------------------------------
-    variable result        : AlertLogIDType ;
-    variable ParentIdSet   : boolean ;
-    variable localParentID : AlertLogIDType := ParentID ;
-    constant Goal          : integer := 0 ;
-    constant PassedGoalSet : boolean := FALSE ;
-		variable ReportMode    : AlertLogReportModeType := ENABLED ;
-    constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ;
+    variable result         : AlertLogIDType ;
+    variable ParentIdSet    : boolean ;
+    variable localParentID  : AlertLogIDType := ParentID ;
+		variable ReportMode     : AlertLogReportModeType := ENABLED ;
+    constant PrintParent    : AlertLogPrintParentType := PRINT_NAME ;
+    constant Goal           : integer := 0 ;
+    constant IsARequirement : boolean := FALSE ;
 	begin
     ParentIdSet   := AlertLogStruct.IsValidID(ParentID) ;
     if not ParentIdSet then
@@ -7300,7 +7320,7 @@ package body AlertLogPkg is
         ReportMode := DISABLED ;
     end if;
 
-    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, IsARequirement) ;
     return result ;
   end function GetID ;
 
@@ -7314,32 +7334,30 @@ package body AlertLogPkg is
     PrintParent     : AlertLogPrintParentType := PRINT_NAME_AND_PARENT ;
     CreateHierarchy : boolean                 := TRUE
   ) return AlertLogIDType is
-    variable result        : AlertLogIDType ;
-    constant ParentIdSet   : boolean := TRUE ;  -- NewReqID always sets to true
-    variable localParentID : AlertLogIDType := ParentID ;
-    variable PassedGoalSet : boolean ;
+    variable result         : AlertLogIDType ;
+    constant ParentIdSet    : boolean := TRUE ;  -- NewReqID always sets to true
+    variable localParentID  : AlertLogIDType := ParentID ;
+    constant IsARequirement : boolean := TRUE ;
 	begin
     if not AlertLogStruct.IsValidID(ParentID) then
       localParentID := REQUIREMENT_ALERTLOG_ID ;
       -- ParentIdSet   := FALSE ;  -- NewReqID always sets to true
       FailureInvalidParentID("NewReqID", ParentID) ;
     end if ;
-    PassedGoalSet := Goal > 0 ;
 
-    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, IsARequirement) ;
     return result ;
   end function NewReqID ;
 
   ------------------------------------------------------------
-  impure function GetReqID(Name : string ; PassedGoal : integer := -1 ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType is
+  impure function GetReqID(Name : string ; PassedGoal : integer := USE_DEFAULT_REQUIREMENTS ; ParentID : AlertLogIDType := ALERTLOG_ID_NOT_ASSIGNED ; CreateHierarchy : Boolean := TRUE) return AlertLogIDType is
   ------------------------------------------------------------
-    variable result        : AlertLogIDType ;
-    variable ParentIdSet   : boolean ;
-    variable localParentID : AlertLogIDType := ParentID ;
-    variable PassedGoalSet : boolean ;
-		constant ReportMode    : AlertLogReportModeType  := ENABLED ;
-    constant PrintParent   : AlertLogPrintParentType := PRINT_NAME ;
-    -- alias Goal : integer is PassedGoal ;
+    variable result         : AlertLogIDType ;
+    variable ParentIdSet    : boolean ;
+    variable localParentID  : AlertLogIDType := ParentID ;
+		constant ReportMode     : AlertLogReportModeType  := ENABLED ;
+    constant PrintParent    : AlertLogPrintParentType := PRINT_NAME ;
+    constant IsARequirement : boolean := TRUE ;
 	begin
     ParentIdSet   := AlertLogStruct.IsValidID(ParentID) ;
     if not ParentIdSet then
@@ -7348,9 +7366,8 @@ package body AlertLogPkg is
         FailureInvalidParentID("GetReqID", ParentID) ;
       end if ;
     end if ;
-    PassedGoalSet := PassedGoal > 0 ;
 
-    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, PassedGoal, PassedGoalSet) ;
+    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, PassedGoal, IsARequirement) ;
     return result ;
   end function GetReqID ;
 

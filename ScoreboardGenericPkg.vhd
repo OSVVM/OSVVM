@@ -2354,18 +2354,22 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb.yml",
-                                              IfElse(FileNameIsBaseName, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",
-                                                                         FileName) ) ;
---x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileNameIsBaseName,
+                                                        OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",
+                                                        FileName) ;
       file SbYamlFile : text ;
       variable buf : line ;
     begin
-      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
-      if SbPtr = NULL or SbPtr'length <= 0 then
+      if (FileName = "") then
+        Alert("Scoreboard.WriteScoreboardYaml: Scoreboard not named", ERROR) ;
+        return ;
+      end if ;
+      if (SbPtr = NULL or SbPtr'length <= 0) then
         Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
         return ;
       end if ;
+
+      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
 
       swrite(buf, "Version: "  & '"' & SCOREBOARD_YAML_VERSION & '"' & LF) ;
       swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;

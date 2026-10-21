@@ -5051,7 +5051,6 @@ package body CoveragePkg is
 --!! TODO: Add Writing for ParentName, ReportMode, Search, PrintParent
       write(buf, NAME_PREFIX & "  TestCases: " & LF) ;
       write(buf, NAME_PREFIX & "    - " & '"' & TestCaseName & '"' & LF) ;
---!! Add code to list out merged tests
       write(buf, NAME_PREFIX & "  Coverage: " & to_string(GetCov(ID), 2) & LF) ;
       WriteCovSettingsYaml(ID, buf, NAME_PREFIX &  "  ") ;
       WriteCovBinInfoYaml (ID, buf, NAME_PREFIX &  "  ") ;
@@ -5723,7 +5722,7 @@ package body CoveragePkg is
     ------------------------------------------------------------
     begin
       for i in 1 to NumItems loop
-        if CovStructPtr(i).NumBins >= 1 then
+        if CovStructPtr(i).NumBins >= 1 and CovStructPtr(i).CovWeight >= 1 then
           return TRUE ;
         end if;
       end loop ;
