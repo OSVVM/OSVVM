@@ -76,11 +76,13 @@
 --
 
 use work.OsvvmGlobalPkg.all ;
+use work.TextUtilPkg.all ;
 use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.OsvvmTypesPkg.all ;
+use work.LanguageSupport2019Pkg.all ;
 
 use std.textio.all ;
 
@@ -114,7 +116,6 @@ package RandomPkg is
   type NaturalVSlType   is array (std_logic range <>) of natural;
   type NaturalVBitType  is array (bit range <>) of natural;
 
-
   --- ///////////////////////////////////////////////////////////////////////////
   --- ///////////////////////////////////////////////////////////////////////////
   ---
@@ -132,7 +133,7 @@ package RandomPkg is
     ------------------------------------------------------------
     --  Seed Manipulation
     ------------------------------------------------------------
-    -- Known ambiguity between InitSeed with string and integer_vector
+    -- Known ambiguity between InitSeed with string and integer_vector for literal values
     -- Recommendation, use :  RV.InitSeed(RV'instance_path) ;
     -- For integer_vector use either : RV.InitSeed(IV => (1,5)) ;
     --   or : RV.InitSeed(integer_vector'(1,5)) ;
@@ -570,6 +571,7 @@ package body RandomPkg is
     procedure InitSeed (T : time ; UseNewSeedMethods : boolean := RANDOM_USE_NEW_SEED_METHODS ) is
     ------------------------------------------------------------
     begin
+      -- UseNewSeedMethods is ignored.  Provided for uniformity with other InitSeed procedures.
       RandomSeed := GenRandSeed(T) ;
     end procedure InitSeed ;
 
@@ -938,6 +940,7 @@ package body RandomPkg is
     impure function Normal (Mean, StdDeviation, Min, Max : real) return real is
     ------------------------------------------------------------
       variable rRandomVal : real ;
+      variable Found : boolean ;
     begin
       if Max < Min then
          Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -946,12 +949,24 @@ package body RandomPkg is
            FAILURE) ;
          return Mean ;
       else
-        loop
+        for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
           rRandomVal := Normal (Mean, StdDeviation) ;
-          exit when rRandomVal >= Min and rRandomVal <= Max ;
+          Found := rRandomVal >= Min and rRandomVal <= Max ;
+          exit when Found ;
         end loop ;
       end if ;
-      return rRandomVal ;
+      if Found then
+        return rRandomVal ;
+      else
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg.Normal(Mean => " & format(Mean) &
+          ", StdDeviation => " & format(StdDeviation) &
+          ", Min => " & format(Min) &
+          ", Max => " & format(Max) &
+          ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+          FAILURE) ;
+        return real'low ;
+      end if ;
     end function Normal ;
 
     ------------------------------------------------------------
@@ -965,6 +980,7 @@ package body RandomPkg is
       Exclude       : integer_vector := NULL_INTV
     ) return integer is
       variable iRandomVal : integer ;
+      variable Found : boolean ;
     begin
       if Max < Min then
         Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -973,13 +989,26 @@ package body RandomPkg is
           FAILURE) ;
         return integer(round(Mean)) ;
       else
-        loop
+        for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
           iRandomVal := integer(round(  Normal(Mean, StdDeviation)  )) ;
-          exit when iRandomVal >= Min and iRandomVal <= Max and
+          Found := iRandomVal >= Min and iRandomVal <= Max and
                      not inside(iRandomVal, Exclude) ;
+          exit when Found ;
         end loop ;
       end if ;
-      return iRandomVal ;
+      if Found then
+        return iRandomVal ;
+      else
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg.Normal(Mean => " & format(Mean) &
+          ", StdDeviation => " & format(StdDeviation) &
+          ", Min => " & format(Min) &
+          ", Max => " & format(Max) &
+          ", Exclude => " & to_string(Exclude) &
+          ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+          FAILURE) ;
+        return integer'low ;
+      end if ;
     end function Normal ;
 
 
@@ -1013,7 +1042,7 @@ package body RandomPkg is
         UniformRand := Uniform ;
         Product := Product * UniformRand ;
       end loop ;
-      return PoissonRand ;
+      return PoissonRand - 1.0 ;
     end function  Poisson ; -- no range
 
     ------------------------------------------------------------
@@ -1021,6 +1050,7 @@ package body RandomPkg is
     impure function Poisson (Mean, Min, Max : real) return real is
     ------------------------------------------------------------
       variable rRandomVal : real ;
+      variable Found : boolean ;
     begin
       if Max < Min then
         Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -1029,12 +1059,23 @@ package body RandomPkg is
            FAILURE) ;
         return Mean ;
       else
-        loop
+        for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
           rRandomVal := Poisson (Mean) ;
-          exit when rRandomVal >= Min and rRandomVal <= Max ;
+          Found := rRandomVal >= Min and rRandomVal <= Max ;
+          exit when Found ;
         end loop ;
       end if ;
-      return rRandomVal ;
+      if Found then
+        return rRandomVal ;
+      else
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg.Poisson(Mean => " & format(Mean) &
+          ", Min => " & format(Min) &
+          ", Max => " & format(Max) &
+          ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+          FAILURE) ;
+        return real'low ;
+      end if ;
     end function  Poisson ;
 
     ------------------------------------------------------------
@@ -1046,6 +1087,7 @@ package body RandomPkg is
       Exclude       : integer_vector := NULL_INTV
     ) return integer is
       variable iRandomVal : integer ;
+      variable Found : boolean ;
     begin
       if Max < Min then
         Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -1054,13 +1096,25 @@ package body RandomPkg is
            FAILURE) ;
         return integer(round(Mean)) ;
       else
-        loop
+        for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
           iRandomVal := integer(round(  Poisson (Mean)  )) ;
-          exit when iRandomVal >= Min and iRandomVal <= Max and
+          Found := iRandomVal >= Min and iRandomVal <= Max and
                      not inside(iRandomVal, Exclude) ;
+          exit when Found ;
         end loop ;
       end if ;
-      return iRandomVal ;
+      if Found then
+        return iRandomVal ;
+      else
+        Alert(OSVVM_RANDOM_ALERTLOG_ID,
+          "RandomPkg.Poisson(Mean => " & format(Mean) &
+          ", Min => " & format(Min) &
+          ", Max => " & format(Max) &
+          ", Exclude => " & to_string(Exclude) &
+          ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+          FAILURE) ;
+        return integer'low ;
+      end if ;
     end function  Poisson ;
 
 

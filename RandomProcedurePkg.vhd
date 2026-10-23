@@ -18,8 +18,8 @@
 --  Description :
 --    A minimal randomization package using procedures that
 --    supports CoveragePkg.vhd.
---    Does not use protected types.   
---    Does not use VHDL-2019.     
+--    Does not use protected types.
+--    Does not use VHDL-2019.
 --
 --  Developed for :
 --        SynthWorks Design Inc.
@@ -34,25 +34,25 @@
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2006 - 2021 by SynthWorks Design Inc.  
---  Copyright (C) 2021 by OSVVM Authors   
---  
+--
+--  Copyright (c) 2006 - 2021 by SynthWorks Design Inc.
+--  Copyright (C) 2021 by OSVVM Authors
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
-use work.OsvvmGlobalPkg.all ; 
-use work.AlertLogPkg.all ; 
+use work.OsvvmGlobalPkg.all ;
+use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
 
@@ -119,6 +119,11 @@ package body RandomProcedurePkg is
   begin
     ExcludeList.add(Exclude, Min, Max) ;
     count := ExcludeList.count ;
+    if (Max - count < Min) then
+      Alert (OSVVM_RANDOM_ALERTLOG_ID, "RandomProcedurePkg.Uniform: Max - Exclude'length < Min", FAILURE) ;
+      R := Min ;
+      return ;
+    end if ;
     Uniform(RandomSeed, iRandomVal, Min, Max - count) ;
     -- adjust count, note iRandomVal changes while checking.
     for i in 1 to count loop
@@ -158,7 +163,7 @@ package body RandomProcedurePkg is
       for i in DistArray'range loop
         if iRandomVal <= DistArray(i) then
           R := i ;
-          return ; 
+          return ;
         end if ;
       end loop ;
       Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomPkg.DistInt: randomization failed", FAILURE) ;

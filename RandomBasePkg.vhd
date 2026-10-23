@@ -12,7 +12,7 @@
 --        Defines Base randomization, seed definition, seed generation,
 --        and seed IO functionality for RandomPkg.vhd
 --        Defines:
---          Procedure Uniform - baseline randomization 
+--          Procedure Uniform - baseline randomization
 --          Type RandomSeedType - the seed as a single object
 --          function GenRandSeed from integer_vector, integer, or string
 --          IO function to_string, & procedures write, read
@@ -30,17 +30,17 @@
 --  Revision History:
 --    Date       Version    Description
 --    01/2023    2023.01    Added functions for SetRandomSalt to support setting in declaration regions
---    10/2022    2022.10    Added SetRandomSalt(string or integer), GetRandomSalt (integer), 
+--    10/2022    2022.10    Added SetRandomSalt(string or integer), GetRandomSalt (integer),
 --                          RandomSalt is added to all versions of GenRandSeed
---    06/2021    2021.06    Updated GenRandSeed hash to DJBX33A 
+--    06/2021    2021.06    Updated GenRandSeed hash to DJBX33A
 --    01/2020    2020.01    Updated Licenses to Apache
 --    6/2015     2015.06    Changed GenRandSeed to impure
 --    1/2015     2015.01    Changed Assert/Report to Alert
 --    5/2013     2013.05    No Changes
 --    4/2013     2013.04    No Changes
 --    03/01/2011 2.0        STANDARD VERSION
---                          Fixed abstraction by moving RandomParamType to RandomPkg.vhd 
---    02/25/2009 1.1        Replaced reference to std_2008 with a reference 
+--                          Fixed abstraction by moving RandomParamType to RandomPkg.vhd
+--    02/25/2009 1.1        Replaced reference to std_2008 with a reference
 --                          to ieee_proposed.standard_additions.all ;
 --    02/2009:   1.0        First Public Released Version
 --    01/2008:   0.1        Initial revision
@@ -48,32 +48,32 @@
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2008 - 2023 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2008 - 2023 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
 library ieee ;
 use ieee.math_real.all ;
 use std.textio.all ;
 
-use work.OsvvmGlobalPkg.all ; 
-use work.AlertLogPkg.all ; 
-use work.TbUtilPkg.all ; 
+use work.OsvvmGlobalPkg.all ;
+use work.AlertLogPkg.all ;
+use work.TbUtilPkg.all ;
 use work.SortListPkg_int.all ;
 
--- comment out following 2 lines with VHDL-2008.  Leave in for VHDL-2002 
+-- comment out following 2 lines with VHDL-2008.  Leave in for VHDL-2002
 -- library ieee_proposed ;						          -- remove with VHDL-2008
 -- use ieee_proposed.standard_additions.all ;   -- remove with VHDL-2008
 
@@ -91,16 +91,16 @@ package RandomBasePkg is
   -----------------------------------------------------------------
   -- RandomSeedType - Abstract the type for randomization
   type RandomSeedType is array (1 to 2) of integer ;
-  
+
   -----------------------------------------------------------------
   -- Uniform
   --   Generate a random number with a Uniform distribution
   --   Required by RandomPkg.  All randomization is derived from here.
-  --   Value produced must be either: 
+  --   Value produced must be either:
   --     0 <= Value < 1  or  0 < Value < 1
   --
   --   Current version uses ieee.math_real.Uniform
-  --   This abstraction allows higher precision version 
+  --   This abstraction allows higher precision version
   --   of a uniform distribution to be used provided
   --
   procedure Uniform (Result : out real ;  Seed : inout RandomSeedType) ;
@@ -117,14 +117,14 @@ package RandomBasePkg is
   impure function  GenRandSeed   (T  : Time) return RandomSeedType ;
   impure function  GenRandSeed   (S  : string)  return RandomSeedType ;
   impure function  OldGenRandSeed(S  : string)  return RandomSeedType ;
-  procedure SetRandomSalt (I : integer) ; 
-  impure function SetRandomSalt (I : integer) return boolean ; 
-  impure function SetRandomSalt (I : integer) return integer ; 
-  procedure SetRandomSalt (S : string) ; 
+  procedure SetRandomSalt (I : integer) ;
+  impure function SetRandomSalt (I : integer) return boolean ;
+  impure function SetRandomSalt (I : integer) return integer ;
+  procedure SetRandomSalt (S : string) ;
   impure function SetRandomSalt (S : string) return boolean ;
   impure function SetRandomSalt (S : string) return string ;
-  impure function GetRandomSalt return integer ; 
-  
+  impure function GetRandomSalt return integer ;
+
   -----------------------------------------------------------------
   --- RandomSeedType IO
   function  to_string(A : RandomSeedType; Separator : string := " ") return string ;
@@ -141,7 +141,7 @@ package RandomBasePkg is
     Mean         : Real ; -- also used as probability of success
     StdDeviation : Real ; -- also used as number of trials for binomial
   end record ;
-  
+
   subtype RandomParmType is RandomParamType ;  -- backward compatibility
 
   -----------------------------------------------------------------
@@ -159,13 +159,13 @@ package RandomBasePkg is
   ---  Randomization Support
   ---    Scale                - Scale a value to be within a given range
   ---    FavorSmall, FavorBig - Distribution Support
-  ---    RemoveExclude 
+  ---    RemoveExclude
   function Scale (A, Min, Max : real) return real ;
   function Scale (A : real ; Min, Max : integer) return integer ;
 
   function FavorSmall (A : real) return real ;
   function FavorBig   (A : real) return real ;
-  
+
   function to_time_vector    (A : integer_vector ; Unit : time) return time_vector ;
   function to_integer_vector (A : time_vector ; Unit : time) return integer_vector ;
   procedure RemoveExclude    (A, Exclude : integer_vector ; variable NewA : out integer_vector ; variable NewALength : inout natural ) ;
@@ -184,18 +184,18 @@ package body RandomBasePkg is
   -- Uniform
   --   Generate a random number with a Uniform distribution
   --   Required by RandomPkg.  All randomization is derived from here.
-  --   Value produced must be either: 
+  --   Value produced must be either:
   --     0 <= Value < 1  or  0 < Value < 1
   --
   --   Current version uses ieee.math_real.Uniform
-  --   This abstraction allows higher precision version 
+  --   This abstraction allows higher precision version
   --   of a uniform distribution to be used provided
   --
   -----------------------------------------------------------------
   procedure Uniform (
   -----------------------------------------------------------------
     Result : out   real ;
-    Seed   : inout RandomSeedType 
+    Seed   : inout RandomSeedType
   ) is
   begin
     ieee.math_real.Uniform (Seed(Seed'left), Seed(Seed'right), Result) ;
@@ -208,19 +208,19 @@ package body RandomBasePkg is
   --    Uniform requires two seed values of the form:
   --        1 <= SEED1 <= 2147483562; 1 <= SEED2 <= 2147483398
   --
-  --    if 2 seed values are passed to GenRandSeed and they are 
+  --    if 2 seed values are passed to GenRandSeed and they are
   --    in the above range, then they must remain unmodified.
   ------------------------------------------------------------
   impure function GenRandSeed(IV : integer_vector) return RandomSeedType is
   ------------------------------------------------------------
     alias iIV : integer_vector(1 to IV'length) is IV ;
-    variable Seed      : RandomSeedType ; 
+    variable Seed      : RandomSeedType ;
     variable ChurnSeed : real ;
     constant SEED1_MAX : integer := 2147483562 ;
     constant SEED2_MAX : integer := 2147483398 ;
   begin
     if iIV'Length <= 0 then  -- no seed
-      Alert(OSVVM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ; 
+      Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ;
       return GenRandSeed(integer_vector'(3, 17)) ;  -- if continue seed = (3, 17)
 
     elsif iIV'Length = 1 then  -- one seed value
@@ -233,7 +233,7 @@ package body RandomBasePkg is
       Seed(1) := ((iIV(1)-1 + GetRandomSalt) mod SEED1_MAX) + 1 ;
      -- 1 <= SEED2 <= 2147483398
       Seed(2) := ((iIV(2)-1) mod SEED2_MAX) + 1 ;
-      
+
       Uniform(ChurnSeed, Seed) ;
       return Seed ;
     end if ;
@@ -249,7 +249,7 @@ package body RandomBasePkg is
     constant SEED2_MAX : integer := 2147483398 ;
   begin
     if iIV'Length <= 0 then  -- no seed
-      Alert(OSVVM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ; 
+      Alert(OSVVM_RANDOM_ALERTLOG_ID, "RandomBasePkg.GenRandSeed received NULL integer_vector", FAILURE) ;
       return OldGenRandSeed(integer_vector'(3, 17)) ;  -- if continue seed = (3, 17)
 
     elsif iIV'Length = 1 then  -- one seed value
@@ -271,13 +271,13 @@ package body RandomBasePkg is
   --  GenRandSeed - Integer
   impure function GenRandSeed(I : integer) return RandomSeedType is
   -----------------------------------------------------------------
-    variable Seed      : RandomSeedType ; 
+    variable Seed      : RandomSeedType ;
     variable ChurnSeed : real ;
   begin
     Seed(1) := integer((real(I + GetRandomSalt) * 5381.0 + 313.0 - 1.0) mod 2.0 ** 30) + 1 ;
-    Seed(2) := integer((real(I) * 313.0 + 5381.0 - 1.0) mod 2.0 ** 30) + 1 ; 
+    Seed(2) := integer((real(I) * 313.0 + 5381.0 - 1.0) mod 2.0 ** 30) + 1 ;
     Uniform(ChurnSeed, Seed) ;
-    return Seed ; 
+    return Seed ;
   end function GenRandSeed ;
 
   -----------------------------------------------------------------
@@ -299,8 +299,8 @@ package body RandomBasePkg is
     --      RandomSeed := GenRandSeed(T /std.env.resolution_limit) ;
     -- Also consider:
     --      RandomSeed := GenRandSeed( (T - (T/2**30)*2**30) /std.env.resolution_limit) ;
---     return GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit ) ; 
-    return GenRandSeed( (T mod (2**30*OSVVM_SIM_RESOLUTION)) /OSVVM_SIM_RESOLUTION ) ; 
+--     return GenRandSeed( (T mod (2**30*std.env.resolution_limit)) /std.env.resolution_limit ) ;
+    return GenRandSeed( (T mod (2**30*OSVVM_SIM_RESOLUTION)) /OSVVM_SIM_RESOLUTION ) ;
   end function GenRandSeed ;
 
   -----------------------------------------------------------------
@@ -312,7 +312,7 @@ package body RandomBasePkg is
     constant LEN : integer := S'length ;
     constant HALF_LEN : integer := LEN/2 ;
     alias revS : string(LEN downto 1) is S ;
-    variable Seed      : RandomSeedType ; 
+    variable Seed      : RandomSeedType ;
     variable ChurnSeed : real ;
     variable temp : real := 5381.0 ;
   begin
@@ -325,9 +325,9 @@ package body RandomBasePkg is
     end loop ;
     Seed(2) := integer(temp) ;
     Uniform(ChurnSeed, Seed) ;
-    return Seed ; 
+    return Seed ;
   end function GenRandSeed ;
-  
+
   -----------------------------------------------------------------
   impure function OldGenRandSeed(S : string) return RandomSeedType is
   -----------------------------------------------------------------
@@ -350,48 +350,48 @@ package body RandomBasePkg is
   end function OldGenRandSeed ;
 
   -----------------------------------------------------------------
-  type LocalIntegerPType is protected 
+  type LocalIntegerPType is protected
   -----------------------------------------------------------------
-    procedure Set (A : Integer) ; 
-    impure function get return Integer ; 
-  end protected LocalIntegerPType ; 
+    procedure Set (A : Integer) ;
+    impure function get return Integer ;
+  end protected LocalIntegerPType ;
   type LocalIntegerPType is protected body
-    variable SettingsVar : Integer := 0 ; 
+    variable SettingsVar : Integer := 0 ;
     procedure Set (A : Integer) is
     begin
-       SettingsVar := A ; 
-    end procedure Set ; 
+       SettingsVar := A ;
+    end procedure Set ;
     impure function get return Integer is
     begin
-      return SettingsVar ; 
-    end function get ; 
-  end protected body LocalIntegerPType ; 
-  
-  shared variable RandomSalt : LocalIntegerPType ; 
+      return SettingsVar ;
+    end function get ;
+  end protected body LocalIntegerPType ;
+
+  shared variable RandomSalt : LocalIntegerPType ;
 
   -----------------------------------------------------------------
   procedure SetRandomSalt (I : integer) is
   -----------------------------------------------------------------
-  begin 
-    RandomSalt.Set(I mod 2**30) ; 
-  end procedure SetRandomSalt ; 
-  
+  begin
+    RandomSalt.Set(I mod 2**30) ;
+  end procedure SetRandomSalt ;
+
   -----------------------------------------------------------------
   impure function  SetRandomSalt (I : integer) return boolean is
   -----------------------------------------------------------------
-  begin 
-    SetRandomSalt(I) ; 
-    return TRUE ; 
-  end function SetRandomSalt ; 
-  
+  begin
+    SetRandomSalt(I) ;
+    return TRUE ;
+  end function SetRandomSalt ;
+
   -----------------------------------------------------------------
   impure function  SetRandomSalt (I : integer) return integer is
   -----------------------------------------------------------------
-  begin 
-    SetRandomSalt(I) ; 
-    return I ; 
-  end function SetRandomSalt ; 
-  
+  begin
+    SetRandomSalt(I) ;
+    return I ;
+  end function SetRandomSalt ;
+
   -----------------------------------------------------------------
   procedure SetRandomSalt (S : string) is
   -----------------------------------------------------------------
@@ -402,35 +402,35 @@ package body RandomBasePkg is
 --      temp := (temp*33.0 + real(character'pos(S(i)))) mod (2.0**31 - 2.0**8 - 1.0) ;
       temp := (temp*33.0 + real(character'pos(S(i)))) mod (2.0**30) ;
     end loop ;
-    RandomSalt.Set(integer(temp)) ; 
-  end procedure SetRandomSalt ; 
+    RandomSalt.Set(integer(temp)) ;
+  end procedure SetRandomSalt ;
 
   -----------------------------------------------------------------
   impure function  SetRandomSalt (S : string) return boolean is
   -----------------------------------------------------------------
-  begin 
-    SetRandomSalt(S) ; 
-    return TRUE ; 
-  end function SetRandomSalt ; 
-  
+  begin
+    SetRandomSalt(S) ;
+    return TRUE ;
+  end function SetRandomSalt ;
+
   -----------------------------------------------------------------
   impure function  SetRandomSalt (S : string) return string is
   -----------------------------------------------------------------
-  begin 
-    SetRandomSalt(S) ; 
-    return S ; 
-  end function SetRandomSalt ; 
-  
+  begin
+    SetRandomSalt(S) ;
+    return S ;
+  end function SetRandomSalt ;
+
   -----------------------------------------------------------------
-  impure function GetRandomSalt return integer is 
+  impure function GetRandomSalt return integer is
   -----------------------------------------------------------------
-  begin 
-    return RandomSalt.Get ; 
-  end function GetRandomSalt ; 
+  begin
+    return RandomSalt.Get ;
+  end function GetRandomSalt ;
 
   -----------------------------------------------------------------
   --  RandomSeedType IO
-  -- 
+  --
   -----------------------------------------------------------------
   function to_string(A : RandomSeedType; Separator : string := " ") return string is
   -----------------------------------------------------------------
@@ -463,12 +463,12 @@ package body RandomBasePkg is
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
-      AlertIfNot(ReadValid, OSVVM_ALERTLOG_ID, "RandomBasePkg.read[line, RandomSeedType] failed", FAILURE) ;  
+      AlertIfNot(ReadValid, OSVVM_RANDOM_ALERTLOG_ID, "RandomBasePkg.read[line, RandomSeedType] failed", FAILURE) ;
   end procedure read ;
-  
+
   -----------------------------------------------------------------
   --  RandomParamType IO
-  -- 
+  --
   -----------------------------------------------------------------
   function to_string(A : RandomDistType) return string is
   -----------------------------------------------------------------
@@ -491,8 +491,12 @@ package body RandomBasePkg is
   begin
     -- procedure SREAD (L : inout LINE ; VALUE : out STRING ; STRLEN : out NATURAL) ;
     sread(L, strval, len) ;
-    A := RandomDistType'value(strval(1 to len)) ;
     good := len > 0 ;
+    if good then
+      A := RandomDistType'value(strval(1 to len)) ;
+    else
+      A := RandomDistType'left ;
+    end if ;
   end procedure read ;
 
   -----------------------------------------------------------------
@@ -501,7 +505,7 @@ package body RandomBasePkg is
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
-      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomDistType] failed", FAILURE) ;
+      AlertIfNot( OSVVM_RANDOM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomDistType] failed", FAILURE) ;
   end procedure read ;
 
   -----------------------------------------------------------------
@@ -525,12 +529,10 @@ package body RandomBasePkg is
     variable strval : string(1 to 40) ;
     variable len    : natural ;
     variable igood  : boolean ;
+    variable iDistribution : RandomDistType ;
   begin
     loop
-      -- procedure SREAD (L : inout LINE ; VALUE : out STRING ; STRLEN : out NATURAL) ;
-      sread(L, strval, len) ;
-      A.Distribution := RandomDistType'value(strval(1 to len)) ;
-      igood := len > 0 ;
+      read(L, iDistribution, good) ;
       exit when not igood ;
 
       read(L, A.Mean, igood) ;
@@ -548,7 +550,7 @@ package body RandomBasePkg is
     variable ReadValid : boolean ;
   begin
       read(L, A, ReadValid) ;
-      AlertIfNot( OSVVM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomParamType] failed", FAILURE) ; 
+      AlertIfNot( OSVVM_RANDOM_ALERTLOG_ID, ReadValid, "RandomPkg.read[line, RandomParamType] failed", FAILURE) ;
   end procedure read ;
 
 
@@ -556,8 +558,8 @@ package body RandomBasePkg is
   --  Randomization Support
   --    Scale                - Scale a value to be within a given range
   --    FavorSmall, FavorBig - Distribution Support
-  --    RemoveExclude 
-  --   
+  --    RemoveExclude
+  --
   -----------------------------------------------------------------
   --  Scale - Scale a value to be within a given range
   function Scale (A, Min, Max : real) return real is

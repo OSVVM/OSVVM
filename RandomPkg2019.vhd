@@ -50,11 +50,13 @@
 --
 
 use work.OsvvmGlobalPkg.all ;
+use work.TextUtilPkg.all ;
 use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.SortListPkg_int.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.OsvvmTypesPkg.all ;
+use work.LanguageSupport2019Pkg.all ;
 
 use std.textio.all ;
 
@@ -909,6 +911,7 @@ package body RandomPkg2019 is
   impure function Normal (variable RV : inout RandomType ; Mean, StdDeviation, Min, Max : real) return real is
   ------------------------------------------------------------
     variable rRandomVal : real ;
+    variable Found : boolean ;
   begin
     if Max < Min then
        Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -917,12 +920,24 @@ package body RandomPkg2019 is
          FAILURE) ;
        return Mean ;
     else
-      loop
+      for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
         rRandomVal := Normal (RV, Mean, StdDeviation) ;
-        exit when rRandomVal >= Min and rRandomVal <= Max ;
+        Found := rRandomVal >= Min and rRandomVal <= Max ;
+        exit when Found ;
       end loop ;
     end if ;
-    return rRandomVal ;
+    if Found then
+      return rRandomVal ;
+    else
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
+        "RandomPkg2019.Normal(Mean => " & format(Mean) &
+        ", StdDeviation => " & format(StdDeviation) &
+        ", Min => " & format(Min) &
+        ", Max => " & format(Max) &
+        ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+        FAILURE) ;
+      return real'low ;
+    end if ;
   end function Normal ;
 
   ------------------------------------------------------------
@@ -937,6 +952,7 @@ package body RandomPkg2019 is
     Exclude       : integer_vector := NULL_INTV
   ) return integer is
     variable iRandomVal : integer ;
+    variable Found : boolean ;
   begin
     if Max < Min then
       Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -945,13 +961,26 @@ package body RandomPkg2019 is
         FAILURE) ;
       return integer(round(Mean)) ;
     else
-      loop
+      for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
         iRandomVal := integer(round(  Normal(RV, Mean, StdDeviation)  )) ;
-        exit when iRandomVal >= Min and iRandomVal <= Max and
+        Found := iRandomVal >= Min and iRandomVal <= Max and
                    not inside(iRandomVal, Exclude) ;
+        exit when Found ;
       end loop ;
     end if ;
-    return iRandomVal ;
+    if Found then
+      return iRandomVal ;
+    else
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
+        "RandomPkg2019.Normal(Mean => " & format(Mean) &
+        ", StdDeviation => " & format(StdDeviation) &
+        ", Min => " & format(Min) &
+        ", Max => " & format(Max) &
+        ", Exclude => " & to_string(Exclude) &
+        ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+        FAILURE) ;
+      return integer'low ;
+    end if ;
   end function Normal ;
 
 
@@ -985,7 +1014,7 @@ package body RandomPkg2019 is
       UniformRand := Uniform(RV) ;
       Product := Product * UniformRand ;
     end loop ;
-    return PoissonRand ;
+    return PoissonRand - 1.0 ;
   end function  Poisson ; -- no range
 
   ------------------------------------------------------------
@@ -993,6 +1022,7 @@ package body RandomPkg2019 is
   impure function Poisson (variable RV : inout RandomType ; Mean, Min, Max : real) return real is
   ------------------------------------------------------------
     variable rRandomVal : real ;
+    variable Found : boolean ;
   begin
     if Max < Min then
       Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -1001,12 +1031,23 @@ package body RandomPkg2019 is
          FAILURE) ;
       return Mean ;
     else
-      loop
+      for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
         rRandomVal := Poisson (RV, Mean) ;
-        exit when rRandomVal >= Min and rRandomVal <= Max ;
+        Found := rRandomVal >= Min and rRandomVal <= Max ;
+        exit when Found ;
       end loop ;
     end if ;
-    return rRandomVal ;
+    if Found then
+      return rRandomVal ;
+    else
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
+        "RandomPkg2019.Poisson(Mean => " & format(Mean) &
+        ", Min => " & format(Min) &
+        ", Max => " & format(Max) &
+        ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+        FAILURE) ;
+      return real'low ;
+    end if ;
   end function  Poisson ;
 
   ------------------------------------------------------------
@@ -1019,6 +1060,7 @@ package body RandomPkg2019 is
     Exclude       : integer_vector := NULL_INTV
   ) return integer is
     variable iRandomVal : integer ;
+    variable Found : boolean ;
   begin
     if Max < Min then
       Alert(OSVVM_RANDOM_ALERTLOG_ID,
@@ -1027,15 +1069,26 @@ package body RandomPkg2019 is
          FAILURE) ;
       return integer(round(Mean)) ;
     else
-      loop
+      for i in 1 to RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE loop
         iRandomVal := integer(round(  Poisson (RV, Mean)  )) ;
-        exit when iRandomVal >= Min and iRandomVal <= Max and
+        Found := iRandomVal >= Min and iRandomVal <= Max and
                    not inside(iRandomVal, Exclude) ;
+        exit when Found ;
       end loop ;
     end if ;
-    return iRandomVal ;
+    if Found then
+      return iRandomVal ;
+    else
+      Alert(OSVVM_RANDOM_ALERTLOG_ID,
+        "RandomPkg2019.Poisson(Mean => " & format(Mean) &
+        ", Min => " & format(Min) &
+        ", Max => " & format(Max) &
+        ", Exclude => " & to_string(Exclude) &
+        ") did not find a valid value in " & format(RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE) & "attempts",
+        FAILURE) ;
+      return integer'low ;
+    end if ;
   end function  Poisson ;
-
 
 
   --- ///////////////////////////////////////////////////////////////////////////

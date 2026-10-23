@@ -84,6 +84,9 @@ package body OsvvmSettingsPkg is
   --   For new designs, make this TRUE.
   --   For old designs, changing it will change your randomization.  If you need that exact pattern, then do not change.
   constant RANDOM_USE_NEW_SEED_METHODS             : boolean := IfElse(OSVVM_SETTINGS_REVISION >= "2024", TRUE, FALSE) ;  -- Historic FALSE
+  -- for Normal and Poisson with min, max, and/or exclude values
+  constant RANDOM_MAX_ITERATION_TO_FIND_VALUE_IN_RANGE : integer := 1E9 ; -- 1 Billion iternations
+
 
   -- ------------------------------------------
   -- Settings for ScoreboardGenericPkg
