@@ -482,9 +482,11 @@ package ScoreboardGenericPkg is
   -- Generally these are not required.  When a simulation ends and
   -- another simulation is started, a simulator will release all allocated items.
   -- Deallocate - Deletes all allocated items
-  procedure Deallocate (constant ID : in  ScoreboardIDType) ;
+  procedure DeallocateAllScoreboards ;
+  procedure Deallocate (constant ID : in  ScoreboardIDType) ;  -- Deprecated
   -- Initialize - reCreates initial data structure if it was destroyed with Deallocate
-  procedure Initialize (constant ID : in  ScoreboardIDType) ;
+  procedure InitializeAllScoreboards ;
+  procedure Initialize (constant ID : in  ScoreboardIDType) ;  -- Deprecated
 
 
   -------------------------------------------------------------------------------------------------
@@ -1293,7 +1295,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     begin
       AlertIf(ParentID, X'length /= 2, "ScoreboardPkg.NewID Array parameter X has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ;
-      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Array parameter X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
+      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Array parameter X(X'left): " & to_string(X(X'Left)) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
       return LocalNewID(Name, X, ParentID, ReportMode, Search, PrintParent) ;
     end function NewID ;
 
@@ -1356,8 +1358,8 @@ package body ScoreboardGenericPkg is
     begin
       AlertIf(ParentID, X'length /= 2, "ScoreboardPkg.NewID Matrix parameter X has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ;
       AlertIf(ParentID, Y'length /= 2, "ScoreboardPkg.NewID Matrix parameter Y has " & to_string(Y'length) & "dimensions.  Required to be 2", FAILURE) ;
-      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Matrix parameter X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
-      AlertIf(ParentID, Y(Y'Left) > Y(Y'right), "ScoreboardPkg.NewID Matrix parameter Y(Y'left): " & to_string(Y'Left) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ;
+      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Matrix parameter X(X'left): " & to_string(X(X'Left)) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
+      AlertIf(ParentID, Y(Y'Left) > Y(Y'right), "ScoreboardPkg.NewID Matrix parameter Y(Y'left): " & to_string(Y(Y'Left)) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ;
       return LocalNewID(Name, X, Y, ParentID, ReportMode, Search, PrintParent) ;
     end function NewID ;
 
@@ -1472,7 +1474,6 @@ package body ScoreboardGenericPkg is
         end if ;
         return ;
       end if ;
-      SbPtr(Index).PopCount := SbPtr(Index).PopCount + 1 ;
       -- deallocate previous pointer
       if SbPtr(Index).PopListPtr /= NULL then
         deallocate(SbPtr(Index).PopListPtr.TagPtr) ;
@@ -1490,7 +1491,7 @@ package body ScoreboardGenericPkg is
         loop
           if CurPtr.NextPtr = NULL then
             SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-            AffirmIf(SbPtr(Index).AlertLogID, FALSE, Name & "   Tag: " & Tag & " not found", ERROR) ;
+            AffirmIf(SbPtr(Index).AlertLogID, FALSE, Name & "   Tag: " & Tag & " not found",  FAILURE) ;
             exit ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
             Found := TRUE ;
@@ -1504,6 +1505,9 @@ package body ScoreboardGenericPkg is
             CurPtr := CurPtr.NextPtr ;
           end if ;
         end loop ;
+      end if ;
+      if Found then
+        SbPtr(Index).PopCount := SbPtr(Index).PopCount + 1 ;
       end if ;
     end procedure LocalPop ;
 
@@ -1630,6 +1634,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
     end procedure Check ;
 
@@ -1645,6 +1650,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
     end procedure Check ;
 
@@ -1661,6 +1667,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
       return found ;
     end function Check ;
@@ -1677,6 +1684,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
       return found ;
     end function Check ;
@@ -1694,6 +1702,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ExpectedData), found) ;
       if found then
         LocalCheck(Index, ExpectedData, found, ExpectedInFIFO => FALSE) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
       return found ;
     end function CheckExpected ;
@@ -1711,6 +1720,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, Tag, "Pop", found) ;
       if found then
         Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+      -- else  alert FAILURE already issued if not found
       end if ;
     end procedure Pop ;
 
@@ -1726,6 +1736,7 @@ package body ScoreboardGenericPkg is
       LocalPop(Index, "Pop", found) ;
       if found then
         Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
+      -- else  alert FAILURE already issued if not found
       end if ;
     end procedure Pop ;
 
@@ -1739,6 +1750,7 @@ package body ScoreboardGenericPkg is
       variable found : boolean ;
     begin
       LocalPop(Index, Tag, "Pop", found) ;
+      -- if not found then  alert FAILURE already issued this will be fatal. Use pop as a procedure if you need to continue
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -1749,6 +1761,7 @@ package body ScoreboardGenericPkg is
       variable found : boolean ;
     begin
       LocalPop(Index, "Pop", found) ;
+      -- if not found then  alert FAILURE already issued this will be fatal. Use pop as a procedure if you need to continue
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -1759,10 +1772,6 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurPtr : ListPtrType ;
     begin
---!! LocalPeek does this, but so do each of the indexed calls
---!!      if LocalOutOfRange(Index, "Peek") then
---!!        return NULL ; -- error reporting in LocalOutOfRange
---!!      end if ;
       if SbPtr(Index).HeadPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
         Alert(SbPtr(Index).AlertLogID, GetName & " Empty during Peek", FAILURE) ;
@@ -1807,6 +1816,7 @@ package body ScoreboardGenericPkg is
       CurPtr := LocalPeek(Index, Tag) ;
       if CurPtr /= NULL then
         Item := CurPtr.ExpectedPtr.all ;
+      -- else  alert FAILURE already issued if CurPtr = NULL
       end if ;
     end procedure Peek ;
 
@@ -1825,6 +1835,7 @@ package body ScoreboardGenericPkg is
       CurPtr := LocalPeek(Index, "") ;
       if CurPtr /= NULL then
         Item := CurPtr.ExpectedPtr.all ;
+      -- else  alert FAILURE already issued if CurPtr = NULL
       end if ;
     end procedure Peek ;
 
@@ -1842,12 +1853,8 @@ package body ScoreboardGenericPkg is
         return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
       end if ;
       CurPtr := LocalPeek(Index, Tag) ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ;
+      -- if CurPtr = NULL then  alert FAILURE already issued this will be fatal. Use Peek as a procedure if you need to continue
+      return CurPtr.ExpectedPtr.all ;
     end function Peek ;
 
     ------------------------------------------------------------
@@ -1861,12 +1868,8 @@ package body ScoreboardGenericPkg is
         return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
       end if ;
       CurPtr := LocalPeek(Index, "") ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ;
+      -- if CurPtr = NULL then  alert FAILURE already issued this will be fatal. Use Peek as a procedure if you need to continue
+      return CurPtr.ExpectedPtr.all ;
     end function Peek ;
 
     ------------------------------------------------------------
@@ -2263,7 +2266,7 @@ package body ScoreboardGenericPkg is
       end if ;
       LocalDelete (FindPtr, FindParentPtr, Index, Tag, ActualData) ;
       -- Flush if there are things to flush
-      if GetFifoCount > 0 and FlushToItemNumber > 0 then
+      if GetFifoCount(Index) > 0 and FlushToItemNumber > 0 then
         CurrentDropCount := SbPtr(Index).DropCount ;
         Flush(Index, Tag, FlushToItemNumber) ;
         LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ;
@@ -2305,7 +2308,7 @@ package body ScoreboardGenericPkg is
       end if ;
       LocalDelete (FindPtr, FindParentPtr, Index, ActualData) ;
       -- Flush if there are things to flush
-      if GetFifoCount > 0 and FlushToItemNumber > 0 then
+      if GetFifoCount(Index) > 0 and FlushToItemNumber > 0 then
         CurrentDropCount := SbPtr(Index).DropCount ;
         Flush(Index, FlushToItemNumber) ;
         LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ;
@@ -2470,6 +2473,9 @@ package body ScoreboardGenericPkg is
 
       -- Deallocate NameVar - NamePType
       NameVar.Deallocate ;
+
+      -- Deallocate NameStorePType
+      LocalNameStore.Deallocate ;
 
       -- Set the state s.t. there is nothing in the SB
       MinIndex       := 0 ;
@@ -2764,7 +2770,7 @@ package body ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer is
     begin
-      return Find(MinIndex, "", ActualData) ;
+      return Find(MinIndex, ActualData) ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -3672,6 +3678,17 @@ package body ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and
   -- another simulation is started, a simulator will release all allocated items.
+  procedure DeallocateAllScoreboards is
+  begin
+    ScoreboardStore.Deallocate ;
+  end procedure DeallocateAllScoreboards ;
+
+  procedure InitializeAllScoreboards is
+  begin
+    ScoreboardStore.Initialize ;
+  end procedure InitializeAllScoreboards ;
+
+  -- Old Way
   procedure Deallocate (
     constant ID     : in  ScoreboardIDType
   ) is

@@ -89,6 +89,7 @@ package NameStorePkg is
   impure function IsSet     (ID : NameIDType) return boolean ;
   procedure       Clear     (ID : NameIDType) ; -- clear name
   procedure       Deallocate(ID : NameIDType) ; -- effectively alias to clear name
+  procedure       NameStoreDeallocate ;
 
   ------------------------------------------------------------
   -- Helper function for NewID in data structures
@@ -144,6 +145,7 @@ package NameStorePkg is
     impure function IsSet     (ID : integer) return boolean ;
     procedure       Clear     (ID : integer) ; -- clear name
     procedure       Deallocate(ID : integer) ; -- effectively alias to clear name
+    procedure       Deallocate ;
 
     -- Deprecated
     impure function GetOpt    (ID : integer) return string ;
@@ -171,10 +173,6 @@ package body NameStorePkg is
 
     type  NameArrayType    is array (integer range <>) of NameItemRecType ;
     type  NameArrayPtrType is access NameArrayType ;
-
---    type  LineArrayType    is array (integer range <>) of Line ;
---    type  LineArrayPtrType is access LineArrayType ;
---    variable NameArrayPtr   : LineArrayPtrType ;
 
     variable NameArrayPtr   : NameArrayPtrType ;
     variable NumItems       : integer := 0 ;
@@ -291,7 +289,7 @@ package body NameStorePkg is
         -- skip if private
         next when NameArrayPtr(ID).Search = PRIVATE_NAME ;
         -- find Name
-        if iName = NameArrayPtr(ID).Name.all then
+        if NameArrayPtr(ID).Name /= NULL and iName = NameArrayPtr(ID).Name.all then
           return ID ;
         end if ;
       end loop ;
@@ -307,7 +305,7 @@ package body NameStorePkg is
         -- skip if private
         next when NameArrayPtr(ID).Search = PRIVATE_NAME ;
         -- find Name and Parent
-        if iName = NameArrayPtr(ID).Name.all and (ParentID = NameArrayPtr(ID).ParentID or NameArrayPtr(ID).Search = NAME) then
+        if NameArrayPtr(ID).Name /= NULL and iName = NameArrayPtr(ID).Name.all and (ParentID = NameArrayPtr(ID).ParentID or NameArrayPtr(ID).Search = NAME) then
           return ID ;
         end if ;
       end loop ;
@@ -358,8 +356,19 @@ package body NameStorePkg is
     procedure Deallocate(ID : integer) is
     ------------------------------------------------------------
     begin
-      Clear(ID) ;
+      deallocate(NameArrayPtr(ID).Name) ;
     end procedure Deallocate ;
+
+    ------------------------------------------------------------
+    procedure Deallocate is
+    ------------------------------------------------------------
+    begin
+      for ID in 1 to NumItems loop
+        Deallocate(ID) ;
+      end loop ;
+      deallocate(NameArrayPtr) ;
+    end procedure Deallocate ;
+
 
     -- Deprecated
     ------------------------------------------------------------
@@ -455,6 +464,13 @@ package body NameStorePkg is
   end procedure Deallocate ;
 
   ------------------------------------------------------------
+  procedure NameStoreDeallocate is
+  ------------------------------------------------------------
+  begin
+    NameStore.Deallocate ;
+  end procedure NameStoreDeallocate ;
+
+  ------------------------------------------------------------
   -- Helper function for NewID in data structures
   function ResolveSearch (
   ------------------------------------------------------------
@@ -477,7 +493,7 @@ package body NameStorePkg is
   impure function GetOpt (ID : NameIDType) return string is
   ------------------------------------------------------------
   begin
-    return NameStore.Get(ID.ID) ;
+    return NameStore.GetOpt(ID.ID) ;
   end function GetOpt ;
 
 end package body NameStorePkg ;

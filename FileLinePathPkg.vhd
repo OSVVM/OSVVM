@@ -49,6 +49,12 @@ use osvvm.TranscriptBasePkg.all ;
 
 package FileLinePathPkg is
 
+--!!
+--!! There is a descrepency between Get_Call_Path and to_string wrt indexing.
+--!!    to_string uses CpvPtr(index - 1 to CpvPtr'right)
+--!!    Get_Call_Path uses CpvPtr(index to CpvPtr'right)
+--!!
+
   constant SUPPORTS_2019_FILE_PATH : BOOLEAN := TRUE ;
 
   -- Alias's to std.env are not ambiguous just like for ieee.std_logic_textio
@@ -133,6 +139,7 @@ package body FileLinePathPkg is
     Separator : STRING := "" & LF
   ) return string is
     variable CpvPtr  : Call_Path_Vector_Ptr := Get_Call_Path ;  --  0 to N.  Note 0 is this subprogram
+--! there is a descrepency between this and to_string wrt indexing.
     constant Result  : string := to_string(CpvPtr(index to CpvPtr'right), Separator) ;  -- uses 2019 version
 --    constant Result  : string := to_string(CpvPtr, index, Separator) ;
   begin

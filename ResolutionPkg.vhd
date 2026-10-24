@@ -277,7 +277,7 @@ package body ResolutionPkg is
              ('U', 'X', '0', '1', 'Z', 'W', 'L', 'H', '-'),  -- | Z |
              ('W', 'X', '0', '1', 'W', 'W', 'L', 'H', '-'),  -- | W |
              ('L', 'L', '0', '1', 'L', 'L', 'L', 'H', 'L'),  -- | L |
-             ('H', 'H', '0', '1', 'H', 'H', 'W', 'H', 'H'),  -- | H |
+             ('H', 'H', '0', '1', 'H', 'H', 'H', 'H', 'H'),  -- | H |
              ('-', '-', '0', '1', '-', '-', 'L', 'H', '-')   -- | - |
              );
 
@@ -300,15 +300,18 @@ package body ResolutionPkg is
   function resolved ( s : integer_vector ) return integer is
   -- requires interface to be initialized to 0
   ------------------------------------------------------------
-    variable result : integer := 0 ;
+    variable result : integer := integer'low ;
     variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) /= 0 then
-        failed := failed or (result /= 0) ;
+      if s(i) /= integer'low and s(i) /= 0 then
+        failed := failed or (result /= integer'low and result /= 0) ;
         result := maximum(s(i),result);
       end if ;
     end loop ;
+    if result = integer'low then
+      result := 0 ;
+    end if ;
     assert not failed report "ResolutionPkg.resolved: multiple drivers on integer" severity MULTIPLE_DRIVER_SEVERITY ;
     -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on integer") ;
     return result ;
@@ -318,15 +321,19 @@ package body ResolutionPkg is
   function resolved ( s : time_vector ) return time is
   -- requires interface to be initialized to 0 ns
   ------------------------------------------------------------
-    variable result : time := 0 ns ;
+    variable result : time := time'low ;
     variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) > 0 ns then
-        failed := failed or (result /= 0 ns) ;
+      if s(i) /= 0 sec and s(i) /= time'low then
+        failed := failed or (result /= time'low and result /= 0 sec) ;
         result := maximum(s(i),result);
       end if ;
     end loop ;
+    if result = time'low then
+      result := 0 sec ;
+    end if ;
+
     assert not failed report "ResolutionPkg.resolved: multiple drivers on time" severity MULTIPLE_DRIVER_SEVERITY ;
     -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on time") ;
     return result ;
@@ -336,15 +343,18 @@ package body ResolutionPkg is
   function resolved ( s : real_vector ) return real is
   -- requires interface to be initialized to 0.0
   ------------------------------------------------------------
-    variable result : real := 0.0 ;
+    variable result : real := real'low ;
     variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) /= 0.0 then
-        failed := failed or (result /= 0.0) ;
+      if s(i) /= 0.0 and s(i) /= real'low then
+        failed := failed or (result /= real'low and result /= 0.0) ;
         result := maximum(s(i),result);
       end if ;
     end loop ;
+    if result = real'low then
+      result := 0.0 ;
+    end if ;
     assert not failed report "ResolutionPkg.resolved: multiple drivers on real" severity MULTIPLE_DRIVER_SEVERITY ;
     -- AlertIf(OSVVM_ALERTLOG_ID, failed, "ResolutionPkg.resolved: multiple drivers on real") ;
     return result ;
@@ -354,12 +364,12 @@ package body ResolutionPkg is
   function resolved (s : string) return character is
   -- same as resolved_max
   ------------------------------------------------------------
-    variable result : character := NUL ;
+    variable result : character := character'low ;
     variable failed : boolean := FALSE ;
   begin
     for i in s'RANGE loop
-      if s(i) /= NUL then
-        failed := failed or (result /= NUL) ;
+      if s(i) /= character'low then
+        failed := failed or (result /= character'low) ;
         result := maximum(result, s(i)) ;
       end if ;
     end loop ;

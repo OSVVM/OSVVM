@@ -778,7 +778,7 @@ package body MemoryGenericPkg is
     impure function GetAlertLogID (ID : integer) return AlertLogIDType is
     ------------------------------------------------------------
     begin
-      if IdOutOfRange(ID, "MemErase") then
+      if IdOutOfRange(ID, "GetAlertLogID") then
         return ALERTLOG_ID_NOT_FOUND ;
       else
         return MemStructPtr(ID).AlertLogID ;
@@ -1227,10 +1227,12 @@ package body MemoryGenericPkg is
       for ID in MemStructPtr'range loop
         deallocate(ID) ;
       end loop ;
--- If this is done, nothing will work after
+--!! Uncomment after splitting PT from Singleton
 --      deallocate(MemStructPtr) ;
-      NumItems := 0 ;
 --      MemStructPtr := new ItemArrayType'(Template) ;   -- I--
+      NumItems := 0 ;
+      -- Deallocate NameStorePType
+      LocalNameStore.Deallocate ;
     end procedure deallocate ;
 
 -- /////////////////////////////////////////

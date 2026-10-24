@@ -100,6 +100,9 @@ package body FileUtilPkg is
     variable LenA : integer := A'length ;
     variable FoundAtIndex : integer ;
   begin
+    if LenA = 0 then
+      return A ;
+    end if ;
     -- Remove ending PathDelimiter
     if aA(LenA) = PathDelimiter then
       LenA := LenA - 1 ;
