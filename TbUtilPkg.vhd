@@ -17,12 +17,14 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
+--    08/2026   2026.08    Added WakeOnBarrier
 --    11/2024   2024.11    Replaced time with delay_length (0 to time'high) and integer with natural (in WaitForClock)
 --    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
---    07/2024   2024.07    Added pre-defined barriers:  
---                             OsvvmTestInit, OsvvmResetDone, OsvvmVcInit, 
+--    07/2024   2024.07    Added pre-defined barriers:
+--                             OsvvmTestInit, OsvvmResetDone, OsvvmVcInit,
 --                             OsvvmTestDone, TestDone
---                         For all procedures that use Clk, added a ClkActive input parameter and 
+--                         For all procedures that use Clk, added a ClkActive input parameter and
 --                         defaulted it to CLOCK_ACTIVE.  Allows all to support either edge of clock.
 --                         Former input parameters named polarity were renamed - breaking change if using named association
 --                         Moved Clock and Reset support from TbUtilPkg to ClockResetPkg
@@ -66,7 +68,7 @@ library ieee ;
 
   use work.ResolutionPkg.all ;
 --  use work.AlertLogPkg.all ;
---  use work.TranscriptPkg.all ;
+--  use work.TranscriptBasePkg.all ;
 --  use work.OsvvmGlobalPkg.all ;
 
 package TbUtilPkg is
@@ -153,7 +155,7 @@ package TbUtilPkg is
     signal Ack         : Out bit ;
     constant ClkActive : In std_logic := CLK_ACTIVE
   ) ;
-  
+
   -- Only for clockless models
   procedure WaitForTransaction (
     signal Rdy : in  bit ;
@@ -187,8 +189,8 @@ package TbUtilPkg is
 
 
   ------------------------------------------------------------
-  -- Interrupt handling variations of WaitForTransaction 
-  --   std_logic / std_logic 
+  -- Interrupt handling variations of WaitForTransaction
+  --   std_logic / std_logic
   ------------------------------------------------------------
   procedure WaitForTransaction (
     signal   Clk            : In  std_logic ;
@@ -216,8 +218,8 @@ package TbUtilPkg is
   function TransactionPending ( signal Rdy : In  std_logic ) return boolean ;
 
   ------------------------------------------------------------
-  -- Interrupt handling variations of WaitForTransaction 
-  --   RdyType/AckType 
+  -- Interrupt handling variations of WaitForTransaction
+  --   RdyType/AckType
   ------------------------------------------------------------
   -- Intended for models that need to switch between instruction streams
   -- such as a CPU when interrupt is pending
@@ -231,7 +233,7 @@ package TbUtilPkg is
   ) ;
 
   -- StartTransaction not used, Ack is incremented at transaction completion
---  procedure StartTransaction  ( signal Ack : Out AckType ) ; 
+--  procedure StartTransaction  ( signal Ack : Out AckType ) ;
 
   -- Increment Ack
   procedure FinishTransaction ( signal Ack : InOut AckType ) ;
@@ -279,18 +281,22 @@ package TbUtilPkg is
   function resolved_barrier ( s : integer_vector ) return integer ;
   -- integer'low+1 is for Xilinx.   It should be just integer'low
   subtype  BarrierType is resolved_barrier integer range integer'low+1 to integer'high ;
---  alias    integer_barrier is BarrierType ; 
-  subtype  integer_barrier is BarrierType ; 
+--  alias    integer_barrier is BarrierType ;
+  subtype  integer_barrier is BarrierType ;
   -- Usage of integer barriers requires resolved_barrier.  Usage of BarrierType is recommended.
   --   signal barrier1 : BarrierType ;                    -- Recommended
   --   signal barrier2 : resolved_barrier integer := 1 ;  -- Supported
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ) ;
+  procedure WakeOnBarrier  ( signal Sig : In    BarrierType) ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; constant TimeOut : delay_length ) ;
+
   -- std_logic support
   procedure WaitForBarrier ( signal Sig : InOut std_logic ) ;
+  procedure WakeOnBarrier  ( signal Sig : In    std_logic) ;
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') ;
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; constant TimeOut : delay_length ) ;
+
   -- Using separate signals
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncIn : in  std_logic ) ;
   procedure WaitForBarrier2 ( signal SyncOut : out std_logic ; signal SyncInV : in  std_logic_vector ) ;
@@ -298,21 +304,21 @@ package TbUtilPkg is
   ------------------------------------------------------------
   -- Predefined barrier signals
   ------------------------------------------------------------
-  type PredefinedBarrierType is record 
-    ResetStarted   : BarrierType ; 
-    ResetDone      : BarrierType ; 
-    TestInit       : BarrierType ; 
-    TestDone       : BarrierType ; 
-    VcInit         : BarrierType ; 
-  end record PredefinedBarrierType ; 
+  type PredefinedBarrierType is record
+    ResetStarted   : BarrierType ;
+    ResetDone      : BarrierType ;
+    TestInit       : BarrierType ;
+    TestDone       : BarrierType ;
+    VcInit         : BarrierType ;
+  end record PredefinedBarrierType ;
   signal Barrier : PredefinedBarrierType ;
-  
-  alias OsvvmResetStarted  : BarrierType is Barrier.ResetStarted ; 
-  alias OsvvmResetDone     : BarrierType is Barrier.ResetDone ; 
-  alias OsvvmTestInit      : BarrierType is Barrier.TestInit ; 
-  alias OsvvmTestDone      : BarrierType is Barrier.TestDone ; 
-  alias TestDone           : BarrierType is Barrier.TestDone ; 
-  alias OsvvmVcInit        : BarrierType is Barrier.VcInit ; 
+
+  alias OsvvmResetStarted  : BarrierType is Barrier.ResetStarted ;
+  alias OsvvmResetDone     : BarrierType is Barrier.ResetDone ;
+  alias OsvvmTestInit      : BarrierType is Barrier.TestInit ;
+  alias OsvvmTestDone      : BarrierType is Barrier.TestDone ;
+  alias TestDone           : BarrierType is Barrier.TestDone ;
+  alias OsvvmVcInit        : BarrierType is Barrier.VcInit ;
 
   ------------------------------------------------------------
   -- WaitForClock
@@ -414,14 +420,25 @@ package body TbUtilPkg is
     return  to_x01(C)='0' and to_x01(C'last_value)='1' and C'last_event= 0 sec ;
   end function EdgeFell ;
 
+  constant opposite_edge_check : stdulogic_indexed_by_stdulogic := (
+      '0'     => '1',
+      'L'     => '1',
+      '1'     => '0',
+      'H'     => '0',
+      '-'     => '-',
+      'U'     => 'U',
+      others  => 'X'
+  );
+
   function EdgeActive ( signal C : in std_logic; A : std_logic ) return boolean is
   begin
-    return  to_x01(C)=A and to_x01(C'last_value)=not A and C'last_event= 0 sec ;
+    -- ?= handles when A is a '-'
+    return  (??(C ?= A)) and (??(C'last_value ?= opposite_edge_check(C))) and C'last_event= 0 sec ;
   end function EdgeActive ;
 
   function ChangingEdge ( signal C : in std_logic; A : std_logic ) return boolean is
   begin
-    return  to_x01(C)=A and to_x01(C'last_value)=not A and C'event ;
+    return  (??(C ?= A)) and (??(C'last_value ?= opposite_edge_check(C))) and C'event ;
   end function ChangingEdge ;
 
   procedure FindRisingEdge ( signal C : in std_logic) is
@@ -536,7 +553,7 @@ package body TbUtilPkg is
     wait for 0 ns ; -- Allow transactions without time passing
   end procedure WaitForTransaction ;
 
-  -- Only for clockless models 
+  -- Only for clockless models
   procedure WaitForTransaction (
     signal Rdy  : In  std_logic ;
     signal Ack  : Out std_logic
@@ -600,7 +617,7 @@ package body TbUtilPkg is
     wait for 0 ns ; -- Allow transactions without time passing
   end procedure WaitForTransaction ;
 
-  -- Only for clockless models 
+  -- Only for clockless models
   procedure WaitForTransaction (
     signal Rdy  : in  bit ;
     signal Ack  : out bit
@@ -654,7 +671,7 @@ package body TbUtilPkg is
     end if ;
   end procedure WaitForTransaction ;
 
-  -- Only for clockless models 
+  -- Only for clockless models
   procedure WaitForTransaction (
     signal Rdy      : In    RdyType ;
     signal Ack      : InOut AckType
@@ -668,7 +685,7 @@ package body TbUtilPkg is
   end procedure WaitForTransaction ;
 
   ------------------------------------------------------------
-  -- WaitForTransaction 
+  -- WaitForTransaction
   --   Specializations for interrupt handling
   ------------------------------------------------------------
   procedure WaitForTransaction (
@@ -756,7 +773,7 @@ package body TbUtilPkg is
   end function TransactionPending ;
 
   ------------------------------------------------------------
-  -- WaitForTransaction - RdyType/AckType 
+  -- WaitForTransaction - RdyType/AckType
   --   Specializations for interrupt handling
   ------------------------------------------------------------
   -- Intended for models that need to switch between instruction streams
@@ -921,6 +938,11 @@ package body TbUtilPkg is
     wait for 0 ns ;
   end procedure WaitForBarrier ;
 
+  procedure WakeOnBarrier ( signal Sig : In    std_logic ) is
+  begin
+    wait until Sig = 'H' ;
+  end procedure WakeOnBarrier ;
+
   procedure WaitForBarrier ( signal Sig : InOut std_logic ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') is
   begin
     Sig <= 'H' ;
@@ -970,6 +992,11 @@ package body TbUtilPkg is
     Sig <= 1 ;
     wait for 0 ns ;
   end procedure WaitForBarrier ;
+
+  procedure WakeOnBarrier ( signal Sig : In    BarrierType ) is
+  begin
+    wait until Sig = 0  ;
+  end procedure WakeOnBarrier ;
 
   procedure WaitForBarrier ( signal Sig : InOut BarrierType ; signal TimeOut : std_logic ; constant TimeOutActive : in std_logic := '1') is
   begin
@@ -1033,13 +1060,13 @@ package body TbUtilPkg is
     if delay > OSVVM_SIM_RESOLUTION then
       wait for delay - OSVVM_SIM_RESOLUTION ;
     end if ;
-    wait until Clk ?= ClkActive ;
+    wait on Clk until Clk ?= ClkActive ;
   end procedure WaitForClock ;
 
   procedure WaitForClock ( signal Clk : in std_logic ;  constant NumberOfClocks : in natural := 1 ; constant ClkActive : in std_logic := CLK_ACTIVE) is
   begin
     for i in 1 to NumberOfClocks loop
-      wait until Clk ?= ClkActive ;
+      wait on Clk until Clk ?= ClkActive ;
     end loop ;
   end procedure WaitForClock ;
 
@@ -1068,12 +1095,13 @@ package body TbUtilPkg is
   procedure WaitForLevel ( signal A : in std_logic ; Level : std_logic := '1' ) is
   begin
     if A /= Level then
-      -- wait on A until A = Level ;
-      if Level = '1' then
-        wait until A = '1' ;
-      else
-        wait until A = '0' ;
-      end if ;
+      wait on A until A = Level ;
+      -- wait until A = Level ;
+--      if Level = '1' then
+--        wait until A = '1' ;
+--      else
+--        wait until A = '0' ;
+--      end if ;
     end if ;
   end procedure WaitForLevel ;
 
@@ -1081,31 +1109,31 @@ package body TbUtilPkg is
   -- WaitForLevel with TimeOut
   --   Find a signal at a level or simply pass after timeout
   ------------------------------------------------------------
-  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : delay_length) is 
+  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : delay_length) is
   begin
-    if not A then 
+    if not A then
       wait until A for TimeOut;
-    end if ; 
-  end procedure WaitForLevel ; 
-  
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; constant Level : std_logic := '1') is 
+    end if ;
+  end procedure WaitForLevel ;
+
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; constant Level : std_logic := '1') is
   begin
-    if A /= Level then 
-	    wait until A = Level for TimeOut; 
-    end if ; 
-  end procedure WaitForLevel ; 
-				
-  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : delay_length; variable TimeOutReached : out boolean) is 
+    if A /= Level then
+	    wait until A = Level for TimeOut;
+    end if ;
+  end procedure WaitForLevel ;
+
+  procedure WaitForLevel ( signal A : in boolean; constant TimeOut : delay_length; variable TimeOutReached : out boolean) is
   begin
-    WaitForLevel(A, TimeOut) ; 
-    TimeOutReached := not A ; 
-  end procedure WaitForLevel ; 
-  
-  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; variable TimeOutReached : out boolean; constant Level : std_logic := '1') is 
+    WaitForLevel(A, TimeOut) ;
+    TimeOutReached := not A ;
+  end procedure WaitForLevel ;
+
+  procedure WaitForLevel ( signal A : in std_logic; constant TimeOut : delay_length; variable TimeOutReached : out boolean; constant Level : std_logic := '1') is
   begin
-    WaitForLevel(A, TimeOut, Level) ; 
-    TimeOutReached := A /= Level ; 
-  end procedure WaitForLevel ; 
+    WaitForLevel(A, TimeOut, Level) ;
+    TimeOutReached := A /= Level ;
+  end procedure WaitForLevel ;
 
   ------------------------------------------------------------
   -- Deprecated

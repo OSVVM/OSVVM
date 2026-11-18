@@ -3,51 +3,52 @@
 --  Design Unit Name:  ResizePkg
 --  Revision:          STANDARD VERSION
 --
---  Maintainer:        Jim Lewis      email:  jim@SynthWorks.com 
---  Contributor(s):            
---     Jim Lewis      email:  jim@SynthWorks.com   
+--  Maintainer:        Jim Lewis      email:  jim@SynthWorks.com
+--  Contributor(s):
+--     Jim Lewis      email:  jim@SynthWorks.com
 --
 --  Package Defines
 --      Resizing for transaction records
---    
---  Developed for: 
---        SynthWorks Design Inc. 
+--
+--  Developed for:
+--        SynthWorks Design Inc.
 --        VHDL Training Classes
 --        11898 SW 128th Ave.  Tigard, Or  97223
 --        http://www.SynthWorks.com
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
 --    03/2024   2024.03    Added AlertLogID to SafeResize
 --    06/2021   2021.06    Refactored from ResolutionPkg
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2005 - 2024 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2005 - 2024 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
 
-library ieee ; 
-use ieee.std_logic_1164.all ; 
-use ieee.numeric_std.all ; 
+library ieee ;
+use ieee.std_logic_1164.all ;
+use ieee.numeric_std.all ;
 
-use work.AlertLogPkg.all ; 
-use work.ResolutionPkg.all ; 
+use work.AlertLogPkg.all ;
+use work.ResolutionPkg.all ;
 
-package ResizePkg is 
+package ResizePkg is
   ------------------------------------------------------------
   -- SafeResize
   -- Convert and resize to/from std_logic_vector and std_logic_vector_max_c
@@ -71,23 +72,23 @@ package ResizePkg is
   function        ToTransaction(A : std_logic_vector) return std_logic_vector_max_c ;
   impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector_max_c ;
   function        ToTransaction(A : integer; Size : natural) return std_logic_vector_max_c ;
-  
+
   function        FromTransaction (A: std_logic_vector_max_c) return std_logic_vector ;
   impure function FromTransaction (A: std_logic_vector_max_c ; Size : natural) return std_logic_vector ;
   function        FromTransaction (A: std_logic_vector_max_c) return integer ;
-  
+
   ------------------------------------------------------------
   -- Deprecated:  ToTransaction/FromTransaction - Provided for symmetry - Deprecated by SafeResize
   function        ToTransaction(A : std_logic_vector) return std_logic_vector ;  -- Symmetry
   impure function ToTransaction(A : std_logic_vector ; Size : natural) return std_logic_vector ;
   function        ToTransaction(A : integer; Size : natural) return std_logic_vector ;
-  
+
   function        FromTransaction (A: std_logic_vector) return std_logic_vector ; -- Symmetry
   impure function FromTransaction (A: std_logic_vector ; Size : natural) return std_logic_vector ;
-  function        FromTransaction (A: std_logic_vector) return integer ;    
-  
+  function        FromTransaction (A: std_logic_vector) return integer ;
+
 end package ResizePkg ;
-package body ResizePkg is 
+package body ResizePkg is
 
   ------------------------------------------------------------
   -- SafeResize
@@ -106,13 +107,13 @@ package body ResizePkg is
     else
       -- Reduce A and Error if any extra bits of A are a '1'
       Result := aA(Size-1 downto 0) ;
-      AlertIf(ID, (OR aA(A'length-1 downto Size) = '1'), 
-        "SafeResize: value changed on resize.  Original value: " & to_hstring(A) & 
+      AlertIf(ID, (OR aA(A'length-1 downto Size) /= '0'),
+        "SafeResize: value changed on resize.  Original value: " & to_hstring(A) &
         ",  Resized value: " & to_hstring(Result) ) ;
-    end if ;    
+    end if ;
     return Result ;
   end function LocalSafeResize ;
- 
+
   ------------------------------------------------------------
   impure function SafeResize(ID : AlertLogIDType ; A : std_logic_vector; Size : natural) return std_logic_vector is
   ------------------------------------------------------------
@@ -173,7 +174,7 @@ package body ResizePkg is
   begin
     return aA(Size-1 downto 0) ;
   end function Reduce ;
-  
+
 
   ------------------------------------------------------------
   -- Deprecated:  ToTransaction/FromTransaction - Deprecated by SafeResize
@@ -206,7 +207,7 @@ package body ResizePkg is
   begin
     return to_integer(signed(A)) ;
   end function FromTransaction ;
-  
+
   ------------------------------------------------------------
   -- Deprecated:  ToTransaction/FromTransaction - Provided for symmetry - Deprecated by SafeResize
   function ToTransaction(A : std_logic_vector) return std_logic_vector is
@@ -237,6 +238,6 @@ package body ResizePkg is
   function FromTransaction (A: std_logic_vector) return integer is
   begin
     return to_integer(signed(A)) ;
-  end function FromTransaction ;  
-  
+  end function FromTransaction ;
+
 end package body ResizePkg ;

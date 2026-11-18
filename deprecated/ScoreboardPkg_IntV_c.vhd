@@ -51,7 +51,7 @@ library ieee ;
   use work.IfElsePkg.all ;
   use work.OsvvmScriptSettingsPkg.all ;
   use work.OsvvmSettingsPkg.all ;
-  use work.TranscriptPkg.all ;
+  use work.TranscriptBasePkg.all ;
   use work.TextUtilPkg.all ;
   use work.AlertLogPkg.all ;
   use work.NamePkg.all ;
@@ -69,15 +69,15 @@ package ScoreBoardPkg_IntV is
 --    impure function actual_to_string  (A : ActualType) return string      -- is to_string ;
 --  ) ;
 
-   --  For a VHDL-2002 package, comment out the generics and 
+   --  For a VHDL-2002 package, comment out the generics and
    --  uncomment the following, it replaces a generic instance of the package.
-   --  As a result, you will have multiple copies of the entire package. 
+   --  As a result, you will have multiple copies of the entire package.
    --  Inconvenient, but ok as it still works the same.
   subtype ExpectedType is integer_vector ;
   subtype ActualType   is integer_vector ;
-   alias   Match is "=" [ActualType, ExpectedType return boolean] ;       
-   alias   expected_to_string is to_string [ExpectedType return string];  
-   alias   actual_to_string   is to_string [ActualType   return string];      
+   alias   Match is "=" [ActualType, ExpectedType return boolean] ;
+   alias   expected_to_string is to_string [ExpectedType return string];
+   alias   actual_to_string   is to_string [ActualType   return string];
 
   -- ScoreboardReportType is deprecated
   -- Replaced by Affirmations.  ERROR is the default.  ALL turns on PASSED flag
@@ -89,7 +89,7 @@ package ScoreBoardPkg_IntV is
   type ScoreboardIdArrayType  is array (integer range <>) of ScoreboardIdType ;
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;
 
-  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'low) ; 
+  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'low) ;
 
   -- Preparation for refactoring - if that ever happens.
   subtype FifoIdType       is ScoreboardIdType ;
@@ -303,7 +303,7 @@ package ScoreBoardPkg_IntV is
   alias Empty           is IsEmpty [ScoreboardIDType, string return boolean] ;
   alias ScoreboardEmpty is IsEmpty [ScoreboardIDType return boolean] ;
   alias ScoreboardEmpty is IsEmpty [ScoreboardIDType, string return boolean] ;
-  
+
   impure function AllScoreboardsEmpty return boolean ;                     -- All scoreboards in the singleton
 
 --  -- Simple
@@ -1706,11 +1706,11 @@ package body ScoreBoardPkg_IntV is
       end if ;
       if HeadPointer(Index) = NULL then
         ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
-        if tag'length > 0 then 
+        if tag'length > 0 then
           Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
         else
           Alert(AlertLogIDVar(Index), GetName & " Empty during " & Name, FAILURE) ;
-        end if ; 
+        end if ;
         return ;
       end if ;
       PopCountVar(Index) := PopCountVar(Index) + 1 ;
@@ -1789,7 +1789,7 @@ package body ScoreBoardPkg_IntV is
           if not (ArrayLengthVar > 1 and PrintIndexVar) then
             swrite(WriteBuf, "   ") ;
           end if ;
-        elsif NameVar.IsSet then 
+        elsif NameVar.IsSet then
 --x          write(WriteBuf, GetName(DefaultName => "")) ;
           write(WriteBuf, NameVar.Get("")) ;
           if not (ArrayLengthVar > 1 and PrintIndexVar) then
@@ -2095,10 +2095,10 @@ package body ScoreBoardPkg_IntV is
             ErrCntVar(Index) := ErrCntVar(Index) + 1 ;
             Alert(AlertLogIDVar(Index), GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
             -- return NULL ;
-            exit ; 
+            exit ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
             -- return CurPtr.NextPtr ;
-            exit ; 
+            exit ;
           else
             CurPtr := CurPtr.NextPtr ;
           end if ;
@@ -2284,27 +2284,27 @@ package body ScoreBoardPkg_IntV is
     begin
       return HeadPointer(FirstIndexVar) = NULL ;
     end function Empty ;
-    
+
     ------------------------------------------------------------
     impure function AllScoreboardsEmpty return boolean is
     -- All scoreboards in the singleton.  Not for PT
     ------------------------------------------------------------
-      variable AllEmpty : boolean := FALSE ; 
+      variable AllEmpty : boolean := FALSE ;
     begin
       if CalledNewID then
-        -- Is a singleton 
+        -- Is a singleton
         for i in 1 to NumItems loop
-          AllEmpty := Empty(i) ; 
-          exit when not AllEmpty ; 
+          AllEmpty := Empty(i) ;
+          exit when not AllEmpty ;
         end loop ;
-        return AllEmpty ; 
+        return AllEmpty ;
       else
         -- singleton not initialized.  Return TRUE as all are indeed empty.
         alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "AllScoreboardsEmpty: Scoreboard is either a PT or not initialized") ;
-        return TRUE ; 
+        return TRUE ;
       end if ;
     end function AllScoreboardsEmpty ;
-    
+
     ------------------------------------------------------------
     procedure CheckFinish (
     ------------------------------------------------------------
@@ -2320,7 +2320,7 @@ package body ScoreBoardPkg_IntV is
         write(WriteBuf, NameVar.Get("Scoreboard")) ;
       else
 --x        write(WriteBuf, GetName(DefaultName => "")) ;
-        write(WriteBuf, NameVar.Get("")) ; 
+        write(WriteBuf, NameVar.Get("")) ;
       end if ;
       if ArrayLengthVar > 1 then
 --x        if WriteBuf.all /= "" then
@@ -2544,7 +2544,7 @@ package body ScoreBoardPkg_IntV is
       constant ActualData  :  in  ActualType
     ) return integer is
       variable CurPtr : ListPointerType ;
-      variable LocalItemNumber : integer := integer'low ; 
+      variable LocalItemNumber : integer := integer'low ;
     begin
       if LocalOutOfRange(Index, "Find") then
         return integer'low ; -- error reporting in LocalOutOfRange
@@ -2572,13 +2572,13 @@ package body ScoreBoardPkg_IntV is
           -- Found it.  Return Index.
 --          return CurPtr.ItemNumber ;
           LocalItemNumber := CurPtr.ItemNumber ;
-          exit ; 
+          exit ;
 
         else  -- Descend
           CurPtr := CurPtr.NextPtr ;
         end if ;
       end loop ;
-      return LocalItemNumber ; 
+      return LocalItemNumber ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2761,7 +2761,7 @@ package body ScoreBoardPkg_IntV is
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
+      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb.yml",
                                               IfElse(FileNameIsBaseName, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",FileName) ) ;
 --x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
       file SbYamlFile : text ;
@@ -2988,8 +2988,8 @@ package body ScoreBoardPkg_IntV is
   impure function IsInitialized (ID : ScoreboardIDType) return boolean is
   ------------------------------------------------------------
   begin
-    return ScoreboardStore.IsInitialized(ID) ; 
-  end function IsInitialized ; 
+    return ScoreboardStore.IsInitialized(ID) ;
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
@@ -3206,12 +3206,12 @@ package body ScoreBoardPkg_IntV is
   begin
     return ScoreboardStore.Empty(ID.ID, Tag) ;
   end function IsEmpty ;
-  
+
   -- All scoreboards in the singleton
   impure function AllScoreboardsEmpty return boolean is
   begin
     return ScoreboardStore.AllScoreboardsEmpty ;
-  end function AllScoreboardsEmpty ; 
+  end function AllScoreboardsEmpty ;
 
 --!!   --
 --!!   --  impure function ScoreboardEmpty (

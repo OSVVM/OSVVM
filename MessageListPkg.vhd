@@ -19,43 +19,44 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    07/2021   2021.07    Initial revision.  
+--    11/2026   2026.11    Updates after Claude code review
+--    07/2021   2021.07    Initial revision.
 --                         Written as a replacement for protected types (MessagePkg)
---                         to simplify usage in new data structure. 
+--                         to simplify usage in new data structure.
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2021 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2021 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
 library ieee ;
 use std.textio.all ;
 
 package MessageListPkg is
-  type MessageStructType ; 
-  type MessageStructPtrType is access MessageStructType ; 
+  type MessageStructType ;
+  type MessageStructPtrType is access MessageStructType ;
   type MessageStructType is record
-    Name    : line ; 
-    NextPtr : MessageStructPtrType ; 
-  end record MessageStructType ; 
-  
+    Name    : line ;
+    NextPtr : MessageStructPtrType ;
+  end record MessageStructType ;
+
   procedure SetMessage        (variable Message : inout MessageStructPtrType; Name : String) ;
-  procedure WriteMessage      (variable buf : inout line; variable Message : inout MessageStructPtrType; prefix : string := "") ; 
-  procedure WriteMessage      (file f : text; variable Message : inout MessageStructPtrType; prefix : string := "") ; 
+  procedure WriteMessage      (variable buf : inout line; variable Message : inout MessageStructPtrType; prefix : string := "") ;
+  procedure WriteMessage      (file f : text; variable Message : inout MessageStructPtrType; prefix : string := "") ;
   procedure GetMessageCount   (variable Message : inout MessageStructPtrType; variable Count : out integer) ;
-  procedure DeallocateMessage (variable Message : inout MessageStructPtrType) ; 
+  procedure DeallocateMessage (variable Message : inout MessageStructPtrType) ;
 
 end package MessageListPkg ;
 
@@ -68,71 +69,72 @@ package body MessageListPkg is
   ------------------------------------------------------------
   procedure SetMessage (variable Message : inout MessageStructPtrType; Name : String) is
   ------------------------------------------------------------
-    variable M : MessageStructPtrType ; 
+    variable M : MessageStructPtrType ;
   begin
     if Message = NULL then
-      Message         := new MessageStructType ; 
-      Message.Name    := new string'(Name) ; 
+      Message         := new MessageStructType ;
+      Message.Name    := new string'(Name) ;
       Message.NextPtr := NULL ;
     else
-      M := Message ; 
+      M := Message ;
       while M.NextPtr /= NULL loop
-        M := M.NextPtr ; 
-      end loop ; 
-      M.NextPtr := new MessageStructType ; 
-      M         := M.NextPtr ; 
-      M.Name    := new string'(Name) ; 
+        M := M.NextPtr ;
+      end loop ;
+      M.NextPtr := new MessageStructType ;
+      M         := M.NextPtr ;
+      M.Name    := new string'(Name) ;
       M.NextPtr := NULL ;
-    end if ; 
-  end procedure SetMessage ; 
+    end if ;
+  end procedure SetMessage ;
 
   ------------------------------------------------------------
-  procedure WriteMessage (variable buf : inout line;  variable Message : inout MessageStructPtrType; prefix : string := "") is 
+  procedure WriteMessage (variable buf : inout line;  variable Message : inout MessageStructPtrType; prefix : string := "") is
   ------------------------------------------------------------
-    variable M : MessageStructPtrType ; 
+    variable M : MessageStructPtrType ;
   begin
-    M := Message ; 
+    M := Message ;
     while M /= NULL loop
-      write(buf, prefix & M.Name.all & LF) ;      
-      M := M.NextPtr ; 
+      write(buf, prefix & M.Name.all & LF) ;
+      M := M.NextPtr ;
     end loop ;
   end procedure WriteMessage ;
 
   ------------------------------------------------------------
-  procedure WriteMessage (file f : text; variable Message : inout MessageStructPtrType; prefix : string := "") is 
+  procedure WriteMessage (file f : text; variable Message : inout MessageStructPtrType; prefix : string := "") is
   ------------------------------------------------------------
-    variable M : MessageStructPtrType ; 
-    variable buf : line ; 
+    variable M : MessageStructPtrType ;
+    variable buf : line ;
   begin
-    M := Message ; 
+    M := Message ;
     while M /= NULL loop
       write(buf, prefix & M.Name.all) ;
       writeline(f, buf) ;
-      M := M.NextPtr ; 
+      M := M.NextPtr ;
     end loop ;
   end procedure WriteMessage ;
 
   ------------------------------------------------------------
   procedure GetMessageCount (variable Message : inout MessageStructPtrType; variable Count : out integer) is
   ------------------------------------------------------------
-    variable M : MessageStructPtrType ; 
+    variable M : MessageStructPtrType ;
   begin
-    Count := 0 ; 
-    M := Message ; 
+    Count := 0 ;
+    M := Message ;
     while M /= NULL loop
-      Count := Count + 1 ; 
-      M := M.NextPtr ; 
+      Count := Count + 1 ;
+      M := M.NextPtr ;
     end loop ;
   end procedure GetMessageCount ;
 
   ------------------------------------------------------------
-  procedure DeallocateMessage (variable Message : inout MessageStructPtrType) is 
+  procedure DeallocateMessage (variable Message : inout MessageStructPtrType) is
   ------------------------------------------------------------
-    variable OldM : MessageStructPtrType ; 
+    variable OldM : MessageStructPtrType ;
   begin
     while Message /= NULL loop
-      OldM := Message ; 
-      Message := Message.NextPtr ; 
+      OldM := Message ;
+      Message := Message.NextPtr ;
+      deallocate(OldM.Name) ;
       deallocate(OldM) ;
     end loop ;
   end procedure DeallocateMessage ;

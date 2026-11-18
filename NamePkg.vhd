@@ -9,7 +9,7 @@
 --
 --
 --  Package Defines
---      Data structure for name. 
+--      Data structure for name.
 --
 --  Developed for:
 --        SynthWorks Design Inc.
@@ -29,21 +29,21 @@
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2010 - 2020 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2010 - 2020 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
 use std.textio.all ;
 
@@ -52,11 +52,13 @@ package NamePkg is
   type NamePType is protected
     procedure Set (NameIn : String) ;
     impure function Get (DefaultName : string := "") return string ;
-    impure function GetOpt return string ;
-    impure function IsSet return boolean ; 
-    impure function NameLength return integer ; 
+    impure function IsSet return boolean ;
+    impure function NameLength return integer ;
     procedure Clear ; -- clear name
     procedure Deallocate ; -- effectively alias to clear name
+
+    -- Deprecated
+    impure function GetOpt return string ;
   end protected NamePType ;
 
 end package NamePkg ;
@@ -67,16 +69,16 @@ end package NamePkg ;
 
 package body NamePkg is
   type NamePType is protected body
-  
+
     variable NamePtr   : line ;
 
     ------------------------------------------------------------
     procedure Set (NameIn : String) is
     ------------------------------------------------------------
     begin
-      if NamePtr /= NULL then 
+      if NamePtr /= NULL then
         deallocate(NamePtr) ;
-      end if ; 
+      end if ;
       NamePtr := new string'(NameIn) ;
     end procedure Set ;
 
@@ -84,40 +86,29 @@ package body NamePkg is
     impure function Get (DefaultName : string := "") return string is
     ------------------------------------------------------------
     begin
-      if NamePtr = NULL then 
-        return DefaultName ; 
+      if NamePtr = NULL then
+        return DefaultName ;
       else
-        return NamePtr.all ; 
-      end if ; 
+        return NamePtr.all ;
+      end if ;
     end function Get ;
 
     ------------------------------------------------------------
-    impure function GetOpt return string is
+    impure function IsSet return boolean is
     ------------------------------------------------------------
     begin
-      if NamePtr = NULL then 
-        return NUL & "" ; 
-      else
-        return NamePtr.all ; 
-      end if ; 
-    end function GetOpt ;
+      return NamePtr /= NULL ;
+    end function IsSet ;
 
-    ------------------------------------------------------------
-    impure function IsSet return boolean is 
-    ------------------------------------------------------------
-    begin
-      return NamePtr /= NULL ; 
-    end function IsSet ;      
-    
     ------------------------------------------------------------
     impure function NameLength return integer is
     ------------------------------------------------------------
     begin
-      if NamePtr = NULL then 
-        return 0 ; 
+      if NamePtr = NULL then
+        return 0 ;
       else
-        return NamePtr.all'length ; 
-      end if ; 
+        return NamePtr.all'length ;
+      end if ;
     end function NameLength ;
 
     ------------------------------------------------------------
@@ -126,13 +117,26 @@ package body NamePkg is
     begin
       deallocate(NamePtr) ;
     end procedure Clear ;
-    
+
     ------------------------------------------------------------
     procedure Deallocate is  -- clear name
     ------------------------------------------------------------
     begin
-      Clear ; 
+      Clear ;
     end procedure Deallocate ;
+
+    -- Deprecated
+    ------------------------------------------------------------
+    -- Deprecated
+    impure function GetOpt return string is
+    ------------------------------------------------------------
+    begin
+      if NamePtr = NULL then
+        return NUL & "" ;
+      else
+        return NamePtr.all ;
+      end if ;
+    end function GetOpt ;
 
   end protected body NamePType ;
 

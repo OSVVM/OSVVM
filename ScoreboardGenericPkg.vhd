@@ -21,13 +21,13 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    10/2025   2025.10    Updated FindAndFlush s.t. the one found is a check and remaining are dropped. 
---    02/2025   2025.02    Replaced alias Empty with function Empty to work around Q bug. 
---    09/2024   2024.09    Updated Data Structure.  Added FindAndDelete and FindAndFlush.  
---    07/2024   2024.07    Made function generics impure. Added IsInitialized.  Updated Yaml.  
+--    10/2025   2025.10    Updated FindAndFlush s.t. the one found is a check and remaining are dropped.
+--    02/2025   2025.02    Replaced alias Empty with function Empty to work around Q bug.
+--    09/2024   2024.09    Updated Data Structure.  Added FindAndDelete and FindAndFlush.
+--    07/2024   2024.07    Made function generics impure. Added IsInitialized.  Updated Yaml.
 --    05/2023   2023.05    Updated Pop fail on empty error to print tag if a tag is used
 --    02/2023   2023.04    Bug fix for Peek with a tag.
---    01/2023   2023.01    OSVVM_TEMP_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY 
+--    01/2023   2023.01    OSVVM_TEMP_OUTPUT_DIRECTORY replaced REPORTS_DIRECTORY
 --    11/2022   2022.11    Updated default search to PRIVATE_NAME
 --    10/2022   2022.10    Added Parent Name to YAML output.
 --    09/2022   2022.09    Added FifoCount to YAML output.
@@ -88,7 +88,7 @@ library ieee ;
   use work.IfElsePkg.all ;
   use work.OsvvmScriptSettingsPkg.all ;
   use work.OsvvmSettingsPkg.all ;
-  use work.TranscriptPkg.all ;
+  use work.TranscriptBasePkg.all ;
   use work.TextUtilPkg.all ;
   use work.AlertLogPkg.all ;
   use work.NamePkg.all ;
@@ -124,7 +124,7 @@ package ScoreboardGenericPkg is
   type ScoreboardIdArrayType  is array (integer range <>) of ScoreboardIdType ;
   type ScoreboardIdMatrixType is array (integer range <>, integer range <>) of ScoreboardIdType ;
 
-  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'low) ; 
+  constant SCOREBOARD_ID_UNINITIALZED : ScoreboardIdType := (ID => integer'low) ;
 
   -- Preparation for refactoring - if that ever happens.
   subtype FifoIdType       is ScoreboardIdType ;
@@ -363,7 +363,7 @@ package ScoreboardGenericPkg is
 
   alias ScoreboardEmpty is IsEmpty [ScoreboardIDType return boolean] ;
   alias ScoreboardEmpty is IsEmpty [ScoreboardIDType, string return boolean] ;
-  
+
   impure function AllScoreboardsEmpty return boolean ;                     -- All scoreboards in the singleton
 
 
@@ -418,7 +418,7 @@ package ScoreboardGenericPkg is
     constant Tag         :  in  string ;
     constant ActualData  :  in  ActualType
   ) ;
-  
+
   -- Ignores tag to determine match
   procedure FindAndDelete (
     constant ID          :  in  ScoreboardIDType ;
@@ -433,7 +433,7 @@ package ScoreboardGenericPkg is
     constant Tag         :  in  string ;
     constant ActualData  :  in  ActualType
   ) ;
-  
+
   -- Removes all values up to the value found
   procedure FindAndFlush (
     constant ID          :  in  ScoreboardIDType ;
@@ -482,9 +482,11 @@ package ScoreboardGenericPkg is
   -- Generally these are not required.  When a simulation ends and
   -- another simulation is started, a simulator will release all allocated items.
   -- Deallocate - Deletes all allocated items
-  procedure Deallocate (constant ID : in  ScoreboardIDType) ;  
+  procedure DeallocateAllScoreboards ;
+  procedure Deallocate (constant ID : in  ScoreboardIDType) ;  -- Deprecated
   -- Initialize - reCreates initial data structure if it was destroyed with Deallocate
-  procedure Initialize (constant ID : in  ScoreboardIDType) ;  
+  procedure InitializeAllScoreboards ;
+  procedure Initialize (constant ID : in  ScoreboardIDType) ;  -- Deprecated
 
 
   -------------------------------------------------------------------------------------------------
@@ -672,10 +674,10 @@ package ScoreboardGenericPkg is
     -- Empty - check to see if scoreboard is empty
     impure function Empty (Index  : integer) return boolean ;                -- Array
     impure function Empty (Index  : integer; Tag : String) return boolean ;  -- Array, Tagged
-    
+
     -- Empty for all scoreboards in the singleton
-    impure function AllScoreboardsEmpty return boolean ; 
-    
+    impure function AllScoreboardsEmpty return boolean ;
+
     ------------------------------------------------------------
     -- Find - Returns the ItemNumber for a value and tag (if applicable) in a scoreboard.
     -- Find returns integer'low if no match found
@@ -692,7 +694,7 @@ package ScoreboardGenericPkg is
       constant Tag         :  in  string;
       constant ActualData  :  in  ActualType
     ) return integer ;
-    
+
     ------------------------------------------------------------
     -- Flush - Remove elements in the scoreboard upto and including the one with ItemNumber
     -- See Find to identify an ItemNumber of a particular value and tag (if applicable)
@@ -717,7 +719,7 @@ package ScoreboardGenericPkg is
       constant Tag         :  in  string ;
       constant ActualData  :  in  ActualType
     ) ;
-    
+
     -- Ignores tag to determine match
     procedure FindAndDelete (
       constant Index       :  in  integer ;
@@ -732,7 +734,7 @@ package ScoreboardGenericPkg is
       constant Tag         :  in  string ;
       constant ActualData  :  in  ActualType
     ) ;
-    
+
     -- Removes all values up to the value found
     procedure FindAndFlush (
       constant Index       :  in  integer ;
@@ -753,16 +755,16 @@ package ScoreboardGenericPkg is
     -- Scoreboard Introspection
     -- Note Scoreboard Reports automatically done by OSVVM contain all of this information
     -- Number of items put into scoreboard
-    impure function GetItemCount (Index  : integer) return integer ; 
-    impure function GetPushCount (Index  : integer) return integer ; 
+    impure function GetItemCount (Index  : integer) return integer ;
+    impure function GetPushCount (Index  : integer) return integer ;
     -- Number of items removed from scoreboard by pop or check
     impure function GetPopCount (Index  : integer) return integer ;
     -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
     impure function GetFifoCount (Index  : integer) return integer ;
     -- Number of items checked by scoreboard
-    impure function GetCheckCount (Index  : integer) return integer ; 
+    impure function GetCheckCount (Index  : integer) return integer ;
     -- Number of items dropped by scoreboard.  See Find/Flush
-    impure function GetDropCount (Index  : integer) return integer ;  
+    impure function GetDropCount (Index  : integer) return integer ;
 
     ------------------------------------------------------------
     -- Generally these are not required.  When a simulation ends and
@@ -916,9 +918,9 @@ package ScoreboardGenericPkg is
     -- Number of items currently in the scoreboard (= PushCount - PopCount - DropCount)
     impure function GetFifoCount return integer ;
     -- Number of items checked by scoreboard
-    impure function GetCheckCount return integer ; 
+    impure function GetCheckCount return integer ;
     -- Number of items dropped by scoreboard.  See Find/Flush
-    impure function GetDropCount return integer ; 
+    impure function GetDropCount return integer ;
 
 
     ------------------------------------------------------------
@@ -931,7 +933,7 @@ package ScoreboardGenericPkg is
     ------------------------------------------------------------
     -- /////////////////////////////////////////
     -- /////////////////////////////////////////
-    -- Deprecated.  Supported only for backward compatibility.   
+    -- Deprecated.  Supported only for backward compatibility.
     -- /////////////////////////////////////////
     -- /////////////////////////////////////////
     ------------------------------------------------------------
@@ -989,10 +991,10 @@ package ScoreboardGenericPkg is
     --   Instead use:
     --      AlertLogPkg.SetLogEnable(ID, PASSED, TRUE)  for REPORT_ALL
     --      AlertLogPkg.SetLogEnable(ID, PASSED, FALSE) for REPORT_ERROR and REPORT_NONE
-    --   and 
+    --   and
     --      AlertLogPkg.SetAlertPrintCount(ID, integer'high)  for REPORT_ALL and REPORT_ERROR
     --      AlertLogPkg.SetAlertPrintCount(ID, 0) for REPORT_NONE
-    -- 
+    --
     procedure SetReportMode (ReportModeIn : ScoreboardReportType) ;
     impure function GetReportMode return ScoreboardReportType ;
 
@@ -1030,11 +1032,11 @@ package ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- /////////////////////////////////////////
   -- /////////////////////////////////////////
-  -- Deprecated.  Supported only for backward compatibility. 
+  -- Deprecated.  Supported only for backward compatibility.
   -- /////////////////////////////////////////
   -- /////////////////////////////////////////
   ------------------------------------------------------------
-  
+
   ------------------------------------------------------------
   -- GetErrorCount - Deprecated, replaced by usage of Alerts
   --   Use AlertLogPkg.GetAlertCount(AlertLogID)
@@ -1055,10 +1057,10 @@ package ScoreboardGenericPkg is
   --   Instead use:
   --      AlertLogPkg.SetLogEnable(ID, PASSED, TRUE)  for REPORT_ALL
   --      AlertLogPkg.SetLogEnable(ID, PASSED, FALSE) for REPORT_ERROR and REPORT_NONE
-  --   and 
+  --   and
   --      AlertLogPkg.SetAlertPrintCount(ID, integer'high)  for REPORT_ALL and REPORT_ERROR
   --      AlertLogPkg.SetAlertPrintCount(ID, 0) for REPORT_NONE
-  -- 
+  --
   procedure SetReportMode (
     constant ID           : in  ScoreboardIDType ;
     constant ReportModeIn : in  ScoreboardReportType
@@ -1068,7 +1070,7 @@ package ScoreboardGenericPkg is
     ) return ScoreboardReportType ;
 
 
-  -- Deprecated Interface to NewID - these remap to the current NewID 
+  -- Deprecated Interface to NewID - these remap to the current NewID
   impure function NewID (Name : String; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDType ;
   -- Vector: 1 to Size
   impure function NewID (Name : String; Size : positive; ParentAlertLogID : AlertLogIDType; DoNotReport : Boolean) return ScoreboardIDArrayType ;
@@ -1112,30 +1114,30 @@ package body ScoreboardGenericPkg is
       AlertLogID     : AlertLogIDType ;
     end record ScoreboardRecType ;
 
-    type     ItemArrayType    is array (integer range <>) of ScoreboardRecType ; 
+    type     ItemArrayType    is array (integer range <>) of ScoreboardRecType ;
     type     ItemArrayPtrType is access ItemArrayType ;
-    
+
     -- Template and new ItemArray'(Template) initialization support usage as PT.  Not needed for singleton.
     constant DEFAULT_INDEX    : integer := 1 ;
     variable Template  : ItemArrayType(DEFAULT_INDEX to DEFAULT_INDEX) := (DEFAULT_INDEX => (NULL, NULL, NULL, 0, 0, 0, 0, 0, OSVVM_SCOREBOARD_ALERTLOG_ID)) ;  -- Work around for QS 2020.04 and 2021.02
     variable SbPtr : ItemArrayPtrType := new ItemArrayType'(Template) ;
 
     -- Used by ScoreboardStore
-    variable NumItems         : integer := 0 ; 
+    variable NumItems         : integer := 0 ;
 --    constant NUM_ITEMS_TO_ALLOCATE    : integer := 4 ; -- Temporarily small for testing
     constant NUM_ITEMS_TO_ALLOCATE    : integer := 32 ; -- Min amount to resize array
-    variable LocalNameStore   : NameStorePType ; 
+    variable LocalNameStore   : NameStorePType ;
     variable CalledNewID      : boolean := FALSE ;  -- singleton initialized
 
-    -- MinIndex, MaxIndex - mainly for PT, but usable for both as bounds checking of ID 
-    variable MinIndex         : integer := DEFAULT_INDEX ; 
-    variable MaxIndex         : integer := DEFAULT_INDEX ; 
-    
-    -- PT only 
+    -- MinIndex, MaxIndex - mainly for PT, but usable for both as bounds checking of ID
+    variable MinIndex         : integer := DEFAULT_INDEX ;
+    variable MaxIndex         : integer := DEFAULT_INDEX ;
+
+    -- PT only
     variable ArrayLengthVar   : integer := 1 ; -- only for PT.  Default 1 item in Sb array.
     variable NameVar          : NamePType ;
     variable PrintIndexVar    : boolean := TRUE ;
-    
+
 
     ------------------------------------------------------------
     -- PT Only.   Not for Singleton
@@ -1181,7 +1183,7 @@ package body ScoreboardGenericPkg is
         deallocate(oldItemArrayPtr) ;
       end if ;
       NumItems := NewNumItems ;
-      MaxIndex := NumItems ; 
+      MaxIndex := NumItems ;
     end procedure GrowNumberItems ;
 
     ------------------------------------------------------------
@@ -1206,7 +1208,7 @@ package body ScoreboardGenericPkg is
         -- Resize Data Structure as necessary
         GrowNumberItems(SbPtr, NumItems, GrowAmount => 1, MinNumItems => NUM_ITEMS_TO_ALLOCATE) ;
         -- Create AlertLogID
-        SbPtr(NumItems) := Template(DEFAULT_INDEX) ; 
+        SbPtr(NumItems) := Template(DEFAULT_INDEX) ;
         SbPtr(NumItems).AlertLogID := NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy => FALSE) ;
         -- Add item to NameStore
         NameID := LocalNameStore.NewID(Name, ParentID, Search) ;
@@ -1293,7 +1295,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
     begin
       AlertIf(ParentID, X'length /= 2, "ScoreboardPkg.NewID Array parameter X has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ;
-      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Array parameter X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
+      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Array parameter X(X'left): " & to_string(X(X'Left)) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
       return LocalNewID(Name, X, ParentID, ReportMode, Search, PrintParent) ;
     end function NewID ;
 
@@ -1356,8 +1358,8 @@ package body ScoreboardGenericPkg is
     begin
       AlertIf(ParentID, X'length /= 2, "ScoreboardPkg.NewID Matrix parameter X has " & to_string(X'length) & "dimensions.  Required to be 2", FAILURE) ;
       AlertIf(ParentID, Y'length /= 2, "ScoreboardPkg.NewID Matrix parameter Y has " & to_string(Y'length) & "dimensions.  Required to be 2", FAILURE) ;
-      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Matrix parameter X(X'left): " & to_string(X'Left) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
-      AlertIf(ParentID, Y(Y'Left) > Y(Y'right), "ScoreboardPkg.NewID Matrix parameter Y(Y'left): " & to_string(Y'Left) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ;
+      AlertIf(ParentID, X(X'Left) > X(X'right), "ScoreboardPkg.NewID Matrix parameter X(X'left): " & to_string(X(X'Left)) & " must be <= X(X'right): " & to_string(X(X'right)), FAILURE) ;
+      AlertIf(ParentID, Y(Y'Left) > Y(Y'right), "ScoreboardPkg.NewID Matrix parameter Y(Y'left): " & to_string(Y(Y'Left)) & " must be <= Y(Y'right): " & to_string(Y(Y'right)), FAILURE) ;
       return LocalNewID(Name, X, Y, ParentID, ReportMode, Search, PrintParent) ;
     end function NewID ;
 
@@ -1376,15 +1378,15 @@ package body ScoreboardGenericPkg is
     ) return boolean is
     begin
       if Index >= MinIndex and Index <= MaxIndex then
-        return FALSE ; 
-      else 
-        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID, 
+        return FALSE ;
+      else
+        Alert(OSVVM_SCOREBOARD_ALERTLOG_ID,
          GetName & " " & Name & " Index: " & to_string(Index) &
                " is not in the range (" & to_string(MinIndex) &
                " to " & to_string(MaxIndex) & ")",
          FAILURE ) ;
-        return TRUE ; 
-      end if ; 
+        return TRUE ;
+      end if ;
     end function LocalOutOfRange ;
 
     ------------------------------------------------------------
@@ -1394,7 +1396,7 @@ package body ScoreboardGenericPkg is
       constant Tag    : in  string ;
       constant Item   : in  ExpectedType
     ) is
-      variable TailPtr : ListPtrType ; 
+      variable TailPtr : ListPtrType ;
       variable ExpectedPtr : ExpectedPtrType ;
       variable TagPtr : line ;
     begin
@@ -1409,21 +1411,21 @@ package body ScoreboardGenericPkg is
       if SbPtr(Index).HeadPtr = NULL then
         -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
         -- SbPtr(Index).HeadPtr := new ListType'(SbPtr(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
-        TailPtr := new ListType ; 
+        TailPtr := new ListType ;
         SbPtr(Index).HeadPtr := TailPtr ;
-        
+
       else
         -- 2015.05: allocation using ListTtype'(...) in a protected type does not work in some simulators
         -- SbPtr(Index).TailPtr.NextPtr := new ListType'(SbPtr(Index).ItemNumber, TagPtr, ExpectedPtr, NULL) ;
-        TailPtr := new ListType ; 
+        TailPtr := new ListType ;
         SbPtr(Index).TailPtr.NextPtr := TailPtr ;
-      end if ; 
-      
+      end if ;
+
       TailPtr.ItemNumber  := SbPtr(Index).ItemNumber ;
       TailPtr.TagPtr      := TagPtr ;
       TailPtr.ExpectedPtr := ExpectedPtr ;
       TailPtr.NextPtr     := NULL ;
-      
+
       SbPtr(Index).TailPtr := TailPtr ;
     end procedure LocalPush ;
 
@@ -1465,14 +1467,13 @@ package body ScoreboardGenericPkg is
       end if ;
       if SbPtr(Index).HeadPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-        if tag'length > 0 then 
+        if tag'length > 0 then
           Alert(SbPtr(Index).AlertLogID, GetName & " Empty during " & Name & ",  tag: " & Tag , FAILURE) ;
         else
           Alert(SbPtr(Index).AlertLogID, GetName & " Empty during " & Name, FAILURE) ;
-        end if ; 
+        end if ;
         return ;
       end if ;
-      SbPtr(Index).PopCount := SbPtr(Index).PopCount + 1 ;
       -- deallocate previous pointer
       if SbPtr(Index).PopListPtr /= NULL then
         deallocate(SbPtr(Index).PopListPtr.TagPtr) ;
@@ -1490,7 +1491,7 @@ package body ScoreboardGenericPkg is
         loop
           if CurPtr.NextPtr = NULL then
             SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
-            AffirmIf(SbPtr(Index).AlertLogID, FALSE, Name & "   Tag: " & Tag & " not found", ERROR) ;
+            AffirmIf(SbPtr(Index).AlertLogID, FALSE, Name & "   Tag: " & Tag & " not found",  FAILURE) ;
             exit ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
             Found := TRUE ;
@@ -1504,6 +1505,9 @@ package body ScoreboardGenericPkg is
             CurPtr := CurPtr.NextPtr ;
           end if ;
         end loop ;
+      end if ;
+      if Found then
+        SbPtr(Index).PopCount := SbPtr(Index).PopCount + 1 ;
       end if ;
     end procedure LocalPop ;
 
@@ -1534,8 +1538,8 @@ package body ScoreboardGenericPkg is
       SbPtr(Index).HeadPtr     := SbPtr(Index).HeadPtr.NextPtr ;
       Found := TRUE ;
     end procedure LocalPop ;
-    
-    
+
+
     ------------------------------------------------------------
     -- Local Only
     procedure LocalCheck (
@@ -1549,7 +1553,7 @@ package body ScoreboardGenericPkg is
       variable CurrentItem  : integer ;
       variable WriteBuf : line ;
       variable PassedFlagEnabled : boolean ;
-      variable FoundError : boolean ; 
+      variable FoundError : boolean ;
     begin
       SbPtr(Index).CheckCount := SbPtr(Index).CheckCount + 1 ;
       ExpectedPtr := SbPtr(Index).PopListPtr.ExpectedPtr ;
@@ -1568,21 +1572,21 @@ package body ScoreboardGenericPkg is
           IncAffirmPassedCount(SbPtr(Index).AlertLogID) ;
         end if ;
       end if ;
-      Found := not FoundError ; 
+      Found := not FoundError ;
 
 --      IncAffirmCount(SbPtr(Index).AlertLogID) ;
 
 --      if FoundError or ReportModeVar = REPORT_ALL then
       if FoundError or PassedFlagEnabled then
         -- Only used for PT based SB - Singleton uses AlertLogID name instead
-        if not CalledNewID then 
+        if not CalledNewID then
           if SbPtr(Index).AlertLogID = OSVVM_SCOREBOARD_ALERTLOG_ID  then
   --x          write(WriteBuf, GetName(DefaultName => "Scoreboard")) ;
             write(WriteBuf, NameVar.Get("Scoreboard")) ;
             if not (ArrayLengthVar > 1 and PrintIndexVar) then
               swrite(WriteBuf, "   ") ;
             end if ;
-          elsif NameVar.IsSet then 
+          elsif NameVar.IsSet then
   --x          write(WriteBuf, GetName(DefaultName => "")) ;
             write(WriteBuf, NameVar.Get("")) ;
             if not (ArrayLengthVar > 1 and PrintIndexVar) then
@@ -1593,7 +1597,7 @@ package body ScoreboardGenericPkg is
           if ArrayLengthVar > 1 and PrintIndexVar then
             write(WriteBuf, " (" & to_string(Index) & ")    ") ;
           end if ;
-        end if ; 
+        end if ;
         if ExpectedInFIFO then
           write(WriteBuf, "Received: " & actual_to_string(ActualData)) ;
           if FoundError then
@@ -1610,8 +1614,8 @@ package body ScoreboardGenericPkg is
           write(WriteBuf, "   Tag: " & SbPtr(Index).PopListPtr.TagPtr.all) ;
         end if;
         write(WriteBuf, "   Item Number: " & to_string(CurrentItem)) ;
-        
-        AffirmIf(SbPtr(Index).AlertLogID, not FoundError, WriteBuf.all) ; 
+
+        AffirmIf(SbPtr(Index).AlertLogID, not FoundError, WriteBuf.all) ;
 
         deallocate(WriteBuf) ;
       end if ;
@@ -1625,11 +1629,12 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
-      if found then 
+      if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
     end procedure Check ;
 
@@ -1640,11 +1645,12 @@ package body ScoreboardGenericPkg is
       constant Index        : in  integer ;
       constant ActualData   : in  ActualType
     ) is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, "Check   Received: " & actual_to_string(ActualData), found) ;
-      if found then 
+      if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
     end procedure Check ;
 
@@ -1656,11 +1662,12 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ActualData   : in  ActualType
     ) return boolean is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
-      if found then 
+      if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
       return found ;
     end function Check ;
@@ -1672,11 +1679,12 @@ package body ScoreboardGenericPkg is
       constant Index        : in  integer ;
       constant ActualData   : in  ActualType
     ) return boolean is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, "Check   Received: " & actual_to_string(ActualData), found) ;
-      if found then 
+      if found then
         LocalCheck(Index, ActualData, found) ;
+      -- else  alert FAILURE already issued if not found
       end if ;
       return found ;
     end function Check ;
@@ -1689,12 +1697,13 @@ package body ScoreboardGenericPkg is
       constant Tag          : in  string ;
       constant ExpectedData : in  ActualType
     ) return boolean is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, Tag, "Check   Received: " & actual_to_string(ExpectedData), found) ;
-      if found then 
+      if found then
         LocalCheck(Index, ExpectedData, found, ExpectedInFIFO => FALSE) ;
-      end if ; 
+      -- else  alert FAILURE already issued if not found
+      end if ;
       return found ;
     end function CheckExpected ;
 
@@ -1706,12 +1715,13 @@ package body ScoreboardGenericPkg is
       constant Tag    : in  string ;
       variable Item   : out  ExpectedType
     ) is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, Tag, "Pop", found) ;
       if found then
         Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
-      end if ; 
+      -- else  alert FAILURE already issued if not found
+      end if ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -1721,12 +1731,13 @@ package body ScoreboardGenericPkg is
       constant Index  : in  integer ;
       variable Item   : out  ExpectedType
     ) is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, "Pop", found) ;
       if found then
         Item := SbPtr(Index).PopListPtr.ExpectedPtr.all ;
-      end if ; 
+      -- else  alert FAILURE already issued if not found
+      end if ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -1736,9 +1747,10 @@ package body ScoreboardGenericPkg is
       constant Index  : in  integer ;
       constant Tag    : in  string
     ) return ExpectedType is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, Tag, "Pop", found) ;
+      -- if not found then  alert FAILURE already issued this will be fatal. Use pop as a procedure if you need to continue
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -1746,9 +1758,10 @@ package body ScoreboardGenericPkg is
     -- Scoreboards, no tag
     impure function Pop (Index : integer) return ExpectedType is
     ------------------------------------------------------------
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(Index, "Pop", found) ;
+      -- if not found then  alert FAILURE already issued this will be fatal. Use pop as a procedure if you need to continue
       return SbPtr(Index).PopListPtr.ExpectedPtr.all ;
     end function Pop ;
 
@@ -1759,10 +1772,6 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       variable CurPtr : ListPtrType ;
     begin
---!! LocalPeek does this, but so do each of the indexed calls
---!!      if LocalOutOfRange(Index, "Peek") then
---!!        return NULL ; -- error reporting in LocalOutOfRange
---!!      end if ;
       if SbPtr(Index).HeadPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
         Alert(SbPtr(Index).AlertLogID, GetName & " Empty during Peek", FAILURE) ;
@@ -1779,10 +1788,10 @@ package body ScoreboardGenericPkg is
             SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
             Alert(SbPtr(Index).AlertLogID, GetName & " Peek, tag: " & Tag & " not found", FAILURE) ;
             -- return NULL ;
-            exit ; 
+            exit ;
           elsif CurPtr.NextPtr.TagPtr.all = Tag then
             -- return CurPtr.NextPtr ;
-            exit ; 
+            exit ;
           else
             CurPtr := CurPtr.NextPtr ;
           end if ;
@@ -1807,6 +1816,7 @@ package body ScoreboardGenericPkg is
       CurPtr := LocalPeek(Index, Tag) ;
       if CurPtr /= NULL then
         Item := CurPtr.ExpectedPtr.all ;
+      -- else  alert FAILURE already issued if CurPtr = NULL
       end if ;
     end procedure Peek ;
 
@@ -1825,6 +1835,7 @@ package body ScoreboardGenericPkg is
       CurPtr := LocalPeek(Index, "") ;
       if CurPtr /= NULL then
         Item := CurPtr.ExpectedPtr.all ;
+      -- else  alert FAILURE already issued if CurPtr = NULL
       end if ;
     end procedure Peek ;
 
@@ -1842,12 +1853,8 @@ package body ScoreboardGenericPkg is
         return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
       end if ;
       CurPtr := LocalPeek(Index, Tag) ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ;
+      -- if CurPtr = NULL then  alert FAILURE already issued this will be fatal. Use Peek as a procedure if you need to continue
+      return CurPtr.ExpectedPtr.all ;
     end function Peek ;
 
     ------------------------------------------------------------
@@ -1861,12 +1868,8 @@ package body ScoreboardGenericPkg is
         return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
       end if ;
       CurPtr := LocalPeek(Index, "") ;
-      if CurPtr /= NULL then
-        return CurPtr.ExpectedPtr.all ;
-      else
-        -- Already issued failure, continuing for debug only
-        return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ;
+      -- if CurPtr = NULL then  alert FAILURE already issued this will be fatal. Use Peek as a procedure if you need to continue
+      return CurPtr.ExpectedPtr.all ;
     end function Peek ;
 
     ------------------------------------------------------------
@@ -1897,19 +1900,19 @@ package body ScoreboardGenericPkg is
     impure function AllScoreboardsEmpty return boolean is
     -- All scoreboards in the singleton.  Not for PT
     ------------------------------------------------------------
-      variable AllEmpty : boolean := FALSE ; 
+      variable AllEmpty : boolean := FALSE ;
     begin
       if CalledNewID then
-        -- Is a singleton 
+        -- Is a singleton
         for i in 1 to NumItems loop
-          AllEmpty := Empty(i) ; 
-          exit when not AllEmpty ; 
+          AllEmpty := Empty(i) ;
+          exit when not AllEmpty ;
         end loop ;
-        return AllEmpty ; 
+        return AllEmpty ;
       else
         -- singleton not initialized.  Return TRUE as all are indeed empty.
         alert(OSVVM_SCOREBOARD_ALERTLOG_ID, "AllScoreboardsEmpty: Scoreboard is either a PT or not initialized") ;
-        return TRUE ; 
+        return TRUE ;
       end if ;
     end function AllScoreboardsEmpty ;
 
@@ -1927,10 +1930,10 @@ package body ScoreboardGenericPkg is
     begin
       if LocalOutOfRange(Index, Name) then
         FindPtr       := NULL ;
-        FindParentPtr := NULL ; 
-        return ; 
+        FindParentPtr := NULL ;
+        return ;
       end if ;
-      FindParentPtr := NULL ; 
+      FindParentPtr := NULL ;
       FindPtr := SbPtr(Index).HeadPtr ;
       loop
         if FindPtr = NULL then
@@ -1939,15 +1942,15 @@ package body ScoreboardGenericPkg is
 
         elsif FindPtr.TagPtr.all = Tag and
           Match(ActualData, FindPtr.ExpectedPtr.all) then
-          exit ; 
+          exit ;
 
         else  -- Descend
-          FindParentPtr := FindPtr ; 
+          FindParentPtr := FindPtr ;
           FindPtr := FindPtr.NextPtr ;
         end if ;
       end loop ;
     end procedure LocalFind ;
-    
+
     ------------------------------------------------------------
     -- No Tag - search without using tag.
     procedure LocalFind (
@@ -1961,10 +1964,10 @@ package body ScoreboardGenericPkg is
     begin
       if LocalOutOfRange(Index, Name) then
         FindPtr       := NULL ;
-        FindParentPtr := NULL ; 
-        return ; 
+        FindParentPtr := NULL ;
+        return ;
       end if ;
-      FindParentPtr := NULL ; 
+      FindParentPtr := NULL ;
       FindPtr := SbPtr(Index).HeadPtr ;
       loop
         if FindPtr = NULL then
@@ -1976,15 +1979,15 @@ package body ScoreboardGenericPkg is
           exit ;
 
         elsif Match(ActualData, FindPtr.ExpectedPtr.all) then
-          exit ; 
+          exit ;
 
         else  -- Descend
-          FindParentPtr := FindPtr ; 
+          FindParentPtr := FindPtr ;
           FindPtr := FindPtr.NextPtr ;
         end if ;
       end loop ;
     end procedure LocalFind ;
-    
+
     ------------------------------------------------------------
     -- Tagged Scoreboards
     -- Find Element with Matching Tag and ActualData
@@ -1999,7 +2002,7 @@ package body ScoreboardGenericPkg is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
     begin
-      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "Find") ; 
+      LocalFind (FindPtr, FindParentPtr, Index, Tag, ActualData, "Find") ;
 
       if FindPtr = NULL then
         if ErrorOnFail then
@@ -2010,8 +2013,8 @@ package body ScoreboardGenericPkg is
         return integer'low ; 
       else
         -- Found it somewhere else in the List
-        return FindPtr.ItemNumber ; 
-      end if ; 
+        return FindPtr.ItemNumber ;
+      end if ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2027,7 +2030,7 @@ package body ScoreboardGenericPkg is
       variable FindParentPtr : ListPtrType ;
     begin
 --      return Find(Index, "", ActualData) ;
-      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "Find") ; 
+      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "Find") ;
 
       if FindPtr = NULL then
         if ErrorOnFail then
@@ -2038,8 +2041,8 @@ package body ScoreboardGenericPkg is
         return integer'low ; 
       else
         -- Found it somewhere else in the List
-        return FindPtr.ItemNumber ; 
-      end if ; 
+        return FindPtr.ItemNumber ;
+      end if ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2127,9 +2130,9 @@ package body ScoreboardGenericPkg is
         end if ;
       end loop ;
     end procedure Flush ;
-    
+
     ------------------------------------------------------------
-    -- Tagged Scoreboards 
+    -- Tagged Scoreboards
     -- Delete item already found
     procedure LocalDelete (
     ------------------------------------------------------------
@@ -2137,7 +2140,7 @@ package body ScoreboardGenericPkg is
       variable FindParentPtr : inout ListPtrType ;
       constant Index         :  in  integer ;
       constant Tag           :  in  string ;
-      constant ActualData    :  in  ActualType 
+      constant ActualData    :  in  ActualType
     ) is
     begin
       if FindPtr = NULL then
@@ -2153,28 +2156,28 @@ package body ScoreboardGenericPkg is
         -- Found it somewhere else in the List
         if FindParentPtr = NULL then
           -- Found at HeadPtr.  Adjust HeadPtr and TailPtr
-          SbPtr(Index).HeadPtr := FindPtr.NextPtr ; 
+          SbPtr(Index).HeadPtr := FindPtr.NextPtr ;
           if FindPtr.NextPtr = NULL or SbPtr(Index).HeadPtr.NextPtr = NULL then
             -- Adjust tail pointer - for 0 or 1 item in FIFO
-            SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ; 
-          end if ; 
-        else 
+            SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ;
+          end if ;
+        else
           -- Not found at HeadPtr.  Remove it from the list.
-          FindParentPtr.NextPtr := FindPtr.NextPtr ; 
+          FindParentPtr.NextPtr := FindPtr.NextPtr ;
           if FindPtr.NextPtr = NULL then
             -- Adjust tail pointer
-            SbPtr(Index).TailPtr := FindParentPtr ; 
-          end if ; 
-        end if ; 
+            SbPtr(Index).TailPtr := FindParentPtr ;
+          end if ;
+        end if ;
         -- DeleteCell(FindPtr)
         deallocate(FindPtr.TagPtr) ;
         deallocate(FindPtr.ExpectedPtr) ;
         deallocate(FindPtr) ;
-      end if ; 
+      end if ;
     end procedure LocalDelete ;
 
     ------------------------------------------------------------
-    -- Tagged Scoreboards 
+    -- Tagged Scoreboards
     -- Find Element with Matching Tag and ActualData and Delete it
     procedure FindAndDelete (
     ------------------------------------------------------------
@@ -2185,10 +2188,10 @@ package body ScoreboardGenericPkg is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
     begin
-      LocalFind   (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndDelete") ; 
-      LocalDelete (FindPtr, FindParentPtr, Index, Tag, ActualData) ; 
+      LocalFind   (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndDelete") ;
+      LocalDelete (FindPtr, FindParentPtr, Index, Tag, ActualData) ;
     end procedure FindAndDelete ;
-    
+
     ------------------------------------------------------------
     -- Scoreboard no tag
     -- Delete item already found
@@ -2199,7 +2202,7 @@ package body ScoreboardGenericPkg is
       constant Index          : in    integer ;
       constant ActualData     : in    ActualType
     ) is
-    begin 
+    begin
       if FindPtr = NULL then
         SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
         AffirmIf( SbPtr(Index).AlertLogID, FALSE,
@@ -2213,24 +2216,24 @@ package body ScoreboardGenericPkg is
         -- Remove it from the list
         if FindParentPtr = NULL then
           -- Found at HeadPtr.  Adjust HeadPtr and TailPtr
-          SbPtr(Index).HeadPtr := FindPtr.NextPtr ; 
+          SbPtr(Index).HeadPtr := FindPtr.NextPtr ;
           if FindPtr.NextPtr = NULL or SbPtr(Index).HeadPtr.NextPtr = NULL then
             -- Adjust tail pointer - for 0 or 1 item in FIFO
-            SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ; 
-          end if ; 
-        else 
+            SbPtr(Index).TailPtr := SbPtr(Index).HeadPtr ;
+          end if ;
+        else
           -- Not found at HeadPtr.  Remove it from the list.
-          FindParentPtr.NextPtr := FindPtr.NextPtr ; 
+          FindParentPtr.NextPtr := FindPtr.NextPtr ;
           if FindPtr.NextPtr = NULL then
             -- Adjust tail pointer
-            SbPtr(Index).TailPtr := FindParentPtr ; 
-          end if ; 
-        end if ; 
+            SbPtr(Index).TailPtr := FindParentPtr ;
+          end if ;
+        end if ;
         -- DeleteCell(FindPtr)
         deallocate(FindPtr.TagPtr) ;
         deallocate(FindPtr.ExpectedPtr) ;
         deallocate(FindPtr) ;
-      end if ; 
+      end if ;
     end procedure LocalDelete ;
 
     ------------------------------------------------------------
@@ -2243,13 +2246,13 @@ package body ScoreboardGenericPkg is
     ) is
       variable FindPtr       : ListPtrType ;
       variable FindParentPtr : ListPtrType ;
-    begin 
-      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndDelete") ; 
-      LocalDelete (FindPtr, FindParentPtr, Index, ActualData) ; 
+    begin
+      LocalFind (FindPtr, FindParentPtr, Index, ActualData, "FindAndDelete") ;
+      LocalDelete (FindPtr, FindParentPtr, Index, ActualData) ;
     end procedure FindAndDelete ;
 
     ------------------------------------------------------------
-    -- Tagged Scoreboards 
+    -- Tagged Scoreboards
     -- Find Element with Matching Tag and ActualData and Delete it
     procedure FindAndFlush (
     ------------------------------------------------------------
@@ -2259,26 +2262,26 @@ package body ScoreboardGenericPkg is
     ) is
       variable FindPtr           : ListPtrType ;
       variable FindParentPtr     : ListPtrType ;
-      variable FlushToItemNumber : integer := integer'low ; 
-      variable CurrentDropCount  : integer ; 
-      variable LocalDropCount    : integer ; 
+      variable FlushToItemNumber : integer := integer'low ;
+      variable CurrentDropCount  : integer ;
+      variable LocalDropCount    : integer ;
     begin
-      LocalFind   (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndFlush") ; 
-      if FindPtr /= NULL then 
-        FlushToItemNumber := FindPtr.ItemNumber - 1 ; 
-      end if ; 
+      LocalFind   (FindPtr, FindParentPtr, Index, Tag, ActualData, "FindAndFlush") ;
+      if FindPtr /= NULL then
+        FlushToItemNumber := FindPtr.ItemNumber - 1 ;
+      end if ;
       LocalDelete (FindPtr, FindParentPtr, Index, Tag, ActualData) ;
-      -- Flush if there are things to flush 
-      if GetFifoCount > 0 and FlushToItemNumber > 0 then 
-        CurrentDropCount := SbPtr(Index).DropCount ; 
+      -- Flush if there are things to flush
+      if GetFifoCount(Index) > 0 and FlushToItemNumber > 0 then
+        CurrentDropCount := SbPtr(Index).DropCount ;
         Flush(Index, Tag, FlushToItemNumber) ;
-        LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ; 
-        If LocalDropCount > 0 then 
-          log(SbPtr(Index).AlertLogID, "FindAndFlush dropped " & 
-              to_string(LocalDropCount) & " items in tag: " & tag, INFO ) ; 
+        LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ;
+        If LocalDropCount > 0 then
+          log(SbPtr(Index).AlertLogID, "FindAndFlush dropped " &
+              to_string(LocalDropCount) & " items in tag: " & tag, INFO ) ;
         end if ;
-      end if ; 
-      
+      end if ;
+
 --!!      if FindPtr = NULL then
 --!!        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
 --!!        AffirmIf( SbPtr(Index).AlertLogID, FALSE,
@@ -2287,9 +2290,9 @@ package body ScoreboardGenericPkg is
 --!!        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
 --!!              "Flush up to Received: " & actual_to_string(ActualData) & "  with Tag: " & Tag ) ;
 --!!        Flush(Index, Tag, FindPtr.ItemNumber) ;
---!!      end if ; 
+--!!      end if ;
     end procedure FindAndFlush ;
-    
+
     ------------------------------------------------------------
     -- Scoreboard no tag
     -- Find Element with Matching Tag and ActualData
@@ -2301,25 +2304,25 @@ package body ScoreboardGenericPkg is
     ) is
       variable FindPtr           : ListPtrType ;
       variable FindParentPtr     : ListPtrType ;
-      variable FlushToItemNumber : integer := integer'low ; 
-      variable CurrentDropCount  : integer ; 
-      variable LocalDropCount    : integer ; 
-    begin 
-      LocalFind   (FindPtr, FindParentPtr, Index, ActualData, "FindAndFlush") ; 
-      if FindPtr /= NULL then 
-        FlushToItemNumber := FindPtr.ItemNumber - 1 ; 
-      end if ; 
+      variable FlushToItemNumber : integer := integer'low ;
+      variable CurrentDropCount  : integer ;
+      variable LocalDropCount    : integer ;
+    begin
+      LocalFind   (FindPtr, FindParentPtr, Index, ActualData, "FindAndFlush") ;
+      if FindPtr /= NULL then
+        FlushToItemNumber := FindPtr.ItemNumber - 1 ;
+      end if ;
       LocalDelete (FindPtr, FindParentPtr, Index, ActualData) ;
-      -- Flush if there are things to flush 
-      if GetFifoCount > 0 and FlushToItemNumber > 0 then 
-        CurrentDropCount := SbPtr(Index).DropCount ; 
+      -- Flush if there are things to flush
+      if GetFifoCount(Index) > 0 and FlushToItemNumber > 0 then
+        CurrentDropCount := SbPtr(Index).DropCount ;
         Flush(Index, FlushToItemNumber) ;
-        LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ; 
-        If LocalDropCount > 0 then 
-          log(SbPtr(Index).AlertLogID, "FindAndFlush dropped " & 
-              to_string(LocalDropCount) & " items", INFO ) ; 
+        LocalDropCount := SbPtr(Index).DropCount - CurrentDropCount ;
+        If LocalDropCount > 0 then
+          log(SbPtr(Index).AlertLogID, "FindAndFlush dropped " &
+              to_string(LocalDropCount) & " items", INFO ) ;
         end if ;
-      end if ; 
+      end if ;
 
 --!!      if FindPtr = NULL then
 --!!        SbPtr(Index).ErrorCount := SbPtr(Index).ErrorCount + 1 ;
@@ -2329,7 +2332,7 @@ package body ScoreboardGenericPkg is
 --!!        AffirmIf( SbPtr(Index).AlertLogID, TRUE,
 --!!              "Flush up to Received: " & actual_to_string(ActualData)) ;
 --!!        Flush(Index, FindPtr.ItemNumber) ;
---!!      end if ; 
+--!!      end if ;
     end procedure FindAndFlush ;
 
     ------------------------------------------------------------
@@ -2356,22 +2359,26 @@ package body ScoreboardGenericPkg is
       write(buf, NAME_PREFIX & "  FifoCount:    " & to_string(GetFifoCount(Index))          ) ;
       writeline(CovYamlFile, buf) ;
     end procedure WriteScoreboardYaml ;
-    
+
     ------------------------------------------------------------
     procedure WriteScoreboardYaml (FileName : string; OpenKind : File_Open_Kind; FileNameIsBaseName : boolean) is
     ------------------------------------------------------------
-      constant RESOLVED_FILE_NAME : string := IfElse(FileName = "", OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb.yml", 
-                                              IfElse(FileNameIsBaseName, OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",
-                                                                         FileName) ) ;
---x      file SbYamlFile : text open OpenKind is RESOLVED_FILE_NAME ;
+      constant RESOLVED_FILE_NAME : string := IfElse(FileNameIsBaseName,
+                                                        OSVVM_TEMP_OUTPUT_DIRECTORY & GetTestName & "_sb_" & FileName &".yml",
+                                                        FileName) ;
       file SbYamlFile : text ;
       variable buf : line ;
     begin
-      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
-      if SbPtr = NULL or SbPtr'length <= 0 then
+      if (FileName = "") then
+        Alert("Scoreboard.WriteScoreboardYaml: Scoreboard not named", ERROR) ;
+        return ;
+      end if ;
+      if (SbPtr = NULL or SbPtr'length <= 0) then
         Alert("Scoreboard.WriteScoreboardYaml: no scoreboards defined ", ERROR) ;
         return ;
       end if ;
+
+      file_open(SbYamlFile, RESOLVED_FILE_NAME, OpenKind) ;
 
       swrite(buf, "Version: "  & '"' & SCOREBOARD_YAML_VERSION & '"' & LF) ;
       swrite(buf, "TestCase: " & '"' & GetTestName & '"' & LF) ;
@@ -2390,7 +2397,7 @@ package body ScoreboardGenericPkg is
       end if ;
       file_close(SbYamlFile) ;
     end procedure WriteScoreboardYaml ;
-    
+
     ------------------------------------------------------------
     impure function GetAlertLogID(Index : Integer) return AlertLogIDType is
     ------------------------------------------------------------
@@ -2439,7 +2446,7 @@ package body ScoreboardGenericPkg is
     begin
       return SbPtr(Index).DropCount ;
     end function GetDropCount ;
-    
+
     ------------------------------------------------------------
     procedure Deallocate is
     ------------------------------------------------------------
@@ -2472,11 +2479,14 @@ package body ScoreboardGenericPkg is
 
       -- Deallocate NameVar - NamePType
       NameVar.Deallocate ;
-      
+
+      -- Deallocate NameStorePType
+      LocalNameStore.Deallocate ;
+
       -- Set the state s.t. there is nothing in the SB
       MinIndex       := 0 ;
       MaxIndex       := 0 ;
-      ArrayLengthVar := 0 ; 
+      ArrayLengthVar := 0 ;
       NumItems       := 0 ;
       CalledNewID    := FALSE ;
     end procedure Deallocate ;
@@ -2510,13 +2520,13 @@ package body ScoreboardGenericPkg is
       MaxIndex := maximum(L, R) ;
       AllOfOldSb := MinIndex + OldLen - 1 ;
       Len := MaxIndex - MinIndex + 1 ;
-      ArrayLengthVar := Len ; 
+      ArrayLengthVar := Len ;
       if Len >= OldLen then
         OldSbPtr := SbPtr ;
         SbPtr := new ItemArrayType'(MinIndex to MaxIndex => Template(DEFAULT_INDEX)) ;
         if OldSbPtr /= NULL then
           -- Copy OldHeadPtr number of items
-          SbPtr(MinIndex to AllOfOldSb) := OldSbPtr.all ; 
+          SbPtr(MinIndex to AllOfOldSb) := OldSbPtr.all ;
           Deallocate(OldSbPtr) ;
         end if ;
       elsif Len < OldLen then
@@ -2577,7 +2587,7 @@ package body ScoreboardGenericPkg is
       LocalPop(MinIndex, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(MinIndex, ActualData, found) ;
-      end if ; 
+      end if ;
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -2589,7 +2599,7 @@ package body ScoreboardGenericPkg is
       LocalPop(MinIndex, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(MinIndex, ActualData, found) ;
-      end if ; 
+      end if ;
     end procedure Check ;
 
     ------------------------------------------------------------
@@ -2604,7 +2614,7 @@ package body ScoreboardGenericPkg is
       LocalPop(MinIndex, Tag, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(MinIndex, ActualData, found) ;
-      end if ; 
+      end if ;
       return found ;
     end function Check ;
 
@@ -2617,7 +2627,7 @@ package body ScoreboardGenericPkg is
       LocalPop(MinIndex, "Check   Received: " & actual_to_string(ActualData), found) ;
       if found then
         LocalCheck(MinIndex, ActualData, found) ;
-      end if ; 
+      end if ;
       return found ;
     end function Check ;
 
@@ -2628,24 +2638,24 @@ package body ScoreboardGenericPkg is
       constant Tag    : in  string ;
       variable Item   : out  ExpectedType
     ) is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(MinIndex, Tag, "Pop", found) ;
       if found then
         Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ; 
+      end if ;
     end procedure Pop ;
 
     ------------------------------------------------------------
     -- Simple Scoreboard, no tag
     procedure Pop (variable Item : out  ExpectedType) is
     ------------------------------------------------------------
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(MinIndex, "Pop", found) ;
       if found then
         Item := SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
-      end if ; 
+      end if ;
     end procedure Pop ;
 
     ------------------------------------------------------------
@@ -2654,7 +2664,7 @@ package body ScoreboardGenericPkg is
     ------------------------------------------------------------
       constant Tag : in  string
     ) return ExpectedType is
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(MinIndex, Tag, "Pop", found) ;
       return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
@@ -2664,7 +2674,7 @@ package body ScoreboardGenericPkg is
     -- Simple Scoreboard, no tag
     impure function Pop return ExpectedType is
     ------------------------------------------------------------
-      variable found : boolean ; 
+      variable found : boolean ;
     begin
       LocalPop(MinIndex, "Pop", found) ;
       return SbPtr(MinIndex).PopListPtr.ExpectedPtr.all ;
@@ -2766,7 +2776,7 @@ package body ScoreboardGenericPkg is
       constant ActualData  :  in  ActualType
     ) return integer is
     begin
-      return Find(MinIndex, "", ActualData) ;
+      return Find(MinIndex, ActualData) ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2791,7 +2801,7 @@ package body ScoreboardGenericPkg is
     begin
       Flush(MinIndex, ItemNumber) ;
     end procedure Flush ;
-    
+
     ------------------------------------------------------------
     procedure SetAlertLogID (Index : Integer ; A : AlertLogIDType) is
     ------------------------------------------------------------
@@ -2898,7 +2908,7 @@ package body ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- /////////////////////////////////////////
   -- /////////////////////////////////////////
-  -- Deprecated.  Supported only for backward compatibility. 
+  -- Deprecated.  Supported only for backward compatibility.
   -- /////////////////////////////////////////
   -- /////////////////////////////////////////
   ------------------------------------------------------------
@@ -2917,7 +2927,7 @@ package body ScoreboardGenericPkg is
         write(WriteBuf, NameVar.Get("Scoreboard")) ;
       else
 --x        write(WriteBuf, GetName(DefaultName => "")) ;
-        write(WriteBuf, NameVar.Get("")) ; 
+        write(WriteBuf, NameVar.Get("")) ;
       end if ;
       if ArrayLengthVar > 1 then
 --x        if WriteBuf.all /= "" then
@@ -3034,54 +3044,54 @@ package body ScoreboardGenericPkg is
       -- ReportModeVar := ReportModeIn ;
       for i in SbPtr'range loop
         AlertLogID := GetAlertLogID(i) ;
-        if not SignaledAlert then 
-          SignaledAlert := TRUE ; 
-          if AlertLogID = OSVVM_ALERTLOG_ID then 
+        if not SignaledAlert then
+          SignaledAlert := TRUE ;
+          if AlertLogID = OSVVM_ALERTLOG_ID then
             Alert(AlertLogID, "ScoreboardPkg.SetReportMode.  ID = OSVVM_ALERTLOG_ID impacts AlertLog settings beyond just scoreboards.  Use ScoreboardPkg.SetAlertLogID to set a unique id", WARNING) ;
-          end if ; 
-        end if ; 
-        case ReportModeIn is 
-          when REPORT_ALL => 
+          end if ;
+        end if ;
+        case ReportModeIn is
+          when REPORT_ALL =>
             SetLogEnable(AlertLogID, PASSED, TRUE) ;
-            SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
+            SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ;
 
           when REPORT_ERROR =>
             SetLogEnable(AlertLogID, PASSED, FALSE) ;
-            SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
-            
+            SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ;
+
           when REPORT_NONE =>
             SetLogEnable(AlertLogID, PASSED, FALSE) ;
-            SetAlertPrintCount(AlertLogID, ERROR,  0) ; 
+            SetAlertPrintCount(AlertLogID, ERROR,  0) ;
 
-        end case ; 
-      end loop ; 
+        end case ;
+      end loop ;
     end procedure SetReportMode ;
 
     ------------------------------------------------------------
     impure function GetReportMode return ScoreboardReportType is
     ------------------------------------------------------------
-    variable LogEnable  : boolean ; 
-    variable PrintCount : integer ; 
+    variable LogEnable  : boolean ;
+    variable PrintCount : integer ;
     variable AlertLogID : AlertLogIDType ;
     variable ReportMode : ScoreboardReportType ;
     begin
       AlertLogID := SbPtr(MinIndex).AlertLogID ;
-      LogEnable  := GetLogEnable(AlertLogID, PASSED) ; 
-      PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ; 
-      if LogEnable and PrintCount = integer'high then 
+      LogEnable  := GetLogEnable(AlertLogID, PASSED) ;
+      PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ;
+      if LogEnable and PrintCount = integer'high then
         return REPORT_ALL ;
-      elsif not LogEnable and PrintCount = integer'high then 
-        return REPORT_ERROR ; 
+      elsif not LogEnable and PrintCount = integer'high then
+        return REPORT_ERROR ;
       elsif not LogEnable and PrintCount = 0 then
-        return REPORT_NONE ; 
+        return REPORT_NONE ;
       else
-        Alert(AlertLogID, "ScoreboardPkg.GetReportMode, Values inconsistent with ScoreboardReportType" & 
-              ".  LogEnable = "  & to_string(LogEnable) & 
+        Alert(AlertLogID, "ScoreboardPkg.GetReportMode, Values inconsistent with ScoreboardReportType" &
+              ".  LogEnable = "  & to_string(LogEnable) &
               ".  PrintCount = " & to_string(PrintCount), FAILURE) ;
         return REPORT_NONE ;  -- value is not correct.  Note FAILURE above
-      end if ; 
-    end function GetReportMode ; 
-    
+      end if ;
+    end function GetReportMode ;
+
     ------------------------------------------------------------
     -- Deprecated.  Maintained for backward compatibility.
     -- Use TranscriptPkg.TranscriptOpen
@@ -3251,8 +3261,8 @@ package body ScoreboardGenericPkg is
   impure function IsInitialized (ID : ScoreboardIDType) return boolean is
   ------------------------------------------------------------
   begin
-    return ScoreboardStore.IsInitialized(ID) ; 
-  end function IsInitialized ; 
+    return ScoreboardStore.IsInitialized(ID) ;
+  end function IsInitialized ;
 
   ------------------------------------------------------------
   -- Push items into the scoreboard/FIFO
@@ -3277,7 +3287,7 @@ package body ScoreboardGenericPkg is
   begin
     ScoreboardStore.Push(ID.ID, Tag, Item) ;
   end procedure Push ;
-  
+
   ------------------------------------------------------------
   -- Push as a function
   -- Simple Scoreboard, no tag
@@ -3483,7 +3493,7 @@ package body ScoreboardGenericPkg is
     return ScoreboardStore.Empty(ID.ID, Tag) ;
   end function IsEmpty ;
 
---!! These should be an alias, but Questa fails under some 
+--!! These should be an alias, but Questa fails under some
 --!! interesting conditions when they are not an alias.
   impure function Empty (
     constant ID     : in  ScoreboardIDType
@@ -3499,12 +3509,12 @@ package body ScoreboardGenericPkg is
   begin
     return ScoreboardStore.Empty(ID.ID, Tag) ;
   end function Empty ;                    -- Simple, Tagged
-  
+
   -- All scoreboards in the singleton
   impure function AllScoreboardsEmpty return boolean is
   begin
     return ScoreboardStore.AllScoreboardsEmpty ;
-  end function AllScoreboardsEmpty ; 
+  end function AllScoreboardsEmpty ;
 
   impure function GetAlertLogID (
     constant ID     : in  ScoreboardIDType
@@ -3613,7 +3623,7 @@ package body ScoreboardGenericPkg is
   end procedure Flush ;
 
     ------------------------------------------------------------
-    -- Tagged Scoreboards 
+    -- Tagged Scoreboards
     procedure FindAndDelete (
     ------------------------------------------------------------
       constant ID          :  in  ScoreboardIDType ;
@@ -3623,7 +3633,7 @@ package body ScoreboardGenericPkg is
   begin
     ScoreboardStore.FindAndDelete(ID.ID, Tag, ActualData) ;
   end procedure FindAndDelete ;
-    
+
     ------------------------------------------------------------
     -- Scoreboard no tag
     procedure FindAndDelete (
@@ -3636,7 +3646,7 @@ package body ScoreboardGenericPkg is
   end procedure FindAndDelete ;
 
     ------------------------------------------------------------
-    -- Tagged Scoreboards 
+    -- Tagged Scoreboards
     procedure FindAndFlush (
     ------------------------------------------------------------
       constant ID          :  in  ScoreboardIDType ;
@@ -3646,7 +3656,7 @@ package body ScoreboardGenericPkg is
   begin
     ScoreboardStore.FindAndFlush(ID.ID, Tag, ActualData) ;
   end procedure FindAndFlush ;
-    
+
     ------------------------------------------------------------
     -- Scoreboard no tag
     procedure FindAndFlush (
@@ -3674,6 +3684,17 @@ package body ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- Generally these are not required.  When a simulation ends and
   -- another simulation is started, a simulator will release all allocated items.
+  procedure DeallocateAllScoreboards is
+  begin
+    ScoreboardStore.Deallocate ;
+  end procedure DeallocateAllScoreboards ;
+
+  procedure InitializeAllScoreboards is
+  begin
+    ScoreboardStore.Initialize ;
+  end procedure InitializeAllScoreboards ;
+
+  -- Old Way
   procedure Deallocate (
     constant ID     : in  ScoreboardIDType
   ) is
@@ -3718,9 +3739,9 @@ package body ScoreboardGenericPkg is
   ------------------------------------------------------------
   -- SetReportMode
   --   Translates ScoreboardReportType into calls to SetLogEnable and SetAlertPrintCount
-  --   Recommendation, you may use those settings directly instead, but 
+  --   Recommendation, you may use those settings directly instead, but
   --   if you do, do not use GetReportMode.
-  --   
+  --
   procedure SetReportMode (
     constant ID           : in  ScoreboardIDType ;
     constant ReportModeIn : in  ScoreboardReportType
@@ -3728,20 +3749,20 @@ package body ScoreboardGenericPkg is
     variable AlertLogID : AlertLogIDType ;
   begin
     AlertLogID := ScoreboardStore.GetAlertLogID(ID.ID) ;
-    case ReportModeIn is 
-      when REPORT_ALL => 
+    case ReportModeIn is
+      when REPORT_ALL =>
         SetLogEnable(AlertLogID, PASSED, TRUE) ;
-        SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
-        
+        SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ;
+
       when REPORT_ERROR =>
         SetLogEnable(AlertLogID, PASSED, FALSE) ;
-        SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ; 
-        
+        SetAlertPrintCount(AlertLogID, ERROR,  integer'high) ;
+
       when REPORT_NONE =>
         SetLogEnable(AlertLogID, PASSED, FALSE) ;
-        SetAlertPrintCount(AlertLogID, ERROR,  0) ; 
+        SetAlertPrintCount(AlertLogID, ERROR,  0) ;
 
-    end case ; 
+    end case ;
   end procedure SetReportMode ;
 
   ------------------------------------------------------------
@@ -3753,27 +3774,27 @@ package body ScoreboardGenericPkg is
   impure function GetReportMode (
     constant ID           : in  ScoreboardIDType
   ) return ScoreboardReportType is
-    variable LogEnable  : boolean ; 
-    variable PrintCount : integer ; 
+    variable LogEnable  : boolean ;
+    variable PrintCount : integer ;
     variable AlertLogID : AlertLogIDType ;
     variable ReportMode : ScoreboardReportType ;
   begin
     AlertLogID := ScoreboardStore.GetAlertLogID(ID.ID) ;
-    LogEnable  := GetLogEnable(AlertLogID, PASSED) ; 
-    PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ; 
-    if LogEnable and PrintCount = integer'high then 
+    LogEnable  := GetLogEnable(AlertLogID, PASSED) ;
+    PrintCount := GetAlertPrintCount(AlertLogID, ERROR) ;
+    if LogEnable and PrintCount = integer'high then
       return REPORT_ALL ;
-    elsif not LogEnable and PrintCount = integer'high then 
-      return REPORT_ERROR ; 
+    elsif not LogEnable and PrintCount = integer'high then
+      return REPORT_ERROR ;
     elsif not LogEnable and PrintCount = 0 then
-      return REPORT_NONE ; 
+      return REPORT_NONE ;
     else
-      Alert(AlertLogID, "ScoreboardPkg.GetReportMode, Values inconsistent with ScoreboardReportType" & 
-            ".  LogEnable = "  & to_string(LogEnable) & 
+      Alert(AlertLogID, "ScoreboardPkg.GetReportMode, Values inconsistent with ScoreboardReportType" &
+            ".  LogEnable = "  & to_string(LogEnable) &
             ".  PrintCount = " & to_string(PrintCount), FAILURE) ;
       return REPORT_NONE ;  -- value is not correct.  Note FAILURE above
-    end if ; 
-  end function GetReportMode ; 
+    end if ;
+  end function GetReportMode ;
 
 
   --==========================================================

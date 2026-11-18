@@ -22,7 +22,8 @@
 --
 --  Revision History:
 --    Date      Version    Description
---    05/2026   2026.05    Initial.   
+--    11/2026   2026.11    Updates after Claude code review
+--    05/2026   2026.05    Initial.
 --                         Restructure CoveragePType to call CoveragePkg Singleton.
 --
 --  This file is part of OSVVM.
@@ -54,7 +55,7 @@ use work.OsvvmScriptSettingsPkg.all ;
 use work.OsvvmSettingsPkg.all ;
 use work.TextUtilPkg.all ;
 use work.ResolutionPkg.all ;
-use work.TranscriptPkg.all ;
+use work.TranscriptBasePkg.all ;
 use work.AlertLogPkg.all ;
 use work.RandomBasePkg.all ;
 use work.RandomProcedurePkg.all ;
@@ -65,7 +66,7 @@ use work.MessageListPkg.all ;
 use work.OsvvmGlobalPkg.all ;
 use work.CoverageVendorApiPkg.all ;
 use work.LanguageSupport2019Pkg.all ;
-use work.CoveragePkg.all ; 
+use work.CoveragePkg.all ;
 
 package CoveragePtPkg is
 
@@ -402,13 +403,13 @@ package CoveragePtPkg is
     ------------------------------------------------------------
     procedure WriteCovDb (FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
     procedure ReadCovDb (FileName : string; Merge : boolean := FALSE) ;
-    procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) ;
 
 ------------------------------------------------------------
 --  Remaining are Deprecated
---
-/*
+--    Result in deprecated message.
+
     -- Deprecated/Subsumed by versions with PercentCov Parameter (rather than AtLeast value)
     impure function RandCovPoint  (AtLeast : integer ) return integer ;
     impure function RandCovPoint  (AtLeast : integer ) return integer_vector ;
@@ -424,7 +425,7 @@ package CoveragePtPkg is
     procedure       WriteCovHoles (LogLevel : LogType;    AtLeast : integer ) ;
     procedure       WriteCovHoles (FileName : string;     AtLeast : integer;  OpenKind : File_Open_Kind := APPEND_MODE ) ;
     procedure       WriteCovHoles (LogLevel : LogType;    FileName : string;  AtLeast  : integer ; OpenKind : File_Open_Kind := APPEND_MODE ) ;
- */
+
     ------------------------------------------------------------
     -- Deprecated.  Replaced by SetMessage
     procedure       SetItemName   (ItemNameIn : String) ;  -- Replaced by SetMessage
@@ -464,6 +465,8 @@ package CoveragePtPkg is
 
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
+  -- This does not work in Xilinx XSIM.  Use the following instead:
+  --    CompareBins(Bin1.GetCoverageID, Bin2.GetCoverageID, ErrorCount) ;
   procedure CompareBins (
   ------------------------------------------------------------
     variable Bin1       : inout CovPType ;
@@ -473,6 +476,8 @@ package CoveragePtPkg is
 
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
+  -- This does not work in Xilinx XSIM.  Use the following instead:
+  --    CompareBins(Bin1.GetCoverageID, Bin2.GetCoverageID) ;
   procedure CompareBins (
   ------------------------------------------------------------
     variable Bin1       : inout CovPType ;
@@ -493,52 +498,88 @@ package body CoveragePtPkg is
   --  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  CovPType  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
   ------------------------------------------------------------------------------------------
   type CovPType is protected body
-    file OsvvmCoverageWriteBinFile : text ;
-    variable WriteBinFileInit : boolean := FALSE ;
+    variable WriteBinFileName : line ;
+    variable WriteBinOpenKind : File_Open_Kind := WRITE_MODE ;
+    variable WriteBinFileOpen : boolean := FALSE ;
+    variable RvSeedInit       : boolean := FALSE ;
 
-    constant INIT_COVERAGE_ID : CoverageIDType := (ID => integer'right) ; 
-    variable CoverageID       : CoverageIDType := INIT_COVERAGE_ID ; 
+    constant INIT_COVERAGE_ID : CoverageIDType := (ID => integer'right) ;
+    variable CoverageID       : CoverageIDType := INIT_COVERAGE_ID ;
 
     -----------------------------------------------------------
     procedure CheckCoverageID  is
     ------------------------------------------------------------
     begin
       if CoverageID = INIT_COVERAGE_ID then
-        CoverageID := NewID("COV_SharedVariable") ; 
-      end if ; 
+        CoverageID := NewID("COV_SharedVariable", ReportMode => USE_PARENT_ID) ;
+        DeallocateName(CoverageID) ; -- The PT Version is unnamed.
+        SetSeed(CoverageID, RandomSeedType'(1,7)) ;
+      end if ;
     end procedure CheckCoverageID ;
+
+    -----------------------------------------------------------
+    procedure CheckAndErrorCoverageID  is
+    ------------------------------------------------------------
+    begin
+      if CoverageID = INIT_COVERAGE_ID then
+        Alert(OSVVM_COVERAGE_PT_ALERTLOG_ID, "CoveragePtPkg: CoverageID not initialized.", FAILURE) ;
+        CoverageID := NewID("COV_SharedVariable", ReportMode => USE_PARENT_ID) ;
+        DeallocateName(CoverageID) ; -- The PT Version is unnamed.
+        SetSeed(CoverageID, RandomSeedType'(1,7)) ;
+      end if ;
+    end procedure CheckAndErrorCoverageID ;
 
     -----------------------------------------------------------
     impure function GetCoverageID return CoverageIDType is
     ------------------------------------------------------------
     begin
-      return CoverageID ; 
+      CheckCoverageID ;
+      return CoverageID ;
     end function GetCoverageID ;
 
     ------------------------------------------------------------
     -- /////////////////////////////////////////
-    -- These apply to all coverage models 
+    -- These apply to all coverage models
     -- /////////////////////////////////////////
     ------------------------------------------------------------
     ------------------------------------------------------------
     procedure FileOpenWriteBin (FileName : string; OpenKind : File_Open_Kind ) is
     ------------------------------------------------------------
     begin
-      work.CoveragePkg.FileOpenWriteBin(FileName, OpenKind) ;
+      if not WriteBinFileOpen then
+        WriteBinFileName := new string'(FileName) ;
+        WriteBinOpenKind := OpenKind ;
+      else
+        -- FileCloseWriteBin ;
+        Alert(OSVVM_COVERAGE_PT_ALERTLOG_ID, "CoveragePtPkg.FileOpenWriteBin:" &
+            "  File Open Already.  Open Ignored.", Warning) ;
+      end if ;
+      WriteBinFileOpen := TRUE ;
     end procedure FileOpenWriteBin ;
 
     ------------------------------------------------------------
     procedure FileCloseWriteBin is
     ------------------------------------------------------------
     begin
-      work.CoveragePkg.FileCloseWriteBin ;
+      WriteBinFileOpen := FALSE ;
+      deallocate(WriteBinFileName) ;
     end procedure FileCloseWriteBin ;
 
     ------------------------------------------------------------
     procedure PrintToCovFile(S : string) is
     ------------------------------------------------------------
+      file wFile : text ;
+      variable buf : line ;
     begin
-      work.CoveragePkg.PrintToCovFile(S) ; 
+      if WriteBinFileOpen then
+        file_open(wFile, WriteBinFileName.all, WriteBinOpenKind) ;
+        write(buf, S) ;
+        writeline(wFile, buf) ;
+        file_close(wFile) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
+        work.CoveragePkg.PrintToCovFile(S) ;
+      end if ;
     end procedure PrintToCovFile ;
 
     ------------------------------------------------------------
@@ -553,29 +594,38 @@ package body CoveragePtPkg is
       FailName        : string := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
+      CheckCoverageID ;
       work.CoveragePkg.SetReportOptions(
         WritePassFail, WriteBinInfo, WriteCount, WriteAnyIllegal, WritePrefix, PassName, FailName
       ) ;
-    end procedure SetReportOptions ; 
+    end procedure SetReportOptions ;
 
     ------------------------------------------------------------
     procedure ResetReportOptions is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       work.CoveragePkg.ResetReportOptions ;
-    end procedure ResetReportOptions ; 
+    end procedure ResetReportOptions ;
 
     ------------------------------------------------------------
     -- /////////////////////////////////////////
-    -- These apply to a specific coverage model 
+    -- These apply to a specific coverage model
     -- /////////////////////////////////////////
     ------------------------------------------------------------
     ------------------------------------------------------------
     procedure SetName (Name : String) is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
-      SetName(CoverageID, Name) ;
+      if CoverageID = INIT_COVERAGE_ID then
+        CoverageID := NewID(Name, ReportMode => USE_PARENT_ID) ;
+      else
+        SetName(CoverageID, Name) ;
+      end if ;
+      if not RvSeedInit then
+        InitSeed(CoverageID, Name) ;
+        RvSeedInit := TRUE ;
+      end if ;
     end procedure SetName ;
 
     ------------------------------------------------------------
@@ -625,6 +675,10 @@ package body CoveragePtPkg is
     begin
       CheckCoverageID ;
       SetMessage(CoverageID, Message) ;
+      if not RvSeedInit then
+        InitSeed(CoverageID, Message) ;
+        RvSeedInit := TRUE ;
+      end if ;
     end procedure SetMessage ;
 
     ------------------------------------------------------------
@@ -712,21 +766,20 @@ package body CoveragePtPkg is
     procedure SetAlertLogID (A : AlertLogIDType) is
     ------------------------------------------------------------
     begin
---!! not currently on the singleton interface
- --     CheckCoverageID ; 
- --     SetAlertLogID(CoverageID, A) ;
+      CheckCoverageID ;
+      SetAlertLogID(CoverageID, A) ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
     procedure SetAlertLogID(Name : string ; ParentID : AlertLogIDType := ALERTLOG_BASE_ID ; CreateHierarchy : Boolean := TRUE) is
     ------------------------------------------------------------
---      constant SeedInit : boolean := CovStructPtr(CoverageID.ID).RvSeedInit ;
     begin
---!! not currently on the singleton interface
---      SetAlertLogID(CoverageID, Name, ParentID, CreateHierarchy) ;
---      if not SeedInit then
---        InitSeed(CoverageID, Name) ;
---      end if ;
+      CheckCoverageID ;
+      SetAlertLogID(CoverageID, Name, ParentID, CreateHierarchy) ;
+      if not RvSeedInit then
+        InitSeed(CoverageID, Name) ;
+        RvSeedInit := TRUE ;
+      end if ;
     end procedure SetAlertLogID ;
 
     ------------------------------------------------------------
@@ -744,14 +797,15 @@ package body CoveragePtPkg is
     begin
       CheckCoverageID ;
       InitSeed(CoverageID, S, UseNewSeedMethods) ;
+      RvSeedInit := TRUE ;
     end procedure InitSeed ;
 
     ------------------------------------------------------------
     impure function InitSeed (S : string;  UseNewSeedMethods : boolean := COVERAGE_USE_NEW_SEED_METHODS) return string is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
-      return InitSeed(CoverageID, S, UseNewSeedMethods) ;
+      InitSeed(S, UseNewSeedMethods) ; -- call procedure above
+      return S ;
     end function InitSeed ;
 
     ------------------------------------------------------------
@@ -760,6 +814,7 @@ package body CoveragePtPkg is
     begin
       CheckCoverageID ;
       InitSeed(CoverageID, I, UseNewSeedMethods) ;
+      RvSeedInit := TRUE ;
     end procedure InitSeed ;
 
     ------------------------------------------------------------
@@ -769,6 +824,7 @@ package body CoveragePtPkg is
     begin
       CheckCoverageID ;
       SetSeed(CoverageID, RandomSeedIn) ;
+      RvSeedInit := TRUE ;
     end procedure SetSeed ;
 
     ------------------------------------------------------------
@@ -868,7 +924,7 @@ package body CoveragePtPkg is
     ) is
     begin
       -- Call previous one
-      AddCross(Name, AtLeast, 1,   
+      AddCross(Name, AtLeast, 1,
            Bin1, Bin2, Bin3, Bin4, Bin5, Bin6, Bin7, Bin8, Bin9, Bin10, Bin11,
            Bin12, Bin13, Bin14, Bin15, Bin16, Bin17, Bin18, Bin19, Bin20
         ) ;
@@ -946,6 +1002,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix2Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -953,6 +1010,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix3Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -960,6 +1018,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix4Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -967,6 +1026,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix5Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -974,6 +1034,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix6Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -981,6 +1042,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix7Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -988,6 +1050,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix8Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -995,6 +1058,7 @@ package body CoveragePtPkg is
     procedure AddCross (CovBin : CovMatrix9Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       AddCross(CoverageID, CovBin, Name) ;
     end procedure AddCross ;
 
@@ -1003,6 +1067,7 @@ package body CoveragePtPkg is
     procedure Deallocate is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       ResetReportOptions ;
       Deallocate(CoverageID) ;
     end procedure deallocate ;
@@ -1012,6 +1077,7 @@ package body CoveragePtPkg is
     procedure ICoverLast is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       ICoverLast(CoverageID) ;
     end procedure ICoverLast ;
 
@@ -1019,6 +1085,7 @@ package body CoveragePtPkg is
     procedure ICover ( CovPoint : integer) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       ICover(CoverageID, (1=> CovPoint)) ;
     end procedure ICover ;
 
@@ -1026,6 +1093,7 @@ package body CoveragePtPkg is
     procedure ICover( CovPoint : integer_vector) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       ICover(CoverageID, CovPoint) ;
      end procedure ICover ;
 
@@ -1033,16 +1101,18 @@ package body CoveragePtPkg is
     procedure TCover ( A : integer) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       TCover(CoverageID, A) ;
     end procedure TCover ;
 
     ------------------------------------------------------------
     impure function FindBinIndex(
     ------------------------------------------------------------
-      CoverPoint       : integer_vector ; 
+      CoverPoint     : integer_vector ;
       StartingIndex  : integer := 1
     ) return integer is
     begin
+      CheckAndErrorCoverageID ;
       return FindBinIndex(CoverageID, CoverPoint, StartingIndex) ;
     end function FindBinIndex ;
 
@@ -1050,6 +1120,7 @@ package body CoveragePtPkg is
     procedure ClearCov is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       ClearCov(CoverageID) ;
     end procedure ClearCov ;
 
@@ -1058,6 +1129,7 @@ package body CoveragePtPkg is
     procedure SetCovZero is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       ClearCov(CoverageID) ;
     end procedure SetCovZero ;
 
@@ -1066,7 +1138,9 @@ package body CoveragePtPkg is
     impure function IsCovered ( PercentCov : real ) return boolean is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      if CoverageID = INIT_COVERAGE_ID then
+        return FALSE ;
+      end if ;
       return IsCovered(CoverageID, PercentCov) ;
     end function IsCovered ;
 
@@ -1074,7 +1148,9 @@ package body CoveragePtPkg is
     impure function IsCovered return boolean is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      if CoverageID = INIT_COVERAGE_ID then
+        return FALSE ;
+      end if ;
       return IsCovered(CoverageID) ;
     end function IsCovered ;
 
@@ -1082,7 +1158,9 @@ package body CoveragePtPkg is
     impure function IsInitialized return boolean is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      if CoverageID = INIT_COVERAGE_ID then
+        return FALSE ;
+      end if ;
       return IsInitialized(CoverageID) ;
     end function IsInitialized ;
 
@@ -1091,7 +1169,7 @@ package body CoveragePtPkg is
     impure function GetItemCount return integer is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetItemCount(CoverageID) ;
     end function GetItemCount ;
 
@@ -1099,7 +1177,7 @@ package body CoveragePtPkg is
     impure function GetCov ( PercentCov : real ) return real is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetCov(CoverageID, PercentCov) ;
     end function GetCov ;
 
@@ -1107,7 +1185,7 @@ package body CoveragePtPkg is
     impure function GetCov return real is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetCov(CoverageID ) ;
     end function GetCov ;
 
@@ -1115,6 +1193,7 @@ package body CoveragePtPkg is
     impure function GetTotalCovCount ( PercentCov : real ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetTotalCovCount(CoverageID, PercentCov) ;
     end function GetTotalCovCount ;
 
@@ -1122,6 +1201,7 @@ package body CoveragePtPkg is
     impure function GetTotalCovCount return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetTotalCovCount(CoverageID) ;
     end function GetTotalCovCount ;
 
@@ -1129,6 +1209,7 @@ package body CoveragePtPkg is
     impure function GetTotalCovGoal ( PercentCov : real ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetTotalCovGoal(CoverageID, PercentCov) ;
     end function GetTotalCovGoal ;
 
@@ -1136,6 +1217,7 @@ package body CoveragePtPkg is
     impure function GetTotalCovGoal return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetTotalCovGoal(CoverageID) ;
     end function GetTotalCovGoal ;
 
@@ -1144,7 +1226,7 @@ package body CoveragePtPkg is
     impure function GetMinCov return real is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetMinCov(CoverageID) ;
     end function GetMinCov ;
 
@@ -1152,7 +1234,7 @@ package body CoveragePtPkg is
     impure function GetMinCount return integer is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetMinCount (CoverageID);
     end function GetMinCount ;
 
@@ -1160,7 +1242,7 @@ package body CoveragePtPkg is
     impure function GetMaxCov return real is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetMaxCov(CoverageID) ;
     end function GetMaxCov ;
 
@@ -1168,7 +1250,7 @@ package body CoveragePtPkg is
     impure function GetMaxCount return integer is
     ------------------------------------------------------------
     begin
-      CheckCoverageID ;
+      CheckAndErrorCoverageID ;
       return GetMaxCount(CoverageID);
     end function GetMaxCount ;
 
@@ -1177,6 +1259,7 @@ package body CoveragePtPkg is
     impure function CountCovHoles ( PercentCov : real ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return CountCovHoles(CoverageID, PercentCov) ;
     end function CountCovHoles ;
 
@@ -1184,6 +1267,7 @@ package body CoveragePtPkg is
     impure function CountCovHoles return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return CountCovHoles(CoverageID) ;
     end function CountCovHoles ;
 
@@ -1193,6 +1277,7 @@ package body CoveragePtPkg is
     impure function GetPoint ( BinIndex : integer ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetPoint(CoverageID, BinIndex) ;
     end function GetPoint ;
 
@@ -1200,6 +1285,7 @@ package body CoveragePtPkg is
     impure function GetPoint ( BinIndex : integer ) return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetPoint(CoverageID, BinIndex) ;
     end function GetPoint ;
 
@@ -1207,6 +1293,7 @@ package body CoveragePtPkg is
     impure function GetRandPoint return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID) ;
     end function GetRandPoint ;
 
@@ -1214,6 +1301,7 @@ package body CoveragePtPkg is
     impure function GetRandPoint ( PercentCov : real ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID, PercentCov) ;
     end function GetRandPoint ;
 
@@ -1221,6 +1309,7 @@ package body CoveragePtPkg is
     impure function GetRandPoint return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID) ;
     end function GetRandPoint ;
 
@@ -1228,6 +1317,7 @@ package body CoveragePtPkg is
     impure function GetRandPoint ( PercentCov : real ) return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID, PercentCov) ;
     end function GetRandPoint ;
 
@@ -1235,6 +1325,7 @@ package body CoveragePtPkg is
     impure function GetIncPoint return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetIncPoint(CoverageID) ;
     end function GetIncPoint ;
 
@@ -1242,6 +1333,7 @@ package body CoveragePtPkg is
     impure function GetIncPoint return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetIncPoint(CoverageID) ;
     end function GetIncPoint ;
 
@@ -1249,6 +1341,7 @@ package body CoveragePtPkg is
     impure function GetMinPoint return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetMinPoint(CoverageID) ;
     end function GetMinPoint ;
 
@@ -1256,6 +1349,7 @@ package body CoveragePtPkg is
     impure function GetMinPoint return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetMinPoint(CoverageID) ;
     end function GetMinPoint ;
 
@@ -1263,6 +1357,7 @@ package body CoveragePtPkg is
     impure function GetMaxPoint return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetMaxPoint(CoverageID) ;
     end function GetMaxPoint ;
 
@@ -1270,6 +1365,7 @@ package body CoveragePtPkg is
     impure function GetMaxPoint return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetMaxPoint(CoverageID) ;
     end function GetMaxPoint ;
 
@@ -1277,6 +1373,7 @@ package body CoveragePtPkg is
     impure function GetNextPoint return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetNextPoint(CoverageID) ;
     end function GetNextPoint ;
 
@@ -1284,6 +1381,7 @@ package body CoveragePtPkg is
     impure function GetNextPoint return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetNextPoint(CoverageID) ;
     end function GetNextPoint ;
 
@@ -1291,6 +1389,7 @@ package body CoveragePtPkg is
     impure function GetNextPoint (Mode : NextPointModeType) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetNextPoint(CoverageID, Mode) ;
     end function GetNextPoint;
 
@@ -1298,6 +1397,7 @@ package body CoveragePtPkg is
     impure function GetNextPoint (Mode : NextPointModeType) return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetNextPoint(CoverageID, Mode) ;
     end function GetNextPoint;
 
@@ -1306,6 +1406,7 @@ package body CoveragePtPkg is
     impure function RandCovPoint return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID) ;
     end function RandCovPoint ;
 
@@ -1314,6 +1415,7 @@ package body CoveragePtPkg is
     impure function RandCovPoint ( PercentCov : real ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID, PercentCov) ;
     end function RandCovPoint ;
 
@@ -1322,6 +1424,7 @@ package body CoveragePtPkg is
     impure function RandCovPoint return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID) ;
     end function RandCovPoint ;
 
@@ -1330,6 +1433,7 @@ package body CoveragePtPkg is
     impure function RandCovPoint ( PercentCov : real ) return integer_vector is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandPoint(CoverageID, PercentCov) ;
     end function RandCovPoint ;
 
@@ -1340,6 +1444,7 @@ package body CoveragePtPkg is
     impure function GetBinVal ( BinIndex : integer ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetBinVal(CoverageID, BinIndex) ;
     end function GetBinVal ;
 
@@ -1347,6 +1452,7 @@ package body CoveragePtPkg is
     impure function GetRandBinVal ( PercentCov : real ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetRandBinVal(CoverageID, PercentCov) ;  -- GetBinVal
     end function GetRandBinVal ;
 
@@ -1354,6 +1460,7 @@ package body CoveragePtPkg is
     impure function GetRandBinVal  return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       -- use global coverage target
       return GetRandBinVal(CoverageID) ;  -- GetBinVal
     end function GetRandBinVal ;
@@ -1362,6 +1469,7 @@ package body CoveragePtPkg is
     impure function GetLastBinVal return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetLastBinVal(CoverageID) ;
     end function GetLastBinVal ;
 
@@ -1369,6 +1477,7 @@ package body CoveragePtPkg is
     impure function GetIncBinVal return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetIncBinVal( CoverageID ) ;
     end function GetIncBinVal ;
 
@@ -1376,7 +1485,7 @@ package body CoveragePtPkg is
     impure function GetMinBinVal  return RangeArrayType is
     ------------------------------------------------------------
     begin
-      -- use global coverage target
+      CheckAndErrorCoverageID ;
       return GetMinBinVal( CoverageID ) ;
     end function GetMinBinVal ;
 
@@ -1384,7 +1493,7 @@ package body CoveragePtPkg is
     impure function GetMaxBinVal  return RangeArrayType is
     ------------------------------------------------------------
     begin
-      -- use global coverage target
+      CheckAndErrorCoverageID ;
       return GetMaxBinVal( CoverageID ) ;
     end function GetMaxBinVal ;
 
@@ -1392,6 +1501,7 @@ package body CoveragePtPkg is
     impure function GetNextBinVal return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetNextBinVal (CoverageID) ;
     end function GetNextBinVal ;
 
@@ -1399,6 +1509,7 @@ package body CoveragePtPkg is
     impure function GetNextBinVal (Mode : NextPointModeType) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetNextBinVal (CoverageID, Mode) ;
     end function GetNextBinVal;
 
@@ -1406,6 +1517,7 @@ package body CoveragePtPkg is
     impure function GetHoleBinVal ( ReqHoleNum : integer ; PercentCov : real  ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetHoleBinVal(CoverageID, ReqHoleNum, PercentCov) ;
     end function GetHoleBinVal ;
 
@@ -1413,6 +1525,7 @@ package body CoveragePtPkg is
     impure function GetHoleBinVal ( PercentCov : real  ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetHoleBinVal(CoverageID, 1, PercentCov) ;
     end function GetHoleBinVal ;
 
@@ -1420,6 +1533,7 @@ package body CoveragePtPkg is
     impure function GetHoleBinVal ( ReqHoleNum : integer := 1 ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetHoleBinVal(CoverageID, ReqHoleNum) ;
     end function GetHoleBinVal ;
 
@@ -1428,6 +1542,7 @@ package body CoveragePtPkg is
     impure function RandCovBinVal  return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandBinVal(CoverageID) ;  -- GetBinVal
     end function RandCovBinVal ;
 
@@ -1436,6 +1551,7 @@ package body CoveragePtPkg is
     impure function RandCovBinVal ( PercentCov : real ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetRandBinVal(CoverageID, PercentCov) ;  -- GetBinVal
     end function RandCovBinVal ;
 
@@ -1446,6 +1562,7 @@ package body CoveragePtPkg is
     impure function GetNumBins return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetNumBins(CoverageID) ;
     end function GetNumBins ;
 
@@ -1453,6 +1570,7 @@ package body CoveragePtPkg is
     impure function GetRandIndex return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetRandIndex(CoverageID) ;
     end function GetRandIndex ;
 
@@ -1460,6 +1578,7 @@ package body CoveragePtPkg is
     impure function GetRandIndex ( CovTargetPercent : real ) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetRandIndex(CoverageID, CovTargetPercent) ;
     end function GetRandIndex ;
 
@@ -1467,6 +1586,7 @@ package body CoveragePtPkg is
     impure function GetLastIndex return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetLastIndex(CoverageID) ;
     end function GetLastIndex ;
 
@@ -1474,6 +1594,7 @@ package body CoveragePtPkg is
     impure function GetIncIndex return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetIncIndex(CoverageID) ;
     end function GetIncIndex ;
 
@@ -1481,6 +1602,7 @@ package body CoveragePtPkg is
     impure function GetMinIndex return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetMinIndex(CoverageID) ;
     end function GetMinIndex ;
 
@@ -1488,6 +1610,7 @@ package body CoveragePtPkg is
     impure function GetMaxIndex return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetMaxIndex(CoverageID) ;
     end function GetMaxIndex ;
 
@@ -1495,6 +1618,7 @@ package body CoveragePtPkg is
     impure function GetNextIndex return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetNextIndex(CoverageID) ;
     end function GetNextIndex ;
 
@@ -1502,6 +1626,7 @@ package body CoveragePtPkg is
     impure function GetNextIndex (Mode : NextPointModeType) return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetNextIndex(CoverageID, Mode) ;
     end function GetNextIndex;
 
@@ -1511,6 +1636,7 @@ package body CoveragePtPkg is
     impure function GetBinInfo ( BinIndex : integer ) return CovBinBaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBinInfo(CoverageID, BinIndex) ;
     end function GetBinInfo ;
 
@@ -1519,6 +1645,7 @@ package body CoveragePtPkg is
     impure function GetBinValLength return integer is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBinValLength(CoverageID) ;
     end function GetBinValLength ;
 
@@ -1526,6 +1653,7 @@ package body CoveragePtPkg is
     impure function GetBinName ( BinIndex : integer; DefaultName : string := "" ) return string is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetBinName(CoverageID, BinIndex, DefaultName) ;
     end function GetBinName;
 
@@ -1536,6 +1664,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovBinBaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1543,6 +1672,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix2BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1550,6 +1680,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix3BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1557,6 +1688,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix4BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1564,6 +1696,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix5BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1571,6 +1704,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix6BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1578,6 +1712,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix7BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1585,6 +1720,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix8BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1592,6 +1728,7 @@ package body CoveragePtPkg is
     impure function GetBin ( BinIndex : integer ) return CovMatrix9BaseType is
     -- ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return     GetBin(CoverageID, BinIndex) ;
     end function GetBin ;
 
@@ -1599,13 +1736,17 @@ package body CoveragePtPkg is
     impure function GetErrorCount return integer is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       return GetErrorCount(CoverageID) ;
     end function GetErrorCount ;
 
     ------------------------------------------------------------
     ------------------------------------------------------------
-    procedure WriteBin (
+    procedure WriteBin (  -- With LogLevel & FileName
     ------------------------------------------------------------
+      LogLevel        : LogType ;
+      FileName        : string;
+      OpenKind        : File_Open_Kind := APPEND_MODE ;
       WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
@@ -1615,7 +1756,42 @@ package body CoveragePtPkg is
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      SetReportOptions (
+      CheckAndErrorCoverageID ;
+      WriteBinForPtOnly (
+        ID              => CoverageID,
+        LogLevel        => LogLevel,
+        FileName        => FileName,
+        OpenKind        => OpenKind,
+        WritePassFail   => WritePassFail,
+        WriteBinInfo    => WriteBinInfo,
+        WriteCount      => WriteCount,
+        WriteAnyIllegal => WriteAnyIllegal,
+        WritePrefix     => WritePrefix,
+        PassName        => PassName,
+        FailName        => FailName
+      );
+    end procedure WriteBin ;  -- With LogLevel
+
+    ------------------------------------------------------------
+    procedure WriteBin ( -- With FileName
+    ------------------------------------------------------------
+      FileName        : string;
+      OpenKind        : File_Open_Kind   := APPEND_MODE ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePrefix     : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
+      PassName        : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
+      FailName        : string           := OSVVM_STRING_INIT_PARM_DETECT    --!! Deprecated
+    ) is
+    begin
+      CheckAndErrorCoverageID ;
+      WriteBinForPtOnly (
+        ID              => CoverageID,
+        LogLevel        => ALWAYS,
+        FileName        => FileName,
+        OpenKind        => OpenKind,
         WritePassFail   => WritePassFail,
         WriteBinInfo    => WriteBinInfo,
         WriteCount      => WriteCount,
@@ -1624,7 +1800,6 @@ package body CoveragePtPkg is
         PassName        => PassName,
         FailName        => FailName
       ) ;
-      WriteBin (ID => CoverageID) ;
     end procedure WriteBin ;
 
     ------------------------------------------------------------
@@ -1641,54 +1816,44 @@ package body CoveragePtPkg is
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      SetReportOptions (
-        WritePassFail   => WritePassFail,
-        WriteBinInfo    => WriteBinInfo,
-        WriteCount      => WriteCount,
-        WriteAnyIllegal => WriteAnyIllegal,
-        WritePrefix     => WritePrefix,
-        PassName        => PassName,
-        FailName        => FailName
-      ) ;
-      WriteBin (ID => CoverageID, LogLevel => LogLevel) ;
+      CheckAndErrorCoverageID ;
+      if WriteBinFileOpen then
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => LogLevel,
+          FileName        => WriteBinFileName.all,
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        ) ;
+      else
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => LogLevel,
+          FileName        => "",
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        ) ;
+      end if ;
+      if WriteBinFileOpen then
+        WriteBinOpenKind := APPEND_MODE ;
+      end if ;
     end procedure WriteBin ;  -- With LogLevel
 
     ------------------------------------------------------------
     procedure WriteBin (
     ------------------------------------------------------------
-      FileName        : string;
-      OpenKind        : File_Open_Kind   := APPEND_MODE ;
-      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WritePrefix     : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
-      PassName        : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
-      FailName        : string           := OSVVM_STRING_INIT_PARM_DETECT    --!! Deprecated
-    ) is
-    begin
-      SetReportOptions (
-        WritePassFail   => WritePassFail,
-        WriteBinInfo    => WriteBinInfo,
-        WriteCount      => WriteCount,
-        WriteAnyIllegal => WriteAnyIllegal,
-        WritePrefix     => WritePrefix,
-        PassName        => PassName,
-        FailName        => FailName
-      ) ;
-      WriteBin (
-        ID        => CoverageID, 
-        FileName  => FileName, 
-        OpenKind  => OpenKind
-      ) ;
-    end procedure WriteBin ;
-
-    ------------------------------------------------------------
-    procedure WriteBin (  -- With LogLevel
-    ------------------------------------------------------------
-      LogLevel        : LogType ;
-      FileName        : string;
-      OpenKind        : File_Open_Kind := APPEND_MODE ;
       WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
@@ -1698,28 +1863,57 @@ package body CoveragePtPkg is
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      SetReportOptions (
-        WritePassFail   => WritePassFail,
-        WriteBinInfo    => WriteBinInfo,
-        WriteCount      => WriteCount,
-        WriteAnyIllegal => WriteAnyIllegal,
-        WritePrefix     => WritePrefix,
-        PassName        => PassName,
-        FailName        => FailName
-      ) ;
-      WriteBin (
-        ID        => CoverageID, 
-        LogLevel  => LogLevel, 
-        FileName  => FileName, 
-        OpenKind  => OpenKind
-      ) ;
-    end procedure WriteBin ;  -- With LogLevel
+      CheckAndErrorCoverageID ;
+      if WriteBinFileOpen then
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => ALWAYS,
+          FileName        => WriteBinFileName.all,
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        );
+      else
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => ALWAYS,
+          FileName        => "",
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        );
+      end if ;
+      if WriteBinFileOpen then
+        WriteBinOpenKind := APPEND_MODE ;
+      end if ;
+    end procedure WriteBin ;
 
     ------------------------------------------------------------
     procedure DumpBin (LogLevel : LogType := DEBUG) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
+      if WriteBinFileOpen then
+        DumpBin (
+          ID          => CoverageID,
+          LogLevel    => LogLevel,
+          FileName  => WriteBinFileName.all,
+          OpenKind    => WriteBinOpenKind
+        ) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
       DumpBin (CoverageID, LogLevel) ;
+      end if ;
     end procedure DumpBin ;
 
     ------------------------------------------------------------
@@ -1727,27 +1921,62 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( LogLevel : LogType := ALWAYS ) is
     ------------------------------------------------------------
     begin
-      WriteCovHoles(CoverageID, LogLevel) ;
+      CheckAndErrorCoverageID ;
+      if WriteBinFileOpen then
+        WriteCovHoles (
+          ID          => CoverageID,
+          LogLevel    => LogLevel,
+          FileName  => WriteBinFileName.all,
+          OpenKind    => WriteBinOpenKind
+        ) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
+        WriteCovHoles(CoverageID, LogLevel) ;
+      end if ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
     procedure WriteCovHoles ( PercentCov : real ) is
     ------------------------------------------------------------
     begin
-      WriteCovHoles(CoverageID, PercentCov) ;
+      CheckAndErrorCoverageID ;
+      if WriteBinFileOpen then
+        WriteCovHoles (
+          ID          => CoverageID,
+          FileName  => WriteBinFileName.all,
+          PercentCov  => PercentCov,
+          OpenKind    => WriteBinOpenKind
+        ) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
+        WriteCovHoles(CoverageID, PercentCov) ;
+      end if ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
     procedure WriteCovHoles ( LogLevel : LogType ; PercentCov : real ) is
     ------------------------------------------------------------
     begin
-      WriteCovHoles(CoverageID, LogLevel, PercentCov) ;
+      CheckAndErrorCoverageID ;
+      if WriteBinFileOpen then
+        WriteCovHoles (
+          ID          => CoverageID,
+          LogLevel    => LogLevel,
+          FileName  => WriteBinFileName.all,
+          PercentCov  => PercentCov,
+          OpenKind    => WriteBinOpenKind
+        ) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
+        WriteCovHoles(CoverageID, LogLevel, PercentCov) ;
+      end if ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
     procedure WriteCovHoles ( FileName : string;  OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       WriteCovHoles(CoverageID, FileName, OpenKind) ;
     end procedure WriteCovHoles ;
 
@@ -1755,6 +1984,7 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( LogLevel : LogType ; FileName : string;  OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       WriteCovHoles(CoverageID, LogLevel, FileName, OpenKind) ;
     end procedure WriteCovHoles ;
 
@@ -1762,6 +1992,7 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( FileName : string;  PercentCov : real ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       WriteCovHoles(CoverageID, FileName, PercentCov, OpenKind) ;
     end procedure WriteCovHoles ;
 
@@ -1769,6 +2000,7 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( LogLevel : LogType ; FileName : string;  PercentCov : real ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       WriteCovHoles(CoverageID, LogLevel, FileName, PercentCov, OpenKind) ;
     end procedure WriteCovHoles ;
 
@@ -1777,6 +2009,7 @@ package body CoveragePtPkg is
     procedure WriteCovDb (FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       WriteCovDb (CoverageID, FileName, OpenKind) ;
     end procedure WriteCovDb ;
 
@@ -1784,13 +2017,15 @@ package body CoveragePtPkg is
     procedure ReadCovDb (FileName : string; Merge : boolean := FALSE) is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       ReadCovDb (CoverageID, FileName, Merge) ;
     end procedure ReadCovDb ;
 
     ------------------------------------------------------------
-    procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
+    procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       WriteCovYaml (CoverageID, FileName, OpenKind) ;
     end procedure WriteCovYaml ;
 
@@ -1798,6 +2033,7 @@ package body CoveragePtPkg is
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       ReadCovYaml (CoverageID, FileName, Merge) ;
     end procedure ReadCovYaml ;
 
@@ -1807,20 +2043,21 @@ package body CoveragePtPkg is
 -- Maintained for backward compatibility only and
 -- may be removed in the future.
 -- ------------------------------------------------------------
-/*
     ------------------------------------------------------------
     -- Deprecated/Subsumed by versions with PercentCov Parameter (rather than AtLeast value)
     impure function RandCovPoint (AtLeast : integer ) return integer is
     ------------------------------------------------------------
     begin
-      return RandCovPoint(CoverageID, AtLeast) ;
+      CheckAndErrorCoverageID ;
+      return GetRandPoint(CoverageID, AtLeast) ;
     end function RandCovPoint ;
 
     ------------------------------------------------------------
     impure function RandCovPoint (AtLeast : integer ) return integer_vector is
     ------------------------------------------------------------
     begin
-      return     RandCovPoint(CoverageID, AtLeast) ;
+      CheckAndErrorCoverageID ;
+      return GetRandPoint(CoverageID, AtLeast) ;
     end function RandCovPoint ;
 
     ------------------------------------------------------------
@@ -1828,7 +2065,8 @@ package body CoveragePtPkg is
     impure function RandCovBinVal (AtLeast : integer ) return RangeArrayType is
     ------------------------------------------------------------
     begin
-      return     RandCovBinVal(CoverageID, AtLeast) ;
+      CheckAndErrorCoverageID ;
+      return GetRandBinVal(CoverageID, AtLeast) ;
     end function RandCovBinVal ;
 
     ------------------------------------------------------------
@@ -1836,7 +2074,8 @@ package body CoveragePtPkg is
     impure function RandCovHole (AtLeast : integer ) return RangeArrayType is
     ------------------------------------------------------------
     begin
-      return     RandCovHole(CoverageID, AtLeast) ;
+      CheckAndErrorCoverageID ;
+      return GetRandBinVal(CoverageID, AtLeast) ;
     end function RandCovHole ;
 
     ------------------------------------------------------------
@@ -1844,7 +2083,8 @@ package body CoveragePtPkg is
     impure function CountCovHoles ( AtLeast : integer ) return integer is
     ------------------------------------------------------------
     begin
-      return     CountCovHoles (CoverageID, AtLeast) ;
+      CheckCoverageID ;
+      return CountCovHoles(CoverageID, AtLeast) ;
     end function CountCovHoles ;
 
     ------------------------------------------------------------
@@ -1852,7 +2092,8 @@ package body CoveragePtPkg is
     impure function IsCovered ( AtLeast : integer ) return boolean is
     ------------------------------------------------------------
     begin
-      return     IsCovered(CoverageID, AtLeast) ;
+      CheckCoverageID ;
+      return IsCovered(CoverageID, AtLeast) ;
     end function IsCovered ;
 
     ------------------------------------------------------------
@@ -1860,15 +2101,17 @@ package body CoveragePtPkg is
     impure function GetHoleBinVal ( ReqHoleNum : integer ; AtLeast : integer ) return RangeArrayType is
     ------------------------------------------------------------
     begin
-      return     GetHoleBinVal (CoverageID, ReqHoleNum, AtLeast) ;
+      CheckCoverageID ;
+      return GetHoleBinVal(CoverageID, ReqHoleNum, AtLeast) ;
     end function GetHoleBinVal ;
 
     ------------------------------------------------------------
-    -- Deprecated+.  New versions use PercentCov.  Name Change.
+    -- Deprecated+.  Replaced by GetHoleBinval.  New versions use PercentCov.  Name Change.
     impure function GetCovHole ( ReqHoleNum : integer ; AtLeast : integer ) return RangeArrayType is
     ------------------------------------------------------------
     begin
-      return     GetCovHole(CoverageID, ReqHoleNum, AtLeast) ;
+      CheckCoverageID ;
+      return GetHoleBinVal(CoverageID, ReqHoleNum, AtLeast) ;
     end function GetCovHole ;
 
     ------------------------------------------------------------
@@ -1877,7 +2120,18 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( AtLeast : integer ) is
     ------------------------------------------------------------
     begin
-      WriteCovHoles(CoverageID, AtLeast) ;
+      CheckCoverageID ;
+      if WriteBinFileOpen then
+        WriteCovHoles (
+          ID          => CoverageID,
+          FileName  => WriteBinFileName.all,
+          AtLeast     => AtLeast,
+          OpenKind    => WriteBinOpenKind
+        ) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
+        WriteCovHoles(CoverageID, AtLeast) ;
+      end if ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
@@ -1885,7 +2139,19 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( LogLevel : LogType ; AtLeast : integer ) is
     ------------------------------------------------------------
     begin
-      WriteCovHoles(CoverageID, LogLevel, AtLeast) ;
+      CheckCoverageID ;
+      if WriteBinFileOpen then
+        WriteCovHoles (
+          ID          => CoverageID,
+          LogLevel    => LogLevel,
+          FileName  => WriteBinFileName.all,
+          AtLeast     => AtLeast,
+          OpenKind    => WriteBinOpenKind
+        ) ;
+        WriteBinOpenKind := APPEND_MODE ;
+      else
+        WriteCovHoles(CoverageID, LogLevel, AtLeast) ;
+      end if ;
     end procedure WriteCovHoles ;
 
     ------------------------------------------------------------
@@ -1893,6 +2159,7 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( FileName : string;  AtLeast : integer ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       WriteCovHoles(CoverageID, FileName, AtLeast, OpenKind) ;
     end procedure WriteCovHoles ;
 
@@ -1901,9 +2168,10 @@ package body CoveragePtPkg is
     procedure WriteCovHoles ( LogLevel : LogType ; FileName : string;  AtLeast : integer ; OpenKind : File_Open_Kind := APPEND_MODE ) is
     ------------------------------------------------------------
     begin
+      CheckCoverageID ;
       WriteCovHoles(CoverageID, LogLevel, FileName, AtLeast, OpenKind) ;
     end procedure WriteCovHoles ;
- */
+
 --------------------------------------------------------------
 --------------------------------------------------------------
 -- Deprecated.  Due to name changes to promote greater consistency
@@ -1925,6 +2193,7 @@ package body CoveragePtPkg is
     -- Deprecated.  Name changed to ErrorCount for package to package consistency
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetErrorCount(CoverageID) ;
     end function CovBinErrCnt ;
 
@@ -1933,6 +2202,7 @@ package body CoveragePtPkg is
     impure function RandCovHole ( PercentCov : real ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return RandCovBinVal(CoverageID, PercentCov)  ;
     end function RandCovHole ;
 
@@ -1941,6 +2211,7 @@ package body CoveragePtPkg is
     impure function RandCovHole return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return RandCovBinVal(CoverageID)  ;
     end function RandCovHole ;
 
@@ -1949,6 +2220,7 @@ package body CoveragePtPkg is
     impure function GetCovHole ( ReqHoleNum : integer ; PercentCov : real ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetHoleBinVal(CoverageID, ReqHoleNum, PercentCov) ;
     end function GetCovHole ;
 
@@ -1957,6 +2229,7 @@ package body CoveragePtPkg is
     impure function GetCovHole ( PercentCov : real ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetHoleBinVal(CoverageID, PercentCov) ;
     end function GetCovHole ;
 
@@ -1965,6 +2238,7 @@ package body CoveragePtPkg is
     impure function GetCovHole ( ReqHoleNum : integer := 1 ) return RangeArrayType is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetHoleBinVal(CoverageID, ReqHoleNum) ;
     end function GetCovHole ;
 
@@ -1973,6 +2247,7 @@ package body CoveragePtPkg is
     impure function GetMinCov return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetMinCount(CoverageID) ;
     end function GetMinCov ;
 
@@ -1981,6 +2256,7 @@ package body CoveragePtPkg is
     impure function GetMaxCov return integer is
     ------------------------------------------------------------
     begin
+      CheckAndErrorCoverageID ;
       return GetMaxCount(CoverageID) ;
     end function GetMaxCov ;
 
@@ -1989,56 +2265,56 @@ package body CoveragePtPkg is
     procedure AddBins (CovBin : CovMatrix2Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix3Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix4Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix5Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix6Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix7Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix8Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
     ------------------------------------------------------------
     procedure AddBins (CovBin : CovMatrix9Type ; Name : String := "") is
     ------------------------------------------------------------
     begin
-      AddCross(CoverageID, CovBin, Name) ;
+      AddCross(CovBin, Name) ;
     end procedure AddBins ;
 
   end protected body CovPType ;
@@ -2056,68 +2332,29 @@ package body CoveragePtPkg is
     variable Bin2       : inout CovPType ;
     variable ErrorCount : inout integer
   ) is
-    variable NumBins1, NumBins2 : integer ;
-    variable BinInfo1, BinInfo2 : CovBinBaseType ;
-    variable BinVal1, BinVal2 : RangeArrayType(1 to Bin1.GetBinValLength) ;
-    variable buf : line ;
---    variable iAlertLogID : AlertLogIDType ;
+    variable CoverageID1, CoverageID2 : CoverageIDType ;
+    variable Valid : boolean ;
   begin
---    iAlertLogID := Bin1.GetAlertLogID ;
-    
-    NumBins1 := Bin1.GetNumBins ;
-    NumBins2 := Bin2.GetNumBins ;
-
-    if (NumBins1 /= NumBins2) then
-      ErrorCount := ErrorCount + 1 ;
-      print("CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & 
-            " have different bin lengths") ; 
-      return ;
-    end if ;
-
-    for i in 1 to NumBins1 loop
-      BinInfo1 := Bin1.GetBinInfo(i) ;
-      BinInfo2 := Bin2.GetBinInfo(i) ;
-      BinVal1  := Bin1.GetBinVal(i) ;
-      BinVal2  := Bin2.GetBinVal(i) ;
-      if BinInfo1 /= BinInfo2 or BinVal1 /= BinVal2 then
-        write(buf, "%% Bin:" & integer'image(i) & " miscompare." & LF) ;
-        -- writeline(OUTPUT, buf) ;
-        swrite(buf, "%% Bin1: ") ;
-        write(buf, BinVal1) ;
-        write(buf, "   Action = " & integer'image(BinInfo1.action)) ;
-        write(buf, "   Count = " & integer'image(BinInfo1.count)) ;
-        write(buf, "   AtLeast = " & integer'image(BinInfo1.AtLeast)) ;
-        write(buf, "   Weight = " & integer'image(BinInfo1.Weight) & LF ) ;
-        -- writeline(OUTPUT, buf) ;
-        swrite(buf, "%% Bin2: ") ;
-        write(buf, BinVal2) ;
-        write(buf, "   Action = " & integer'image(BinInfo2.action)) ;
-        write(buf, "   Count = " & integer'image(BinInfo2.count)) ;
-        write(buf, "   AtLeast = " & integer'image(BinInfo2.AtLeast)) ;
-        write(buf, "   Weight = " & integer'image(BinInfo2.Weight) & LF ) ;
-        -- writeline(OUTPUT, buf) ;
-        ErrorCount := ErrorCount + 1 ;
-        writeline(buf) ; 
-        -- Alert(iAlertLogID, buf.all, ERROR) ; 
-        -- deallocate(buf) ;
-      end if ;
-    end loop ;
+    CoverageID1 := Bin1.GetCoverageID ;
+    CoverageID2 := Bin2.GetCoverageID ;
+    CompareBins(CoverageID1, CoverageID2, ErrorCount) ;
   end procedure CompareBins ;
-  
-  
+
+
   ------------------------------------------------------------
   -- Experimental.  Intended primarily for development.
   procedure CompareBins (
   ------------------------------------------------------------
     variable Bin1       : inout CovPType ;
-    variable Bin2       : inout CovPType 
+    variable Bin2       : inout CovPType
   ) is
     variable ErrorCount : integer ;
     variable iAlertLogID : AlertLogIDType ;
+    variable BinLen : integer ;
   begin
-    CompareBins(Bin1, Bin2, ErrorCount) ; 
+    CompareBins(Bin1, Bin2, ErrorCount) ;
     iAlertLogID := Bin1.GetAlertLogID ;
-    AlertIf(ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " are not the same.") ; 
-  end procedure CompareBins ; 
+    AlertIf(iAlertLogID, ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " are not the same.") ;
+  end procedure CompareBins ;
 
 end package body CoveragePtPkg ;

@@ -1,6 +1,6 @@
 --
---  File Name:         FifioPtrPkg_int.vhd
---  Design Unit Name:  FifioPtrPkg_int
+--  File Name:         IdFifoPtPkg.vhd
+--  Design Unit Name:  IdFifoPtPkg
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -41,7 +41,7 @@
 
 use work.AlertLogPkg.all ;
 
-package IdFifoPTypePkg is 
+package IdFifoPtPkg is 
   subtype ElementType is integer ; 
 
   type IdFifoPType is protected
@@ -50,9 +50,9 @@ package IdFifoPTypePkg is
     impure function IsEmpty return boolean ; 
   end protected IdFifoPType ;
 
-end package IdFifoPTypePkg ;
+end package IdFifoPtPkg ;
 
-package body IdFifoPTypePkg is
+package body IdFifoPtPkg is
   ------------------------------------------------------------
   type IdFifoPType is protected body
     type FifoRecType ;
@@ -127,4 +127,4 @@ package body IdFifoPTypePkg is
     end function IsEmpty ;
   end protected body IdFifoPType ;
 
-end package body IdFifoPTypePkg ;
+end package body IdFifoPtPkg ;

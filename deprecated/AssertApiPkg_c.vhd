@@ -10,7 +10,7 @@
 --
 --  Description:
 --        Get File and line Info from Call Stack - requires VHDL-2019 features
---          
+--
 --
 --  Developed for:
 --        SynthWorks Design Inc.
@@ -24,28 +24,27 @@
 --
 --
 --  This file is part of OSVVM.
---  
---  Copyright (c) 2024 by SynthWorks Design Inc.  
---  
+--
+--  Copyright (c) 2024 by SynthWorks Design Inc.
+--
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
 --  You may obtain a copy of the License at
---  
+--
 --      https://www.apache.org/licenses/LICENSE-2.0
---  
+--
 --  Unless required by applicable law or agreed to in writing, software
 --  distributed under the License is distributed on an "AS IS" BASIS,
 --  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
---  
+--
 
 use std.textio.all ;
-library ieee ; 
 
 package AssertApiPkg is
 
-  constant SUPPORTS_2019_ASSERT_API : BOOLEAN := FALSE ; 
+  constant SUPPORTS_2019_ASSERT_API : BOOLEAN := FALSE ;
 
   -- VHDL assert failed
   impure function IsVhdlAssertFailed return BOOLEAN ;
@@ -78,7 +77,7 @@ package AssertApiPkg is
 
 
 end AssertApiPkg ;
-  
+
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
@@ -92,28 +91,28 @@ package body AssertApiPkg is
   impure function IsVhdlAssertFailed return BOOLEAN is
   begin
     return FALSE ;
-  end function IsVhdlAssertFailed ; 
+  end function IsVhdlAssertFailed ;
 
   impure function IsVhdlAssertFailed (Level : SEVERITY_LEVEL ) return BOOLEAN is
   begin
     return FALSE ;
-  end function IsVhdlAssertFailed ; 
+  end function IsVhdlAssertFailed ;
 
   -- VHDL assert count
   impure function GetVhdlAssertCount return NATURAL is
   begin
     return 0 ;
-  end function GetVhdlAssertCount ; 
+  end function GetVhdlAssertCount ;
   impure function GetVhdlAssertCount (Level : SEVERITY_LEVEL ) return NATURAL is
   begin
     return 0 ;
-  end function GetVhdlAssertCount ; 
+  end function GetVhdlAssertCount ;
 
   -- Clear VHDL assert errors
   procedure ClearVhdlAssert is
   begin
     null ;
-  end procedure ClearVhdlAssert ; 
+  end procedure ClearVhdlAssert ;
 
   -- Assert enable, disable/ignore asserts
   procedure SetVhdlAssertEnable(Enable : BOOLEAN := TRUE) is
@@ -156,12 +155,12 @@ package body AssertApiPkg is
   -- OSVVM extensions - and requested language features
   impure function SetVhdlAssertEnable(Enable : BOOLEAN := TRUE) return boolean is
   begin
-    SetVhdlAssertEnable(Enable) ; 
+    SetVhdlAssertEnable(Enable) ;
     return Enable ;
   end function SetVhdlAssertEnable ;
   impure function SetVhdlAssertEnable(Level : SEVERITY_LEVEL := NOTE; Enable : BOOLEAN := TRUE) return boolean is
   begin
-    SetVhdlAssertEnable(Level, Enable) ; 
+    SetVhdlAssertEnable(Level, Enable) ;
     return Enable ;
   end function SetVhdlAssertEnable ;
 
