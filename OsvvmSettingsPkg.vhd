@@ -24,6 +24,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Added REQUIREMENTS_ALWAYS_COUNT_DISABLED_ALERTS_AND_WARNINGS
 --    09/2025   2025.09    Adjusted OSVVM_PREFIX_X_MARKS_THE_SPOT prefix constant
 --    08/2025   2025.08    Added additional prefix constants
 --    02/2025   2025.02    Added COVERAGE_REQUIREMENT_BY_BIN

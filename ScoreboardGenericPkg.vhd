@@ -382,15 +382,17 @@ package ScoreboardGenericPkg is
 
   -- Simple Scoreboard
   impure function Find (
-    constant ID          : in  ScoreboardIDType ;
-    constant ActualData  :  in  ActualType
+    constant ID          :  in  ScoreboardIDType ;
+    constant ActualData  :  in  ActualType ;
+    constant ErrorOnFail :  in  boolean := TRUE
   ) return integer ;
 
   -- Tagged Scoreboard
   impure function Find (
-    constant ID          : in  ScoreboardIDType ;
+    constant ID          :  in  ScoreboardIDType ;
     constant Tag         :  in  string;
-    constant ActualData  :  in  ActualType
+    constant ActualData  :  in  ActualType ;
+    constant ErrorOnFail :  in  boolean := TRUE
   ) return integer ;
 
   ------------------------------------------------------------
@@ -685,14 +687,16 @@ package ScoreboardGenericPkg is
     -- Scoreboard no tag
     impure function Find (
       constant Index       :  in  integer ;
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer ;
 
     -- Tagged Scoreboard
     impure function Find (
       constant Index       :  in  integer ;
       constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer ;
 
     ------------------------------------------------------------
@@ -875,13 +879,15 @@ package ScoreboardGenericPkg is
     -- Also See Flush.  Flush will drop items up through the ItemNumber
     -- Simple Scoreboard
     impure function Find (
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer ;
 
     -- Tagged Scoreboard
     impure function Find (
       constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer ;
 
     ------------------------------------------------------------
@@ -2010,7 +2016,7 @@ package body ScoreboardGenericPkg is
           Alert(SbPtr(Index).AlertLogID,
                     "Did not find Tag: " & Tag & " and Actual Data: " & actual_to_string(ActualData)) ;
         end if ;
-        return integer'low ; 
+        return integer'low ;
       else
         -- Found it somewhere else in the List
         return FindPtr.ItemNumber ;
@@ -2038,7 +2044,7 @@ package body ScoreboardGenericPkg is
           Alert(SbPtr(Index).AlertLogID,
                     "Did not find Actual Data: " & actual_to_string(ActualData)) ;
         end if ;
-        return integer'low ; 
+        return integer'low ;
       else
         -- Found it somewhere else in the List
         return FindPtr.ItemNumber ;
@@ -2762,10 +2768,11 @@ package body ScoreboardGenericPkg is
     impure function Find (
     ------------------------------------------------------------
       constant Tag         :  in  string;
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer is
     begin
-      return Find(MinIndex, Tag, ActualData) ;
+      return Find(MinIndex, Tag, ActualData, ErrorOnFail) ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -2773,10 +2780,11 @@ package body ScoreboardGenericPkg is
     -- Find Element with Matching ActualData
     impure function Find (
     ------------------------------------------------------------
-      constant ActualData  :  in  ActualType
+      constant ActualData  :  in  ActualType ;
+      constant ErrorOnFail :  in  boolean := TRUE
     ) return integer is
     begin
-      return Find(MinIndex, ActualData) ;
+      return Find(MinIndex, ActualData, ErrorOnFail) ;
     end function Find ;
 
     ------------------------------------------------------------
@@ -3582,20 +3590,22 @@ package body ScoreboardGenericPkg is
   -- Simple Scoreboard
   impure function Find (
     constant ID          : in  ScoreboardIDType ;
-    constant ActualData  : in  ActualType
+    constant ActualData  : in  ActualType ;
+    constant ErrorOnFail : in  boolean := TRUE
   ) return integer is
   begin
-    return ScoreboardStore.Find(ID.ID, ActualData) ;
+    return ScoreboardStore.Find(ID.ID, ActualData, ErrorOnFail) ;
   end function Find ;
 
   -- Tagged Scoreboard
   impure function Find (
     constant ID          : in  ScoreboardIDType ;
     constant Tag         : in  string;
-    constant ActualData  : in  ActualType
+    constant ActualData  : in  ActualType ;
+    constant ErrorOnFail : in  boolean := TRUE
   ) return integer is
   begin
-    return ScoreboardStore.Find(ID.ID, Tag, ActualData) ;
+    return ScoreboardStore.Find(ID.ID, Tag, ActualData, ErrorOnFail) ;
   end function Find ;
 
   ------------------------------------------------------------
