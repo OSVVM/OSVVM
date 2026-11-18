@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
 --    09/2024   2024.09    Updated reporting for integer'high and integer'low
 --    07/2024   2024.07    Throw Errors on Address > 41 and warnings if Address > 38
 --                         Added IsInitialized
@@ -673,7 +674,13 @@ package body MemoryGenericPkg is
       end if ;
 
       -- Address of a word within a block
-      WordAddr  := to_integer(aAddr(BlockWidth -1 downto 0)) ;
+      if aAddr'high >= BlockWidth then
+        -- Use lower BlockWidth bits of Addr
+        WordAddr  := to_integer(aAddr(BlockWidth-1 downto 0)) ;
+      else
+        -- use all of Addr
+        WordAddr  := to_integer(aAddr) ;
+      end if ;
 
       -- Write to BlockAddr, WordAddr
       MemArrayPtr(BlockAddr)(WordAddr) := ToMemoryBaseType(Data, MemoryBaseWidth) ;
@@ -738,7 +745,13 @@ package body MemoryGenericPkg is
       end if ;
 
       -- Address of a word within a block
-      WordAddr := to_integer(aAddr(BlockWidth -1 downto 0)) ;
+      if aAddr'high >= BlockWidth then
+        -- Use lower BlockWidth bits of Addr
+        WordAddr  := to_integer(aAddr(BlockWidth-1 downto 0)) ;
+      else
+        -- use all of Addr
+        WordAddr  := to_integer(aAddr) ;
+      end if ;
 
       Data := FromMemoryBaseType(MemStructPtr(ID).MemArrayPtr(BlockAddr)(WordAddr), Data'length) ;
 
@@ -750,7 +763,6 @@ package body MemoryGenericPkg is
       Addr  : std_logic_vector
     ) return std_logic_vector is
     ------------------------------------------------------------
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "MemRead function") ;
       constant DATA_WIDTH : integer := MemStructPtr(ID).DataWidth ;
       variable Data  : std_logic_vector(DATA_WIDTH-1 downto 0) ;
     begin
@@ -820,7 +832,7 @@ package body MemoryGenericPkg is
       variable StrLen           : integer ;
     begin
       MultiLineComment := FALSE ;
-      if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
+      if StartAddr'length /= ADDR_WIDTH or EndAddr'length /= ADDR_WIDTH then
         if (MemStructPtr(ID).MemArrayPtr = NULL) then
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileReadX:  Memory not initialized, FileRead Ignored.", FAILURE) ;
         else
@@ -900,6 +912,8 @@ package body MemoryGenericPkg is
             end if ;
           end if ;
 
+          exit ReadLineLoop when Addr > BigAddr ;
+
         end loop ItemLoop ;
       end loop ReadLineLoop ;
 
@@ -919,8 +933,10 @@ package body MemoryGenericPkg is
       StartAddr    : std_logic_vector ;
       EndAddr      : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
     begin
+      if IdOutOfRange(ID, "FileReadH") then
+        return ;
+      end if ;
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ;
     end FileReadH ;
 
@@ -932,10 +948,12 @@ package body MemoryGenericPkg is
       FileName     : string ;
       StartAddr    : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileReadH") then
+        return ;
+      end if ;
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ;
     end FileReadH ;
 
@@ -946,11 +964,13 @@ package body MemoryGenericPkg is
       ID           : integer ;
       FileName     : string
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadH") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant StartAddr   : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '0') ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileReadH") then
+        return ;
+      end if ;
       FileReadX(ID, FileName, HEX, StartAddr, EndAddr) ;
     end FileReadH ;
 
@@ -963,8 +983,10 @@ package body MemoryGenericPkg is
       StartAddr    : std_logic_vector ;
       EndAddr      : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
     begin
+      if IdOutOfRange(ID, "FileReadB") then
+        return ;
+      end if ;
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ;
     end FileReadB ;
 
@@ -976,10 +998,12 @@ package body MemoryGenericPkg is
       FileName     : string ;
       StartAddr    : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileReadB") then
+        return ;
+      end if ;
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ;
     end FileReadB ;
 
@@ -990,11 +1014,13 @@ package body MemoryGenericPkg is
       ID           : integer ;
       FileName     : string
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileReadB") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant StartAddr   : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '0') ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH - 1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileReadB") then
+        return ;
+      end if ;
       FileReadX(ID, FileName, BINARY, StartAddr, EndAddr) ;
     end FileReadB ;
 
@@ -1028,7 +1054,7 @@ package body MemoryGenericPkg is
       constant AllU           : std_logic_vector := (DATA_WIDTH-1 downto 0 => 'U');
 
     begin
-      if StartAddr'length /= ADDR_WIDTH and EndAddr'length /= ADDR_WIDTH then
+      if StartAddr'length /= ADDR_WIDTH or EndAddr'length /= ADDR_WIDTH then
       -- Check StartAddr and EndAddr Widths and Memory not initialized
         if (MemStructPtr(ID).MemArrayPtr = NULL) then
           Alert(MemStructPtr(ID).AlertLogID, "MemoryPkg.FileWriteX:  Memory not initialized, FileWrite Ignored.", FAILURE) ;
@@ -1051,7 +1077,7 @@ package body MemoryGenericPkg is
       end if ;
 
       -- Slice out upper address to form block address
-      if ADDR_WIDTH >= BLOCK_WIDTH then
+      if ADDR_WIDTH > BLOCK_WIDTH then
         StartBlockAddr := to_integer(normStartAddr(ADDR_WIDTH-1 downto BLOCK_WIDTH)) ;
         EndBlockAddr   := to_integer(  normEndAddr(ADDR_WIDTH-1 downto BLOCK_WIDTH)) ;
       else
@@ -1108,8 +1134,10 @@ package body MemoryGenericPkg is
       StartAddr    : std_logic_vector ;
       EndAddr      : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
     begin
+      if IdOutOfRange(ID, "FileWriteH") then
+        return ;
+      end if ;
       FileWriteX(ID, FileName, HEX, StartAddr, EndAddr) ;
     end FileWriteH ;
 
@@ -1121,10 +1149,12 @@ package body MemoryGenericPkg is
       FileName     : string ;
       StartAddr    : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileWriteH") then
+        return ;
+      end if ;
       FileWriteX(ID, FileName, HEX, StartAddr, EndAddr) ;
     end FileWriteH ;
 
@@ -1135,11 +1165,13 @@ package body MemoryGenericPkg is
       ID           : integer ;
       FileName     : string
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteH") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant StartAddr   : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileWriteH") then
+        return ;
+      end if ;
       FileWriteX(ID, FileName, HEX, StartAddr, EndAddr) ;
     end FileWriteH ;
 
@@ -1152,8 +1184,10 @@ package body MemoryGenericPkg is
       StartAddr    : std_logic_vector ;
       EndAddr      : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
     begin
+      if IdOutOfRange(ID, "FileWriteH") then
+        return ;
+      end if ;
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ;
     end FileWriteB ;
 
@@ -1165,10 +1199,12 @@ package body MemoryGenericPkg is
       FileName     : string ;
       StartAddr    : std_logic_vector
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileWriteB") then
+        return ;
+      end if ;
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ;
     end FileWriteB ;
 
@@ -1179,11 +1215,13 @@ package body MemoryGenericPkg is
       ID           : integer ;
       FileName     : string
     ) is
-      constant ID_CHECK_OK : boolean := IdOutOfRange(ID, "FileWriteB") ;
       constant ADDR_WIDTH  : integer := MemStructPtr(ID).AddrWidth ;
       constant StartAddr   : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '0') ;
       constant EndAddr     : std_logic_vector := (ADDR_WIDTH-1 downto 0 => '1') ;
     begin
+      if IdOutOfRange(ID, "FileWriteB") then
+        return ;
+      end if ;
       FileWriteX(ID, FileName, BINARY, StartAddr, EndAddr) ;
     end FileWriteB ;
 
@@ -1200,6 +1238,10 @@ package body MemoryGenericPkg is
     procedure MemErase is
     ------------------------------------------------------------
     begin
+      if MemStructPtr = NULL then
+        Alert("MemErase for ALL IDs called when no memories have been allocated", WARNING) ;
+        return ;
+      end if ;
       for ID in MemStructPtr'range loop
         MemErase(ID) ;
       end loop ;
@@ -1215,6 +1257,9 @@ package body MemoryGenericPkg is
     procedure deallocate (ID : integer) is
     ------------------------------------------------------------
     begin
+      if IdOutOfRange(ID, "deallocate") then
+        return ;
+      end if ;
       MemErase(ID) ;
       deallocate(MemStructPtr(ID).MemArrayPtr) ;
       MemStructPtr(ID).AddrWidth   := -1 ;
@@ -1224,6 +1269,10 @@ package body MemoryGenericPkg is
 
     procedure deallocate is
     begin
+      if MemStructPtr = NULL then
+        Alert("Deallocate for ALL IDs called when no memories have been allocated", WARNING) ;
+        return ;
+      end if ;
       for ID in MemStructPtr'range loop
         deallocate(ID) ;
       end loop ;

@@ -17,6 +17,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
 --    08/2026   2026.08    Added WakeOnBarrier
 --    11/2024   2024.11    Replaced time with delay_length (0 to time'high) and integer with natural (in WaitForClock)
 --    09/2024   2024.09    Updated predefined barriers s.t. there is a record of barriers named PredefinedBarrierType.  Names introduced in 2024.07 are now aliases
@@ -419,14 +420,25 @@ package body TbUtilPkg is
     return  to_x01(C)='0' and to_x01(C'last_value)='1' and C'last_event= 0 sec ;
   end function EdgeFell ;
 
+  constant opposite_edge_check : stdulogic_indexed_by_stdulogic := (
+      '0'     => '1',
+      'L'     => '1',
+      '1'     => '0',
+      'H'     => '0',
+      '-'     => '-',
+      'U'     => 'U',
+      others  => 'X'
+  );
+
   function EdgeActive ( signal C : in std_logic; A : std_logic ) return boolean is
   begin
-    return  to_x01(C)=A and to_x01(C'last_value)=not A and C'last_event= 0 sec ;
+    -- ?= handles when A is a '-'
+    return  (??(C ?= A)) and (??(C'last_value ?= opposite_edge_check(C))) and C'last_event= 0 sec ;
   end function EdgeActive ;
 
   function ChangingEdge ( signal C : in std_logic; A : std_logic ) return boolean is
   begin
-    return  to_x01(C)=A and to_x01(C'last_value)=not A and C'event ;
+    return  (??(C ?= A)) and (??(C'last_value ?= opposite_edge_check(C))) and C'event ;
   end function ChangingEdge ;
 
   procedure FindRisingEdge ( signal C : in std_logic) is
@@ -1083,12 +1095,13 @@ package body TbUtilPkg is
   procedure WaitForLevel ( signal A : in std_logic ; Level : std_logic := '1' ) is
   begin
     if A /= Level then
-      -- wait on A until A = Level ;
-      if Level = '1' then
-        wait until A = '1' ;
-      else
-        wait until A = '0' ;
-      end if ;
+      wait on A until A = Level ;
+      -- wait until A = Level ;
+--      if Level = '1' then
+--        wait until A = '1' ;
+--      else
+--        wait until A = '0' ;
+--      end if ;
     end if ;
   end procedure WaitForLevel ;
 

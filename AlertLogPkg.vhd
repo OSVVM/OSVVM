@@ -27,6 +27,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
 --    09/2026   2026.09    Updated to Alert/Log wrap.  If start with LF, do LF + indent and wrap only if only do LF unless ALERT_LOG_WRAP.
 --                         Als do not WRAP if line length < threshold.
 --    08/2026   2026.08    Added LogHeader, AffirmIfInRange, AffirmIfStable, AffirmIfNotStable,
@@ -517,18 +518,18 @@ package AlertLogPkg is
   ) ;
   procedure WriteTestSummaries ( FileName : string ; OpenKind : File_Open_Kind := WRITE_MODE ) ;
   procedure ReportTestSummaries ;
-  procedure WriteAlerts (
+  procedure WriteAlerts (          -- Deprecated
     FileName    : string ;
     AlertLogID  : AlertLogIDType := ALERTLOG_BASE_ID ;
     OpenKind    : File_Open_Kind := WRITE_MODE
   ) ;
-  procedure WriteRequirements (
+  procedure WriteRequirements (   -- Deprecated
     FileName        : string ;
     AlertLogID      : AlertLogIDType := REQUIREMENT_ALERTLOG_ID ;
     OpenKind        : File_Open_Kind := WRITE_MODE
   ) ;
   procedure ReadSpecification (FileName : string ; PassedGoal : integer := -1) ;
-  procedure ReadRequirements (
+  procedure ReadRequirements (  -- Deprecated
     FileName        : string ;
     ThresholdPassed : boolean := FALSE
   ) ;
@@ -676,8 +677,8 @@ package AlertLogPkg is
 
   procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
   procedure IncrementAlertStopCount(Level : AlertType ;  Count : integer) ;
-  procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
-  procedure SetAlertStopCount(Level : AlertType ;  Count : integer) ;
+  procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : natural) ;
+  procedure SetAlertStopCount(Level : AlertType ;  Count : natural) ;
   impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
   impure function GetAlertStopCount(Level : AlertType) return integer ;
 
@@ -1047,7 +1048,7 @@ package body AlertLogPkg is
     impure function GetManualCheck return boolean ;
 
     procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
-    procedure SetAlertStopCount(UnverifiedAlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
+    procedure SetAlertStopCount(      AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : natural) ;
     impure function GetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType) return integer ;
 
     procedure SetAlertPrintCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) ;
@@ -1197,6 +1198,7 @@ package body AlertLogPkg is
       PassedGoal          : Integer ;
       IsARequirement      : Boolean ;
       PassedGoalSet       : Boolean ;
+      LocalAlertStopCount : AlertCountType ;
       AlertStopCount      : AlertCountType ;
       AlertPrintCount     : AlertCountType ;
       AlertEnabled        : AlertEnableType ;
@@ -1207,7 +1209,6 @@ package body AlertLogPkg is
       -- Used only by ReadTestSummaries
       TotalErrors         : integer ;
       AffirmPassedCount   : integer ;
---      IsRequirement        : boolean ;
     end record AlertLogRecType ;
 
     -- ----------------------------------------------------------
@@ -1791,7 +1792,8 @@ package body AlertLogPkg is
     end procedure GetRequirementsCount ;
 
     ------------------------------------------------------------
--- Only used at top level and superceded by variables PassedCountVar AffirmCheckCountVar
+-- Relevant if ReportAlerts called with an AlertLogID other than ALERTLOG_BASE_ID
+-- with ALERTLOG_BASE_ID, could return PassedCountVar AffirmCheckCountVar
     -- Local
     procedure GetPassedAffirmCount(
       AlertLogID       : AlertLogIDType;
@@ -1976,10 +1978,16 @@ package body AlertLogPkg is
       variable TotalRequirementsPassed, TotalRequirementsGoal, TotalRequirementErrors : integer ;
       variable AlertCountVar, DisabledAlertCount : AlertCountType ;
       variable PassedCount, AffirmCheckCount : integer ;
+      variable AdjustedExternalErrors : AlertCountType ;
     begin
+      if (AlertLogID = ALERTLOG_BASE_ID) then
+        AdjustedExternalErrors := ExternalErrors - ExpectedAlertCountVar ;
+      else
+        AdjustedExternalErrors := ExternalErrors ;
+      end if ;
       CalcTotalErrors (
         AlertLogID                => AlertLogID              ,
-        ExternalErrors            => ExternalErrors  - ExpectedAlertCountVar,
+        ExternalErrors            => AdjustedExternalErrors,
         Timeout                   => Timeout                 ,
         TotalAlertCount           => AlertCountVar           ,
         TotalErrors               => TotalErrors             ,
@@ -1994,6 +2002,7 @@ package body AlertLogPkg is
       HasDisabledAlerts         := TotalDisabledAlertErrors /= 0 ;
       TestFailed := TotalErrors /= 0 ;
 
+      -- Required when AlertLogID /= ALERTLOG_BASE_ID, otherwise, use variables PassedCountVar AffirmCheckCountVar instead
       GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCheckCount) ;
 
       write(buf, ALERT_LOG_PRINT_PREFIX) ;
@@ -2391,8 +2400,8 @@ package body AlertLogPkg is
         TotalRequirementErrors    => TotalRequirementErrors
       ) ;
 
-      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
-      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
+--!      AlertLogPtr(ALERTLOG_BASE_ID).PassedCount := PassedCountVar ;
+--!      AlertLogPtr(ALERTLOG_BASE_ID).AffirmCount := AffirmCheckCountVar ;
 
       Write(buf,
         Prefix & "Name: " & '"' & AlertLogPtr(ALERTLOG_BASE_ID).Name.all & '"'  & LF  &
@@ -2713,8 +2722,12 @@ package body AlertLogPkg is
     begin
       RequirementsGoal   := AlertLogPtr(AlertLogID).PassedGoal ;
       RequirementsPassed := AlertLogPtr(AlertLogID).PassedCount ;
-      -- Requirements count any error as an error and a failure of the requirement
-      TotalErrors := SumAlertCount(AlertLogPtr(AlertLogID).AlertCount + AlertLogPtr(AlertLogID).DisabledAlertCount) ;
+-- Should a requirement be allowed to be disabled?  Should requirement warnings be disabled?
+      if REQUIREMENTS_ALWAYS_COUNT_DISABLED_ALERTS_AND_WARNINGS then
+        TotalErrors := SumAlertCount(AlertLogPtr(AlertLogID).AlertCount + AlertLogPtr(AlertLogID).DisabledAlertCount) ;
+      else
+        TotalErrors := CalcTotalErrors(AlertLogID) ;
+      end if ;
       Write(buf,
         FIRST_PREFIX & "Requirement: " & '"' & AlertLogPtr(AlertLogID).Name.all & '"'  & LF  &
         PREFIX & "TestCases: " &  LF  &
@@ -2904,12 +2917,12 @@ package body AlertLogPkg is
       variable TotalDisabledAlertErrors : integer ;
       variable TotalRequirementsPassed, TotalRequirementsGoal : integer ;
       variable TotalRequirementErrors : integer ;
-      variable PassedCount, AffirmCount : integer ;
+--      variable PassedCount, AffirmCount : integer ;
       constant DELIMITER : string := ", " ;
     begin
       CalcTotalErrors (
         AlertLogID                => AlertLogID              ,
-        ExternalErrors            => ExternalErrors          ,
+        ExternalErrors            => ExternalErrors - ExpectedAlertCountVar,
         Timeout                   => FALSE                   ,
         TotalAlertCount           => TotalAlertCount         ,
         TotalErrors               => TotalErrors             ,
@@ -2920,7 +2933,10 @@ package body AlertLogPkg is
         TotalRequirementErrors    => TotalRequirementErrors
       ) ;
 
-      GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
+      -- When AlertLogID = ALERTLOG_BASE_ID, use variables PassedCountVar AffirmCheckCountVar instead
+      --!! GetPassedAffirmCount(AlertLogID, PassedCount, AffirmCount) ;
+      --!! PassedCount := PassedCountVar ;
+      --!! AffirmCount := AffirmCheckCountVar ;
 
       WriteOneTestSummary(
         TestFile             =>  TestFile,
@@ -2929,12 +2945,12 @@ package body AlertLogPkg is
         RequirementsPassed   =>  TotalRequirementsPassed,
         TotalErrors          =>  TotalErrors,
         AlertCount           =>  TotalAlertCount,
-        AffirmCount          =>  AffirmCount,
-        PassedCount          =>  PassedCount,
+        AffirmCount          =>  AffirmCheckCountVar,
+        PassedCount          =>  PassedCountVar,
         Delimiter            =>  DELIMITER,
         Prefix               =>  Prefix,
         Suffix               =>  Suffix,
-        WriteFieldName       => WriteFieldName
+        WriteFieldName       =>  WriteFieldName
       ) ;
     end procedure WriteTestSummary ;
 
@@ -3326,7 +3342,7 @@ package body AlertLogPkg is
           exit ReadFileLoop when AlertIfNot(OSVVM_ALERTLOG_ID, ReadValid,
                          "AlertLogPkg.ReadRequirements: Failed while reading PassedCount", FAILURE) ;
 
-          AffirmPassedCount := ReqPassedGoal ;
+          AffirmPassedCount := ReqPassedCount ;
 
           FindDelimiter(buf, DELIMITER, Found) ;
             exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, not Found,
@@ -3340,7 +3356,7 @@ package body AlertLogPkg is
 
           FindDelimiter(buf, DELIMITER, Found) ;
           exit ReadFileLoop when AlertIf(OSVVM_ALERTLOG_ID, not Found,
-                         "AlertLogPkg.ReadRequirements: Failed after reading PassedCount", FAILURE) ;
+                         "AlertLogPkg.ReadRequirements: Failed after reading TotalErrorCount", FAILURE) ;
 
         -- Read AlertCount
           for i in AlertType'left to AlertType'right loop
@@ -3368,7 +3384,7 @@ package body AlertLogPkg is
           -- Read AffirmPassedCount
             read(buf, AffirmPassedCount, ReadValid) ;
             if not ReadValid then
-              AffirmPassedCount := ReqPassedGoal ;
+              AffirmPassedCount := ReqPassedCount ;
               Alert(OSVVM_ALERTLOG_ID, "AlertLogPkg.ReadRequirements: Failed while reading AffirmPassedCount", FAILURE) ;
               exit ReadFileLoop ;
             end if ;
@@ -3403,6 +3419,10 @@ package body AlertLogPkg is
           -- AffirmCount
           AlertLogPtr(AlertLogID).AffirmCount         := AlertLogPtr(AlertLogID).AffirmCount + AffirmCount ;
           AlertLogPtr(AlertLogID).AffirmPassedCount   := AlertLogPtr(AlertLogID).AffirmPassedCount + AffirmPassedCount ;
+
+          AffirmCheckCountVar  := AffirmCheckCountVar + AffirmCount ;
+          PassedCountVar       := PassedCountVar      + AffirmPassedCount ;
+
 
 --        else
 --          AlertLogPtr(AlertLogID).PassedGoal          := ReqPassedGoal ;
@@ -3442,14 +3462,17 @@ package body AlertLogPkg is
       ErrorCount             := 0 ;
       ExpectedAlertCountVar  := (0, 0, 0) ;
       ManualCheckVar         := FALSE ;
+      StopLimitVar           := FALSE ;
 
       ClearVhdlAssert ;
 
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
         AlertLogPtr(i).AlertCount           := (0, 0, 0) ;
+        AlertLogPtr(i).TotalErrors          := 0 ;
         AlertLogPtr(i).DisabledAlertCount   := (0, 0, 0) ;
         AlertLogPtr(i).AffirmCount          := 0 ;
         AlertLogPtr(i).PassedCount          := 0 ;
+        AlertLogPtr(i).AffirmPassedCount    := 0 ;
       end loop ;
     end procedure ClearAlerts ;
 
@@ -3457,9 +3480,11 @@ package body AlertLogPkg is
     procedure ClearAlertStopCounts is
     ------------------------------------------------------------
     begin
-      AlertLogPtr(ALERTLOG_BASE_ID).AlertStopCount := ALERT_LOG_STOP_COUNT_DEFAULT ;
+      AlertLogPtr(ALERTLOG_BASE_ID).LocalAlertStopCount := ALERT_LOG_STOP_COUNT_DEFAULT ;
+      AlertLogPtr(ALERTLOG_BASE_ID).AlertStopCount      := ALERT_LOG_STOP_COUNT_DEFAULT ;
 
       for i in ALERTLOG_BASE_ID + 1 to NumAlertLogIDsVar loop
+        AlertLogPtr(i).LocalAlertStopCount := ALERT_LOG_COUNT_MAXIMUM ;
         AlertLogPtr(i).AlertStopCount := ALERT_LOG_COUNT_MAXIMUM ;
       end loop ;
     end procedure ClearAlertStopCounts ;
@@ -3626,6 +3651,7 @@ package body AlertLogPkg is
       AlertLogPtr(AlertLogID).PassedCount         := 0 ;
       AlertLogPtr(AlertLogID).PassedGoal          := 0 ;
       AlertLogPtr(AlertLogID).AlertEnabled        := AlertEnabled ;
+      AlertLogPtr(AlertLogID).LocalAlertStopCount := AlertStopCount ;
       AlertLogPtr(AlertLogID).AlertStopCount      := AlertStopCount ;
       AlertLogPtr(AlertLogID).AlertPrintCount     := ALERT_LOG_COUNT_MAXIMUM ;
       AlertLogPtr(AlertLogID).LogEnabled          := LogEnabled ;
@@ -3747,6 +3773,9 @@ package body AlertLogPkg is
     begin
       for i in ALERTLOG_BASE_ID to NumAlertLogIDsVar loop
         Deallocate(AlertLogPtr(i).Name) ;
+        Deallocate(AlertLogPtr(i).NameLower) ;
+        Deallocate(AlertLogPtr(i).Prefix) ;
+        Deallocate(AlertLogPtr(i).Suffix) ;
         Deallocate(AlertLogPtr(i)) ;
       end loop ;
       deallocate(AlertLogPtr) ;
@@ -3783,6 +3812,7 @@ package body AlertLogPkg is
       PassedCountVar                := 0 ;
       ErrorCount                    := 0 ;
       AlertCount                    := (0, 0, 0) ;
+      ExpectedAlertCountVar         := (0, 0, 0) ;
 
       CalcAlertLogJustifyAmountVar  := 0 ;
       CurAlertLogJustifyAmountVar   := 0 ;
@@ -4119,12 +4149,20 @@ package body AlertLogPkg is
     ) is
       variable CurrentCount : integer ;
     begin
-      CurrentCount := AlertLogPtr(AlertLogID).AlertStopCount(Level) ;
 --      if CurrentCount = integer'high or CurrentCount <= 0 then
-      if CurrentCount <= 0 then
-        AlertLogPtr(AlertLogID).AlertStopCount(Level) := CurrentCount + 1 ;
-      elsif CurrentCount <= (integer'high - Count) then
-        AlertLogPtr(AlertLogID).AlertStopCount(Level) := CurrentCount + Count ;
+      CurrentCount := AlertLogPtr(AlertLogID).AlertStopCount(Level) ;
+      if CurrentCount = integer'high or CurrentCount <= 0 then
+--        AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
+        CurrentCount := 0 ;
+      end if ;
+      if Count + CurrentCount >= 0 then
+        AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count + CurrentCount ;
+      elsif Count >= 0 then
+        -- count rolled over
+        AlertLogPtr(AlertLogID).AlertStopCount(Level) := integer'high ;
+      else
+        -- Count < 0, store as 0
+        AlertLogPtr(AlertLogID).AlertStopCount(Level) := 0 ;
       end if ;
     end procedure IncrementOneStopCount ;
 
@@ -4143,28 +4181,40 @@ package body AlertLogPkg is
     procedure IncrementAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
+      variable CurrentCount    : integer ;
     begin
       localAlertLogID := VerifyID(AlertLogID) ;
+      CurrentCount := AlertLogPtr(localAlertLogID).LocalAlertStopCount(Level) ;
+      if CurrentCount = integer'high or CurrentCount <= 0 then
+        CurrentCount := 0 ;
+      end if ;
+      if Count + CurrentCount >= 0 then
+        AlertLogPtr(localAlertLogID).LocalAlertStopCount(Level) := Count + CurrentCount ;
+      elsif Count >= 0 then
+        -- count rolled over
+        AlertLogPtr(localAlertLogID).LocalAlertStopCount(Level) := integer'high ;
+      else
+        -- Count < 0, store LocalAlertStopCount as 0
+        AlertLogPtr(localAlertLogID).LocalAlertStopCount(Level) := 0 ;
+      end if ;
       LocalIncrementAlertStopCount(localAlertLogID, Level, Count) ;
     end procedure IncrementAlertStopCount ;
 
     ------------------------------------------------------------
-    procedure SetAlertStopCount(UnverifiedAlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+    procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : natural) is
     ------------------------------------------------------------
-      variable AlertLogID   : AlertLogIDType ;
-      variable CurrentCount : integer ;
+      variable localAlertLogID : AlertLogIDType ;
+      variable CurrentCount    : integer ;
     begin
-      AlertLogID := VerifyID(UnverifiedAlertLogID) ;
-      CurrentCount := AlertLogPtr(AlertLogID).AlertStopCount(Level) ;
-      AlertLogPtr(AlertLogID).AlertStopCount(Level) := Count ;
-      if AlertLogID /= ALERTLOG_BASE_ID then
-        if CurrentCount = integer'high or CurrentCount <= 0 then
-          CurrentCount := 0 ;
-        end if ;
-        -- Adjust the other counts by the amount this count increased (or decreased)
-        -- If the count decreased, the stop count will not be checked until the next alert is received
-        LocalIncrementAlertStopCount(AlertLogPtr(AlertLogID).ParentID, Level, Count - CurrentCount) ;
+      localAlertLogID := VerifyID(AlertLogID) ;
+      CurrentCount := AlertLogPtr(localAlertLogID).LocalAlertStopCount(Level) ;
+      AlertLogPtr(localAlertLogID).LocalAlertStopCount(Level) := Count ;
+      if CurrentCount = integer'high or CurrentCount <= 0 then
+        CurrentCount := 0 ;
       end if ;
+      -- Adjust counts by the amount the local count increased (or decreased)
+      -- If the count decreased, the stop count will not be checked until the next alert is received
+      LocalIncrementAlertStopCount(localAlertLogID, Level, Count - CurrentCount) ;
     end procedure SetAlertStopCount ;
 
     ------------------------------------------------------------
@@ -4337,10 +4387,10 @@ package body AlertLogPkg is
     ------------------------------------------------------------
       variable localAlertLogID : AlertLogIDType ;
     begin
-      localAlertLogID := VerifyID(AlertLogID) ;
       if Level = ALWAYS then
         return TRUE ;
       else
+        localAlertLogID := VerifyID(AlertLogID) ;
         return AlertLogPtr(localAlertLogID).LogEnabled(Level) ;
       end if ;
     end function GetLogEnable ;
@@ -6726,7 +6776,7 @@ package body AlertLogPkg is
     ReportVhdlAssert : boolean := TRUE
   ) is
   begin
-    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, TRUE, TimeOut, ReportVhdlAssert) ;
+    AlertLogStruct.ReportAlerts(Name, AlertLogID, ExternalErrors, ReportAll, ReportWhenZero, TimeOut, ReportVhdlAssert) ;
   end procedure ReportAlerts ;
 
   ------------------------------------------------------------
@@ -7555,14 +7605,14 @@ package body AlertLogPkg is
   end procedure IncrementAlertStopCount ;
 
   ------------------------------------------------------------
-  procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : integer) is
+  procedure SetAlertStopCount(AlertLogID : AlertLogIDType ;  Level : AlertType ;  Count : natural) is
   ------------------------------------------------------------
   begin
     AlertLogStruct.SetAlertStopCount(AlertLogID, Level, Count) ;
   end procedure SetAlertStopCount ;
 
   ------------------------------------------------------------
-  procedure SetAlertStopCount(Level : AlertType ;  Count : integer) is
+  procedure SetAlertStopCount(Level : AlertType ;  Count : natural) is
   ------------------------------------------------------------
   begin
     AlertLogStruct.SetAlertStopCount(ALERTLOG_BASE_ID, Level, Count) ;
@@ -8025,7 +8075,6 @@ package body AlertLogPkg is
       LogLevel := INFO ;
       LogValid := TRUE ;
     else
-      log("Name = " & Name  & "...") ;
       LogLevel := ALWAYS ;
       LogValid := FALSE ;
     end if ;
@@ -8103,7 +8152,10 @@ package body AlertLogPkg is
 ----            Log(OSVVM_ALERTLOG_ID, "SetLogEnable(OSVVM_ALERTLOG_ID, " & Name(1 to NameLen) & ", TRUE) ;", DEBUG) ;
 --            LogLevel := LogType'value("" & Name(1 to NameLen)) ;  -- "" & added for RivieraPro 2020.10
             ToLogLevel(LogLevel, Name(1 to NameLen), LogValid) ;
-            exit ReadNameLoop when not LogValid ;
+            if not LogValid then
+              log("ReadLogEnables: Read Invalid LogLevel = " & Name(1 to NameLen)) ;
+              exit ReadNameLoop ;
+            end if ;
             SetLogEnable(AlertLogID, LogLevel, TRUE) ;
         end case ;
       end loop ReadNameLoop ;

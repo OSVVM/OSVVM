@@ -5,7 +5,7 @@
 --
 --  Maintainer:        Jim Lewis      email:  jim@SynthWorks.com
 --  Contributor(s):
---     Jim Lewis      email:  jim@SynthWorks.com
+--     Jim Lewis   LogReset   email:  jim@SynthWorks.com
 --
 --  Package Defines
 --
@@ -213,7 +213,6 @@ package body ClockResetPkg is
   ) is
     variable RandClkPeriod   : time ;
     variable BurstLength, ClockVariance : integer ;
-    constant ACTIVE_TIME     : time := Period * DutyCycle ;
     constant INACTIVE_VALUE  : std_logic := not ClkActive ;
     variable intCoverID      : CoverageIdType ;
   begin
@@ -228,13 +227,16 @@ package body ClockResetPkg is
     if Offset > 0 sec then
       wait for Offset ;
     end if ;
-    Clk <= ClkActive, INACTIVE_VALUE after ACTIVE_TIME, ClkActive after Period ;
+    Clk <= ClkActive, INACTIVE_VALUE after Period * DutyCycle, ClkActive after Period ;
     wait for Period ;
     loop
       (BurstLength, ClockVariance) := RandCovPoint(CoverID) ;
+-- Want constrained random of the distribution so ICover not needed.
+-- Reconsider when have a restoring remaining coverage model
+      -- ICoverLast(CoverID) ;
       RandClkPeriod := (ClockVariance * Period) / 1000 ;
       for i in 1 to BurstLength loop
-        Clk <= INACTIVE_VALUE after ACTIVE_TIME, ClkActive after RandClkPeriod ;
+        Clk <= INACTIVE_VALUE after RandClkPeriod * DutyCycle, ClkActive after RandClkPeriod ;
         wait for RandClkPeriod ;
       end loop ;
     end loop ;
@@ -346,14 +348,11 @@ package body ClockResetPkg is
     for_ever : loop
       wait on Reset ;
       if Reset = ResetActive then
-        LOG(AlertLogID, ResetName & " now active", INFO) ;
-        print("") ;
+        Log(AlertLogID, ResetName & " now active" & LF, LogLevel) ;
       elsif Reset = not ResetActive then
-        LOG(AlertLogID, ResetName & " now inactive", INFO) ;
-        print("") ;
+        Log(AlertLogID, ResetName & " now inactive" & LF, LogLevel) ;
       else
-        LOG(AlertLogID, ResetName & " = " & to_string(Reset), INFO) ;
-        print("") ;
+        Log(AlertLogID, ResetName & " = " & to_string(Reset) & LF, LogLevel) ;
       end if ;
     end loop for_ever ;
   end procedure LogReset ;

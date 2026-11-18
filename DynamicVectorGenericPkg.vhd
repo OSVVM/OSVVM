@@ -19,6 +19,7 @@
 --
 --  Revision History:
 --    Version    Description
+--    2026.11    Updates after Claude code review
 --    2026.05    Initial revision.
 --
 --
@@ -775,6 +776,9 @@ package body DynamicVectorGenericPkg is
     ) return InternalVectorType is
       variable StartingIndex, EndingIndex, TailIndex : natural ;
     begin
+      if NumValues = 0 then
+        return InternalVectorType'(1 to NumValues => GetElementTypeDefault) ;
+      end if ;
       StartingIndex := Index ;
       EndingIndex   := StartingIndex + NumValues - 1 ;
       TailIndex     := SingletonArrayPtr(ID.IdNum).TailIndex ;
@@ -932,6 +936,12 @@ package body DynamicVectorGenericPkg is
               "DynamicVector: Delete Index: " & to_string(Index) &
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) &
               " to " & to_string(OldTailIndex-1), FAILURE) ;
+        return ;
+      end if ;
+      if NumValues > OldTailIndex then
+        Alert(SingletonArrayPtr(IdNum).AlertLogID,
+              "DynamicVector: Delete NumValues: " & to_string(NumValues) &
+              " larger than current array size: " & to_string(OldTailIndex+1), FAILURE) ;
         return ;
       end if ;
       -- Move the current values over

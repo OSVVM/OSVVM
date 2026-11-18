@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Version    Description
+--    2026.11    Updates after Claude code review
 --    2026.08    Moved TranscriptOpen to TranscriptPkg
 --    2024.07    Added timeout flag to EndOfTestReports.
 --               Added scoreboard reporting for: unsigned, signed, and IntV
@@ -204,7 +205,7 @@ package body ReportPkg is
 
     TranscriptClose ; -- Close Transcript if open
 
-    return SumAlertCount(GetAlertCount + ExternalErrors) ;
+    return SumAlertCount(GetAlertCount + ExternalErrors - GetExpectedAlertCount) ;
   end function EndOfTestReports ;
 
   ------------------------------------------------------------

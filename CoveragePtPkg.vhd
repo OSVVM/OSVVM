@@ -22,6 +22,7 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
 --    05/2026   2026.05    Initial.
 --                         Restructure CoveragePType to call CoveragePkg Singleton.
 --
@@ -402,7 +403,7 @@ package CoveragePtPkg is
     ------------------------------------------------------------
     procedure WriteCovDb (FileName : string; OpenKind : File_Open_Kind := WRITE_MODE ) ;
     procedure ReadCovDb (FileName : string; Merge : boolean := FALSE) ;
-    procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) ;
+    procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) ;
     procedure ReadCovYaml  (FileName : string := ""; Merge : boolean := FALSE) ;
 
 ------------------------------------------------------------
@@ -1741,8 +1742,11 @@ package body CoveragePtPkg is
 
     ------------------------------------------------------------
     ------------------------------------------------------------
-    procedure WriteBin (
+    procedure WriteBin (  -- With LogLevel & FileName
     ------------------------------------------------------------
+      LogLevel        : LogType ;
+      FileName        : string;
+      OpenKind        : File_Open_Kind := APPEND_MODE ;
       WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
@@ -1752,7 +1756,42 @@ package body CoveragePtPkg is
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      SetReportOptions (
+      CheckAndErrorCoverageID ;
+      WriteBinForPtOnly (
+        ID              => CoverageID,
+        LogLevel        => LogLevel,
+        FileName        => FileName,
+        OpenKind        => OpenKind,
+        WritePassFail   => WritePassFail,
+        WriteBinInfo    => WriteBinInfo,
+        WriteCount      => WriteCount,
+        WriteAnyIllegal => WriteAnyIllegal,
+        WritePrefix     => WritePrefix,
+        PassName        => PassName,
+        FailName        => FailName
+      );
+    end procedure WriteBin ;  -- With LogLevel
+
+    ------------------------------------------------------------
+    procedure WriteBin ( -- With FileName
+    ------------------------------------------------------------
+      FileName        : string;
+      OpenKind        : File_Open_Kind   := APPEND_MODE ;
+      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
+      WritePrefix     : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
+      PassName        : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
+      FailName        : string           := OSVVM_STRING_INIT_PARM_DETECT    --!! Deprecated
+    ) is
+    begin
+      CheckAndErrorCoverageID ;
+      WriteBinForPtOnly (
+        ID              => CoverageID,
+        LogLevel        => ALWAYS,
+        FileName        => FileName,
+        OpenKind        => OpenKind,
         WritePassFail   => WritePassFail,
         WriteBinInfo    => WriteBinInfo,
         WriteCount      => WriteCount,
@@ -1761,17 +1800,6 @@ package body CoveragePtPkg is
         PassName        => PassName,
         FailName        => FailName
       ) ;
-      CheckAndErrorCoverageID ;
-      if WriteBinFileOpen then
-        WriteBin (
-          ID        => CoverageID,
-          FileName  => WriteBinFileName.all,
-          OpenKind  => WriteBinOpenKind
-        ) ;
-        WriteBinOpenKind := APPEND_MODE ;
-      else
-        WriteBin (ID => CoverageID) ;
-      end if ;
     end procedure WriteBin ;
 
     ------------------------------------------------------------
@@ -1788,66 +1816,44 @@ package body CoveragePtPkg is
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      SetReportOptions (
-        WritePassFail   => WritePassFail,
-        WriteBinInfo    => WriteBinInfo,
-        WriteCount      => WriteCount,
-        WriteAnyIllegal => WriteAnyIllegal,
-        WritePrefix     => WritePrefix,
-        PassName        => PassName,
-        FailName        => FailName
-      ) ;
       CheckAndErrorCoverageID ;
       if WriteBinFileOpen then
-        WriteBin (
-          ID        => CoverageID,
-          LogLevel  => LogLevel,
-          FileName  => WriteBinFileName.all,
-          OpenKind  => WriteBinOpenKind
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => LogLevel,
+          FileName        => WriteBinFileName.all,
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
         ) ;
-        WriteBinOpenKind := APPEND_MODE ;
       else
-        WriteBin (ID => CoverageID, LogLevel => LogLevel) ;
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => LogLevel,
+          FileName        => "",
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        ) ;
+      end if ;
+      if WriteBinFileOpen then
+        WriteBinOpenKind := APPEND_MODE ;
       end if ;
     end procedure WriteBin ;  -- With LogLevel
 
     ------------------------------------------------------------
     procedure WriteBin (
     ------------------------------------------------------------
-      FileName        : string;
-      OpenKind        : File_Open_Kind   := APPEND_MODE ;
-      WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WriteAnyIllegal : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
-      WritePrefix     : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
-      PassName        : string           := OSVVM_STRING_INIT_PARM_DETECT ;  --!! Deprecated
-      FailName        : string           := OSVVM_STRING_INIT_PARM_DETECT    --!! Deprecated
-    ) is
-    begin
-      SetReportOptions (
-        WritePassFail   => WritePassFail,
-        WriteBinInfo    => WriteBinInfo,
-        WriteCount      => WriteCount,
-        WriteAnyIllegal => WriteAnyIllegal,
-        WritePrefix     => WritePrefix,
-        PassName        => PassName,
-        FailName        => FailName
-      ) ;
-      CheckAndErrorCoverageID ;
-      WriteBin (
-        ID        => CoverageID,
-        FileName  => FileName,
-        OpenKind  => OpenKind
-      ) ;
-    end procedure WriteBin ;
-
-    ------------------------------------------------------------
-    procedure WriteBin (  -- With LogLevel
-    ------------------------------------------------------------
-      LogLevel        : LogType ;
-      FileName        : string;
-      OpenKind        : File_Open_Kind := APPEND_MODE ;
       WritePassFail   : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteBinInfo    : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
       WriteCount      : OsvvmOptionsType := COV_OPT_INIT_PARM_DETECT ;
@@ -1857,23 +1863,40 @@ package body CoveragePtPkg is
       FailName        : string         := OSVVM_STRING_INIT_PARM_DETECT
     ) is
     begin
-      SetReportOptions (
-        WritePassFail   => WritePassFail,
-        WriteBinInfo    => WriteBinInfo,
-        WriteCount      => WriteCount,
-        WriteAnyIllegal => WriteAnyIllegal,
-        WritePrefix     => WritePrefix,
-        PassName        => PassName,
-        FailName        => FailName
-      ) ;
       CheckAndErrorCoverageID ;
-      WriteBin (
-        ID        => CoverageID,
-        LogLevel  => LogLevel,
-        FileName  => FileName,
-        OpenKind  => OpenKind
-      ) ;
-    end procedure WriteBin ;  -- With LogLevel
+      if WriteBinFileOpen then
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => ALWAYS,
+          FileName        => WriteBinFileName.all,
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        );
+      else
+        WriteBinForPtOnly (
+          ID              => CoverageID,
+          LogLevel        => ALWAYS,
+          FileName        => "",
+          OpenKind        => WriteBinOpenKind,
+          WritePassFail   => WritePassFail,
+          WriteBinInfo    => WriteBinInfo,
+          WriteCount      => WriteCount,
+          WriteAnyIllegal => WriteAnyIllegal,
+          WritePrefix     => WritePrefix,
+          PassName        => PassName,
+          FailName        => FailName
+        );
+      end if ;
+      if WriteBinFileOpen then
+        WriteBinOpenKind := APPEND_MODE ;
+      end if ;
+    end procedure WriteBin ;
 
     ------------------------------------------------------------
     procedure DumpBin (LogLevel : LogType := DEBUG) is
@@ -1999,7 +2022,7 @@ package body CoveragePtPkg is
     end procedure ReadCovDb ;
 
     ------------------------------------------------------------
-    procedure WriteCovYaml (FileName : string := ""; Coverage : real ; OpenKind : File_Open_Kind := WRITE_MODE) is
+    procedure WriteCovYaml (FileName : string := ""; OpenKind : File_Open_Kind := WRITE_MODE) is
     ------------------------------------------------------------
     begin
       CheckAndErrorCoverageID ;
@@ -2331,7 +2354,7 @@ package body CoveragePtPkg is
   begin
     CompareBins(Bin1, Bin2, ErrorCount) ;
     iAlertLogID := Bin1.GetAlertLogID ;
-    AlertIf(ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " are not the same.") ;
+    AlertIf(iAlertLogID, ErrorCount /= 0, "CoveragePkg.CompareBins: CoverageModels " & Bin1.GetCovModelName & " and " & Bin2.GetCovModelName & " are not the same.") ;
   end procedure CompareBins ;
 
 end package body CoveragePtPkg ;

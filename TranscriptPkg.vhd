@@ -20,6 +20,7 @@
 --
 --  Revision History:
 --    Version    Description
+--    2026.11    Updates after Claude code review
 --    2026.08    Added AlertLog controls to PrintLine and BlankLine
 --               Moved ReportPkg.TranscriptOpen to here
 --               Moved low level essentials into TranscriptBasePkg
@@ -103,7 +104,7 @@ package TranscriptPkg is
   procedure PrintLine (s : string ; Level : LogType ) ;
   procedure PrintLine (AlertLogID : AlertLogIDType ; s : string ; Level : LogType ) ;
 
-  procedure        Print(s : string) ;
+  procedure Print(s : string) ;
 
   ------------------------------------------------------------
   -- Print with a header and user defined prefix and suffix

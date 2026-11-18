@@ -76,6 +76,7 @@ package body OsvvmSettingsPkg is
   --   if TRUE, each bin of a coverage model is one requirement.
   --   if FALSE, an entire coverage model is one requirement,
   constant  COVERAGE_REQUIREMENT_BY_BIN            : boolean := ${COVERAGE_REQUIREMENT_BY_BIN} ;
+  constant  REQUIREMENTS_ALWAYS_COUNT_DISABLED_ALERTS_AND_WARNINGS : boolean := ${REQUIREMENTS_ALWAYS_COUNT_DISABLED_ALERTS_AND_WARNINGS} ;
 
   -- ------------------------------------------
   -- Settings for RandomPkg

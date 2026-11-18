@@ -20,8 +20,9 @@
 --
 --  Revision History:
 --    Date      Version    Description
+--    11/2026   2026.11    Updates after Claude code review
 --              2026.09    Exposed the length on HeaderToBuf so it can be mapped
---              2026.08    Added format, WrapOneLine, WrapToBuf, HeaderToBuf, 
+--              2026.08    Added format, WrapOneLine, WrapToBuf, HeaderToBuf,
 --    02/2025   2025.02    Fixed bug in RemoveCrLf when only Cr/LF in line and no other characters.
 --    09/2024   2024.09    Added to_string_max, RemoveSpace, RemoveCrLf, GetLine
 --    12/2023   2024.03    SkipWhiteSpace now treats LF and CR as blank space - if a tool leaves them
@@ -398,6 +399,9 @@ package body TextUtilPkg is
   function IsNumber (Name : string ) return boolean is
   ------------------------------------------------------------
   begin
+    if Name'length = 0 then
+      return FALSE ;
+    end if ;
     for i in Name'range loop
       if not IsNumber(Name(i)) then
         return FALSE ;
@@ -730,25 +734,31 @@ package body TextUtilPkg is
     constant RESOLVED_FRACTION_DIGITS  : integer := minimum(MAX_FRACTION_DIGITS, FractionDigits) ;
     constant EXTRA_DIGITS              : integer := MAX_FRACTION_DIGITS - RESOLVED_FRACTION_DIGITS ;
 
+    constant IsNegative : boolean := T < 0 Sec ;
     variable Index    : integer := 0 ;
     variable TimeVal  : time ;
     variable RoundVal : time ;
     variable IntDigit : integer ;
-    constant ADJ_JUSTIFY : integer := RightJustify - ifelse(TimeUnits = min or TimeUnits = sec, 4, 3) ;
+    --                                Justify Input  Adjust for space and time units                    Adjust for '-' if negative
+    constant ADJ_JUSTIFY : integer := RightJustify - IfElse(TimeUnits = min or TimeUnits = sec, 4, 3) - IfElse(IsNegative, 1, 0) ;
     variable S        : string(maximum(ADJ_JUSTIFY, OSVVM_MAX_TIME_DECIMAL_DIGITS + FractionDigits) downto 1) := (others => ' ') ;
   begin
+    TimeVal := T ;
+    if IsNegative then
+      TimeVal := - TimeVal ;
+    end if ;
     -- round value considering TimeUnits, FractionDigits, and Simulator resolution
     if EXTRA_DIGITS /= 0 then
       RoundVal := 0.5 * TimeUnits / 10**RESOLVED_FRACTION_DIGITS ;
       -- Integer32 issues
       if EXTRA_DIGITS <= 9 then
-        TimeVal  := (T + RoundVal) / (10**EXTRA_DIGITS) ; -- round and shift off extra digits
+        TimeVal  := (TimeVal + RoundVal) / (10**EXTRA_DIGITS) ; -- round and shift off extra digits
       else
-        TimeVal  := (T + RoundVal) / (10**9) ; -- round and shift off extra digits in two steps
+        TimeVal  := (TimeVal + RoundVal) / (10**9) ; -- round and shift off extra digits in two steps
         TimeVal  := TimeVal / (10**(EXTRA_DIGITS - 9)) ;
       end if ;
-    else
-      TimeVal  := T ;  -- Fraction uses all digits
+--  else
+--      TimeVal  := TimeVal ;  -- Fraction uses all digits
     end if ;
     -- Adjust TimeVal for minutes and hours
     if TimeUnits = 1 min then
@@ -757,14 +767,14 @@ package body TextUtilPkg is
       TimeVal := TimeVal / 3.6 ;  -- already divided by 1000
     end if ;
 
-    if MAX_FRACTION_DIGITS < FractionDigits then
-      -- If available fraction bits < requested, fill the extra bits with 0
+    if FractionDigits > MAX_FRACTION_DIGITS then
+      -- If requested fraction digits > available fraction bits, fill the extra bits with 0
       for i in MAX_FRACTION_DIGITS to FractionDigits - 1 loop
         Index := Index + 1 ;
         S(Index) := '0' ;
       end loop ;
 
-      -- If no availabe fraction bits add in the decimal point
+      -- If no avaiable fraction bits add in the decimal point
       if MAX_FRACTION_DIGITS = 0 then
         Index := Index + 1 ;
         S(Index) := '.' ;
@@ -778,13 +788,19 @@ package body TextUtilPkg is
       TimeVal  := TimeVal / 10 ;  -- advance to next digit
       exit when TimeVal = 0 sec and Index > FractionDigits ;
       if Index = FractionDigits then
-        Index := Index + 1 ;
+        Index    := Index + 1 ;
         S(Index) := '.' ;
       end if ;
     end loop ;
-    if ADJ_JUSTIFY <= Index then
+    if IsNegative then
+      Index    := Index + 1 ;
+      S(Index) := '-' ;
+    end if ;
+    if Index >= ADJ_JUSTIFY then
+      -- Overran Justify, print all
       return S(Index   downto 1) & GetTimeUnits(TimeUnits) ;
     else
+      -- Add extra spaces for Justify
       return S(ADJ_JUSTIFY downto 1) & GetTimeUnits(TimeUnits) ;
 -- Could skip the initialization and do this instead
 --      return (ADJ_JUSTIFY to Index+1 => ' ') & S(Index downto 1) & GetTimeUnits(TimeUnits) ;
@@ -1045,7 +1061,7 @@ package body TextUtilPkg is
   ------------------------------------------------------------
     variable L                : InOut  line ;
     variable Empty            : InOut  boolean ;
-    variable MultiLineComment : inout  boolean
+    variable MultiLineComment : InOut  boolean
   ) is
     variable Valid : boolean ;
     variable Next2Char  : string(1 to 2) ;
@@ -1073,6 +1089,7 @@ package body TextUtilPkg is
         exit when Next2Char = "--" ; -- VHDL style comment
 
         if Next2Char = "/*" then   -- C style multi line comment
+          read(L, Next2Char) ;    -- remove the "/*"
           FindCommentEnd(L, Empty, MultiLineComment) ;
           exit when Empty ;
           next EmptyCheckLoop ; -- Found end of comment, restart processing line
